@@ -1653,7 +1653,7 @@ input, select, textarea {
 <style>
 #zed-splash-screen{position:fixed;inset:0;z-index:999999;background:#0F0E0B;display:flex;flex-direction:column;align-items:center;justify-content:center;transition:opacity 0.6s ease,visibility 0.6s ease;overflow:hidden}
 #zed-splash-screen.hide{opacity:0;visibility:hidden;pointer-events:none}
-#zed-splash-bg{position:absolute;inset:0;background:radial-gradient(circle at 30% 20%,rgba(140,255,138,0.15) 0%,transparent 50%),radial-gradient(circle at 80% 80%,rgba(255,214,0,0.12) 0%,transparent 50%),radial-gradient(circle at 50% 50%,rgba(140,255,138,0.06) 0%,transparent 70%)}
+#zed-splash-bg{position:absolute;inset:0;background:radial-gradient(circle at 30% 20%,rgba(140,255,138,0.15) 0%,transparent 50%),radial-gradient(circle at 80% 80%,rgba(255,214,0,0.12) 0%,transparent 50%)}
 #zed-splash-text{position:relative;z-index:1;text-align:center;color:#F5F1E8}
 #zed-splash-text .welcome{font-family:'Bricolage Grotesque',sans-serif;font-size:13px;letter-spacing:0.32em;text-transform:uppercase;color:#8CFF8A;font-weight:700;margin-bottom:14px;opacity:0;animation:fadeUp 0.7s ease 0.2s forwards}
 #zed-splash-text .main-title{font-family:'Instrument Serif',serif;font-size:clamp(28px,6vw,44px);line-height:0.95;letter-spacing:-0.02em;margin-bottom:10px;opacity:0;animation:fadeUp 0.7s ease 0.4s forwards}
@@ -1665,9 +1665,19 @@ input, select, textarea {
 @keyframes loadProgress{0%{width:0%}60%{width:85%}100%{width:100%}}
 @keyframes fadeUp{from{opacity:0;transform:translateY(14px)}to{opacity:1;transform:translateY(0)}}
 @keyframes splashPulse{0%,100%{transform:scale(1)}50%{transform:scale(1.05)}}
-#zed-video-search-wrap,#zed-doc-search-wrap{background:#1A1A1A;border:1px solid #2A2A2A;border-radius:14px;padding:12px;display:flex;align-items:center;gap:10px;margin-bottom:16px;margin-top:0}
-#zed-video-search-wrap input,#zed-doc-search-wrap input{flex:1;height:42px;background:#0F0E0B;border:1px solid #2A2A2A;border-radius:10px;padding:0 14px 0 40px;color:#F5F1E8;font-size:14px;font-family:'Bricolage Grotesque',sans-serif;outline:none;width:100%}
-#zed-video-search-wrap input:focus,#zed-doc-search-wrap input:focus{border-color:#8CFF8A;box-shadow:0 0 0 3px rgba(140,255,138,0.15)}
+.zed-search-wrap{background:transparent;border:none;padding:0;margin-bottom:12px;position:relative;z-index:10;display:flex;justify-content:flex-start}
+.zed-search-row{display:flex;align-items:center;gap:8px;width:auto}
+.zed-search-wrap input{width:160px;height:34px;background:#1A1A1A;border:1px solid #2A2A2A;border-radius:999px;padding:0 12px 0 32px;color:#F5F1E8;font-size:12px;font-family:'Bricolage Grotesque',sans-serif;outline:none;transition:width 0.25s ease,border-color 0.2s}
+.zed-search-wrap input:focus{width:220px;border-color:#8CFF8A;box-shadow:0 0 0 2px rgba(140,255,138,0.15);background:#222}
+.zed-search-wrap input::placeholder{color:#666;font-size:11px;letter-spacing:0.02em}
+.zed-search-icon{position:absolute;left:10px;top:50%;transform:translateY(-50%);color:#888;font-size:13px;pointer-events:none}
+.zed-search-count{font-size:10px;color:#8CFF8A;background:rgba(140,255,138,0.12);padding:3px 8px;border-radius:999px;border:1px solid rgba(140,255,138,0.2);white-space:nowrap;font-weight:700}
+.zed-search-suggestions{position:absolute;top:100%;left:0;right:auto;width:240px;margin-top:6px;background:#1A1A1A;border:1px solid #2A2A2A;border-radius:12px;max-height:240px;overflow-y:auto;display:none;z-index:20;box-shadow:0 12px 32px rgba(0,0,0,0.4)}
+.zed-search-suggestions.show{display:block}
+.zed-suggestion-item{padding:10px 14px;cursor:pointer;display:flex;align-items:center;gap:10px;border-bottom:1px solid rgba(255,255,255,0.04);font-size:13px;color:#F5F1E8}
+.zed-suggestion-item:hover{background:rgba(140,255,138,0.08)}
+.zed-suggestion-item:last-child{border-bottom:none}
+.zed-suggestion-icon{width:28px;height:28px;border-radius:8px;background:#2A2A2A;display:flex;align-items:center;justify-content:center;font-size:14px;flex-shrink:0}
 #zed-pdf-modal{position:fixed;inset:0;z-index:999997;background:rgba(0,0,0,0.92);backdrop-filter:blur(12px);display:none;flex-direction:column}
 #zed-pdf-modal.open{display:flex}
 #zed-pdf-header{height:56px;background:#1A1A1A;border-bottom:1px solid #2A2A2A;display:flex;align-items:center;justify-content:space-between;padding:0 16px;flex-shrink:0}
@@ -1677,139 +1687,13 @@ input, select, textarea {
 #zed-pdf-viewer{flex:1;width:100%;border:none;background:#0F0E0B}
 .zed-offline-badge{display:inline-flex;align-items:center;gap:4px;font-size:9px;font-weight:800;letter-spacing:0.1em;text-transform:uppercase;background:#8CFF8A;color:#000;padding:3px 8px;border-radius:999px;margin-left:8px;border:1px solid #8CFF8A;box-shadow:0 0 10px rgba(140,255,138,0.3)}
 .zed-save-btn{height:36px;padding:0 12px;border-radius:10px;font-size:10px;font-weight:800;letter-spacing:0.06em;text-transform:uppercase;border:1px solid #2A2A2A;background:#222;color:#F5F1E8;cursor:pointer;display:inline-flex;align-items:center;gap:6px}
-.zed-save-btn.saved{background:#1a2e1a;color:#8CFF8A;border-color:#8CFF8A}
 .zed-view-offline-btn{height:36px;padding:0 14px;border-radius:10px;font-size:10px;font-weight:800;letter-spacing:0.06em;text-transform:uppercase;border:1px solid #8CFF8A;background:#8CFF8A;color:#000;cursor:pointer;display:inline-flex;align-items:center;gap:6px;box-shadow:0 0 15px rgba(140,255,138,0.3)}
 .zed-remove-btn{height:36px;width:36px;border-radius:10px;border:1px solid #3a2a2a;background:#2a1a1a;color:#ff9a9a;cursor:pointer;display:inline-flex;align-items:center;justify-content:center}
 #zed-offline-toast{position:fixed;bottom:20px;left:16px;right:16px;max-width:420px;margin:0 auto;background:#F5F1E8;color:#0F0E0B;padding:14px 16px;border-radius:12px;font-size:13px;font-weight:600;font-family:'Bricolage Grotesque',sans-serif;box-shadow:0 16px 40px rgba(0,0,0,0.4);border:2px solid #8CFF8A;z-index:999999;display:none;align-items:center;gap:10px}
 #zed-offline-toast.show{display:flex;animation:toastSlide 0.35s ease}
 @keyframes toastSlide{from{transform:translateY(20px);opacity:0}to{transform:translateY(0);opacity:1}}
-
-/* === CHAT SYSTEM - SECURE EDITION BY HOPECHAKA === */
-#zed-chat-fab{
-  position:fixed;bottom:90px;right:16px;z-index:99990;
-  width:58px;height:58px;border-radius:50%;background:#8CFF8A;
-  display:flex;align-items:center;justify-content:center;
-  box-shadow:0 8px 32px rgba(140,255,138,0.4),0 4px 16px rgba(0,0,0,0.3);
-  cursor:pointer;transition:transform 0.2s,box-shadow 0.2s;
-  font-size:26px;border:2px solid #0F0E0B;
-}
-#zed-chat-fab:hover{transform:scale(1.08);box-shadow:0 12px 40px rgba(140,255,138,0.5)}
-#zed-chat-fab-badge{
-  position:absolute;top:-4px;right:-4px;min-width:22px;height:22px;
-  background:#FF3B30;color:#fff;border-radius:999px;font-size:11px;font-weight:800;
-  display:none;align-items:center;justify-content:center;padding:0 6px;
-  border:2px solid #0F0E0B;font-family:'Bricolage Grotesque',sans-serif;
-}
-#zed-chat-fab-badge.show{display:flex}
-
-#zed-chat-modal{
-  position:fixed;inset:0;z-index:9999999;background:#0F0E0B;
-  display:none;flex-direction:column;overflow:hidden;
-  width:100vw;height:100vh;top:0;left:0;
-}
-#zed-chat-modal.open{display:flex !important;opacity:1;visibility:visible;}
-
-#zed-chat-header{
-  height:60px;background:#1A1A1A;border-bottom:1px solid #2A2A2A;
-  display:flex;align-items:center;justify-content:space-between;padding:0 16px;
-  flex-shrink:0;
-}
-#zed-chat-header-left{display:flex;align-items:center;gap:12px}
-#zed-chat-back{display:none;width:36px;height:36px;border-radius:50%;background:#2A2A2A;border:1px solid #333;color:#F5F1E8;cursor:pointer;align-items:center;justify-content:center;font-size:18px}
-#zed-chat-title{font-family:'Bricolage Grotesque',sans-serif;font-weight:800;font-size:16px;color:#F5F1E8;letter-spacing:-0.01em}
-#zed-chat-subtitle{font-size:11px;color:#888;margin-top:2px}
-
-#zed-chat-body{display:flex;flex:1;overflow:hidden}
-
-#zed-chat-sidebar{
-  width:100%;max-width:380px;background:#121212;border-right:1px solid #2A2A2A;
-  display:flex;flex-direction:column;overflow:hidden;
-}
-@media(min-width:768px){
-  #zed-chat-sidebar{width:380px}
-}
-#zed-chat-sidebar-tabs{display:flex;gap:8px;padding:12px 16px;border-bottom:1px solid #2A2A2A;background:#1A1A1A}
-.zed-tab-btn{flex:1;height:36px;border-radius:999px;border:1px solid #2A2A2A;background:#222;color:#888;font-size:11px;font-weight:700;letter-spacing:0.08em;text-transform:uppercase;cursor:pointer;transition:all 0.2s}
-.zed-tab-btn.active{background:#8CFF8A;color:#000;border-color:#8CFF8A}
-
-#zed-chat-search{padding:12px 16px;border-bottom:1px solid #2A2A2A}
-#zed-chat-search input{width:100%;height:40px;background:#0F0E0B;border:1px solid #2A2A2A;border-radius:10px;padding:0 14px 0 40px;color:#F5F1E8;font-size:13px;outline:none}
-#zed-chat-search input:focus{border-color:#8CFF8A}
-
-#zed-chat-list{flex:1;overflow-y:auto;padding:8px 0}
-
-.zed-chat-item{
-  display:flex;gap:12px;padding:12px 16px;cursor:pointer;transition:background 0.15s;
-  border-bottom:1px solid rgba(255,255,255,0.04);
-}
-.zed-chat-item:hover{background:rgba(255,255,255,0.04)}
-.zed-chat-item.active{background:rgba(140,255,138,0.08);border-left:3px solid #8CFF8A}
-
-.zed-avatar-wrap{position:relative;flex-shrink:0}
-.zed-avatar{
-  width:48px;height:48px;border-radius:50%;background:#2A2A2A;
-  display:flex;align-items:center;justify-content:center;
-  font-weight:800;color:#F5F1E8;font-size:18px;overflow:hidden;
-}
-.zed-avatar img{width:100%;height:100%;object-fit:cover}
-.zed-online-dot{
-  position:absolute;bottom:2px;right:2px;width:12px;height:12px;border-radius:50%;
-  background:#888;border:2px solid #121212;
-}
-.zed-online-dot.online{background:#8CFF8A;box-shadow:0 0 8px rgba(140,255,138,0.6)}
-
-.zed-chat-item-info{flex:1;min-width:0}
-.zed-chat-item-top{display:flex;justify-content:space-between;align-items:center;gap:8px}
-.zed-chat-item-name{font-weight:700;font-size:14px;color:#F5F1E8;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
-.zed-chat-item-time{font-size:10px;color:#666;flex-shrink:0}
-.zed-chat-item-last{font-size:12px;color:#888;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;margin-top:3px;display:flex;align-items:center;gap:6px}
-.zed-unread-badge{min-width:20px;height:20px;background:#8CFF8A;color:#000;border-radius:999px;font-size:10px;font-weight:800;display:flex;align-items:center;justify-content:center;padding:0 6px;margin-left:auto}
-
-#zed-chat-main{flex:1;display:flex;flex-direction:column;overflow:hidden;background:#0F0E0B;position:relative}
-@media(max-width:767px){
-  #zed-chat-main{display:none}
-  #zed-chat-modal.show-chat #zed-chat-sidebar{display:none}
-  #zed-chat-modal.show-chat #zed-chat-main{display:flex}
-  #zed-chat-modal.show-chat #zed-chat-back{display:flex}
-}
-
-#zed-chat-messages{flex:1;overflow-y:auto;padding:16px;display:flex;flex-direction:column;gap:10px;background:#0F0E0B;background-image:radial-gradient(circle at 20% 30%,rgba(140,255,138,0.03) 0%,transparent 50%)}
-
-.zed-msg{
-  max-width:78%;padding:10px 14px;border-radius:18px;font-size:14px;line-height:1.4;
-  position:relative;word-wrap:break-word;
-}
-.zed-msg.sent{align-self:flex-end;background:#8CFF8A;color:#000;border-bottom-right-radius:6px}
-.zed-msg.received{align-self:flex-start;background:#1A1A1A;color:#F5F1E8;border:1px solid #2A2A2A;border-bottom-left-radius:6px}
-.zed-msg-img{max-width:220px;border-radius:12px;margin-top:6px;cursor:pointer;display:block}
-.zed-msg-meta{display:flex;align-items:center;gap:6px;margin-top:4px;font-size:10px;opacity:0.7}
-.zed-msg.sent .zed-msg-meta{justify-content:flex-end;color:rgba(0,0,0,0.6)}
-.zed-msg.received .zed-msg-meta{color:#888}
-.zed-ticks{font-size:12px}
-.zed-ticks.delivered{color:rgba(0,0,0,0.6)}
-.zed-ticks.seen{color:#0084FF}
-
-#zed-chat-input-area{
-  padding:12px 16px;background:#1A1A1A;border-top:1px solid #2A2A2A;
-  display:flex;gap:10px;align-items:flex-end;
-}
-#zed-chat-input{flex:1;min-height:44px;max-height:120px;background:#0F0E0B;border:1px solid #2A2A2A;border-radius:22px;padding:12px 16px;color:#F5F1E8;font-size:14px;outline:none;resize:none;font-family:inherit}
-#zed-chat-input:focus{border-color:#8CFF8A}
-#zed-chat-send{width:44px;height:44px;border-radius:50%;background:#8CFF8A;border:none;color:#000;cursor:pointer;display:flex;align-items:center;justify-content:center;font-size:18px;flex-shrink:0;transition:transform 0.15s}
-#zed-chat-send:hover{transform:scale(1.05)}
-#zed-chat-attach{width:44px;height:44px;border-radius:50%;background:#2A2A2A;border:1px solid #333;color:#F5F1E8;cursor:pointer;display:flex;align-items:center;justify-content:center;font-size:18px;flex-shrink:0}
-
-#zed-friend-requests{padding:8px 0}
-.zed-request-item{display:flex;gap:12px;padding:12px 16px;border-bottom:1px solid rgba(255,255,255,0.04);align-items:center}
-.zed-request-actions{display:flex;gap:8px;margin-left:auto}
-.zed-accept-btn{height:32px;padding:0 14px;border-radius:999px;background:#8CFF8A;color:#000;border:none;font-weight:700;font-size:11px;text-transform:uppercase;cursor:pointer}
-.zed-reject-btn{height:32px;padding:0 14px;border-radius:999px;background:#2A2A2A;color:#F5F1E8;border:1px solid #333;font-weight:700;font-size:11px;text-transform:uppercase;cursor:pointer}
-
-#zed-chat-empty{display:flex;flex-direction:column;align-items:center;justify-content:center;flex:1;padding:40px;text-align:center;color:#666}
-#zed-chat-empty-icon{font-size:48px;margin-bottom:16px}
-#zed-chat-notification{position:fixed;top:20px;right:16px;left:16px;max-width:360px;margin-left:auto;background:#1A1A1A;border:1px solid #8CFF8A;border-radius:14px;padding:14px 16px;z-index:999999;display:none;gap:12px;box-shadow:0 16px 40px rgba(0,0,0,0.5)}
-#zed-chat-notification.show{display:flex;animation:slideIn 0.35s ease}
-@keyframes slideIn{from{transform:translateX(100%);opacity:0}to{transform:translateX(0);opacity:1}}
+.zed-no-results{display:none;text-align:center;padding:32px 16px;background:#1A1A1A;border:1px solid #2A2A2A;border-radius:14px;margin-top:16px;color:#888;}
+.zed-no-results.show{display:block}
 </style></head>
 <body>
 
@@ -1823,56 +1707,6 @@ input, select, textarea {
 
 <div id="zed-pdf-modal"><div id="zed-pdf-header"><div style="display:flex;align-items:center;gap:10px;"><div id="zed-pdf-title">Offline Viewer</div><span style="font-size:9px;background:#8CFF8A;color:#000;padding:2px 6px;border-radius:999px;font-weight:800;">OFFLINE</span></div><div style="display:flex;gap:8px;"><button class="zed-pdf-btn" id="zed-pdf-share-btn">Share</button><button class="zed-pdf-btn primary" id="zed-pdf-close-btn">✕ Close</button></div></div><iframe id="zed-pdf-viewer" title="PDF Viewer"></iframe></div>
 <div id="zed-offline-toast"><span style="font-size:18px;">✓</span><span id="zed-toast-text">Saved</span></div>
-
-<!-- CHAT FAB -->
-<div id="zed-chat-fab">💬<div id="zed-chat-fab-badge">0</div></div>
-
-<!-- CHAT MODAL -->
-<div id="zed-chat-modal">
-  <div id="zed-chat-header">
-    <div id="zed-chat-header-left">
-      <button id="zed-chat-back">←</button>
-      <div>
-        <div id="zed-chat-title">Study Chats</div>
-        <div id="zed-chat-subtitle">Connect with classmates</div>
-      </div>
-    </div>
-    <div style="display:flex;gap:8px;align-items:center;">
-      <span id="zed-online-count" style="font-size:11px;color:#8CFF8A;background:rgba(140,255,138,0.12);padding:4px 8px;border-radius:999px;border:1px solid rgba(140,255,138,0.2);">0 online</span>
-      <button id="zed-chat-close" style="width:36px;height:36px;border-radius:50%;background:#2A2A2A;border:1px solid #333;color:#F5F1E8;cursor:pointer;">✕</button>
-    </div>
-  </div>
-  <div id="zed-chat-body">
-    <div id="zed-chat-sidebar">
-      <div id="zed-chat-sidebar-tabs">
-        <button class="zed-tab-btn active" data-tab="chats">Chats</button>
-        <button class="zed-tab-btn" data-tab="friends">Friends</button>
-        <button class="zed-tab-btn" data-tab="requests">Requests <span id="zed-request-badge" style="background:#FF3B30;color:#fff;border-radius:999px;padding:1px 6px;font-size:9px;margin-left:4px;display:none;">0</span></button>
-        <button class="zed-tab-btn" data-tab="find">Find</button>
-      </div>
-      <div id="zed-chat-search"><div style="position:relative;"><div style="position:absolute;left:12px;top:50%;transform:translateY(-50%);color:#888;">🔍</div><input type="text" id="zed-friends-search" placeholder="Search students, classmates, school..." /></div><div style="font-size:10px;color:#666;margin-top:6px;display:flex;gap:6px;align-items:center;"><span>💡</span><span>Find tab: Search all students in your app by name, school, province • Messages auto-delete after 24hrs</span></div></div>
-      <div id="zed-chat-list"></div>
-      <div id="zed-friend-requests" style="display:none;"></div>
-      <div id="zed-find-students" style="display:none;flex:1;overflow-y:auto;padding:8px 0;"></div>
-    </div>
-    <div id="zed-chat-main">
-      <div id="zed-chat-empty"><div id="zed-chat-empty-icon">💬</div><div style="font-weight:700;color:#F5F1E8;margin-bottom:8px;">Select a chat</div><div style="font-size:13px;max-width:240px;">Choose a friend to start chatting. Send text, pics, and see when they are online.</div></div>
-      <div id="zed-chat-messages" style="display:none;"></div>
-      <div id="zed-chat-input-area" style="display:none;">
-        <button id="zed-chat-attach" title="Send picture">📷</button>
-        <textarea id="zed-chat-input" placeholder="Type a message..." rows="1"></textarea>
-        <button id="zed-chat-send">➤</button>
-        <input type="file" id="zed-chat-file" accept="image/*" style="display:none;" />
-      </div>
-    </div>
-  </div>
-</div>
-
-<div id="zed-chat-notification">
-  <div style="width:40px;height:40px;border-radius:50%;background:#8CFF8A;display:flex;align-items:center;justify-content:center;font-weight:800;color:#000;flex-shrink:0;">💬</div>
-  <div style="flex:1;min-width:0;"><div id="zed-notif-title" style="font-weight:700;font-size:13px;color:#F5F1E8;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">New message</div><div id="zed-notif-body" style="font-size:12px;color:#888;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">You have a new message</div></div>
-  <button onclick="this.parentElement.classList.remove('show')" style="background:none;border:none;color:#888;cursor:pointer;font-size:18px;">✕</button>
-</div>
 
   <div id="root"></div>
   
@@ -1933,21 +1767,8 @@ alter table profiles add column if not exists account_code text;
 <script>
 (function(){const s=document.getElementById('zed-splash-screen');if(s){document.body.style.overflow='hidden';setTimeout(()=>{s.classList.add('hide');document.body.style.overflow='';setTimeout(()=>{try{s.remove();}catch{}},650);},3000);}})();
 </script>
-<script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js"></script>
-<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <script>
 (function(){
-  // === SUPABASE SETUP ===
-  const SUPA_URL='https://biastmylavwhlsccvpyu.supabase.co';
-  const SUPA_KEY='sb_publishable_74vo5_RlNXb0U0TrNLCdCQ_8zjDwFni';
-  let supa=null;
-  try{
-    if(window.supabase && window.supabase.createClient){
-      supa=window.supabase.createClient(SUPA_URL,SUPA_KEY);
-    }
-  }catch(e){console.log('Supabase client init failed',e);}
-
-  // === OFFLINE PDF SYSTEM (kept) ===
   const DB_NAME='zed_internal_storage_v2',STORE_NAME='offline_files';
   function openDB(){return new Promise((res,rej)=>{const r=indexedDB.open(DB_NAME,2);r.onupgradeneeded=e=>{const db=e.target.result;if(!db.objectStoreNames.contains(STORE_NAME)){db.createObjectStore(STORE_NAME,{keyPath:'id'});}};r.onsuccess=()=>res(r.result);r.onerror=()=>rej(r.error);});}
   async function saveToInternalStorage(id,url,meta){const resp=await fetch(url,{mode:'cors',cache:'no-store'});if(!resp.ok)throw new Error('Network '+resp.status);const blob=await resp.blob();const db=await openDB();return new Promise((res,rej)=>{const tx=db.transaction(STORE_NAME,'readwrite');const rec={id,blob,url,title:meta.title||'Doc',type:meta.type||'paper',savedAt:Date.now(),size:blob.size};const req=tx.objectStore(STORE_NAME).put(rec);req.onsuccess=()=>res(rec);req.onerror=()=>rej(req.error);});}
@@ -1962,46 +1783,273 @@ alter table profiles add column if not exists account_code text;
   function closeViewer(){pdfModal.classList.remove('open');document.body.style.overflow='';pdfIframe.src='about:blank';if(curBlob&&curBlob.startsWith('blob:')){setTimeout(()=>{try{URL.revokeObjectURL(curBlob);}catch{}curBlob=null;},500);}}
   pdfClose.addEventListener('click',closeViewer);pdfModal.addEventListener('click',e=>{if(e.target===pdfModal)closeViewer();});
 
-  // === SEARCH BARS - TOP, SIMILAR MATCH ===
-  function isSimilarMatch(text, query){
-    if(!query) return true;
+  function getSimilarityScore(text, query){
+    if(!query) return 100;
     const t=text.toLowerCase(); const q=query.toLowerCase().trim();
-    if(t.includes(q)) return true;
-    const qWords=q.split(/\s+/).filter(w=>w.length>=2);
+    if(!q) return 100;
+    let score=0;
+    if(t.includes(q)) score+=50;
+    if(t.startsWith(q)) score+=30;
+    const qWords=q.split(/\s+/).filter(w=>w.length>=1);
     const tWords=t.split(/\s+/).filter(Boolean);
     for(let qw of qWords){
+      if(!qw) continue;
       for(let tw of tWords){
-        if(tw.includes(qw)||qw.includes(tw)) return true;
-        if(qw.length>=3&&tw.length>=3&&tw.slice(0,2)===qw.slice(0,2)&&Math.abs(tw.length-qw.length)<=3) return true;
+        const twl=tw.toLowerCase();
+        if(twl===qw) score+=20;
+        else if(twl.startsWith(qw)) score+=15;
+        else if(twl.includes(qw)) score+=10;
+        else if(qw.includes(twl) && twl.length>=3) score+=8;
+        else if(qw.length>=3 && twl.length>=3 && twl.slice(0,2)===qw.slice(0,2)) score+=3;
+      }
+      if(t.includes(qw)) score+=5;
+    }
+    if(q.length<=4 && t.includes(q)) score+=10;
+    return score;
+  }
+  function isSimilarMatch(text, query){
+    return getSimilarityScore(text, query) > 0;
+  }
+
+  function getVisibleTab(){
+    const headers = Array.from(document.querySelectorAll('div')).filter(el=>{
+      const txt=el.textContent||'';
+      return txt.includes('Live from') && el.offsetParent!==null;
+    });
+    if(headers.length===0) return null;
+    for(let h of headers){
+      if(h.textContent.includes('videos table')) return 'videos';
+      if(h.textContent.includes('documents table')) return 'documents';
+      if(h.textContent.includes('papers • Live')) return 'papers';
+      if(h.textContent.includes('Live from Supabase')) return 'papers';
+    }
+    return 'papers';
+  }
+  // Remove papers search wrap if exists - only videos and docs should have search
+  function cleanupPapersSearch(){
+    const papersWrap=document.getElementById('zed-search-papers');
+    if(papersWrap) papersWrap.remove();
+    const papersNoRes=document.getElementById('zed-no-papers-msg');
+    if(papersNoRes) papersNoRes.remove();
+  }
+
+  function createSearchWrap(id, placeholder, tabName){
+    if(document.getElementById(id)) return document.getElementById(id);
+    const wrap=document.createElement('div');
+    wrap.id=id;
+    wrap.className='zed-search-wrap';
+    wrap.dataset.tab=tabName;
+    wrap.innerHTML=`
+      <div class="zed-search-row" style="position:relative;">
+        <div style="position:relative;flex:1;">
+          <span class="zed-search-icon">🔍</span>
+          <input type="text" placeholder="${placeholder}" autocomplete="off" />
+        </div>
+        <div class="zed-search-count" style="display:none;">0 results</div>
+      </div>
+      <div class="zed-search-suggestions"></div>
+    `;
+    return wrap;
+  }
+
+  function setupSearchForTab(tabName, headerText, gridSelector, placeholder, noResId, typeLabel){
+    // Find visible header for this tab
+    const headers = Array.from(document.querySelectorAll('div')).filter(el=> (el.textContent||'').includes(headerText) );
+    let header = null;
+    for(let h of headers){
+      // Only use header that is in visible tab or first one
+      if(h.offsetParent!==null || headers.length===1){
+        header=h; break;
       }
     }
-    return false;
+    if(!header && headers.length>0) header=headers[0];
+    if(!header) return;
+
+    const parent = header.parentNode;
+    if(!parent) return;
+
+    // Check if search wrap already exists in this parent
+    let wrap = parent.querySelector(`#zed-search-${tabName}`);
+    if(!wrap){
+      wrap = createSearchWrap(`zed-search-${tabName}`, placeholder, tabName);
+      parent.insertBefore(wrap, header);
+    }
+
+    const input = wrap.querySelector('input');
+    const countEl = wrap.querySelector('.zed-search-count');
+    const suggBox = wrap.querySelector('.zed-search-suggestions');
+    
+    // No results element
+    let noRes = document.getElementById(noResId);
+    if(!noRes){
+      noRes=document.createElement('div');
+      noRes.id=noResId;
+      noRes.className='zed-no-results';
+      noRes.dataset.tab=tabName;
+      parent.appendChild(noRes);
+    }
+
+    // Collect titles for suggestions
+    function getAllTitles(){
+      const grid = document.querySelector(gridSelector);
+      if(!grid) return [];
+      const titles=[];
+      for(let card of grid.children){
+        if(card.id && card.id.startsWith('zed-no-')) continue;
+        const titleEl=card.querySelector('.font-semibold, [class*="font-bold"], h3, h4');
+        const txt = titleEl ? titleEl.textContent.trim() : card.textContent.trim().slice(0,80);
+        if(txt) titles.push(txt);
+      }
+      return [...new Set(titles)].slice(0,50);
+    }
+
+    function updateSearch(){
+      const q=input.value.trim();
+      const grid=document.querySelector(gridSelector);
+      if(!grid) return;
+
+      let vis=0, tot=0;
+      const cards=[];
+      
+      for(let card of grid.children){
+        if(card.id && card.id.startsWith('zed-no-')) continue;
+        if(card.classList.contains('zed-search-wrap')) continue;
+        tot++;
+        const text=card.textContent;
+        const score=getSimilarityScore(text,q);
+        cards.push({card, score, text});
+      }
+      // Sort: similar words come to top
+      cards.sort((a,b)=>b.score-a.score);
+      cards.forEach(({card, score})=>{
+        grid.appendChild(card);
+        if(q && score===0){
+          card.style.display='none';
+        } else {
+          card.style.display='';
+          if(q) { if(score>0) vis++; } else vis=tot;
+        }
+      });
+      if(!q) vis=tot;
+      
+
+      // Update count - number of results
+      if(q){
+        if(vis>0){
+          countEl.textContent=`${vis} found`;
+          countEl.style.display='flex';
+          countEl.style.background='rgba(140,255,138,0.15)';
+          countEl.style.color='#8CFF8A';
+        } else {
+          countEl.textContent=`0 found`;
+          countEl.style.display='flex';
+          countEl.style.background='rgba(255,100,100,0.12)';
+          countEl.style.color='#ff9a9a';
+        }
+      } else {
+        countEl.style.display='none';
+      }
+
+      // Show suggestions - similar at top while typing
+      if(q && q.length>=1){
+        const similar=cards.filter(c=>c.score>0).slice(0,5).map(c=>{
+          const titleEl=c.card.querySelector('.font-semibold');
+          return titleEl ? titleEl.textContent.trim() : c.text.slice(0,50);
+        });
+        const unique=[...new Set(similar)];
+        if(unique.length>0){
+          suggBox.innerHTML=unique.map(t=>`
+            <div class="zed-suggestion-item" data-value="${t.replace(/"/g,'&quot;')}">
+              <div class="zed-suggestion-icon">🔍</div>
+              <div style="flex:1;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">${t.slice(0,45)}</div>
+              <div style="font-size:9px;color:#8CFF8A;background:rgba(140,255,138,0.1);padding:2px 6px;border-radius:999px;">top</div>
+            </div>
+          `).join('') + `<div style="padding:8px 14px;font-size:10px;color:#666;text-align:center;">${vis} results • similar on top</div>`;
+          suggBox.classList.add('show');
+          suggBox.querySelectorAll('.zed-suggestion-item').forEach(item=>{
+            item.addEventListener('click',()=>{
+              input.value=item.dataset.value;
+              suggBox.classList.remove('show');
+              updateSearch();
+            });
+          });
+        } else {
+          suggBox.classList.remove('show');
+        }
+      } else {
+        suggBox.classList.remove('show');
+      }
+
+      // No results - say no results found
+      if(q && vis===0){
+        noRes.innerHTML=`<div style="font-size:28px;margin-bottom:12px;">😕</div><div style="font-weight:700;color:#F5F1E8;font-size:14px;">no results found</div><div style="font-size:12px;margin-top:4px;color:#888;">No results for "${q.replace(/</g,'&lt;').slice(0,30)}"</div><div style="font-size:11px;margin-top:10px;line-height:1.6;max-width:280px;margin:auto;">Try <span style="color:#8CFF8A;">topics</span> like <b>Biology, Maths, Physics</b> or <span style="color:#8CFF8A;">sentences</span> from title.<br/><span style="color:#666;">Example: bio, math, G12, ECZ</span></div><div style="margin-top:10px;font-size:10px;color:#555;">${tot} total ${typeLabel} available</div>`;
+        noRes.classList.add('show');
+        noRes.style.display='block';
+      } else {
+        noRes.classList.remove('show');
+        noRes.style.display='none';
+      }
+    }
+
+    input.removeEventListener('input', input._zedHandler||(()=>{}));
+    const handler=()=>updateSearch();
+    input._zedHandler=handler;
+    input.addEventListener('input', handler);
+    input.addEventListener('focus', ()=>{
+      if(input.value.trim().length>=2) updateSearch();
+    });
+    // Hide suggestions when clicking outside
+    document.addEventListener('click', (e)=>{
+      if(!wrap.contains(e.target)) suggBox.classList.remove('show');
+    });
   }
+
   function initScopedSearch(){
-    const videoHeader=Array.from(document.querySelectorAll('div')).find(el=>el.textContent&&el.textContent.includes('Live from videos table'));
-    const docHeader=Array.from(document.querySelectorAll('div')).find(el=>el.textContent&&el.textContent.includes('Live from documents table'));
-    if(videoHeader&&!document.getElementById('zed-video-search-wrap')){
-      const wrap=document.createElement('div');wrap.id='zed-video-search-wrap';
-      wrap.innerHTML=`<div style="position:relative;flex:1;"><div style="position:absolute;left:12px;top:50%;transform:translateY(-50%);color:#888;">🔍</div><input type="text" placeholder="Search videos..." /></div><div id="zed-video-count" style="font-size:11px;color:#888;"></div>`;
-      videoHeader.parentNode.insertBefore(wrap,videoHeader);
-      const input=wrap.querySelector('input');const countEl=document.getElementById('zed-video-count');
-      input.addEventListener('input',e=>{const q=e.target.value.trim();const grid=document.querySelector('.grid.md\:grid-cols-2.gap-4');if(!grid)return;let vis=0,tot=0;for(let c of grid.children){if(c.id==='zed-no-videos')continue;tot++;if(isSimilarMatch(c.textContent,q)){c.style.display='';vis++;}else c.style.display='none';}countEl.textContent=q?vis+'/'+tot+' videos':tot+' videos';});
-    }
-    if(docHeader&&!document.getElementById('zed-doc-search-wrap')){
-      const wrap=document.createElement('div');wrap.id='zed-doc-search-wrap';
-      wrap.innerHTML=`<div style="position:relative;flex:1;"><div style="position:absolute;left:12px;top:50%;transform:translateY(-50%);color:#888;">🔍</div><input type="text" placeholder="Search documents..." /></div><div id="zed-doc-count" style="font-size:11px;color:#888;"></div>`;
-      docHeader.parentNode.insertBefore(wrap,docHeader);
-      const input=wrap.querySelector('input');const countEl=document.getElementById('zed-doc-count');
-      input.addEventListener('input',e=>{const q=e.target.value.trim();const grid=document.querySelector('.grid.md\:grid-cols-3.gap-3');if(!grid)return;let vis=0,tot=0;for(let c of grid.children){tot++;if(isSimilarMatch(c.textContent,q)){c.style.display='';vis++;}else c.style.display='none';}countEl.textContent=q?vis+'/'+tot+' docs':tot+' docs';});
-    }
+    cleanupPapersSearch();
+    const allWraps=document.querySelectorAll('.zed-search-wrap');
+    const seen={};
+    allWraps.forEach(w=>{
+      const tab=w.dataset.tab;
+      if(tab==='papers'){ w.remove(); return; }
+      if(seen[tab]){ w.remove(); } else { seen[tab]=true; }
+    });
+
+    // Only videos and docs have search bar - small ka thing, placeholder 'search here'
+    setupSearchForTab('videos', 'Live from videos table', '.grid.md\:grid-cols-2.gap-4', 'search here', 'zed-no-videos-msg', 'videos');
+    setupSearchForTab('documents', 'Live from documents table', '.grid.md\:grid-cols-3.gap-3', 'search here', 'zed-no-docs-msg', 'docs');
+
+    // Tab visibility handling - hide search bars not in active tab
+    const activeTab=getVisibleTab();
+    document.querySelectorAll('.zed-search-wrap').forEach(w=>{
+      if(w.dataset.tab===activeTab){
+        w.style.display='block';
+      } else {
+        // Check if its header parent is visible - if not, hide
+        const headerText = w.dataset.tab==='videos' ? 'Live from videos table' : w.dataset.tab==='documents' ? 'Live from documents table' : 'papers • Live';
+        const headers=Array.from(document.querySelectorAll('div')).filter(el=> (el.textContent||'').includes(headerText) && el.offsetParent!==null );
+        if(headers.length===0 && activeTab!==w.dataset.tab){
+          w.style.display='none';
+        } else if(activeTab && w.dataset.tab!==activeTab){
+          w.style.display='none';
+        } else {
+          w.style.display='block';
+        }
+      }
+    });
+    document.querySelectorAll('.zed-no-results').forEach(el=>{
+      if(el.dataset.tab!==activeTab){
+        el.style.display='none';
+      }
+    });
   }
+
   async function enhanceCards(){
     const grids=document.querySelectorAll('.grid.md\:grid-cols-2.lg\:grid-cols-3.gap-3, .grid.md\:grid-cols-3.gap-3');
     for(let grid of grids){
       if(grid.querySelector('iframe')||grid.querySelector('video')) continue;
       if(grid.classList.contains('md:grid-cols-2')&&grid.classList.contains('gap-4')) continue;
       for(let card of grid.children){
-        if(card.dataset.zedEnhanced==='2') continue;
+        if(card.dataset.zedEnhanced==='2' || (card.id&&card.id.startsWith('zed-no-'))) continue;
         const dlLink=card.querySelector('a[href*="past_papers"], a[href*="documents"], a[href*=".pdf"], a[href^="http"]');
         if(!dlLink) continue;
         if(!card.textContent.includes('Download')&&!card.textContent.includes('Open Document')) continue;
@@ -2019,13 +2067,13 @@ alter table profiles add column if not exists account_code text;
           const viewBtn=document.createElement('button');viewBtn.className='zed-view-offline-btn';viewBtn.innerHTML='👁 View Offline';
           viewBtn.onclick=async e=>{e.preventDefault();const f=await getFromInternalStorage(fileId);if(f&&f.blob)openOfflineViewer(f.blob,{title});};
           const rmBtn=document.createElement('button');rmBtn.className='zed-remove-btn';rmBtn.innerHTML='🗑';
-          rmBtn.onclick=async e=>{e.preventDefault();if(confirm('Remove?')){await removeFromInternalStorage(fileId);showToast('Removed');card.dataset.zedEnhanced='0';const b=card.querySelector('.zed-offline-badge');if(b)b.remove();dlLink.style.display='';setTimeout(()=>enhanceCards(),300);}};
+          rmBtn.onclick=async e=>{e.preventDefault();if(confirm('Remove from phone?')){await removeFromInternalStorage(fileId);showToast('Removed');card.dataset.zedEnhanced='0';const b=card.querySelector('.zed-offline-badge');if(b)b.remove();dlLink.style.display='';setTimeout(()=>enhanceCards(),300);}};
           btnGroup.appendChild(viewBtn);btnGroup.appendChild(rmBtn);
-          if(!card.querySelector('.zed-offline-badge')){const badge=document.createElement('span');badge.className='zed-offline-badge';badge.textContent='DOWNLOADED';titleEl.appendChild(badge);}
+          if(!card.querySelector('.zed-offline-badge')){const badge=document.createElement('span');badge.className='zed-offline-badge';badge.textContent='DOWNLOADED';if(titleEl)titleEl.appendChild(badge);}
           actionDiv.innerHTML='';actionDiv.appendChild(btnGroup);
         }else{
           const saveBtn=document.createElement('button');saveBtn.className='zed-save-btn';saveBtn.innerHTML='⬇ Save to Phone';
-          saveBtn.onclick=async e=>{e.preventDefault();saveBtn.disabled=true;saveBtn.innerHTML='⏳ Downloading...';try{await saveToInternalStorage(fileId,fileUrl,{title});showToast('✓ Saved to internal storage');card.dataset.zedEnhanced='0';setTimeout(()=>enhanceCards(),200);}catch(err){saveBtn.innerHTML='❌ Failed';showToast('Failed: '+err.message,true);setTimeout(()=>{saveBtn.innerHTML='⬇ Save to Phone';saveBtn.disabled=false;},2500);}};
+          saveBtn.onclick=async e=>{e.preventDefault();saveBtn.disabled=true;saveBtn.innerHTML='⏳ Downloading...';try{await saveToInternalStorage(fileId,fileUrl,{title});showToast('✓ Saved to phone');card.dataset.zedEnhanced='0';setTimeout(()=>enhanceCards(),200);}catch(err){saveBtn.innerHTML='❌ Failed';showToast('Failed: '+err.message,true);setTimeout(()=>{saveBtn.innerHTML='⬇ Save to Phone';saveBtn.disabled=false;},2500);}};
           const viewBtn=document.createElement('button');viewBtn.className='zed-save-btn';viewBtn.style.borderColor='#8CFF8A';viewBtn.style.color='#8CFF8A';viewBtn.innerHTML='👁 View';
           viewBtn.onclick=e=>{e.preventDefault();openOnlineViewer(fileUrl,{title});};
           btnGroup.appendChild(saveBtn);btnGroup.appendChild(viewBtn);
@@ -2036,698 +2084,39 @@ alter table profiles add column if not exists account_code text;
     }
   }
 
-  // === CHAT SYSTEM ===
-  let currentUser=null;
-  let activeChatFriend=null;
-  let friends=[], requests=[], allProfiles=[], messagesCache={};
-  let unreadCounts={};
-
-  function getCurrentUser(){
-    try{const u=localStorage.getItem('zed_user');return u?JSON.parse(u):null;}catch{return null;}
-  }
-
-  function showChatNotification(title, body){
-    const notif=document.getElementById('zed-chat-notification');
-    const tEl=document.getElementById('zed-notif-title');
-    const bEl=document.getElementById('zed-notif-body');
-    if(notif&&tEl&&bEl){tEl.textContent=title;bEl.textContent=body;notif.classList.add('show');setTimeout(()=>notif.classList.remove('show'),5000);}
-    // Browser notification if permitted
-    if(Notification && Notification.permission==='granted'){
-      new Notification(title,{body:body,icon:''});
-    }
-    // Sound
-    try{const audio=new Audio('data:audio/wav;base64,UklGRigAAABXQVZFZm10IBAAAAABAAEARKwAAIhYAQACABAAZGF0YQQAAAAAAA==');audio.volume=0.3;audio.play().catch(()=>{});}catch{}
-  }
-
-  async function initChat(){
-    currentUser=getCurrentUser();
-    if(!currentUser){
-      console.log('No current user for chat');
-      const listEl=document.getElementById('zed-chat-list');
-      if(listEl){
-        listEl.innerHTML=`<div style="text-align:center;padding:40px;color:#888;"><div style="font-size:32px;margin-bottom:12px;">🔒</div><div style="font-weight:700;color:#F5F1E8;">Please login first</div><div style="font-size:12px;margin-top:8px;">Login to your account to chat with students<br/>Search & add friends in Find tab</div></div>`;
-      }
-      return;
-    }
-
-    // Update last_seen / online status
-    if(supa){
-      try{
-        await supa.from('profiles').update({last_seen:new Date().toISOString(), is_online:true}).eq('id',currentUser.id);
-        setInterval(async()=>{
-          try{await supa.from('profiles').update({last_seen:new Date().toISOString(), is_online:true}).eq('id',currentUser.id);}catch{}
-        },30000);
-        window.addEventListener('beforeunload',async()=>{try{await supa.from('profiles').update({is_online:false}).eq('id',currentUser.id);}catch{}});
-      }catch(e){console.log('Online status update failed',e);}
-    }
-
-    // Request notification permission
-    if(Notification && Notification.permission==='default'){Notification.requestPermission().catch(()=>{});}
-
-    // Load initial data
-    await loadFriendsAndRequests();
-    await loadAllProfiles();
-    renderChatList();
-    setupChatRealtime();
-    checkDailyQuizNotification();
-  }
-
-  async function loadFriendsAndRequests(){
-    if(!supa || !currentUser) return;
-    try{
-      // Try friendships table, fallback to localStorage if not exists
-      let {data, error}=await supa.from('friendships').select('*').or(`requester_id.eq.${currentUser.id},addressee_id.eq.${currentUser.id}`);
-      if(error && error.message.includes('does not exist')){
-        // Fallback to localStorage mock
-        const mock=JSON.parse(localStorage.getItem('zed_friendships_'+currentUser.id)||'[]');
-        data=mock;
-      }
-      if(data){
-        friends=data.filter(f=>f.status==='accepted').map(f=>{
-          const friendId=f.requester_id===currentUser.id?f.addressee_id:f.requester_id;
-          return {...f, friendId};
-        });
-        requests=data.filter(f=>f.status==='pending' && f.addressee_id===currentUser.id);
-        // Load friend profiles
-        for(let fr of friends){
-          try{
-            const {data:prof}=await supa.from('profiles').select('id,name,school,province,district,last_seen,is_online').eq('id',fr.friendId).maybeSingle();
-            if(prof) fr.profile=prof;
-          }catch{}
+  // Observer with tab awareness
+  let lastActiveTab=null;
+  const observer=new MutationObserver(()=>{
+    const active=getVisibleTab();
+    if(active!==lastActiveTab){
+      lastActiveTab=active;
+      // Clear all search inputs when switching tabs
+      document.querySelectorAll('.zed-search-wrap').forEach(w=>{
+        if(w.dataset.tab!==active){
+          const inp=w.querySelector('input');
+          if(inp) inp.value='';
         }
-      }
-    }catch(e){console.log('Load friends error',e);}
-  }
-
-  async function loadAllProfiles(){
-    if(!supa) return;
-    try{
-      const {data}=await supa.from('profiles').select('id,name,school,province,district,last_seen,is_online').limit(100);
-      if(data) allProfiles=data.filter(p=>p.id!==currentUser.id);
-    }catch(e){console.log('Load profiles error',e);}
-  }
-
-  function isOnline(profile){
-    if(!profile || !profile.last_seen) return false;
-    if(profile.is_online) return true;
-    const last=new Date(profile.last_seen).getTime();
-    const now=Date.now();
-    return (now-last) < 5*60*1000; // 5 minutes
-  }
-
-  function formatLastSeen(profile){
-    if(isOnline(profile)) return 'Online';
-    if(!profile || !profile.last_seen) return 'Offline';
-    const diff=Math.floor((Date.now()-new Date(profile.last_seen).getTime())/1000);
-    if(diff<60) return 'Just now';
-    if(diff<3600) return Math.floor(diff/60)+'m ago';
-    if(diff<86400) return Math.floor(diff/3600)+'h ago';
-    return new Date(profile.last_seen).toLocaleDateString();
-  }
-
-  function renderChatList(){
-    const listEl=document.getElementById('zed-chat-list');
-    const reqEl=document.getElementById('zed-friend-requests');
-    const findEl=document.getElementById('zed-find-students');
-    const activeTab=document.querySelector('.zed-tab-btn.active')?.dataset.tab||'chats';
-
-    listEl.style.display=activeTab==='chats'?'block':'none';
-    reqEl.style.display=activeTab==='requests'?'block':'none';
-    findEl.style.display=activeTab==='find'?'block':'none';
-    if(activeTab==='friends'){
-      listEl.style.display='block';
+      });
     }
-
-    if(activeTab==='chats'){
-      // Show chats sorted by last message time
-      const chatItems=[];
-      for(let fr of friends){
-        const friendId=fr.friendId;
-        const profile=fr.profile||{name:'Student',school:''};
-        const lastMsg=messagesCache[friendId]?.slice(-1)[0];
-        const unread=unreadCounts[friendId]||0;
-        chatItems.push({fr,profile,lastMsg,unread,lastTime:lastMsg?new Date(lastMsg.created_at).getTime():0});
-      }
-      chatItems.sort((a,b)=>b.lastTime-a.lastTime);
-
-      const searchQ=(document.getElementById('zed-friends-search')?.value||'').toLowerCase();
-      const filtered=searchQ?chatItems.filter(item=>{
-        const t=(item.profile.name+' '+item.profile.school+' '+(item.lastMsg?.content||'')).toLowerCase();
-        return t.includes(searchQ) || isSimilarMatch(t,searchQ);
-      }):chatItems;
-
-      if(filtered.length===0){
-        listEl.innerHTML=`<div style="text-align:center;padding:40px;color:#666;"><div style="font-size:32px;margin-bottom:12px;">💬</div><div style="font-weight:600;">No chats yet</div><div style="font-size:12px;margin-top:6px;">Add friends to start chatting</div></div>`;
-      } else {
-        listEl.innerHTML=filtered.map(item=>{
-          const p=item.profile;
-          const online=isOnline(p);
-          const lastText=item.lastMsg? (item.lastMsg.image_url?'📷 Photo':item.lastMsg.content.slice(0,40)) : 'No messages yet';
-          const time=item.lastMsg? new Date(item.lastMsg.created_at).toLocaleTimeString([], {hour:'2-digit',minute:'2-digit'}) : '';
-          return `
-            <div class="zed-chat-item" data-friend-id="${item.fr.friendId}">
-              <div class="zed-avatar-wrap">
-                <div class="zed-avatar">${p.name.charAt(0).toUpperCase()}</div>
-                <div class="zed-online-dot ${online?'online':''}"></div>
-              </div>
-              <div class="zed-chat-item-info">
-                <div class="zed-chat-item-top">
-                  <div class="zed-chat-item-name">${p.name}</div>
-                  <div class="zed-chat-item-time">${time}</div>
-                </div>
-                <div class="zed-chat-item-last">
-                  <span style="flex:1;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">${lastText}</span>
-                  ${item.unread>0?`<span class="zed-unread-badge">${item.unread}</span>`:''}
-                </div>
-                <div style="font-size:10px;color:${online?'#8CFF8A':'#666'};margin-top:2px;">${online?'● Online':'○ Offline'} • ${p.school||''}</div>
-              </div>
-            </div>
-          `;
-        }).join('');
-        listEl.querySelectorAll('.zed-chat-item').forEach(el=>{
-          el.addEventListener('click',()=>openChat(el.dataset.friendId));
-        });
-      }
-
-      // Update fab badge
-      const totalUnread=Object.values(unreadCounts).reduce((a,b)=>a+b,0);
-      const fabBadge=document.getElementById('zed-chat-fab-badge');
-      if(totalUnread>0){fabBadge.textContent=totalUnread>99?'99+':totalUnread;fabBadge.classList.add('show');}
-      else fabBadge.classList.remove('show');
-    }
-
-    if(activeTab==='friends'){
-      const searchQ=(document.getElementById('zed-friends-search')?.value||'').toLowerCase();
-      const filtered=searchQ?friends.filter(fr=>{
-        const p=fr.profile||{}; const t=(p.name+' '+p.school).toLowerCase();
-        return t.includes(searchQ)||isSimilarMatch(t,searchQ);
-      }):friends;
-
-      if(filtered.length===0){
-        const searchQ=(document.getElementById('zed-friends-search')?.value||'').toLowerCase();
-        if(searchQ){
-          listEl.innerHTML=`<div style="text-align:center;padding:40px;color:#666;"><div style="font-size:28px;margin-bottom:8px;">🔍</div><div>No results for "${searchQ}"</div><div style="font-size:12px;margin-top:6px;">Try searching name, school, or province</div></div>`;
-        } else {
-          listEl.innerHTML=`<div style="text-align:center;padding:40px;color:#666;">No friends yet<br/><span style="font-size:12px;">Go to Find tab to search students</span></div>`;
-        }
-      } else {
-        listEl.innerHTML=filtered.map(fr=>{
-          const p=fr.profile||{name:'Student'};const online=isOnline(p);
-          return `
-            <div class="zed-chat-item" data-friend-id="${fr.friendId}">
-              <div class="zed-avatar-wrap"><div class="zed-avatar">${p.name.charAt(0).toUpperCase()}</div><div class="zed-online-dot ${online?'online':''}"></div></div>
-              <div class="zed-chat-item-info">
-                <div class="zed-chat-item-top"><div class="zed-chat-item-name">${p.name}</div><div style="font-size:10px;color:${online?'#8CFF8A':'#666'};">${online?'Online':'Offline'}</div></div>
-                <div style="font-size:12px;color:#888;">${p.school||''} • ${formatLastSeen(p)}</div>
-              </div>
-            </div>
-          `;
-        }).join('');
-        listEl.querySelectorAll('.zed-chat-item').forEach(el=>el.addEventListener('click',()=>openChat(el.dataset.friendId)));
-      }
-    }
-
-    if(activeTab==='requests'){
-      const badge=document.getElementById('zed-request-badge');
-      if(requests.length>0){badge.textContent=requests.length;badge.style.display='inline';}else badge.style.display='none';
-
-      if(requests.length===0){
-        reqEl.innerHTML=`<div style="text-align:center;padding:40px;color:#666;"><div style="font-size:32px;margin-bottom:12px;">📩</div><div>No friend requests</div></div>`;
-      } else {
-        reqEl.innerHTML=requests.map(req=>{
-          const profile=allProfiles.find(p=>p.id===req.requester_id)||{name:'Student'};
-          return `
-            <div class="zed-request-item">
-              <div class="zed-avatar">${profile.name.charAt(0).toUpperCase()}</div>
-              <div style="flex:1;"><div style="font-weight:700;font-size:14px;color:#F5F1E8;">${profile.name}</div><div style="font-size:12px;color:#888;">${profile.school||''} wants to be friends</div></div>
-              <div class="zed-request-actions"><button class="zed-accept-btn" data-id="${req.id}">Accept</button><button class="zed-reject-btn" data-id="${req.id}">Reject</button></div>
-            </div>
-          `;
-        }).join('');
-        reqEl.querySelectorAll('.zed-accept-btn').forEach(btn=>btn.addEventListener('click',()=>handleRequest(btn.dataset.id,'accepted')));
-        reqEl.querySelectorAll('.zed-reject-btn').forEach(btn=>btn.addEventListener('click',()=>handleRequest(btn.dataset.id,'rejected')));
-      }
-    }
-
-    if(activeTab==='find'){
-      const searchQ=(document.getElementById('zed-friends-search')?.value||'').toLowerCase();
-      let filtered=allProfiles;
-      if(searchQ){filtered=allProfiles.filter(p=>{const t=(p.name+' '+p.school+' '+p.province+' '+p.district).toLowerCase();return t.includes(searchQ)||isSimilarMatch(t,searchQ);});}
-      console.log(`Find tab: search="${searchQ}" found ${filtered.length} students`);
-
-      // Show info banner for auto-delete and search
-      if(!document.getElementById('zed-find-info')){
-        const info=document.createElement('div');
-        info.id='zed-find-info';
-        info.style.cssText='background:rgba(140,255,138,0.08);border:1px solid rgba(140,255,138,0.2);border-radius:10px;padding:10px 12px;margin:8px 16px;font-size:11px;color:#8CFF8A;display:flex;gap:8px;align-items:flex-start;';
-        info.innerHTML='<span style="font-size:14px;">🔒</span><div><div style="font-weight:700;">Search Students • Auto-Delete 24hrs</div><div style="color:#888;margin-top:2px;">All messages auto-delete after 24 hours for privacy. Search by name, school, province. Messages & pics auto-delete after 24hrs.</div></div>';
-        findEl.parentNode.insertBefore(info, findEl);
-      }
-      findEl.innerHTML=filtered.slice(0,50).map(p=>{
-        const isFriend=friends.some(f=>f.friendId===p.id);
-        const isPending=requests.some(r=>r.requester_id===p.id)||false;
-        const online=isOnline(p);
-        return `
-          <div class="zed-chat-item">
-            <div class="zed-avatar-wrap"><div class="zed-avatar">${p.name.charAt(0).toUpperCase()}</div><div class="zed-online-dot ${online?'online':''}"></div></div>
-            <div class="zed-chat-item-info">
-              <div class="zed-chat-item-name">${p.name}</div>
-              <div style="font-size:12px;color:#888;">${p.school||''} • ${p.province||''}</div>
-              <div style="font-size:10px;color:${online?'#8CFF8A':'#666'};">${formatLastSeen(p)}</div>
-            </div>
-            <div style="margin-left:auto;">
-              ${isFriend?'<span style="font-size:10px;background:#1a2e1a;color:#8CFF8A;padding:4px 8px;border-radius:999px;border:1px solid #8CFF8A;">Friends</span>':isPending?'<span style="font-size:10px;background:#2A2A2A;color:#888;padding:4px 8px;border-radius:999px;">Pending</span>':`<button class="zed-accept-btn" data-profile-id="${p.id}" style="height:32px;">Add Friend</button>`}
-            </div>
-          </div>
-        `;
-      }).join('');
-      findEl.querySelectorAll('.zed-accept-btn[data-profile-id]').forEach(btn=>btn.addEventListener('click',()=>sendFriendRequest(btn.dataset.profileId)));
-    }
-
-    // Update online count
-    const onlineCount=allProfiles.filter(p=>isOnline(p)).length + friends.filter(f=>isOnline(f.profile)).length;
-    const onlineEl=document.getElementById('zed-online-count');
-    if(onlineEl) onlineEl.textContent=onlineCount+' online';
-  }
-
-  async function sendFriendRequest(toId){
-    if(!supa||!currentUser) return;
-    try{
-      const {data,error}=await supa.from('friendships').insert({requester_id:currentUser.id,addressee_id:toId,status:'pending'}).select();
-      if(error){
-        if(error.message.includes('does not exist')){
-          // Fallback localStorage
-          const key='zed_friendships_'+currentUser.id;
-          const list=JSON.parse(localStorage.getItem(key)||'[]');
-          list.push({id:Date.now().toString(),requester_id:currentUser.id,addressee_id:toId,status:'pending',created_at:new Date().toISOString()});
-          localStorage.setItem(key,JSON.stringify(list));
-          const otherKey='zed_friendships_'+toId;
-          const otherList=JSON.parse(localStorage.getItem(otherKey)||'[]');
-          otherList.push({id:Date.now().toString(),requester_id:currentUser.id,addressee_id:toId,status:'pending',created_at:new Date().toISOString()});
-          localStorage.setItem(otherKey,JSON.stringify(otherList));
-        } else throw error;
-      }
-      showToast('Friend request sent ✓');
-      await loadFriendsAndRequests();
-      renderChatList();
-    }catch(e){showToast('Failed: '+e.message,true);}
-  }
-
-  async function handleRequest(reqId, status){
-    if(!supa) return;
-    try{
-      const {error}=await supa.from('friendships').update({status}).eq('id',reqId);
-      if(error) throw error;
-      showToast(status==='accepted'?'Friend request accepted ✓':'Request rejected');
-      await loadFriendsAndRequests();
-      renderChatList();
-    }catch(e){showToast('Failed: '+e.message,true);}
-  }
-
-  async function openChat(friendId){
-    activeChatFriend=friends.find(f=>f.friendId===friendId)?.profile || allProfiles.find(p=>p.id===friendId);
-    if(!activeChatFriend) return;
-
-    document.getElementById('zed-chat-modal').classList.add('show-chat');
-    document.getElementById('zed-chat-title').textContent=activeChatFriend.name;
-    document.getElementById('zed-chat-subtitle').textContent=isOnline(activeChatFriend)?'● Online • '+ (activeChatFriend.school||'') : '○ '+formatLastSeen(activeChatFriend);
-
-    document.getElementById('zed-chat-empty').style.display='none';
-    const msgContainer=document.getElementById('zed-chat-messages');
-    const inputArea=document.getElementById('zed-chat-input-area');
-    msgContainer.style.display='flex';
-    inputArea.style.display='flex';
-
-    await loadMessages(friendId);
-    renderMessages(friendId);
-    // Mark as seen
-    await markMessagesSeen(friendId);
-    unreadCounts[friendId]=0;
-    renderChatList();
-  }
-
-  async function loadMessages(friendId){
-    if(!supa||!currentUser) return;
-    // Cleanup old messages before loading
-    await cleanupOldMessages();
-    try{
-      const {data,error}=await supa.from('messages').select('*').or(`and(sender_id.eq.${currentUser.id},receiver_id.eq.${friendId}),and(sender_id.eq.${friendId},receiver_id.eq.${currentUser.id})`).order('created_at',{ascending:true}).limit(100);
-      if(error && error.message.includes('does not exist')){
-        // Fallback localStorage
-        const key=`zed_messages_${currentUser.id}_${friendId}`;
-        const otherKey=`zed_messages_${friendId}_${currentUser.id}`;
-        const msgs1=JSON.parse(localStorage.getItem(key)||'[]');
-        const msgs2=JSON.parse(localStorage.getItem(otherKey)||'[]');
-        messagesCache[friendId]=[...msgs1,...msgs2].sort((a,b)=>new Date(a.created_at)-new Date(b.created_at));
-      } else if(data){
-        messagesCache[friendId]=data;
-        // Mark delivered for messages sent to current user
-        const undelivered=data.filter(m=>m.receiver_id===currentUser.id && !m.delivered);
-        for(let m of undelivered){
-          await supa.from('messages').update({delivered:true}).eq('id',m.id);
-        }
-      }
-    }catch(e){console.log('Load messages error',e);}
-  }
-
-  function renderMessages(friendId){
-    const container=document.getElementById('zed-chat-messages');
-    const msgs=messagesCache[friendId]||[];
-    if(msgs.length===0){
-      container.innerHTML=`<div style="text-align:center;padding:40px;color:#666;"><div style="font-size:32px;margin-bottom:12px;">👋</div><div>Say hi to ${activeChatFriend.name}!</div></div>`;
-      return;
-    }
-    container.innerHTML=msgs.map(m=>{
-      const isSent=m.sender_id===currentUser.id;
-      const time=new Date(m.created_at).toLocaleTimeString([], {hour:'2-digit',minute:'2-digit'});
-      const ticks=isSent? (m.seen?'✓✓':'✓✓'): '';
-      const tickClass=m.seen?'seen':m.delivered?'delivered':'';
-      return `
-        <div class="zed-msg ${isSent?'sent':'received'}">
-          ${m.content?`<div>${m.content.replace(/</g,'&lt;')}</div>`:''}
-          ${m.image_url?`<img src="${m.image_url}" class="zed-msg-img" onclick="window.open('${m.image_url}','_blank')" />`:''}
-          <div class="zed-msg-meta">
-            <span>${time}</span>
-            ${isSent?`<span class="zed-ticks ${tickClass}">${m.seen?'✓✓ Seen':m.delivered?'✓✓ Delivered':'✓ Sent'}</span>`:''}
-          </div>
-        </div>
-      `;
-    }).join('');
-    container.scrollTop=container.scrollHeight;
-  }
-
-  async function markMessagesSeen(friendId){
-    if(!supa||!currentUser) return;
-    try{
-      await supa.from('messages').update({seen:true,delivered:true}).eq('receiver_id',currentUser.id).eq('sender_id',friendId).eq('seen',false);
-    }catch{}
-    // Also localStorage fallback
-    try{
-      const key=`zed_messages_${friendId}_${currentUser.id}`;
-      const msgs=JSON.parse(localStorage.getItem(key)||'[]');
-      const updated=msgs.map(m=>({...m,seen:true,delivered:true}));
-      localStorage.setItem(key,JSON.stringify(updated));
-      if(messagesCache[friendId]){
-        messagesCache[friendId]=messagesCache[friendId].map(m=>m.receiver_id===currentUser.id?{...m,seen:true,delivered:true}:m);
-      }
-    }catch{}
-  }
-
-  async function sendMessage(){
-    const input=document.getElementById('zed-chat-input');
-    const fileInput=document.getElementById('zed-chat-file');
-    const content=input.value.trim();
-    if(!content && !fileInput.dataset.uploadedUrl) return;
-    if(!activeChatFriend||!currentUser) return;
-
-    let imageUrl=fileInput.dataset.uploadedUrl||null;
-
-    // If file selected but not uploaded yet, upload to Supabase storage
-    if(fileInput.files.length>0 && !imageUrl){
-      const file=fileInput.files[0];
-      if(supa){
-        try{
-          const fileName=Date.now()+'_'+file.name.replace(/[^a-zA-Z0-9.]/g,'_');
-          const {data,error}=await supa.storage.from('chat_images').upload(fileName,file);
-          if(!error){
-            const {data:pub}=supa.storage.from('chat_images').getPublicUrl(fileName);
-            imageUrl=pub.publicUrl;
-          } else {
-            // Fallback to base64
-            imageUrl=await new Promise(res=>{const r=new FileReader();r.onload=e=>res(e.target.result);r.readAsDataURL(file);});
-          }
-        }catch{
-          imageUrl=await new Promise(res=>{const r=new FileReader();r.onload=e=>res(e.target.result);r.readAsDataURL(file);});
-        }
-      } else {
-        imageUrl=await new Promise(res=>{const r=new FileReader();r.onload=e=>res(e.target.result);r.readAsDataURL(file);});
-      }
-    }
-
-    const msg={
-      id:Date.now().toString(),
-      sender_id:currentUser.id,
-      receiver_id:activeChatFriend.id,
-      content:content,
-      image_url:imageUrl,
-      delivered:false,
-      seen:false,
-      created_at:new Date().toISOString()
-    };
-
-    // Optimistic UI
-    if(!messagesCache[activeChatFriend.id]) messagesCache[activeChatFriend.id]=[];
-    messagesCache[activeChatFriend.id].push(msg);
-    renderMessages(activeChatFriend.id);
-    input.value='';
-    fileInput.value='';
-    delete fileInput.dataset.uploadedUrl;
-    input.style.height='44px';
-
-    try{
-      if(supa){
-        const {data,error}=await supa.from('messages').insert({sender_id:currentUser.id,receiver_id:activeChatFriend.id,content:content,image_url:imageUrl}).select();
-        if(error && error.message.includes('does not exist')){
-          // Fallback localStorage
-          const key=`zed_messages_${currentUser.id}_${activeChatFriend.id}`;
-          const list=JSON.parse(localStorage.getItem(key)||'[]');
-          list.push(msg);
-          localStorage.setItem(key,JSON.stringify(list));
-          const otherKey=`zed_messages_${activeChatFriend.id}_${currentUser.id}`;
-          const otherList=JSON.parse(localStorage.getItem(otherKey)||'[]');
-          otherList.push({...msg,delivered:true});
-          localStorage.setItem(otherKey,JSON.stringify(otherList));
-        } else if(data && data[0]){
-          // Update cache with real id
-          messagesCache[activeChatFriend.id]=messagesCache[activeChatFriend.id].map(m=>m.id===msg.id?data[0]:m);
-          renderMessages(activeChatFriend.id);
-        }
-      }
-    }catch(e){console.log('Send message error',e);}
-
-    renderChatList();
-  }
-
-  function setupChatRealtime(){
-    if(!supa||!currentUser) return;
-    try{
-      const channel=supa.channel('chat-'+currentUser.id)
-        .on('postgres_changes',{event:'INSERT',schema:'public',table:'messages',filter:`receiver_id=eq.${currentUser.id}`},payload=>{
-          const msg=payload.new;
-          const senderId=msg.sender_id;
-          if(!messagesCache[senderId]) messagesCache[senderId]=[];
-          messagesCache[senderId].push(msg);
-          unreadCounts[senderId]=(unreadCounts[senderId]||0)+1;
-          // Show notification if not in active chat with this friend
-          if(!activeChatFriend || activeChatFriend.id!==senderId){
-            const senderProfile=allProfiles.find(p=>p.id===senderId)||{name:'Someone'};
-            showChatNotification(senderProfile.name, msg.image_url?'📷 Sent a photo':msg.content.slice(0,50));
-          } else {
-            renderMessages(senderId);
-            markMessagesSeen(senderId);
-          }
-          renderChatList();
-        })
-        .on('postgres_changes',{event:'UPDATE',schema:'public',table:'messages',filter:`receiver_id=eq.${currentUser.id}`},payload=>{
-          // Update delivered/seen status
-          const msg=payload.new;
-          if(messagesCache[msg.sender_id]){
-            messagesCache[msg.sender_id]=messagesCache[msg.sender_id].map(m=>m.id===msg.id?msg:m);
-            if(activeChatFriend && activeChatFriend.id===msg.sender_id) renderMessages(msg.sender_id);
-          }
-        })
-        .subscribe();
-    }catch(e){console.log('Realtime setup failed',e);}
-
-    // Fallback polling
-    setInterval(async()=>{
-      if(!activeChatFriend) return;
-      await loadMessages(activeChatFriend.id);
-      renderMessages(activeChatFriend.id);
-    },5000);
-  }
-
-  // === AUTO DELETE MESSAGES EVERY 24HRS ===
-  async function cleanupOldMessages(){
-    const cutoffTime=Date.now()-24*60*60*1000;
-    const cutoffISO=new Date(cutoffTime).toISOString();
-    console.log('🧹 Cleaning messages & images older than 24hrs... cutoff:',cutoffISO);
-    // Supabase - first get old images to delete from storage, then delete messages
-    if(supa){
-      try{
-        // Get old messages with images
-        const {data:oldMsgs}=await supa.from('messages').select('image_url').lt('created_at',cutoffISO).not('image_url','is',null);
-        if(oldMsgs && oldMsgs.length>0){
-          console.log(`Found ${oldMsgs.length} old images to delete from storage`);
-          for(let m of oldMsgs){
-            if(m.image_url && m.image_url.includes('chat_images')){
-              try{
-                const filename=m.image_url.split('/').pop().split('?')[0];
-                if(filename){
-                  await supa.storage.from('chat_images').remove([filename]);
-                  console.log('✓ Deleted image from storage:',filename);
-                }
-              }catch(e){console.log('Failed to delete image:',e.message);}
-            }
-          }
-        }
-        // Now delete old messages
-        const {error}=await supa.from('messages').delete().lt('created_at',cutoffISO);
-        if(error) console.log('Supabase cleanup error:',error.message);
-        else console.log('✓ Supabase old messages & images deleted (24hrs)');
-      }catch(e){console.log('Supabase cleanup failed',e);}
-    }
-    // LocalStorage fallback cleanup
-    try{
-      let cleanedCount=0;
-      for(let i=0;i<localStorage.length;i++){
-        const key=localStorage.key(i);
-        if(key && key.startsWith('zed_messages_')){
-          const list=JSON.parse(localStorage.getItem(key)||'[]');
-          const filtered=list.filter(m=>new Date(m.created_at).getTime()>cutoffTime);
-          if(filtered.length!==list.length){
-            cleanedCount+=list.length-filtered.length;
-            localStorage.setItem(key,JSON.stringify(filtered));
-            // Also update cache
-            const parts=key.split('_');
-            const friendId=parts[parts.length-1];
-            if(messagesCache[friendId]){
-              messagesCache[friendId]=messagesCache[friendId].filter(m=>new Date(m.created_at).getTime()>cutoffTime);
-            }
-          }
-        }
-      }
-      if(cleanedCount>0) console.log(`✓ Cleaned ${cleanedCount} old local messages`);
-    }catch(e){console.log('Local cleanup failed',e);}
-  }
-
-  function checkDailyQuizNotification(){
-    const lastQuizNotif=localStorage.getItem('zed_last_quiz_notif');
-    const today=new Date().toDateString();
-    if(lastQuizNotif!==today){
-      const now=new Date();
-      if(now.getHours()>=8){ // 8 AM
-        setTimeout(()=>{
-          showChatNotification('Daily Quiz Ready! 🧠','Your daily quiz is waiting. Test your knowledge and earn coins!');
-          localStorage.setItem('zed_last_quiz_notif',today);
-        },3000);
-      }
-    }
-    // Check every hour
-    setInterval(()=>{
-      const today=new Date().toDateString();
-      const last=localStorage.getItem('zed_last_quiz_notif');
-      if(last!==today && new Date().getHours()>=8){
-        showChatNotification('Daily Quiz Ready! 🧠','Don't miss today's quiz!');
-        localStorage.setItem('zed_last_quiz_notif',today);
-      }
-    },3600000);
-  }
-
-  // === EVENT LISTENERS - FIXED ===
-  function openChatModal(){
-    console.log('Opening chat modal...');
-    const modal=document.getElementById('zed-chat-modal');
-    if(!modal){console.log('Chat modal not found!'); return;}
-    modal.classList.add('open');
-    modal.style.display='flex';
-    document.body.style.overflow='hidden';
-    // Force reflow
-    void modal.offsetWidth;
-    initChat().then(()=>{console.log('Chat init done'); renderChatList();}).catch(e=>console.log('Chat init error',e));
-  }
-  function closeChatModal(){
-    const modal=document.getElementById('zed-chat-modal');
-    if(modal){
-      modal.classList.remove('open');
-      modal.classList.remove('show-chat');
-      modal.style.display='none';
-      document.body.style.overflow='';
-    }
-  }
+    initScopedSearch();
+    enhanceCards();
+  });
   
-  // Make FAB work with both click and touch
-  const fabEl=document.getElementById('zed-chat-fab');
-  if(fabEl){
-    fabEl.addEventListener('click',openChatModal);
-    fabEl.addEventListener('touchend',function(e){e.preventDefault(); openChatModal();});
-    fabEl.onclick=openChatModal; // Fallback
-    console.log('✓ Chat FAB listeners attached');
-  }
-  
-  document.getElementById('zed-chat-close').addEventListener('click',closeChatModal);
-  document.getElementById('zed-chat-close').addEventListener('touchend',function(e){e.preventDefault(); closeChatModal();});
-  document.getElementById('zed-chat-back').addEventListener('click',()=>{
-    document.getElementById('zed-chat-modal').classList.remove('show-chat');
-    activeChatFriend=null;
-  });
-  document.getElementById('zed-chat-back').addEventListener('touchend',function(e){
-    e.preventDefault();
-    document.getElementById('zed-chat-modal').classList.remove('show-chat');
-    activeChatFriend=null;
-  });
-  document.querySelectorAll('.zed-tab-btn').forEach(btn=>{
-    btn.addEventListener('click',()=>{
-      document.querySelectorAll('.zed-tab-btn').forEach(b=>b.classList.remove('active'));
-      btn.classList.add('active');
-      renderChatList();
-    });
-  });
-  document.getElementById('zed-friends-search').addEventListener('input',()=>renderChatList());
-  document.getElementById('zed-chat-send').addEventListener('click',sendMessage);
-  document.getElementById('zed-chat-input').addEventListener('keydown',e=>{
-    if(e.key==='Enter'&&!e.shiftKey){e.preventDefault();sendMessage();}
-  });
-  document.getElementById('zed-chat-input').addEventListener('input',function(){
-    this.style.height='44px';
-    this.style.height=Math.min(this.scrollHeight,120)+'px';
-  });
-  document.getElementById('zed-chat-attach').addEventListener('click',()=>document.getElementById('zed-chat-file').click());
-  document.getElementById('zed-chat-file').addEventListener('change',async function(){
-    if(this.files.length>0){
-      const file=this.files[0];
-      if(file.size>5*1024*1024){showToast('Image too large (max 5MB)',true);this.value='';return;}
-      // Preview
-      showToast('📷 Photo selected - tap send');
-    }
-  });
-
-  // === INJECT CHAT TAB INTO TOP NAV ===
-  function injectChatTab(){
-    const navRow=document.querySelector('div.border-b.border-\[var\(--border\)\].bg-\[var\(--surface\)\]');
-    if(!navRow) return;
-    if(document.getElementById('zed-chat-nav-btn')) return;
-    // Find the tabs container - it's the div with PAPERS, QUIZZES etc buttons
-    const tabsContainer=navRow.querySelector('div.flex.items-center.gap-1') || navRow;
-    if(tabsContainer){
-      const chatBtn=document.createElement('button');
-      chatBtn.id='zed-chat-nav-btn';
-      chatBtn.textContent='💬 CHATS';
-      chatBtn.style.cssText='height:36px;padding:0 16px;border-radius:999px;background:#8CFF8A;color:#000;font-weight:800;font-size:11px;letter-spacing:0.08em;text-transform:uppercase;border:2px solid #8CFF8A;cursor:pointer;flex-shrink:0;';
-      chatBtn.onclick=openChatModal;
-      tabsContainer.appendChild(chatBtn);
-      console.log('✓ Chat tab injected');
-    }
-  }
-
-  // Init search and offline + chat tab
-  const observer=new MutationObserver(()=>{initScopedSearch();enhanceCards();injectChatTab();});
   setTimeout(()=>{
-    const root=document.getElementById('root')||document.body;
-    observer.observe(root,{childList:true,subtree:true});
-    initScopedSearch();enhanceCards();injectChatTab();
-    // Try again after 2 sec
-    setTimeout(injectChatTab,2000);
-    setTimeout(injectChatTab,4000);
-  },1000);
-  setInterval(()=>{initScopedSearch();enhanceCards();injectChatTab();},2000);
-  document.addEventListener('click',()=>setTimeout(()=>{initScopedSearch();enhanceCards();injectChatTab();},300));
-
-  // Auto-init chat for logged in user after 2 sec
-  setTimeout(()=>{if(getCurrentUser()) initChat();},2000);
-
-  window.ZEDOffline={saveToInternalStorage,getFromInternalStorage,removeFromInternalStorage,openOfflineViewer,openOnlineViewer};
-  window.ZEDChat={initChat,sendFriendRequest,openChat,loadFriendsAndRequests};
+    observer.observe(document.getElementById('root')||document.body,{childList:true,subtree:true,attributes:true});
+    initScopedSearch();
+    enhanceCards();
+  },1200);
+  
+  setInterval(()=>{initScopedSearch();enhanceCards();},3000);
+  
+  // Listen for tab clicks
+  document.addEventListener('click', (e)=>{
+    const target=e.target;
+    if(target.textContent && ['PAPERS','DOCS','VIDEOS','QUIZZES'].some(t=>target.textContent.includes(t))){
+      setTimeout(()=>{initScopedSearch();},300);
+    }
+  });
 })();
 </script>
 
