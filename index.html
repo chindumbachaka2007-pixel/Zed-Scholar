@@ -1802,6 +1802,23 @@ div[class*="bg-"][class*="border"][class*="rounded"] {
 }
 </style>
 
+
+<!-- PDF.js for enhanced offline viewer -->
+<script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js"></script>
+<script>
+if (typeof pdfjsLib !== 'undefined') {
+  pdfjsLib.GlobalWorkerOptions.workerSrc = 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js';
+}
+</script>
+<style>
+/* Enhanced PDF Viewer Styles */
+#zed-pdf-modal { background:#0F0E0B !important; }
+#zed-pdf-container::-webkit-scrollbar { width:6px; height:6px; }
+#zed-pdf-container::-webkit-scrollbar-thumb { background:#2A2A2A; border-radius:999px; }
+.pdf-page-canvas { background:white; box-shadow:0 4px 24px rgba(0,0,0,0.5); border-radius:4px; max-width:100%; }
+.zed-pdf-enhanced-btn { transition:all 0.15s; }
+.zed-pdf-enhanced-btn:active { transform:scale(0.96); }
+</style>
 </head>
 <body>
 
@@ -2407,9 +2424,9 @@ window.addEventListener('beforeinstallprompt', e => {
 
 
 
+
 <script>
-// ZED SCHOLAR - V6 PRIVATE STORAGE ONLY - No Downloads folder leak - Fast Refresh - Searchable Offline Library
-// Keeps Supabase intact
+// ZED SCHOLAR - V6.1 PRIVATE STORAGE + FIXED VIEWER - No Downloads folder - Fast Refresh - Searchable
 (function(){
   const DB_NAME='zed_internal_storage_v2',STORE_NAME='offline_files';
   const SUPABASE_ANON_KEY = 'sb_publishable_74vo5_RlNXb0U0TrNLCdCQ_8zjDwFni';
@@ -2420,28 +2437,36 @@ window.addEventListener('beforeinstallprompt', e => {
     const resp=await fetch(url,{
       mode:'cors',
       cache:'no-store',
-      headers: {
-        'apikey': SUPABASE_ANON_KEY,
-        'Authorization': `Bearer ${SUPABASE_ANON_KEY}`
-      }
+      headers: { 'apikey': SUPABASE_ANON_KEY, 'Authorization': `Bearer ${SUPABASE_ANON_KEY}` }
     });
-    if(!resp.ok) throw new Error('Network '+resp.status+' - check data');
+    if(!resp.ok) throw new Error('Network '+resp.status);
     const blob=await resp.blob();
-    if(blob.size < 1024) throw new Error('File too small - link expired');
+    if(blob.size < 1024) throw new Error('File too small');
     if(blob.type && blob.type.includes('text/html')){
-      throw new Error('Got HTML not PDF - link expired');
+      const t=await blob.text().then(x=>x.slice(0,400)).catch(()=>'' );
+      console.log('HTML error page:', t);
+      throw new Error('Supabase returned HTML not PDF');
     }
+    // Ensure PDF type
+    const pdfBlob = blob.type.includes('pdf') ? blob : new Blob([blob], {type: 'application/pdf'});
     const db=await openDB();
     return new Promise((res,rej)=>{
       const tx=db.transaction(STORE_NAME,'readwrite');
-      const rec={id,blob,url,title:meta.title||'Paper',type:'paper',savedAt:Date.now(),size:blob.size,fileName:meta.fileName||'paper.pdf'};
+      const rec={id,blob:pdfBlob,url,title:meta.title||'Paper',type:'paper',savedAt:Date.now(),size:pdfBlob.size,fileName:meta.fileName||'paper.pdf'};
       const req=tx.objectStore(STORE_NAME).put(rec);
       req.onsuccess=()=>res(rec);
       req.onerror=()=>rej(req.error);
     });
   }
   async function getFromInternalStorage(id){
-    try{const db=await openDB();return new Promise((res,rej)=>{const tx=db.transaction(STORE_NAME,'readonly');const req=tx.objectStore(STORE_NAME).get(id);req.onsuccess=()=>res(req.result||null);req.onerror=()=>rej(req.error);});}catch{return null;}
+    try{
+
+      try{
+        if(meta && meta.id && window._zedSaveRecent){
+          window._zedSaveRecent(meta.id, meta.title);
+        }
+      }catch(e){}
+const db=await openDB();return new Promise((res,rej)=>{const tx=db.transaction(STORE_NAME,'readonly');const req=tx.objectStore(STORE_NAME).get(id);req.onsuccess=()=>res(req.result||null);req.onerror=()=>rej(req.error);});}catch{return null;}
   }
   async function getAllDownloaded(){
     try{const db=await openDB();return new Promise((res,rej)=>{const tx=db.transaction(STORE_NAME,'readonly');const req=tx.objectStore(STORE_NAME).getAll();req.onsuccess=()=>res(req.result||[]);req.onerror=()=>rej(req.error);});}catch{return [];}
@@ -2462,33 +2487,136 @@ window.addEventListener('beforeinstallprompt', e => {
     t.style.borderColor=isError?'#ff9a9a':'#8CFF8A';
     t.style.transform='translateX(-50%) translateY(0)';
     clearTimeout(t._hide);
-    t._hide=setTimeout(()=>{t.style.transform='translateX(-50%) translateY(120px)';},4000);
+    t._hide=setTimeout(()=>{t.style.transform='translateX(-50%) translateY(120px)';},4500);
   }
 
+  // --- V6.3 INSTANT VIEWER + SPINNER + PRE-CACHE ---
+  window._curBlobUrl=null;
+  window._blobUrlCache={};
+  function getCachedUrl(id, blob){
+    if(window._blobUrlCache[id]) return window._blobUrlCache[id];
+    let pdfBlob = blob.type && blob.type.includes('pdf') ? blob : new Blob([blob], {type:'application/pdf'});
+    const url = URL.createObjectURL(pdfBlob);
+    window._blobUrlCache[id]=url;
+    return url;
+  }
   function openOfflineViewer(blob,meta){
-    let modal=document.getElementById('zed-pdf-modal'),iframe=document.getElementById('zed-pdf-viewer'),titleEl=document.getElementById('zed-pdf-title');
-    if(!modal){
-      modal=document.createElement('div');modal.id='zed-pdf-modal';
-      modal.innerHTML='<div id="zed-pdf-header" style="position:absolute;top:0;left:0;right:0;background:#1A1917;border-bottom:1px solid #2A2825;padding:12px 16px;display:flex;justify-content:space-between;z-index:1;"><div style="display:flex;gap:10px;align-items:center;"><div id="zed-pdf-title" style="color:#F5F1E8;font-size:13px;font-weight:600;">Offline Viewer</div><span style="font-size:9px;background:#8CFF8A;color:#000;padding:3px 8px;border-radius:999px;font-weight:800;">OFFLINE ✓ NO DATA</span></div><button id="zed-pdf-close-btn" style="background:#F5F1E8;color:#000;border:none;padding:8px 14px;border-radius:8px;font-size:11px;font-weight:700;cursor:pointer;">✕ Close</button></div><iframe id="zed-pdf-viewer" style="width:100%;height:100%;border:none;background:#fff;margin-top:50px;border-radius:8px;"></iframe>';
-      modal.style.cssText='position:fixed;inset:0;z-index:99999;background:rgba(0,0,0,0.92);display:none;padding:20px;';
+    try{
+      const libModal=document.getElementById('zed-offline-lib-modal');
+      if(libModal) libModal.style.display='none';
+      let modal=document.getElementById('zed-pdf-modal');
+      if(modal) modal.remove();
+
+      // Use cached URL if available for instant open
+      let blobUrl;
+      if(meta.id && window._blobUrlCache[meta.id]){
+        blobUrl = window._blobUrlCache[meta.id];
+      } else {
+        let pdfBlob = blob.type && blob.type.includes('pdf') ? blob : new Blob([blob], {type:'application/pdf'});
+        if(window._curBlobUrl){ try{URL.revokeObjectURL(window._curBlobUrl);}catch{} }
+        blobUrl = URL.createObjectURL(pdfBlob);
+        window._curBlobUrl = blobUrl;
+        if(meta.id) window._blobUrlCache[meta.id]=blobUrl;
+      }
+
+      modal=document.createElement('div');
+      modal.id='zed-pdf-modal';
+      modal.style.cssText='position:fixed;inset:0;z-index:9999999;background:#0F0E0B;display:flex;flex-direction:column;';
+
+      modal.innerHTML=`
+        <style>@keyframes spin{to{transform:rotate(360deg)}}</style>
+        <div style="height:52px;background:#1A1917;border-bottom:1px solid #2A2825;display:flex;align-items:center;justify-content:space-between;padding:0 12px;flex-shrink:0;">
+          <div style="display:flex;align-items:center;gap:8px;min-width:0;flex:1;">
+            <div style="color:#F5F1E8;font-size:13px;font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">${(meta.title||'Paper').slice(0,45)}</div>
+            <span style="font-size:8px;background:#8CFF8A;color:#000;padding:3px 7px;border-radius:999px;font-weight:800;flex-shrink:0;">OFFLINE</span>
+          </div>
+          <div style="display:flex;gap:6px;flex-shrink:0;">
+            <button id="zed-pdf-open-ext" style="background:#8CFF8A;color:#000;border:none;height:32px;padding:0 14px;border-radius:20px;font-size:12px;font-weight:800;cursor:pointer;">Open</button>
+            <button id="zed-pdf-close-btn" style="background:#F5F1E8;color:#000;border:none;width:32px;height:32px;border-radius:8px;font-size:14px;font-weight:700;cursor:pointer;">✕</button>
+          </div>
+        </div>
+        <div style="flex:1;position:relative;background:#121212;overflow:hidden;">
+          <div id="zed-pdf-loader" style="position:absolute;inset:0;background:#0F0E0B;display:flex;flex-direction:column;align-items:center;justify-content:center;z-index:5;">
+            <div style="width:38px;height:38px;border:3px solid #2A2A2A;border-top-color:#8CFF8A;border-radius:50%;animation:spin 0.7s linear infinite;"></div>
+            <div style="margin-top:14px;color:#F5F1E8;font-size:12px;font-weight:600;letter-spacing:0.02em;">Opening • ${(meta.title||'Paper').slice(0,30)}</div>
+            <div style="margin-top:4px;color:#9A9590;font-size:10px;">No data needed • Instant</div>
+          </div>
+          <iframe id="zed-pdf-viewer" style="width:100%;height:100%;border:none;background:#fff;position:relative;z-index:1;" src="${blobUrl}"></iframe>
+        </div>
+      `;
+
       document.body.appendChild(modal);
-      iframe=document.getElementById('zed-pdf-viewer');titleEl=document.getElementById('zed-pdf-title');
-      document.getElementById('zed-pdf-close-btn').onclick=()=>{modal.style.display='none';document.body.style.overflow='';iframe.src='about:blank';if(window._curBlobUrl){URL.revokeObjectURL(window._curBlobUrl);window._curBlobUrl=null;}};
-      modal.onclick=(e)=>{if(e.target===modal){modal.style.display='none';document.body.style.overflow='';iframe.src='about:blank';}};
+      document.body.style.overflow='hidden';
+
+      const iframe=document.getElementById('zed-pdf-viewer');
+      const loader=document.getElementById('zed-pdf-loader');
+
+      // Hide loader as soon as iframe loads - instant feel
+      iframe.onload=()=>{
+        if(loader) loader.style.display='none';
+      };
+      // Safety: hide loader after 800ms even if onload didn't fire (some WebViews don't fire it)
+      setTimeout(()=>{ if(loader) loader.style.display='none'; }, 900);
+
+      document.getElementById('zed-pdf-open-ext').onclick=()=>{
+        const win=window.open(blobUrl, '_blank');
+        if(!win){
+          const a=document.createElement('a'); a.href=blobUrl; a.target='_blank'; a.click();
+        }
+      };
+
+      function closeViewer(){
+        modal.style.display='none';
+        document.body.style.overflow='';
+        setTimeout(()=>{
+          try{ modal.remove(); }catch{}
+          const lib=document.getElementById('zed-offline-lib-modal');
+          if(lib) lib.style.display='flex';
+        },80);
+      }
+      document.getElementById('zed-pdf-close-btn').onclick=closeViewer;
+      modal.addEventListener('click', (e)=>{ if(e.target===modal) closeViewer(); });
+
+    }catch(err){
+      console.log('viewer error', err);
+      try{
+        const url=URL.createObjectURL(new Blob([blob], {type:'application/pdf'}));
+        window.open(url,'_blank');
+      }catch(e){}
     }
-    titleEl.textContent=(meta.title||'Paper')+' • Offline ✓';
-    if(window._curBlobUrl){try{URL.revokeObjectURL(window._curBlobUrl);}catch{}}
-    const blobUrl=URL.createObjectURL(blob);window._curBlobUrl=blobUrl;
-    modal.style.display='flex';document.body.style.overflow='hidden';iframe.src=blobUrl;
   }
   window._zedOpenViewer=openOfflineViewer;
 
-  // --- FAST PATCH FOR MAIN CARDS (NO View Offline button, NO Save to Documents, NO Downloads folder) ---
+  // --- FAST PATCH FOR MAIN CARDS (NO View Offline button, NO Save to Documents) ---
   let _patchRunning=false;
   async function patchDownloads(){
     if(_patchRunning) return;
     _patchRunning=true;
     try{
+      // Get recently viewed map for badges
+      let recentMap = {};
+      try{
+        const raw = localStorage.getItem('zed_recently_viewed_v1');
+        if(raw){
+          const arr = JSON.parse(raw);
+          arr.forEach(r=>{ recentMap[r.id]=r.viewedAt; });
+        }
+      }catch(e){}
+
+      function timeAgoShort(ts){
+        if(!ts) return '';
+        const diff = Date.now() - ts;
+        const mins = Math.floor(diff/60000);
+        if(mins<1) return 'just now';
+        if(mins===1) return '1m ago';
+        if(mins<60) return mins+'m ago';
+        const hrs = Math.floor(mins/60);
+        if(hrs===1) return '1h ago';
+        if(hrs<24) return hrs+'h ago';
+        const days = Math.floor(hrs/24);
+        return days+'d ago';
+      }
+
       const links=document.querySelectorAll('a');
       for(let link of links){
         const txt=(link.textContent||'').trim().toUpperCase();
@@ -2496,11 +2624,25 @@ window.addEventListener('beforeinstallprompt', e => {
         const url=link.href;
         if(!url||!url.includes('http')) continue;
         if(link.closest('.zed-offline-fixed-v2')) continue;
-        // Skip if already processed in this cycle via data attribute on parent
         const card=link.closest('div[class*="bg-"][class*="border"][class*="rounded"]')||link.parentElement?.parentElement;
         if(!card) continue;
-        if(card.dataset.zedV6==='1') continue;
-        // Do not double-process if wrapper already exists
+        if(card.dataset.zedV6==='1') {
+          // Update viewed badge even if already patched
+          const existingBadge = card.querySelector('.zed-viewed-badge');
+          const fileIdTmp='paper_'+btoa(url).replace(/[^a-zA-Z0-9]/g,'');
+          if(recentMap[fileIdTmp] && !existingBadge){
+            const vBadge=document.createElement('div');
+            vBadge.className='zed-viewed-badge';
+            vBadge.style.cssText='font-size:10px;color:#8CFF8A;background:rgba(140,255,138,0.12);border:1px solid rgba(140,255,138,0.2);padding:4px 8px;border-radius:999px;display:inline-flex;align-items:center;gap:4px;margin-top:4px;align-self:flex-start;font-weight:600;';
+            vBadge.textContent=`👁 Viewed ${timeAgoShort(recentMap[fileIdTmp])}`;
+            const wrapper=card.querySelector('.zed-offline-fixed-v2');
+            if(wrapper){
+              const hint=wrapper.querySelector('div');
+              if(hint) hint.insertAdjacentElement('afterend', vBadge);
+            }
+          }
+          continue;
+        }
         if(card.querySelector('.zed-offline-fixed-v2')) continue;
 
         const fileId='paper_'+btoa(url).replace(/[^a-zA-Z0-9]/g,'');
@@ -2520,7 +2662,6 @@ window.addEventListener('beforeinstallprompt', e => {
         wrapper.style.cssText='display:flex;flex-direction:column;gap:8px;width:100%;margin-top:12px;';
 
         if(!isDl){
-          // NOT DOWNLOADED STATE
           const saveBtn=document.createElement('button');
           saveBtn.style.cssText='width:100%;height:48px;border-radius:12px;background:#FFD700;color:#000;display:flex;align-items:center;justify-content:center;gap:8px;font-size:13px;font-weight:800;cursor:pointer;border:none;';
           saveBtn.innerHTML='⬇ Download to Phone';
@@ -2530,22 +2671,17 @@ window.addEventListener('beforeinstallprompt', e => {
             saveBtn.style.opacity='0.7';
             try{
               const rec=await saveToInternalStorage(fileId,url,{title,fileName});
-              // FAST REFRESH - instantly show DOWNLOADED UI without waiting for observer
               showToast(`✓ Saved! ${title} - Open 📚 My Offline Papers`);
-              // Build downloaded UI immediately in same wrapper
               const badge=document.createElement('div');
               badge.style.cssText='background:#8CFF8A;color:#000;font-size:11px;font-weight:800;padding:7px 14px;border-radius:999px;display:inline-flex;align-self:flex-start;';
               badge.textContent=`DOWNLOADED ✓ ${formatSize(rec.size)} • No Data Needed`;
-
               const hint=document.createElement('div');
               hint.style.cssText='font-size:11px;color:#8CFF8A;background:rgba(140,255,138,0.1);padding:6px 10px;border-radius:8px;border:1px dashed rgba(140,255,138,0.3);';
               hint.textContent='📚 Find it in My Offline Papers - Tap 📚 button';
-
               const viewOnline2=document.createElement('a');
               viewOnline2.href=url;viewOnline2.target='_blank';viewOnline2.rel='noopener';
               viewOnline2.style.cssText='width:100%;height:38px;border-radius:8px;background:transparent;color:#9A9590;border:1px solid #2A2825;display:flex;align-items:center;justify-content:center;font-size:11px;text-decoration:none;';
               viewOnline2.textContent='View Online (Needs Data)';
-
               const row=document.createElement('div');row.style.cssText='display:flex;gap:8px;';
               const rmBtn=document.createElement('button');
               rmBtn.style.cssText='flex:1;height:38px;border-radius:8px;background:transparent;color:#ff9a9a;border:1px solid #ff9a9a;display:flex;align-items:center;justify-content:center;font-size:11px;cursor:pointer;';
@@ -2560,13 +2696,11 @@ window.addEventListener('beforeinstallprompt', e => {
                 }
               };
               row.appendChild(rmBtn);
-
               wrapper.innerHTML='';
               wrapper.appendChild(badge);
               wrapper.appendChild(hint);
               wrapper.appendChild(viewOnline2);
               wrapper.appendChild(row);
-
               if(titleEl && !card.querySelector('.zed-badge-top')){
                 const topBadge=document.createElement('span');
                 topBadge.className='zed-badge-top';
@@ -2575,9 +2709,7 @@ window.addEventListener('beforeinstallprompt', e => {
                 titleEl.appendChild(topBadge);
               }
               card.dataset.zedV6='1';
-              // Update floating button count instantly
               updateLibBtnCount();
-              // Also trigger global refresh for other observers
               setTimeout(patchDownloads,150);
             }catch(err){
               saveBtn.innerHTML='❌ Failed - Tap to retry';
@@ -2593,7 +2725,6 @@ window.addEventListener('beforeinstallprompt', e => {
           wrapper.appendChild(saveBtn);
           wrapper.appendChild(viewOnline);
         } else {
-          // DOWNLOADED STATE - NO View Offline button on main card, NO Save to Documents, NO Downloads folder leak
           const badge=document.createElement('div');
           badge.style.cssText='background:#8CFF8A;color:#000;font-size:11px;font-weight:800;padding:7px 14px;border-radius:999px;display:inline-flex;align-self:flex-start;gap:6px;';
           badge.innerHTML=`DOWNLOADED ✓ ${formatSize(existing.size)} • No Data Needed`;
@@ -2602,11 +2733,19 @@ window.addEventListener('beforeinstallprompt', e => {
           hint.style.cssText='font-size:11px;color:#8CFF8A;background:rgba(140,255,138,0.08);padding:6px 10px;border-radius:8px;border:1px dashed rgba(140,255,138,0.25);';
           hint.textContent='📚 Open My Offline Papers to view';
 
+          // NEW: Viewed badge if recently viewed
+          let viewedBadge=null;
+          if(recentMap[fileId]){
+            viewedBadge=document.createElement('div');
+            viewedBadge.className='zed-viewed-badge';
+            viewedBadge.style.cssText='font-size:10px;color:#8CFF8A;background:rgba(140,255,138,0.12);border:1px solid rgba(140,255,138,0.25);padding:5px 10px;border-radius:999px;display:inline-flex;align-items:center;gap:5px;align-self:flex-start;font-weight:700;';
+            viewedBadge.innerHTML=`👁 Viewed ${timeAgoShort(recentMap[fileId])}`;
+          }
+
           const viewOnline=document.createElement('a');
           viewOnline.href=url;viewOnline.target='_blank';viewOnline.rel='noopener';
           viewOnline.style.cssText='width:100%;height:38px;border-radius:8px;background:transparent;color:#9A9590;border:1px solid #2A2825;display:flex;align-items:center;justify-content:center;font-size:11px;text-decoration:none;';
           viewOnline.textContent='View Online (Needs Data)';
-
           const row=document.createElement('div');row.style.cssText='display:flex;gap:8px;';
           const rmBtn=document.createElement('button');
           rmBtn.style.cssText='flex:1;height:38px;border-radius:8px;background:transparent;color:#ff9a9a;border:1px solid #ff9a9a;display:flex;align-items:center;justify-content:center;font-size:11px;cursor:pointer;';
@@ -2623,9 +2762,9 @@ window.addEventListener('beforeinstallprompt', e => {
             }
           };
           row.appendChild(rmBtn);
-
           wrapper.appendChild(badge);
           wrapper.appendChild(hint);
+          if(viewedBadge) wrapper.appendChild(viewedBadge);
           wrapper.appendChild(viewOnline);
           wrapper.appendChild(row);
 
@@ -2636,8 +2775,15 @@ window.addEventListener('beforeinstallprompt', e => {
             topBadge.textContent='DOWNLOADED';
             titleEl.appendChild(topBadge);
           }
+          // Add small inline viewed badge in title if recently viewed
+          if(titleEl && recentMap[fileId] && !titleEl.querySelector('.zed-title-viewed')){
+            const tBadge=document.createElement('span');
+            tBadge.className='zed-title-viewed';
+            tBadge.style.cssText='background:rgba(140,255,138,0.15);color:#8CFF8A;font-size:7px;font-weight:800;padding:2px 6px;border-radius:999px;margin-left:6px;vertical-align:middle;border:1px solid rgba(140,255,138,0.2);';
+            tBadge.textContent=`👁 ${timeAgoShort(recentMap[fileId])}`;
+            titleEl.appendChild(tBadge);
+          }
         }
-
         const parent=link.parentElement;
         if(parent){
           parent.innerHTML='';
@@ -2649,6 +2795,7 @@ window.addEventListener('beforeinstallprompt', e => {
     _patchRunning=false;
   }
   window._zedPatch=patchDownloads;
+
 
   async function updateLibBtnCount(){
     try{
@@ -2680,15 +2827,32 @@ window.addEventListener('beforeinstallprompt', e => {
     updateLibBtnCount();
   }
 
-  // --- SEARCHABLE OFFLINE LIBRARY MODAL V6 ---
   window.showRealOfflineLibrary = async function(){
     const all=await getAllDownloaded();
+    function getRecentlyViewed(){
+      try{
+        const raw = localStorage.getItem('zed_recently_viewed_v1');
+        if(!raw) return [];
+        const arr = JSON.parse(raw);
+        return Array.isArray(arr) ? arr : [];
+      }catch{ return []; }
+    }
+    function saveRecentlyViewed(id, title){
+      try{
+        let recent = getRecentlyViewed();
+        recent = recent.filter(r=>r.id!==id);
+        recent.unshift({id, title: title||'Paper', viewedAt: Date.now()});
+        if(recent.length>5) recent = recent.slice(0,5);
+        localStorage.setItem('zed_recently_viewed_v1', JSON.stringify(recent));
+      }catch(e){}
+    }
+    window._zedSaveRecent = saveRecentlyViewed;
+    window._zedGetRecent = getRecentlyViewed;
+
     let old=document.getElementById('zed-offline-lib-modal'); if(old) old.remove();
     const modal=document.createElement('div');
     modal.id='zed-offline-lib-modal';
     modal.style.cssText='position:fixed;inset:0;z-index:999999;background:rgba(0,0,0,0.88);display:flex;align-items:center;justify-content:center;padding:16px;backdrop-filter:blur(6px);';
-
-    // Build modal structure with search
     modal.innerHTML=`
       <div style="background:#0F0E0D;border:2px solid #8CFF8A;border-radius:18px;width:100%;max-width:440px;max-height:88vh;display:flex;flex-direction:column;box-shadow:0 20px 60px rgba(0,0,0,0.9);overflow:hidden;">
         <div style="padding:14px 16px;border-bottom:1px solid #2A2825;display:flex;justify-content:space-between;align-items:center;gap:12px;">
@@ -2713,11 +2877,24 @@ window.addEventListener('beforeinstallprompt', e => {
     const titleEl=document.getElementById('zed-lib-title');
     const infoEl=document.getElementById('zed-lib-search-info');
 
-    function formatDate(ts){
-      try{ return new Date(ts).toLocaleDateString(); }catch{ return ''; }
+    function formatDate(ts){ try{ return new Date(ts).toLocaleDateString(); }catch{ return ''; } }
+    function timeAgo(ts){
+      const diff = Date.now() - ts;
+      const mins = Math.floor(diff/60000);
+      if(mins<1) return 'just now';
+      if(mins===1) return '1 min ago';
+      if(mins<60) return mins+' mins ago';
+      const hrs = Math.floor(mins/60);
+      if(hrs===1) return '1 hr ago';
+      if(hrs<24) return hrs+' hrs ago';
+      return formatDate(ts);
     }
 
     function renderList(items, query){
+      const isSearching = !!query;
+      const recentRaw = getRecentlyViewed();
+      const recentValid = recentRaw.filter(r=> all.some(a=>a.id===r.id));
+
       if(!items || items.length===0){
         if(all.length===0){
           listWrap.innerHTML='<div style="text-align:center;padding:30px 20px;color:#9A9590;"><div style="font-size:32px;margin-bottom:10px;">📄</div>No offline papers yet<br><small style="font-size:11px;line-height:1.4;display:block;margin-top:6px;">Tap ⬇ Download to Phone on any paper first<br>(needs data once, then works offline)</small></div>';
@@ -2738,8 +2915,37 @@ window.addEventListener('beforeinstallprompt', e => {
         infoEl.style.display='none';
       }
       titleEl.textContent=`My Offline Papers (${all.length})${query?` • ${items.length} shown`:''}`;
-      listWrap.innerHTML=items.map(f=>`
-        <div class="zed-offline-item" data-title="${(f.title||'').replace(/"/g,'&quot;')}" style="background:#1A1917;border:1px solid #2A2825;border-radius:12px;padding:12px;margin-bottom:10px;transition:border-color 0.2s;">
+
+      let html = '';
+
+      if(!isSearching && recentValid.length>0){
+        html+=`<div style="margin-bottom:14px;">
+          <div style="display:flex;align-items:center;gap:6px;margin-bottom:8px;">
+            <span style="font-size:11px;">⏱</span>
+            <span style="color:#F5F1E8;font-size:11px;font-weight:700;letter-spacing:0.06em;text-transform:uppercase;">Recently Viewed</span>
+            <span style="background:rgba(140,255,138,0.15);color:#8CFF8A;font-size:9px;font-weight:800;padding:2px 6px;border-radius:999px;">${recentValid.length}</span>
+          </div>
+          ${recentValid.map(r=>{
+            const full = all.find(a=>a.id===r.id);
+            const size = full ? ` • ${formatSize(full.size)}` : '';
+            return `
+            <div style="background:#1E1C19;border:1px solid rgba(140,255,138,0.25);border-radius:10px;padding:10px;margin-bottom:6px;display:flex;justify-content:space-between;align-items:center;gap:8px;">
+              <div style="min-width:0;flex:1;">
+                <div style="color:#F5F1E8;font-size:12px;font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">${(r.title||'Paper').slice(0,45)}</div>
+                <div style="color:#8CFF8A;font-size:10px;margin-top:2px;">${timeAgo(r.viewedAt)}${size}</div>
+              </div>
+              <button data-id="${r.id}" class="zed-lib-view" style="background:#8CFF8A;color:#000;border:none;height:32px;padding:0 12px;border-radius:8px;font-size:11px;font-weight:800;cursor:pointer;flex-shrink:0;">Open</button>
+            </div>
+            `;
+          }).join('')}
+        </div>
+        <div style="height:1px;background:#2A2825;margin:0 0 12px 0;"></div>
+        <div style="color:#9A9590;font-size:10px;font-weight:700;letter-spacing:0.08em;text-transform:uppercase;margin-bottom:8px;">All Papers</div>
+        `;
+      }
+
+      html+= items.map(f=>`
+        <div class="zed-offline-item" style="background:#1A1917;border:1px solid #2A2825;border-radius:12px;padding:12px;margin-bottom:10px;">
           <div style="color:#F5F1E8;font-size:13px;font-weight:600;margin-bottom:4px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">${(f.title||'Paper').slice(0,65)}</div>
           <div style="color:#8CFF8A;font-size:11px;margin-bottom:10px;display:flex;gap:8px;align-items:center;"><span>${formatSize(f.size)}</span><span style="color:#3A3632;">•</span><span style="color:#9A9590;">${formatDate(f.savedAt)}</span></div>
           <div style="display:flex;gap:8px;">
@@ -2749,17 +2955,17 @@ window.addEventListener('beforeinstallprompt', e => {
         </div>
       `).join('');
 
-      // Attach events
+      listWrap.innerHTML=html;
+
       listWrap.querySelectorAll('.zed-lib-view').forEach(btn=>{
         btn.onclick=async ()=>{
           const id=btn.dataset.id;
-          const db=await openDB();
-          const rec=await new Promise((res,rej)=>{const tx=db.transaction(STORE_NAME,'readonly');const req=tx.objectStore(STORE_NAME).get(id);req.onsuccess=()=>res(req.result||null);req.onerror=()=>rej(req.error);});
+          const rec=await getFromInternalStorage(id);
           if(rec&&rec.blob){
-            modal.remove();
-            openOfflineViewer(rec.blob,{title:rec.title});
+            saveRecentlyViewed(id, rec.title);
+            openOfflineViewer(rec.blob,{title:rec.title, id:rec.id});
           } else {
-            showToast('File not found',true);
+            showToast('File not found - download again', true);
           }
         };
       });
@@ -2767,9 +2973,14 @@ window.addEventListener('beforeinstallprompt', e => {
         btn.onclick=async ()=>{
           if(confirm('Remove this paper from phone?')){
             await removeFromInternalStorage(btn.dataset.id);
-            // Update local all array
             const idx=all.findIndex(x=>x.id===btn.dataset.id);
             if(idx>-1) all.splice(idx,1);
+            let recent = getRecentlyViewed().filter(r=>r.id!==btn.dataset.id);
+            try{ localStorage.setItem('zed_recently_viewed_v1', JSON.stringify(recent)); }catch{}
+            if(window._blobUrlCache[btn.dataset.id]){
+              try{ URL.revokeObjectURL(window._blobUrlCache[btn.dataset.id]); }catch{}
+              delete window._blobUrlCache[btn.dataset.id];
+            }
             showToast('Removed');
             const q=searchInput.value.trim();
             const filtered=q? all.filter(f=>(f.title||'').toLowerCase().includes(q.toLowerCase())) : all;
@@ -2781,64 +2992,683 @@ window.addEventListener('beforeinstallprompt', e => {
       });
     }
 
-    // Initial render
     renderList(all,'');
+    setTimeout(()=>{
+      all.slice(0,10).forEach(f=>{
+        try{
+          if(!window._blobUrlCache[f.id] && f.blob){
+            const pdfBlob = f.blob.type && f.blob.type.includes('pdf') ? f.blob : new Blob([f.blob], {type:'application/pdf'});
+            window._blobUrlCache[f.id]=URL.createObjectURL(pdfBlob);
+          }
+        }catch(e){}
+      });
+    }, 300);
 
-    // Search handler - instant filter
     searchInput.addEventListener('input', ()=>{
       const q=searchInput.value.trim();
       const filtered=q? all.filter(f=>(f.title||'').toLowerCase().includes(q.toLowerCase())) : all;
       renderList(filtered,q);
     });
 
-    // Close handlers
     modal.onclick=(e)=>{ if(e.target===modal) modal.remove(); };
     closeBtn.onclick=()=>modal.remove();
-    // Focus search after open
     setTimeout(()=>{ searchInput.focus(); },100);
   };
 
-  // Remove any old Save to Documents / Downloads folder mentions continuously
+
   function cleanOldUI(){
     document.querySelectorAll('button, a, div, span').forEach(el=>{
       const t=(el.textContent||'').trim();
-      if(t==='Save to Documents' && el.tagName==='BUTTON'){
-        // hide export button that leaks to Downloads
-        el.style.display='none';
-      }
+      if(t==='Save to Documents' && el.tagName==='BUTTON'){ el.style.display='none'; }
     });
-    // Remove footer text Also in Phone Downloads folder
     document.querySelectorAll('div').forEach(d=>{
       if(d.textContent && d.textContent.includes('Also in Phone Downloads folder')){
         d.textContent='Private app storage • Works with no data • Only in My Offline Papers';
-        d.style.fontSize='10px';
-        d.style.color='#9A9590';
       }
     });
   }
 
-  // Observers & intervals - faster refresh
-  const observer=new MutationObserver(()=>{
-    patchDownloads();
-    createOfflineLibraryBtn();
-    cleanOldUI();
-  });
+  const observer=new MutationObserver(()=>{ patchDownloads(); createOfflineLibraryBtn(); cleanOldUI(); });
   setTimeout(()=>{
     observer.observe(document.getElementById('root')||document.body,{childList:true,subtree:true});
     patchDownloads();
     createOfflineLibraryBtn();
     cleanOldUI();
   },500);
-
   setInterval(()=>{ patchDownloads(); createOfflineLibraryBtn(); cleanOldUI(); updateLibBtnCount(); },1200);
-
   document.addEventListener('DOMContentLoaded',()=>{ setTimeout(()=>{patchDownloads();createOfflineLibraryBtn();},300); });
   window.addEventListener('load',()=>{ setTimeout(()=>{patchDownloads();createOfflineLibraryBtn();},600); });
-
-  // Also patch on custom event
-  window.addEventListener('zed-offline-updated', ()=>{ setTimeout(patchDownloads,100); });
 })();
 </script>
 
+
+
+<script>
+// ZED SCHOLAR - ENHANCED PDF VIEWER - Offline First - PDF.js Powered
+(function(){
+  const DB_NAME='zed_internal_storage_v2', STORE_NAME='offline_files';
+  const SUPABASE_ANON_KEY = 'sb_publishable_74vo5_RlNXb0U0TrNLCdCQ_8zjDwFni';
+  
+  function openDB(){ return new Promise((res,rej)=>{ const r=indexedDB.open(DB_NAME,2); r.onupgradeneeded=e=>{ const db=e.target.result; if(!db.objectStoreNames.contains(STORE_NAME)){ db.createObjectStore(STORE_NAME,{keyPath:'id'}); } }; r.onsuccess=()=>res(r.result); r.onerror=()=>rej(r.error); }); }
+  
+  let currentPdf = null;
+  let currentPageNum = 1;
+  let totalPages = 0;
+  let currentScale = 1.3;
+  let isScrollMode = false;
+  let currentBlob = null;
+  let currentBlobUrl = null;
+  let currentTitle = 'Paper';
+  let renderQueue = [];
+  let isRendering = false;
+  
+  function showToast(m,isError){
+    let t=document.getElementById('zed-offline-toast');
+    if(!t){
+      t=document.createElement('div');t.id='zed-offline-toast';
+      t.innerHTML='<span id="zed-toast-text"></span>';
+      t.style.cssText='position:fixed;bottom:20px;left:50%;transform:translateX(-50%) translateY(120px);background:#1A1917;border:2px solid #8CFF8A;color:#F5F1E8;padding:14px 22px;border-radius:14px;font-size:13px;z-index:9999999;transition:transform 0.35s cubic-bezier(.2,.8,.2,1);box-shadow:0 10px 30px rgba(0,0,0,0.5);max-width:90vw;text-align:center;font-family:"Bricolage Grotesque",sans-serif;font-weight:600;';
+      document.body.appendChild(t);
+    }
+    const txt=document.getElementById('zed-toast-text');if(txt) txt.textContent=m;
+    t.style.borderColor=isError?'#ff9a9a':'#8CFF8A';
+    t.style.transform='translateX(-50%) translateY(0)';
+    clearTimeout(t._hide);
+    t._hide=setTimeout(()=>{t.style.transform='translateX(-50%) translateY(120px)';},4000);
+  }
+
+  async function fetchBlobFromUrl(url){
+    // Try to fetch blob URL or http URL
+    try{
+      if(url.startsWith('blob:')){
+        const resp = await fetch(url);
+        return await resp.blob();
+      } else {
+        // Supabase URL needs apikey
+        const resp = await fetch(url, {
+          mode:'cors',
+          cache:'no-store',
+          headers: { 'apikey': SUPABASE_ANON_KEY, 'Authorization': `Bearer ${SUPABASE_ANON_KEY}` }
+        });
+        if(!resp.ok) throw new Error('Network '+resp.status);
+        return await resp.blob();
+      }
+    }catch(e){
+      console.log('fetchBlob error', e);
+      throw e;
+    }
+  }
+
+  async function renderPage(pdf, num, canvas, scale){
+    const page = await pdf.getPage(num);
+    const viewport = page.getViewport({scale});
+    const dpr = window.devicePixelRatio || 1;
+    canvas.width = viewport.width * dpr;
+    canvas.height = viewport.height * dpr;
+    canvas.style.width = viewport.width + 'px';
+    canvas.style.height = viewport.height + 'px';
+    const ctx = canvas.getContext('2d');
+    ctx.setTransform(dpr,0,0,dpr,0,0);
+    const renderContext = { canvasContext: ctx, viewport };
+    await page.render(renderContext).promise;
+    return viewport;
+  }
+
+  async function renderSinglePage(){
+    if(!currentPdf) return;
+    const loader = document.getElementById('zed-pdf-loader');
+    const canvas = document.getElementById('pdf-canvas');
+    const scrollContainer = document.getElementById('pdf-scroll-container');
+    if(loader) loader.style.display='flex';
+    if(canvas) canvas.style.display='none';
+    if(scrollContainer) scrollContainer.style.display='none';
+    
+    try{
+      const c = document.getElementById('pdf-canvas');
+      if(!c) return;
+      c.style.display='block';
+      await renderPage(currentPdf, currentPageNum, c, currentScale);
+      if(loader) loader.style.display='none';
+      updateUI();
+    }catch(e){
+      console.log('render error', e);
+      if(loader){
+        loader.innerHTML = `<div style="color:#ff9a9a;font-size:12px;text-align:center;">Failed to render<br><span style="font-size:10px;color:#9A9590;">${e.message}</span><br><button onclick="location.reload()" style="margin-top:8px;background:#2A2A2A;color:#F5F1E8;border:1px solid #3A3632;padding:6px 12px;border-radius:8px;font-size:11px;cursor:pointer;">Retry</button></div>`;
+      }
+    }
+  }
+
+  async function renderScrollMode(){
+    if(!currentPdf) return;
+    const loader = document.getElementById('zed-pdf-loader');
+    const canvas = document.getElementById('pdf-canvas');
+    const scrollContainer = document.getElementById('pdf-scroll-container');
+    if(canvas) canvas.style.display='none';
+    if(scrollContainer){
+      scrollContainer.style.display='flex';
+      scrollContainer.innerHTML='';
+    }
+    if(loader) loader.style.display='flex';
+    
+    try{
+      for(let i=1;i<=totalPages;i++){
+        const wrapper = document.createElement('div');
+        wrapper.style.cssText='position:relative;display:flex;flex-direction:column;align-items:center;gap:6px;width:100%;';
+        const pageCanvas = document.createElement('canvas');
+        pageCanvas.className='pdf-page-canvas';
+        pageCanvas.dataset.page=i;
+        pageCanvas.style.cssText='background:white;box-shadow:0 4px 24px rgba(0,0,0,0.5);border-radius:4px;max-width:100%;min-height:200px;';
+        const label = document.createElement('div');
+        label.style.cssText='color:#9A9590;font-size:10px;font-weight:600;letter-spacing:0.06em;';
+        label.textContent = `Page ${i} / ${totalPages}`;
+        wrapper.appendChild(pageCanvas);
+        wrapper.appendChild(label);
+        scrollContainer.appendChild(wrapper);
+        // Render with slight delay for smooth UI
+        await renderPage(currentPdf, i, pageCanvas, currentScale);
+        if(i===1 && loader) loader.style.display='none';
+        // Small pause to keep UI responsive
+        await new Promise(r=>setTimeout(r, 30));
+      }
+      if(loader) loader.style.display='none';
+      updateUI();
+    }catch(e){
+      console.log('scroll render error', e);
+    }
+  }
+
+  function updateUI(){
+    const pageInput = document.getElementById('pdf-page-input');
+    const pageTotal = document.getElementById('pdf-page-total');
+    const zoomLabel = document.getElementById('pdf-zoom-label');
+    const prevBtn = document.getElementById('pdf-prev');
+    const nextBtn = document.getElementById('pdf-next');
+    if(pageInput) pageInput.value = currentPageNum;
+    if(pageTotal) pageTotal.textContent = totalPages;
+    if(zoomLabel) zoomLabel.textContent = Math.round(currentScale*75) + '%';
+    if(prevBtn) prevBtn.style.opacity = currentPageNum<=1 ? '0.4' : '1';
+    if(nextBtn) nextBtn.style.opacity = currentPageNum>=totalPages ? '0.4' : '1';
+  }
+
+  async function buildEnhancedModal(blobUrl, title, blob){
+    // Close existing
+    let old = document.getElementById('zed-pdf-modal');
+    if(old) old.remove();
+    
+    const modal = document.createElement('div');
+    modal.id='zed-pdf-modal';
+    modal.style.cssText='position:fixed;inset:0;z-index:9999999;background:#0F0E0B;display:flex;flex-direction:column;';
+    
+    const safeTitle = (title||'Paper').slice(0,60).replace(/</g,'&lt;');
+    
+    modal.innerHTML = `
+      <style>@keyframes spin{to{transform:rotate(360deg)}}</style>
+      <div style="height:52px;background:#1A1917;border-bottom:1px solid #2A2825;display:flex;align-items:center;justify-content:space-between;padding:0 12px;flex-shrink:0;">
+        <div style="display:flex;align-items:center;gap:8px;min-width:0;flex:1;">
+          <div style="color:#F5F1E8;font-size:13px;font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">${safeTitle}</div>
+          <span style="font-size:8px;background:#8CFF8A;color:#000;padding:3px 7px;border-radius:999px;font-weight:800;flex-shrink:0;">PDF VIEWER</span>
+        </div>
+        <div style="display:flex;gap:6px;flex-shrink:0;">
+          <button id="zed-pdf-open-ext-enhanced" style="background:#8CFF8A;color:#000;border:none;height:32px;padding:0 14px;border-radius:20px;font-size:11px;font-weight:800;cursor:pointer;display:flex;align-items:center;gap:4px;">↗ Open</button>
+          <button id="zed-pdf-close-btn-enhanced" style="background:#F5F1E8;color:#000;border:none;width:32px;height:32px;border-radius:8px;font-size:14px;font-weight:700;cursor:pointer;display:flex;align-items:center;justify-content:center;">✕</button>
+        </div>
+      </div>
+      <div style="height:46px;background:#141312;border-bottom:1px solid #2A2825;display:flex;align-items:center;justify-content:space-between;padding:0 10px;gap:8px;flex-shrink:0;">
+        <div style="display:flex;align-items:center;gap:6px;">
+          <button id="pdf-prev" class="zed-pdf-enhanced-btn" style="background:#2A2A2A;border:1px solid #3A3632;color:#F5F1E8;width:36px;height:34px;border-radius:10px;display:flex;align-items:center;justify-content:center;cursor:pointer;font-size:16px;font-weight:700;">‹</button>
+          <div style="background:#1A1A1A;border:1px solid #2A2A2A;border-radius:10px;padding:0 8px;height:34px;display:flex;align-items:center;gap:6px;">
+            <input id="pdf-page-input" type="number" min="1" style="width:40px;background:transparent;border:none;color:#F5F1E8;text-align:center;font-size:12px;font-weight:700;outline:none;" value="1">
+            <span style="color:#6B6763;font-size:11px;">/</span>
+            <span id="pdf-page-total" style="color:#F5F1E8;font-size:12px;font-weight:700;min-width:18px;text-align:center;">1</span>
+          </div>
+          <button id="pdf-next" class="zed-pdf-enhanced-btn" style="background:#2A2A2A;border:1px solid #3A3632;color:#F5F1E8;width:36px;height:34px;border-radius:10px;display:flex;align-items:center;justify-content:center;cursor:pointer;font-size:16px;font-weight:700;">›</button>
+        </div>
+        <div style="display:flex;align-items:center;gap:6px;">
+          <button id="pdf-zoom-out" class="zed-pdf-enhanced-btn" style="background:#2A2A2A;border:1px solid #3A3632;color:#F5F1E8;width:36px;height:34px;border-radius:10px;cursor:pointer;font-size:14px;font-weight:700;">−</button>
+          <span id="pdf-zoom-label" style="color:#F5F1E8;font-size:11px;font-weight:700;min-width:44px;text-align:center;background:#1A1A1A;border:1px solid #2A2A2A;border-radius:8px;height:34px;display:flex;align-items:center;justify-content:center;padding:0 6px;">100%</span>
+          <button id="pdf-zoom-in" class="zed-pdf-enhanced-btn" style="background:#2A2A2A;border:1px solid #3A3632;color:#F5F1E8;width:36px;height:34px;border-radius:10px;cursor:pointer;font-size:14px;font-weight:700;">+</button>
+          <button id="pdf-fit" class="zed-pdf-enhanced-btn" style="background:#1A1A1A;border:1px solid #8CFF8A;color:#8CFF8A;height:34px;padding:0 12px;border-radius:10px;font-size:10px;font-weight:800;cursor:pointer;letter-spacing:0.05em;">FIT</button>
+        </div>
+      </div>
+      <div id="zed-pdf-container" style="flex:1;overflow:auto;background:#0F0E0D;display:flex;flex-direction:column;align-items:center;padding:12px;gap:12px;-webkit-overflow-scrolling:touch;position:relative;">
+        <div id="pdf-render-wrapper" style="position:relative;display:flex;flex-direction:column;align-items:center;gap:12px;width:100%;max-width:900px;">
+          <div id="zed-pdf-loader" style="position:absolute;top:30%;left:50%;transform:translate(-50%,-50%);background:#1A1917;border:1px solid #2A2825;padding:22px 26px;border-radius:16px;display:flex;flex-direction:column;align-items:center;gap:14px;z-index:10;box-shadow:0 10px 30px rgba(0,0,0,0.5);">
+            <div style="width:38px;height:38px;border:3px solid #2A2A2A;border-top-color:#8CFF8A;border-radius:50%;animation:spin 0.7s linear infinite;"></div>
+            <div style="color:#F5F1E8;font-size:13px;font-weight:600;">Loading PDF</div>
+            <div style="color:#9A9590;font-size:11px;">${safeTitle.slice(0,35)}</div>
+          </div>
+          <canvas id="pdf-canvas" style="background:white;box-shadow:0 8px 32px rgba(0,0,0,0.6);border-radius:6px;max-width:100%;display:none;"></canvas>
+          <div id="pdf-scroll-container" style="width:100%;display:none;flex-direction:column;align-items:center;gap:16px;"></div>
+        </div>
+      </div>
+      <div style="height:40px;background:#1A1917;border-top:1px solid #2A2825;display:flex;align-items:center;justify-content:space-between;padding:0 12px;flex-shrink:0;">
+        <span style="color:#6B6763;font-size:10px;display:flex;align-items:center;gap:6px;"><span style="width:6px;height:6px;background:#8CFF8A;border-radius:50%;display:inline-block;"></span> Offline • Pinch zoom • Swipe</span>
+        <div style="display:flex;gap:6px;">
+          <button id="pdf-toggle-scroll" style="background:#2A2A2A;border:1px solid #3A3632;color:#9A9590;height:28px;padding:0 12px;border-radius:999px;font-size:10px;font-weight:700;cursor:pointer;letter-spacing:0.04em;">SCROLL MODE</button>
+          <button id="pdf-rotate" style="background:#2A2A2A;border:1px solid #3A3632;color:#9A9590;height:28px;padding:0 10px;border-radius:999px;font-size:10px;font-weight:700;cursor:pointer;">↻ ROTATE</button>
+        </div>
+      </div>
+    `;
+    
+    document.body.appendChild(modal);
+    document.body.style.overflow='hidden';
+    
+    // Store current
+    currentBlob = blob;
+    currentBlobUrl = blobUrl;
+    currentTitle = title;
+    currentPageNum = 1;
+    currentScale = 1.3;
+    isScrollMode = false;
+    
+    // Close handler
+    function closeViewer(){
+      modal.style.display='none';
+      document.body.style.overflow='';
+      setTimeout(()=>{ try{ modal.remove(); }catch{} const lib=document.getElementById('zed-offline-lib-modal'); if(lib) lib.style.display='flex'; },80);
+      if(currentPdf){
+        try{ currentPdf.destroy(); }catch{}
+        currentPdf=null;
+      }
+    }
+    document.getElementById('zed-pdf-close-btn-enhanced').onclick=closeViewer;
+    modal.addEventListener('click', (e)=>{ if(e.target===modal) closeViewer(); });
+    document.getElementById('zed-pdf-open-ext-enhanced').onclick=()=>{
+      const win=window.open(blobUrl, '_blank');
+      if(!win){
+        const a=document.createElement('a'); a.href=blobUrl; a.target='_blank'; a.click();
+      }
+    };
+    
+    // Controls
+    document.getElementById('pdf-prev').onclick=()=>{
+      if(currentPageNum<=1) return;
+      currentPageNum--;
+      if(isScrollMode){
+        const el = document.querySelector(`canvas[data-page="${currentPageNum}"]`);
+        if(el) el.scrollIntoView({behavior:'smooth', block:'start'});
+        updateUI();
+      } else {
+        renderSinglePage();
+      }
+    };
+    document.getElementById('pdf-next').onclick=()=>{
+      if(currentPageNum>=totalPages) return;
+      currentPageNum++;
+      if(isScrollMode){
+        const el = document.querySelector(`canvas[data-page="${currentPageNum}"]`);
+        if(el) el.scrollIntoView({behavior:'smooth', block:'start'});
+        updateUI();
+      } else {
+        renderSinglePage();
+      }
+    };
+    const pageInput = document.getElementById('pdf-page-input');
+    pageInput.onchange=()=>{
+      let v=parseInt(pageInput.value);
+      if(isNaN(v)) v=1;
+      v=Math.max(1, Math.min(totalPages, v));
+      currentPageNum=v;
+      if(isScrollMode){
+        const el = document.querySelector(`canvas[data-page="${currentPageNum}"]`);
+        if(el) el.scrollIntoView({behavior:'smooth', block:'start'});
+        updateUI();
+      } else {
+        renderSinglePage();
+      }
+    };
+    document.getElementById('pdf-zoom-in').onclick=()=>{
+      currentScale=Math.min(3.5, currentScale+0.25);
+      if(isScrollMode) renderScrollMode(); else renderSinglePage();
+    };
+    document.getElementById('pdf-zoom-out').onclick=()=>{
+      currentScale=Math.max(0.5, currentScale-0.25);
+      if(isScrollMode) renderScrollMode(); else renderSinglePage();
+    };
+    document.getElementById('pdf-fit').onclick=()=>{
+      // Fit to width
+      const container = document.getElementById('zed-pdf-container');
+      const wrapper = document.getElementById('pdf-render-wrapper');
+      if(container && currentPdf){
+        const availableWidth = container.clientWidth - 24;
+        currentPdf.getPage(currentPageNum).then(page=>{
+          const viewport = page.getViewport({scale:1});
+          const scale = availableWidth / viewport.width;
+          currentScale = Math.min(2.5, Math.max(0.5, scale*0.95));
+          if(isScrollMode) renderScrollMode(); else renderSinglePage();
+        });
+      }
+    };
+    document.getElementById('pdf-toggle-scroll').onclick=()=>{
+      isScrollMode=!isScrollMode;
+      const btn=document.getElementById('pdf-toggle-scroll');
+      if(btn) btn.textContent = isScrollMode ? 'PAGE MODE' : 'SCROLL MODE';
+      btn.style.background = isScrollMode ? '#8CFF8A' : '#2A2A2A';
+      btn.style.color = isScrollMode ? '#000' : '#9A9590';
+      btn.style.borderColor = isScrollMode ? '#8CFF8A' : '#3A3632';
+      if(isScrollMode){
+        renderScrollMode();
+      } else {
+        // Switch back to single page - find closest page in view
+        const canvases = document.querySelectorAll('#pdf-scroll-container canvas');
+        let closest = 1;
+        let minDist = Infinity;
+        const container = document.getElementById('zed-pdf-container');
+        const contTop = container.scrollTop;
+        canvases.forEach(c=>{
+          const rect = c.getBoundingClientRect();
+          const dist = Math.abs(rect.top);
+          if(dist<minDist){ minDist=dist; closest=parseInt(c.dataset.page)||1; }
+        });
+        currentPageNum = closest;
+        document.getElementById('pdf-scroll-container').style.display='none';
+        renderSinglePage();
+      }
+    };
+    
+    // Pinch zoom handling
+    let lastDist = 0;
+    const pdfContainer = document.getElementById('zed-pdf-container');
+    pdfContainer.addEventListener('touchstart', (e)=>{
+      if(e.touches.length===2){
+        lastDist = Math.hypot(e.touches[0].pageX - e.touches[1].pageX, e.touches[0].pageY - e.touches[1].pageY);
+      }
+    }, {passive:true});
+    pdfContainer.addEventListener('touchmove', (e)=>{
+      if(e.touches.length===2){
+        const dist = Math.hypot(e.touches[0].pageX - e.touches[1].pageX, e.touches[0].pageY - e.touches[1].pageY);
+        if(lastDist>0){
+          const delta = (dist - lastDist) * 0.01;
+          currentScale = Math.min(3.5, Math.max(0.5, currentScale + delta));
+          clearTimeout(window._pinchTimeout);
+          window._pinchTimeout = setTimeout(()=>{
+            if(isScrollMode) renderScrollMode(); else renderSinglePage();
+          }, 150);
+        }
+        lastDist = dist;
+      }
+    }, {passive:true});
+    pdfContainer.addEventListener('touchend', ()=>{ lastDist=0; }, {passive:true});
+    
+    // Keyboard navigation
+    const keyHandler = (e)=>{
+      if(e.key==='ArrowLeft' && currentPageNum>1){ currentPageNum--; renderSinglePage(); }
+      if(e.key==='ArrowRight' && currentPageNum<totalPages){ currentPageNum++; renderSinglePage(); }
+      if(e.key==='Escape'){ closeViewer(); document.removeEventListener('keydown', keyHandler); }
+      if(e.key==='+' || e.key==='='){ currentScale=Math.min(3.5, currentScale+0.2); if(isScrollMode) renderScrollMode(); else renderSinglePage(); }
+      if(e.key==='-' || e.key==='_'){ currentScale=Math.max(0.5, currentScale-0.2); if(isScrollMode) renderScrollMode(); else renderSinglePage(); }
+    };
+    document.addEventListener('keydown', keyHandler);
+    
+    // Load PDF
+    try{
+      if(!blob){
+        // Fetch from blobUrl
+        blob = await fetchBlobFromUrl(blobUrl);
+        currentBlob = blob;
+      }
+      const arrayBuffer = await blob.arrayBuffer();
+      
+      // Wait for pdfjsLib
+      let attempts=0;
+      while(typeof pdfjsLib==='undefined' && attempts<50){
+        await new Promise(r=>setTimeout(r,100));
+        attempts++;
+      }
+      if(typeof pdfjsLib==='undefined'){
+        throw new Error('PDF.js not loaded - check internet');
+      }
+      
+      const loadingTask = pdfjsLib.getDocument({data: arrayBuffer});
+      currentPdf = await loadingTask.promise;
+      totalPages = currentPdf.numPages;
+      document.getElementById('pdf-page-total').textContent = totalPages;
+      
+      // Auto fit on first load
+      setTimeout(()=>{
+        const fitBtn = document.getElementById('pdf-fit');
+        if(fitBtn) fitBtn.click();
+      }, 100);
+      
+      await renderSinglePage();
+      
+      // Pre-cache next pages
+      for(let i=2;i<=Math.min(3,totalPages);i++){
+        currentPdf.getPage(i).then(()=>{});
+      }
+      
+    }catch(err){
+      console.log('PDF load error', err);
+      const loader = document.getElementById('zed-pdf-loader');
+      if(loader){
+        loader.innerHTML = `<div style="text-align:center;max-width:260px;">
+          <div style="font-size:32px;margin-bottom:12px;">⚠️</div>
+          <div style="color:#F5F1E8;font-size:13px;font-weight:600;margin-bottom:6px;">Failed to load PDF</div>
+          <div style="color:#9A9590;font-size:11px;margin-bottom:14px;word-break:break-word;">${err.message}</div>
+          <div style="display:flex;gap:8px;justify-content:center;">
+            <button id="retry-pdf" style="background:#8CFF8A;color:#000;border:none;padding:8px 14px;border-radius:8px;font-size:11px;font-weight:800;cursor:pointer;">Retry</button>
+            <button id="open-external-pdf" style="background:#2A2A2A;color:#F5F1E8;border:1px solid #3A3632;padding:8px 14px;border-radius:8px;font-size:11px;font-weight:700;cursor:pointer;">Open External</button>
+          </div>
+        </div>`;
+        document.getElementById('retry-pdf').onclick=()=>{ buildEnhancedModal(blobUrl, title, blob); };
+        document.getElementById('open-external-pdf').onclick=()=>{ window.open(blobUrl,'_blank'); };
+      }
+    }
+  }
+
+  // Intercept original viewer modal creation
+  function enhanceExistingModal(modalNode){
+    try{
+      const iframe = modalNode.querySelector('iframe#zed-pdf-viewer, iframe');
+      if(!iframe) return;
+      const src = iframe.src;
+      if(!src) return;
+      
+      // Extract title
+      let titleEl = modalNode.querySelector('[style*="font-weight:600"]');
+      let title = 'Paper';
+      if(titleEl) title = titleEl.textContent.replace('• Offline','').replace('OFFLINE','').trim();
+      // Try to get from global
+      if(window._blobUrlCache){
+        // src is blobUrl, we have blob? need to fetch
+      }
+      // Fetch blob then build enhanced
+      fetchBlobFromUrl(src).then(blob=>{
+        buildEnhancedModal(src, title, blob);
+      }).catch(e=>{
+        // Even if fetch fails, try to build with src only
+        buildEnhancedModal(src, title, null);
+      });
+    }catch(e){
+      console.log('enhance modal error', e);
+    }
+  }
+
+  // Watch for original modal creation
+  const bodyObserver = new MutationObserver((mutations)=>{
+    for(let mut of mutations){
+      for(let node of mut.addedNodes){
+        if(node.nodeType===1){
+          if(node.id==='zed-pdf-modal'){
+            enhanceExistingModal(node);
+          } else {
+            const inner = node.querySelector && node.querySelector('#zed-pdf-modal');
+            if(inner) enhanceExistingModal(inner);
+          }
+        }
+      }
+    }
+  });
+  bodyObserver.observe(document.body, {childList:true, subtree:true});
+
+  // Also override global functions
+  window._zedOpenViewerEnhanced = async function(blob, meta){
+    let blobUrl;
+    try{
+      if(meta && meta.id && window._blobUrlCache && window._blobUrlCache[meta.id]){
+        blobUrl = window._blobUrlCache[meta.id];
+      } else {
+        let pdfBlob = blob.type && blob.type.includes('pdf') ? blob : new Blob([blob], {type:'application/pdf'});
+        blobUrl = URL.createObjectURL(pdfBlob);
+        if(meta && meta.id){
+          if(!window._blobUrlCache) window._blobUrlCache={};
+          window._blobUrlCache[meta.id]=blobUrl;
+        }
+      }
+    }catch{
+      blobUrl = URL.createObjectURL(blob);
+    }
+    await buildEnhancedModal(blobUrl, meta.title||'Paper', blob);
+  };
+
+  // Override showRealOfflineLibrary to use enhanced viewer
+  const originalShowLib = window.showRealOfflineLibrary;
+  window.showRealOfflineLibrary = async function(){
+    // Call original to get modal, then override its view buttons
+    if(originalShowLib){
+      // We'll create our own enhanced library modal instead
+      const DB = await openDB();
+      const all = await new Promise((res,rej)=>{
+        const tx=DB.transaction(STORE_NAME,'readonly');
+        const req=tx.objectStore(STORE_NAME).getAll();
+        req.onsuccess=()=>res(req.result||[]);
+        req.onerror=()=>rej(req.error);
+      });
+      
+      // Build modal similar to original but with enhanced viewer
+      let old=document.getElementById('zed-offline-lib-modal'); if(old) old.remove();
+      const modal=document.createElement('div');
+      modal.id='zed-offline-lib-modal';
+      modal.style.cssText='position:fixed;inset:0;z-index:999999;background:rgba(0,0,0,0.88);display:flex;align-items:center;justify-content:center;padding:16px;backdrop-filter:blur(6px);';
+      
+      function formatSize(b){if(!b) return '';if(b<1024) return b+' B';if(b<1024*1024) return (b/1024).toFixed(1)+' KB';return (b/1024/1024).toFixed(1)+' MB';}
+      function formatDate(ts){ if(!ts) return ''; const d=new Date(ts); return d.toLocaleDateString(); }
+      
+      modal.innerHTML=`
+        <div style="background:#0F0E0D;border:2px solid #8CFF8A;border-radius:18px;width:100%;max-width:460px;max-height:90vh;display:flex;flex-direction:column;box-shadow:0 20px 60px rgba(0,0,0,0.9);overflow:hidden;">
+          <div style="padding:16px;border-bottom:1px solid #2A2825;display:flex;justify-content:space-between;align-items:center;gap:12px;">
+            <div style="color:#F5F1E8;font-weight:800;font-size:15px;display:flex;align-items:center;gap:8px;"><span>📚</span><span>My Offline Papers (${all.length})</span><span style="background:#8CFF8A;color:#000;font-size:9px;font-weight:800;padding:3px 8px;border-radius:999px;">PDF VIEWER</span></div>
+            <button id="zed-lib-close" style="background:#F5F1E8;color:#000;border:none;width:36px;height:36px;border-radius:10px;font-weight:800;cursor:pointer;display:flex;align-items:center;justify-content:center;">✕</button>
+          </div>
+          <div style="padding:12px 16px;border-bottom:1px solid #1F1D1B;background:#141312;">
+            <div style="position:relative;">
+              <span style="position:absolute;left:12px;top:50%;transform:translateY(-50%);font-size:14px;">🔍</span>
+              <input id="zed-lib-search" type="text" placeholder="Search offline papers..." autocomplete="off" style="width:100%;height:44px;background:#1A1917;border:1px solid #2A2825;border-radius:12px;padding:0 14px 0 38px;color:#F5F1E8;font-size:13px;outline:none;font-family:inherit;">
+            </div>
+          </div>
+          <div id="zed-lib-list" style="flex:1;overflow:auto;padding:12px 12px 16px 12px;background:#0F0E0B;"></div>
+        </div>
+      `;
+      document.body.appendChild(modal);
+      
+      const listWrap = modal.querySelector('#zed-lib-list');
+      const searchInput = modal.querySelector('#zed-lib-search');
+      const closeBtn = modal.querySelector('#zed-lib-close');
+      
+      function renderList(items){
+        if(items.length===0){
+          listWrap.innerHTML=`<div style="text-align:center;padding:32px 16px;color:#9A9590;"><div style="font-size:32px;margin-bottom:12px;">📄</div><div style="font-size:13px;font-weight:600;margin-bottom:6px;">No offline papers yet</div><div style="font-size:11px;">Save papers from the app to view them offline with PDF viewer</div></div>`;
+          return;
+        }
+        listWrap.innerHTML = items.map(f=>`
+          <div class="zed-offline-item" style="background:#1A1917;border:1px solid #2A2825;border-radius:12px;padding:12px;margin-bottom:10px;">
+            <div style="color:#F5F1E8;font-size:13px;font-weight:600;margin-bottom:4px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">${(f.title||'Paper').slice(0,65)}</div>
+            <div style="color:#8CFF8A;font-size:11px;margin-bottom:10px;display:flex;gap:8px;align-items:center;"><span>${formatSize(f.size)}</span><span style="color:#3A3632;">•</span><span style="color:#9A9590;">${formatDate(f.savedAt)}</span><span style="background:#8CFF8A;color:#000;font-size:8px;font-weight:800;padding:2px 6px;border-radius:999px;margin-left:auto;">PDF READY</span></div>
+            <div style="display:flex;gap:8px;">
+              <button data-id="${f.id}" class="zed-lib-view-enhanced" style="flex:1;height:44px;border-radius:11px;background:#8CFF8A;color:#000;font-weight:800;border:none;cursor:pointer;font-size:13px;display:flex;align-items:center;justify-content:center;gap:6px;">📖 View PDF</button>
+              <button data-id="${f.id}" class="zed-lib-del-enhanced" style="width:44px;height:44px;border-radius:11px;background:transparent;border:1px solid #3a2a2a;color:#ff9a9a;cursor:pointer;display:flex;align-items:center;justify-content:center;font-size:16px;">✕</button>
+            </div>
+          </div>
+        `).join('');
+        
+        listWrap.querySelectorAll('.zed-lib-view-enhanced').forEach(btn=>{
+          btn.onclick=async ()=>{
+            const id=btn.dataset.id;
+            try{
+              const db=await openDB();
+              const rec=await new Promise((res,rej)=>{const tx=db.transaction(STORE_NAME,'readonly');const req=tx.objectStore(STORE_NAME).get(id);req.onsuccess=()=>res(req.result||null);req.onerror=()=>rej(req.error);});
+              if(rec&&rec.blob){
+                await window._zedOpenViewerEnhanced(rec.blob,{title:rec.title, id:rec.id});
+              } else {
+                showToast('File not found', true);
+              }
+            }catch(e){ showToast('Error opening', true); }
+          };
+        });
+        listWrap.querySelectorAll('.zed-lib-del-enhanced').forEach(btn=>{
+          btn.onclick=async ()=>{
+            if(confirm('Remove this paper from phone?')){
+              const db=await openDB();
+              await new Promise((res,rej)=>{const tx=db.transaction(STORE_NAME,'readwrite');const req=tx.objectStore(STORE_NAME).delete(btn.dataset.id);req.onsuccess=()=>res();req.onerror=()=>rej(req.error);});
+              showToast('Removed');
+              const updated = all.filter(x=>x.id!==btn.dataset.id);
+              const idx=all.findIndex(x=>x.id===btn.dataset.id);
+              if(idx>-1) all.splice(idx,1);
+              renderList(updated);
+            }
+          };
+        });
+      }
+      
+      renderList(all);
+      searchInput.addEventListener('input', ()=>{
+        const q=searchInput.value.trim().toLowerCase();
+        const filtered=q? all.filter(f=>(f.title||'').toLowerCase().includes(q)) : all;
+        renderList(filtered);
+      });
+      closeBtn.onclick=()=>modal.remove();
+      modal.onclick=(e)=>{ if(e.target===modal) modal.remove(); };
+      setTimeout(()=>{ searchInput.focus(); },100);
+      return;
+    }
+    // Fallback to original
+    return originalShowLib.apply(this, arguments);
+  };
+
+  // Periodically rebind card view buttons to use enhanced viewer
+  setInterval(()=>{
+    document.querySelectorAll('.zed-view-offline-btn').forEach(btn=>{
+      if(btn.dataset.enhancedBound==='1') return;
+      // Preserve original but also add enhanced override
+      const origClick = btn.onclick;
+      btn.dataset.enhancedBound='1';
+      btn.addEventListener('click', async (e)=>{
+        e.preventDefault();
+        e.stopPropagation();
+        // Try to find file id from nearby
+        try{
+          // The button is inside a card that has fileId in closure - we need to get from storage by title
+          const card = btn.closest('div[class*="bg-"][class*="border"][class*="rounded"]') || btn.parentElement.parentElement.parentElement;
+          let title = 'Paper';
+          if(card){
+            const tEl = card.querySelector('.font-semibold');
+            if(tEl) title = tEl.textContent.trim();
+          }
+          const all = await new Promise(async (res)=>{
+            try{
+              const db=await openDB();
+              const tx=db.transaction(STORE_NAME,'readonly');
+              const req=tx.objectStore(STORE_NAME).getAll();
+              req.onsuccess=()=>res(req.result||[]);
+              req.onerror=()=>res([]);
+            }catch{ res([]); }
+          });
+          let found = all.find(f=>f.title===title) || all[0];
+          if(found && found.blob){
+            await window._zedOpenViewerEnhanced(found.blob, {title:found.title, id:found.id});
+          } else if(origClick){
+            origClick.call(btn, e);
+          }
+        }catch(err){
+          console.log('rebind error', err);
+          if(origClick) origClick.call(btn, e);
+        }
+      }, true);
+    });
+  }, 1000);
+
+  console.log('✅ ZED Enhanced PDF Viewer loaded - PDF.js powered - offline ready');
+})();
+</script>
 </body>
 </html>
