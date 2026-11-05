@@ -1699,6 +1699,7 @@ input, select, textarea {
   <meta name="theme-color" content="#8CFF8A">
   <meta name="apple-mobile-web-app-capable" content="yes">
   <meta name="apple-mobile-web-app-title" content="ZED MOTEL">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
   <link rel="apple-touch-icon" href="./icon-192.png">
   <link rel="icon" type="image/png" sizes="192x192" href="./icon-192.png">
   <link rel="icon" type="image/png" sizes="512x512" href="./icon-512.png">
@@ -2130,22 +2131,27 @@ alter table profiles add column if not exists account_code text;
 
 
 <script>
-// PWA Links - Manifest + Service Worker - BY HOPECHAKA - Install Fix
+// PWA Perfect - Manifest + Service Worker Linked - BY HOPECHAKA - Fixes all PWABuilder items
 if ('serviceWorker' in navigator) {
   window.addEventListener('load', async () => {
     try {
       const reg = await navigator.serviceWorker.register('./sw.js', {scope: './'});
-      console.log('✅ SW registered:', reg.scope);
+      console.log('✅ SW registered:', reg.scope, '- Offline caching enabled');
+      // Periodic sync registration
+      if ('periodicSync' in reg) {
+        try { await reg.periodicSync.register('content-sync', {minInterval: 24*60*60*1000}); } catch(e){}
+      }
     } catch(e){ console.log('❌ SW failed', e); }
   });
 }
+// Install prompt
 window.addEventListener('beforeinstallprompt', e => {
-  console.log('✅ PWA is installable!');
+  console.log('✅ PWA is 100% installable!');
   e.preventDefault();
   window.deferredPrompt = e;
   let hint = document.createElement('div');
-  hint.style.cssText='position:fixed;bottom:20px;left:16px;right:16px;background:#8CFF8A;color:#000;padding:14px;border-radius:12px;z-index:999999;font-weight:700;text-align:center;box-shadow:0 8px 32px rgba(0,0,0,0.4);cursor:pointer;';
-  hint.innerHTML='📲 Tap to Install ZED MOTEL<br><small style="font-weight:400">Click here to install as app</small>';
+  hint.style.cssText='position:fixed;bottom:20px;left:16px;right:16px;background:#8CFF8A;color:#000;padding:14px;border-radius:12px;z-index:999999;font-weight:700;text-align:center;box-shadow:0 8px 32px rgba(0,0,0,0.4);cursor:pointer;font-family:sans-serif;';
+  hint.innerHTML='📲 Tap to Install ZED MOTEL<br><small style="font-weight:400">Install as app - works offline!</small>';
   hint.onclick = async () => {
     if(window.deferredPrompt){ window.deferredPrompt.prompt(); const c = await window.deferredPrompt.userChoice; console.log(c.outcome); hint.remove(); }
   };
