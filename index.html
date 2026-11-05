@@ -3876,7 +3876,7 @@ const db=await openDB();return new Promise((res,rej)=>{const tx=db.transaction(S
     wrap.innerHTML = `
       <div style="display:flex;align-items:center;gap:10px;background:#1a1a1a;border:1px solid #333;border-radius:9999px;padding:12px 16px;">
         <span>🔍</span>
-        <input id="zed-v16-input" placeholder="SEARCH HERE" style="flex:1;background:transparent;border:none;outline:none;color:white;font-size:15px;font-weight:700;letter-spacing:0.5px;" />
+        <input id="zed-v16-input" placeholder="SEARCH HERE" style="text-transform:uppercase;" style="flex:1;background:transparent;border:none;outline:none;color:white;font-size:15px;font-weight:700;letter-spacing:0.5px;" />
       </div>
       <div id="zed-v16-info" style="margin-top:10px;color:#888;font-size:13px;padding:0 4px;">Loading videos...</div>
     `;
@@ -4400,6 +4400,207 @@ const db=await openDB();return new Promise((res,rej)=>{const tx=db.transaction(S
   obs.observe(document.body, {childList:true, subtree:true});
   window.addEventListener('resize', forceList);
   console.log('✅ V21 LIST VIEW - single column');
+})();
+</script>
+
+
+<script>
+// === V22 SINGLE SEARCH BAR FIX ===
+(function(){
+  function isVideosTab(){
+    // Detect videos tab active
+    let txt = document.body.innerText || '';
+    if(txt.includes('LIVE FROM VIDEOS TABLE')) return true;
+    // Also check if VIDEOS button looks active (white bg)
+    let videosBtn = Array.from(document.querySelectorAll('button')).find(b=> (b.textContent||'').trim() === 'VIDEOS');
+    if(videosBtn){
+      let style = window.getComputedStyle(videosBtn);
+      // active is white background
+      if(style.backgroundColor.includes('255') || videosBtn.className.includes('bg-white') || videosBtn.className.includes('bg-[white]')) return true;
+    }
+    return document.querySelector('.grid.md\:grid-cols-2.gap-4') && document.querySelector('iframe[src*="youtube"], .yt-lite');
+  }
+
+  function cleanSearchBars(){
+    let videosActive = isVideosTab();
+    
+    // Find all search inputs
+    let inputs = document.querySelectorAll('input');
+    inputs.forEach(inp=>{
+      let ph = (inp.placeholder||'').toLowerCase();
+      if(!ph.includes('search here')) return;
+      if(inp.id === 'zed-v16-input') return; // keep our video search
+      if(inp.id === 'zed-topic-input') return;
+      
+      // This is the OLD top search - hide it when in videos tab
+      if(videosActive){
+        // Hide the pill container
+        let pill = inp.closest('div');
+        // Go up 2 levels to find rounded pill
+        let attempts = 0;
+        while(pill && attempts < 4){
+          let cls = pill.className || '';
+          let hasRounded = cls.includes('rounded') || pill.style.borderRadius;
+          let hasSearch = pill.innerHTML && pill.innerHTML.includes('search here');
+          if(hasRounded || (pill.children.length <= 2 && pill.querySelector('input'))){
+            // Check if this is the top small one (top < 200px)
+            let rect = pill.getBoundingClientRect();
+            if(rect.top < 250 || !videosActive){
+              pill.style.display = 'none';
+              break;
+            }
+          }
+          pill = pill.parentElement;
+          attempts++;
+        }
+        // Fallback hide input's parent
+        if(inp.parentElement) inp.parentElement.style.display = 'none';
+      } else {
+        // Not in videos tab - show top search, hide video search
+        let wrap = document.getElementById('zed-v16-wrap');
+        if(wrap) wrap.style.display = 'none';
+        // Show top one
+        let pill = inp.closest('div');
+        if(pill) pill.style.display = '';
+        if(inp.parentElement) inp.parentElement.style.display = '';
+      }
+    });
+
+    // Ensure only one SEARCH HERE wrap exists
+    let wraps = document.querySelectorAll('#zed-v16-wrap');
+    if(wraps.length > 1){
+      for(let i=1;i<wraps.length;i++) wraps[i].remove();
+    }
+    
+    // Show/hide SEARCH HERE based on tab
+    let bigWrap = document.getElementById('zed-v16-wrap');
+    if(bigWrap){
+      if(videosActive){
+        bigWrap.style.display = 'block';
+        bigWrap.style.margin = '16px 0';
+      } else {
+        bigWrap.style.display = 'none';
+      }
+    }
+  }
+
+  // Run frequently at start, then slower
+  cleanSearchBars();
+  setInterval(cleanSearchBars, 700);
+  let obs = new MutationObserver(()=>cleanSearchBars());
+  obs.observe(document.body, {childList:true, subtree:true});
+  
+  // Also on click of tabs
+  document.addEventListener('click', ()=>{
+    setTimeout(cleanSearchBars, 100);
+    setTimeout(cleanSearchBars, 400);
+  });
+
+  console.log('✅ V22 Single search bar fix - top duplicate hidden in VIDEOS');
+})();
+</script>
+<style>
+/* V22: Ensure only video SEARCH HERE is visible in videos, hide any other small search that sneaks in */
+#zed-v16-wrap {
+  display: block !important;
+}
+#zed-v16-wrap input#zed-v16-input {
+  display: block !important;
+}
+</style>
+
+
+<style>
+/* V23 CAPS LOCK */
+#zed-v16-input {
+  text-transform: uppercase !important;
+  letter-spacing: 0.8px !important;
+}
+#zed-v16-input::placeholder {
+  text-transform: uppercase !important;
+  letter-spacing: 0.8px !important;
+  color: #bbb !important;
+  font-weight: 700 !important;
+}
+/* Hide any lowercase search inputs completely */
+input[placeholder="search here"], input[placeholder="Search here"] {
+  display: none !important;
+}
+</style>
+
+
+<style>
+/* V24 HIGH CONTRAST SEARCH FIX */
+#zed-v16-wrap {
+  background: #1a1a1a !important;
+  border: 1px solid #444 !important;
+}
+#zed-v16-wrap div[style*="background:#1a1a1a"] {
+  background: #1a1a1a !important;
+  border: 1px solid #444 !important;
+}
+#zed-v16-input {
+  background: transparent !important;
+  background-color: transparent !important;
+  color: #FFFFFF !important;
+  -webkit-text-fill-color: #FFFFFF !important;
+  caret-color: #8CFF8A !important;
+  font-size: 16px !important;
+  font-weight: 800 !important;
+  letter-spacing: 0.8px !important;
+  opacity: 1 !important;
+}
+#zed-v16-input::placeholder {
+  color: #AAAAAA !important;
+  opacity: 1 !important;
+  font-weight: 700 !important;
+}
+#zed-v16-input::-webkit-input-placeholder {
+  color: #AAAAAA !important;
+}
+#zed-v16-input::-moz-placeholder {
+  color: #AAAAAA !important;
+}
+#zed-v16-input:-ms-input-placeholder {
+  color: #AAAAAA !important;
+}
+/* Prevent browser autofill white background */
+#zed-v16-input:-webkit-autofill,
+#zed-v16-input:-webkit-autofill:hover,
+#zed-v16-input:-webkit-autofill:focus {
+  -webkit-box-shadow: 0 0 0px 1000px #1a1a1a inset !important;
+  -webkit-text-fill-color: #FFFFFF !important;
+  caret-color: #8CFF8A !important;
+  transition: background-color 5000s ease-in-out 0s !important;
+}
+/* Make the input wrapper not show white box */
+#zed-v16-wrap input:focus {
+  outline: none !important;
+  background: transparent !important;
+  box-shadow: none !important;
+}
+</style>
+<script>
+// V24: Force visible text on typing
+(function(){
+  function fixInput(){
+    let inp = document.getElementById('zed-v16-input');
+    if(!inp) return;
+    inp.style.color = '#FFFFFF';
+    inp.style.background = 'transparent';
+    inp.style.webkitTextFillColor = '#FFFFFF';
+    // Ensure parent is dark
+    let parent = inp.parentElement;
+    if(parent){
+      parent.style.background = '#1a1a1a';
+    }
+  }
+  setInterval(fixInput, 500);
+  document.addEventListener('focusin', (e)=>{
+    if(e.target && e.target.id === 'zed-v16-input'){
+      setTimeout(fixInput, 50);
+    }
+  });
 })();
 </script>
 
