@@ -4710,5 +4710,75 @@ input[placeholder="search here"], input[placeholder="Search here"] {
 })();
 </script>
 
+
+<script>
+// === ZED SCHOLAR V26 PWA AUTO-UPDATE ===
+if ('serviceWorker' in navigator) {
+  navigator.serviceWorker.register('./sw.js').then(reg => {
+    console.log('[ZED] SW registered', reg.scope);
+    // Check for update immediately and every hour
+    reg.update();
+    setInterval(() => reg.update(), 60 * 60 * 1000);
+
+    reg.onupdatefound = () => {
+      const newWorker = reg.installing;
+      console.log('[ZED] New SW found');
+      newWorker.onstatechange = () => {
+        if (newWorker.state === 'installed' && navigator.serviceWorker.controller) {
+          console.log('[ZED] New version ready');
+          showZedUpdateToast();
+        }
+      };
+    };
+  }).catch(err => console.log('[ZED] SW register failed', err));
+
+  // Auto reload when new SW takes control
+  let refreshing = false;
+  navigator.serviceWorker.addEventListener('controllerchange', () => {
+    if (refreshing) return;
+    refreshing = true;
+    console.log('[ZED] New SW controlling - reloading');
+    window.location.reload();
+  });
+}
+
+function showZedUpdateToast(){
+  // Don't show twice
+  if(document.getElementById('zed-update-toast')) return;
+  let toast = document.createElement('div');
+  toast.id = 'zed-update-toast';
+  toast.style.cssText = 'position:fixed;bottom:90px;left:50%;transform:translateX(-50%);background:#1A1917;border:2px solid #8CFF8A;color:#F5F1E8;padding:16px 20px;border-radius:16px;font-size:13px;z-index:9999999;box-shadow:0 12px 40px rgba(0,0,0,0.6);max-width:90vw;text-align:center;font-family:"Bricolage Grotesque",sans-serif;font-weight:600;animation:zedSlideUp 0.4s ease;';
+  toast.innerHTML = `
+    <div style="display:flex;align-items:center;gap:8px;justify-content:center;margin-bottom:6px;">
+      <span style="font-size:18px;">✨</span>
+      <span style="font-weight:800;letter-spacing:0.3px;">NEW UPDATE AVAILABLE</span>
+    </div>
+    <div style="font-size:11px;color:#9A9590;margin-bottom:10px;">Faster videos + fixed search + tap to pause</div>
+    <button id="zed-update-btn" style="background:#8CFF8A;color:#000;border:none;padding:10px 18px;border-radius:10px;font-weight:800;font-size:13px;cursor:pointer;width:100%;">Tap to Update Now</button>
+  `;
+  // Add animation
+  let style = document.createElement('style');
+  style.textContent = '@keyframes zedSlideUp{from{transform:translateX(-50%) translateY(100px);opacity:0}to{transform:translateX(-50%) translateY(0);opacity:1}}';
+  document.head.appendChild(style);
+  
+  document.body.appendChild(toast);
+  document.getElementById('zed-update-btn').onclick = () => {
+    toast.innerHTML = '<div style="padding:8px;">🔄 Updating...</div>';
+    // Force SW to skip waiting
+    if(navigator.serviceWorker.controller){
+      navigator.serviceWorker.controller.postMessage({type:'SKIP_WAITING'});
+    }
+    setTimeout(()=>{ window.location.reload(); }, 800);
+  };
+  // Auto update after 6 sec if user doesn't tap
+  setTimeout(()=>{
+    if(document.body.contains(toast)){
+      toast.querySelector('#zed-update-btn').textContent = 'Updating...';
+      setTimeout(()=>window.location.reload(), 600);
+    }
+  }, 6000);
+}
+</script>
+
 </body>
 </html>
