@@ -2401,37 +2401,35 @@ window.addEventListener('beforeinstallprompt', e => {
 </script>
 
 
+
+
+
+
+
+
 <script>
-// ZED SCHOLAR - DUAL SAVE FIX: Saves to App (IndexedDB) + Phone Downloads folder + View Offline
-// Fixes: Can't find in Documents + Can't view in app
+// ZED SCHOLAR - V6 PRIVATE STORAGE ONLY - No Downloads folder leak - Fast Refresh - Searchable Offline Library
+// Keeps Supabase intact
 (function(){
   const DB_NAME='zed_internal_storage_v2',STORE_NAME='offline_files';
+  const SUPABASE_ANON_KEY = 'sb_publishable_74vo5_RlNXb0U0TrNLCdCQ_8zjDwFni';
+  
   function openDB(){return new Promise((res,rej)=>{const r=indexedDB.open(DB_NAME,2);r.onupgradeneeded=e=>{const db=e.target.result;if(!db.objectStoreNames.contains(STORE_NAME)){db.createObjectStore(STORE_NAME,{keyPath:'id'});}};r.onsuccess=()=>res(r.result);r.onerror=()=>rej(r.error);});}
+  
   async function saveToInternalStorage(id,url,meta){
-    // Supabase public storage needs CORS + apikey header for reliability
-    const supabaseAnonKey = 'sb_publishable_74vo5_RlNXb0U0TrNLCdCQ_8zjDwFni';
     const resp=await fetch(url,{
       mode:'cors',
       cache:'no-store',
       headers: {
-        'apikey': supabaseAnonKey,
-        'Authorization': `Bearer ${supabaseAnonKey}`
+        'apikey': SUPABASE_ANON_KEY,
+        'Authorization': `Bearer ${SUPABASE_ANON_KEY}`
       }
     });
-    if(!resp.ok) throw new Error('Network '+resp.status+' - check data bundle');
+    if(!resp.ok) throw new Error('Network '+resp.status+' - check data');
     const blob=await resp.blob();
-    // VALIDATION: Reject fake HTML pages or tiny errors
-    if(blob.size < 1024) throw new Error('File too small ('+blob.size+'B) - link may be expired');
+    if(blob.size < 1024) throw new Error('File too small - link expired');
     if(blob.type && blob.type.includes('text/html')){
-      const txt=await blob.text().then(t=>t.slice(0,500)).catch(()=> '');
-      throw new Error('Got HTML page not PDF - Supabase link expired or needs auth');
-    }
-    // Quick check for PDF magic bytes if possible
-    const slice = blob.slice(0,5);
-    const header = await slice.text().catch(()=> '');
-    if(header && !header.includes('%PDF') && blob.type && !blob.type.includes('pdf') && blob.size < 5000){
-      // allow but warn
-      console.warn('Blob may not be PDF:', header);
+      throw new Error('Got HTML not PDF - link expired');
     }
     const db=await openDB();
     return new Promise((res,rej)=>{
@@ -2441,25 +2439,6 @@ window.addEventListener('beforeinstallprompt', e => {
       req.onsuccess=()=>res(rec);
       req.onerror=()=>rej(req.error);
     });
-  }
-  // CLEANUP old corrupted entries with colliding short IDs
-  async function cleanupOldCorrupted(){
-    try{
-      const all=await getAllDownloaded();
-      for(let rec of all){
-        // Old buggy IDs were exactly 35-36 chars: 'paper_' + 30 chars
-        if(rec.id && rec.id.length <= 36 && rec.id.startsWith('paper_')){
-          console.log('Removing old corrupted ID:', rec.id);
-          await removeFromInternalStorage(rec.id);
-        }
-        // Also remove entries with suspicious 1.5MB fake size if blob is HTML
-        if(rec.blob && rec.blob.size){
-          if(rec.blob.type && rec.blob.type.includes('text/html')){
-            await removeFromInternalStorage(rec.id);
-          }
-        }
-      }
-    }catch(e){ console.log('cleanup error', e); }
   }
   async function getFromInternalStorage(id){
     try{const db=await openDB();return new Promise((res,rej)=>{const tx=db.transaction(STORE_NAME,'readonly');const req=tx.objectStore(STORE_NAME).get(id);req.onsuccess=()=>res(req.result||null);req.onerror=()=>rej(req.error);});}catch{return null;}
@@ -2471,18 +2450,21 @@ window.addEventListener('beforeinstallprompt', e => {
     const db=await openDB();return new Promise((res,rej)=>{const tx=db.transaction(STORE_NAME,'readwrite');const req=tx.objectStore(STORE_NAME).delete(id);req.onsuccess=()=>res();req.onerror=()=>rej(req.error);});
   }
   function formatSize(b){if(!b) return '';if(b<1024) return b+' B';if(b<1024*1024) return (b/1024).toFixed(1)+' KB';return (b/1024/1024).toFixed(1)+' MB';}
-  function showToast(m,e){
+  function showToast(m,isError){
     let t=document.getElementById('zed-offline-toast');
     if(!t){
       t=document.createElement('div');t.id='zed-offline-toast';
       t.innerHTML='<span id="zed-toast-text"></span>';
-      t.style.cssText='position:fixed;bottom:20px;left:50%;transform:translateX(-50%) translateY(100px);background:#1A1917;border:2px solid #8CFF8A;color:#F5F1E8;padding:14px 22px;border-radius:14px;font-size:13px;z-index:999999;transition:transform 0.3s ease;box-shadow:0 10px 30px rgba(0,0,0,0.5);max-width:90vw;text-align:center;';
+      t.style.cssText='position:fixed;bottom:20px;left:50%;transform:translateX(-50%) translateY(120px);background:#1A1917;border:2px solid #8CFF8A;color:#F5F1E8;padding:14px 22px;border-radius:14px;font-size:13px;z-index:9999999;transition:transform 0.35s cubic-bezier(.2,.8,.2,1);box-shadow:0 10px 30px rgba(0,0,0,0.5);max-width:90vw;text-align:center;font-family:"Bricolage Grotesque",sans-serif;font-weight:600;';
       document.body.appendChild(t);
     }
-    const x=document.getElementById('zed-toast-text');if(x) x.textContent=m;
-    t.style.borderColor=e?'#ff9a9a':'#8CFF8A';t.style.transform='translateX(-50%) translateY(0)';
-    setTimeout(()=>{t.style.transform='translateX(-50%) translateY(100px)';},5000);
+    const txt=document.getElementById('zed-toast-text');if(txt) txt.textContent=m;
+    t.style.borderColor=isError?'#ff9a9a':'#8CFF8A';
+    t.style.transform='translateX(-50%) translateY(0)';
+    clearTimeout(t._hide);
+    t._hide=setTimeout(()=>{t.style.transform='translateX(-50%) translateY(120px)';},4000);
   }
+
   function openOfflineViewer(blob,meta){
     let modal=document.getElementById('zed-pdf-modal'),iframe=document.getElementById('zed-pdf-viewer'),titleEl=document.getElementById('zed-pdf-title');
     if(!modal){
@@ -2499,284 +2481,362 @@ window.addEventListener('beforeinstallprompt', e => {
     const blobUrl=URL.createObjectURL(blob);window._curBlobUrl=blobUrl;
     modal.style.display='flex';document.body.style.overflow='hidden';iframe.src=blobUrl;
   }
-  
-  function triggerRealDownload(blob,fileName){
-    try{
-      const url=URL.createObjectURL(blob);
-      const a=document.createElement('a');
-      a.href=url;
-      a.download=fileName||'ZED_SCHOLAR_Paper.pdf';
-      a.style.display='none';
-      document.body.appendChild(a);
-      a.click();
-      setTimeout(()=>{URL.revokeObjectURL(url);a.remove();},2000);
-      return true;
-    }catch(err){
-      console.log('Real download failed',err);
-      return false;
-    }
-  }
+  window._zedOpenViewer=openOfflineViewer;
 
+  // --- FAST PATCH FOR MAIN CARDS (NO View Offline button, NO Save to Documents, NO Downloads folder) ---
+  let _patchRunning=false;
   async function patchDownloads(){
-    const links=document.querySelectorAll('a');
-    for(let link of links){
-      const txt=(link.textContent||'').trim().toUpperCase();
-      if(txt!=='DOWNLOAD') continue;
-      const url=link.href;
-      if(!url||!url.includes('http')) continue;
-      if(link.closest('.zed-offline-fixed-v2')) continue;
-      
-      const fileId='paper_'+btoa(url).replace(/[^a-zA-Z0-9]/g,''); // FIXED: full hash, no slice(0,30) which caused all papers to share same ID -> fake DOWNLOADED
-      const card=link.closest('div[class*="bg-"][class*="border"][class*="rounded"]')||link.parentElement?.parentElement;
-      if(!card) continue;
-      if(card.querySelector('.zed-offline-fixed-v2')) continue;
-      
-      let existing=await getFromInternalStorage(fileId);
-      // FIXED: Verify blob actually exists and has real size, not just entry
-      if(existing && (!existing.blob || existing.blob.size < 1024)){
-        // Corrupted entry - delete it
-        try{ await removeFromInternalStorage(fileId); }catch{}
-        existing=null;
-      }
-      const isDl=!!(existing && existing.blob && existing.blob.size > 1024);
-      const titleEl=card.querySelector('div[class*="font-semibold"]');
-      const title=titleEl?.textContent||'Paper';
-      const fileName=title.replace(/[^a-zA-Z0-9]/g,'_').slice(0,40)+'.pdf';
-      
-      const wrapper=document.createElement('div');
-      wrapper.className='zed-offline-fixed-v2';
-      wrapper.style.cssText='display:flex;flex-direction:column;gap:8px;width:100%;margin-top:12px;';
-      
-      if(!isDl){
-        const saveBtn=document.createElement('button');
-        saveBtn.style.cssText='width:100%;height:48px;border-radius:12px;background:#FFD700;color:#000;display:flex;align-items:center;justify-content:center;gap:8px;font-size:13px;font-weight:800;cursor:pointer;border:none;';
-        saveBtn.innerHTML='⬇ Download to Phone';
-        saveBtn.onclick=async (e)=>{
-          e.preventDefault();
-          saveBtn.disabled=true;saveBtn.innerHTML='⏳ Downloading... Please wait';
-          saveBtn.style.opacity='0.7';
-          try{
-            const rec=await saveToInternalStorage(fileId,url,{title,fileName});
-            // Also trigger real download to Downloads folder so user finds it in Documents
-            triggerRealDownload(rec.blob,fileName);
-            showToast(`✓ Saved! ${title} (${formatSize(rec.size)}) - Find in: App (View Offline) + Phone Downloads folder!`);
-            wrapper.remove();
-            setTimeout(patchDownloads,600);
-          }catch(err){
-            saveBtn.innerHTML='❌ Failed - Tap to retry (Check data)';
-            saveBtn.style.background='#ff9a9a';
-            showToast('Download failed: '+err.message+' - Need data bundle for first download',true);
-            setTimeout(()=>{saveBtn.innerHTML='⬇ Download to Phone';saveBtn.disabled=false;saveBtn.style.opacity='1';saveBtn.style.background='#FFD700';},3000);
+    if(_patchRunning) return;
+    _patchRunning=true;
+    try{
+      const links=document.querySelectorAll('a');
+      for(let link of links){
+        const txt=(link.textContent||'').trim().toUpperCase();
+        if(txt!=='DOWNLOAD') continue;
+        const url=link.href;
+        if(!url||!url.includes('http')) continue;
+        if(link.closest('.zed-offline-fixed-v2')) continue;
+        // Skip if already processed in this cycle via data attribute on parent
+        const card=link.closest('div[class*="bg-"][class*="border"][class*="rounded"]')||link.parentElement?.parentElement;
+        if(!card) continue;
+        if(card.dataset.zedV6==='1') continue;
+        // Do not double-process if wrapper already exists
+        if(card.querySelector('.zed-offline-fixed-v2')) continue;
+
+        const fileId='paper_'+btoa(url).replace(/[^a-zA-Z0-9]/g,'');
+        let existing=null;
+        try{ existing=await getFromInternalStorage(fileId); }catch{}
+        if(existing && (!existing.blob || existing.blob.size < 1024)){
+          try{ await removeFromInternalStorage(fileId); }catch{}
+          existing=null;
+        }
+        const isDl=!!(existing && existing.blob && existing.blob.size > 1024);
+        const titleEl=card.querySelector('div[class*="font-semibold"]') || card.querySelector('[class*="font-bold"]');
+        const title=titleEl?.textContent?.replace('DOWNLOADED','').trim()||'Paper';
+        const fileName=title.replace(/[^a-zA-Z0-9]/g,'_').slice(0,40)+'.pdf';
+
+        const wrapper=document.createElement('div');
+        wrapper.className='zed-offline-fixed-v2';
+        wrapper.style.cssText='display:flex;flex-direction:column;gap:8px;width:100%;margin-top:12px;';
+
+        if(!isDl){
+          // NOT DOWNLOADED STATE
+          const saveBtn=document.createElement('button');
+          saveBtn.style.cssText='width:100%;height:48px;border-radius:12px;background:#FFD700;color:#000;display:flex;align-items:center;justify-content:center;gap:8px;font-size:13px;font-weight:800;cursor:pointer;border:none;';
+          saveBtn.innerHTML='⬇ Download to Phone';
+          saveBtn.onclick=async (e)=>{
+            e.preventDefault();
+            saveBtn.disabled=true;saveBtn.innerHTML='⏳ Downloading...';
+            saveBtn.style.opacity='0.7';
+            try{
+              const rec=await saveToInternalStorage(fileId,url,{title,fileName});
+              // FAST REFRESH - instantly show DOWNLOADED UI without waiting for observer
+              showToast(`✓ Saved! ${title} - Open 📚 My Offline Papers`);
+              // Build downloaded UI immediately in same wrapper
+              const badge=document.createElement('div');
+              badge.style.cssText='background:#8CFF8A;color:#000;font-size:11px;font-weight:800;padding:7px 14px;border-radius:999px;display:inline-flex;align-self:flex-start;';
+              badge.textContent=`DOWNLOADED ✓ ${formatSize(rec.size)} • No Data Needed`;
+
+              const hint=document.createElement('div');
+              hint.style.cssText='font-size:11px;color:#8CFF8A;background:rgba(140,255,138,0.1);padding:6px 10px;border-radius:8px;border:1px dashed rgba(140,255,138,0.3);';
+              hint.textContent='📚 Find it in My Offline Papers - Tap 📚 button';
+
+              const viewOnline2=document.createElement('a');
+              viewOnline2.href=url;viewOnline2.target='_blank';viewOnline2.rel='noopener';
+              viewOnline2.style.cssText='width:100%;height:38px;border-radius:8px;background:transparent;color:#9A9590;border:1px solid #2A2825;display:flex;align-items:center;justify-content:center;font-size:11px;text-decoration:none;';
+              viewOnline2.textContent='View Online (Needs Data)';
+
+              const row=document.createElement('div');row.style.cssText='display:flex;gap:8px;';
+              const rmBtn=document.createElement('button');
+              rmBtn.style.cssText='flex:1;height:38px;border-radius:8px;background:transparent;color:#ff9a9a;border:1px solid #ff9a9a;display:flex;align-items:center;justify-content:center;font-size:11px;cursor:pointer;';
+              rmBtn.textContent='Remove';
+              rmBtn.onclick=async (e2)=>{
+                e2.preventDefault();
+                if(confirm('Remove from phone?')){
+                  await removeFromInternalStorage(fileId);
+                  showToast('Removed');
+                  card.dataset.zedV6='0';
+                  setTimeout(patchDownloads,100);
+                }
+              };
+              row.appendChild(rmBtn);
+
+              wrapper.innerHTML='';
+              wrapper.appendChild(badge);
+              wrapper.appendChild(hint);
+              wrapper.appendChild(viewOnline2);
+              wrapper.appendChild(row);
+
+              if(titleEl && !card.querySelector('.zed-badge-top')){
+                const topBadge=document.createElement('span');
+                topBadge.className='zed-badge-top';
+                topBadge.style.cssText='background:#8CFF8A;color:#000;font-size:8px;font-weight:800;padding:2px 8px;border-radius:999px;margin-left:8px;vertical-align:middle;';
+                topBadge.textContent='DOWNLOADED';
+                titleEl.appendChild(topBadge);
+              }
+              card.dataset.zedV6='1';
+              // Update floating button count instantly
+              updateLibBtnCount();
+              // Also trigger global refresh for other observers
+              setTimeout(patchDownloads,150);
+            }catch(err){
+              saveBtn.innerHTML='❌ Failed - Tap to retry';
+              saveBtn.style.background='#ff9a9a';
+              showToast('Download failed: '+err.message,true);
+              setTimeout(()=>{saveBtn.innerHTML='⬇ Download to Phone';saveBtn.disabled=false;saveBtn.style.opacity='1';saveBtn.style.background='#FFD700';},2500);
+            }
+          };
+          const viewOnline=document.createElement('a');
+          viewOnline.href=url;viewOnline.target='_blank';viewOnline.rel='noopener';
+          viewOnline.style.cssText='width:100%;height:40px;border-radius:10px;background:transparent;color:#9A9590;border:1px solid #2A2825;display:flex;align-items:center;justify-content:center;font-size:12px;text-decoration:none;';
+          viewOnline.textContent='View Online (Needs Data)';
+          wrapper.appendChild(saveBtn);
+          wrapper.appendChild(viewOnline);
+        } else {
+          // DOWNLOADED STATE - NO View Offline button on main card, NO Save to Documents, NO Downloads folder leak
+          const badge=document.createElement('div');
+          badge.style.cssText='background:#8CFF8A;color:#000;font-size:11px;font-weight:800;padding:7px 14px;border-radius:999px;display:inline-flex;align-self:flex-start;gap:6px;';
+          badge.innerHTML=`DOWNLOADED ✓ ${formatSize(existing.size)} • No Data Needed`;
+
+          const hint=document.createElement('div');
+          hint.style.cssText='font-size:11px;color:#8CFF8A;background:rgba(140,255,138,0.08);padding:6px 10px;border-radius:8px;border:1px dashed rgba(140,255,138,0.25);';
+          hint.textContent='📚 Open My Offline Papers to view';
+
+          const viewOnline=document.createElement('a');
+          viewOnline.href=url;viewOnline.target='_blank';viewOnline.rel='noopener';
+          viewOnline.style.cssText='width:100%;height:38px;border-radius:8px;background:transparent;color:#9A9590;border:1px solid #2A2825;display:flex;align-items:center;justify-content:center;font-size:11px;text-decoration:none;';
+          viewOnline.textContent='View Online (Needs Data)';
+
+          const row=document.createElement('div');row.style.cssText='display:flex;gap:8px;';
+          const rmBtn=document.createElement('button');
+          rmBtn.style.cssText='flex:1;height:38px;border-radius:8px;background:transparent;color:#ff9a9a;border:1px solid #ff9a9a;display:flex;align-items:center;justify-content:center;font-size:11px;cursor:pointer;';
+          rmBtn.textContent='Remove';
+          rmBtn.onclick=async (e)=>{
+            e.preventDefault();
+            if(confirm('Remove from phone?')){
+              await removeFromInternalStorage(fileId);
+              showToast('Removed from app');
+              card.dataset.zedV6='0';
+              wrapper.remove();
+              setTimeout(patchDownloads,100);
+              updateLibBtnCount();
+            }
+          };
+          row.appendChild(rmBtn);
+
+          wrapper.appendChild(badge);
+          wrapper.appendChild(hint);
+          wrapper.appendChild(viewOnline);
+          wrapper.appendChild(row);
+
+          if(titleEl && !card.querySelector('.zed-badge-top')){
+            const topBadge=document.createElement('span');
+            topBadge.className='zed-badge-top';
+            topBadge.style.cssText='background:#8CFF8A;color:#000;font-size:8px;font-weight:800;padding:2px 8px;border-radius:999px;margin-left:8px;vertical-align:middle;';
+            topBadge.textContent='DOWNLOADED';
+            titleEl.appendChild(topBadge);
           }
-        };
-        const viewOnline=document.createElement('a');
-        viewOnline.href=url;viewOnline.target='_blank';viewOnline.rel='noopener';
-        viewOnline.style.cssText='width:100%;height:40px;border-radius:10px;background:transparent;color:#9A9590;border:1px solid #2A2825;display:flex;align-items:center;justify-content:center;font-size:12px;text-decoration:none;';
-        viewOnline.textContent='View Online (Needs Data)';
-        wrapper.appendChild(saveBtn);
-        wrapper.appendChild(viewOnline);
-      } else {
-        const badge=document.createElement('div');
-        badge.style.cssText='background:#8CFF8A;color:#000;font-size:11px;font-weight:800;padding:7px 14px;border-radius:999px;display:inline-flex;align-self:flex-start;gap:6px;';
-        badge.innerHTML=`DOWNLOADED ✓ ${formatSize(existing.size)} • No Data Needed`;
-        
-        const viewOffline=document.createElement('button');
-        viewOffline.style.cssText='width:100%;height:52px;border-radius:14px;background:#8CFF8A;color:#000;display:flex;align-items:center;justify-content:center;gap:8px;font-size:15px;font-weight:800;cursor:pointer;border:none;box-shadow:0 6px 20px rgba(140,255,138,0.3);';
-        viewOffline.innerHTML='▶ View Offline (No Data Needed)';
-        viewOffline.onclick=async (e)=>{
-          e.preventDefault();
-          const f=await getFromInternalStorage(fileId);
-          if(f&&f.blob) openOfflineViewer(f.blob,{title:f.title});
-          else showToast('File not found - please download again',true);
-        };
-        
-        const row=document.createElement('div');row.style.cssText='display:flex;gap:8px;';
-        const exportBtn=document.createElement('button');
-        exportBtn.style.cssText='flex:1;height:38px;border-radius:8px;background:#FFD700;color:#000;display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:700;cursor:pointer;border:none;';
-        exportBtn.textContent='Save to Documents';
-        exportBtn.onclick=async (e)=>{
-          e.preventDefault();
-          const f=await getFromInternalStorage(fileId);
-          if(f&&f.blob){
-            triggerRealDownload(f.blob,f.fileName||fileName);
-            showToast('✓ Exported to Downloads folder - Check Documents!');
-          }
-        };
-        const rmBtn=document.createElement('button');
-        rmBtn.style.cssText='flex:1;height:38px;border-radius:8px;background:transparent;color:#ff9a9a;border:1px solid #ff9a9a;display:flex;align-items:center;justify-content:center;font-size:11px;cursor:pointer;';
-        rmBtn.textContent='Remove';
-        rmBtn.onclick=async (e)=>{
-          e.preventDefault();
-          if(confirm('Remove from phone?')){
-            await removeFromInternalStorage(fileId);
-            showToast('Removed from app');
-            wrapper.remove();
-            setTimeout(patchDownloads,500);
-          }
-        };
-        row.appendChild(exportBtn);row.appendChild(rmBtn);
-        
-        const viewOnline=document.createElement('a');
-        viewOnline.href=url;viewOnline.target='_blank';viewOnline.rel='noopener';
-        viewOnline.style.cssText='width:100%;height:38px;border-radius:8px;background:transparent;color:#9A9590;border:1px solid #2A2825;display:flex;align-items:center;justify-content:center;font-size:11px;text-decoration:none;';
-        viewOnline.textContent='View Online (Needs Data)';
-        
-        wrapper.appendChild(badge);
-        wrapper.appendChild(viewOffline);
-        wrapper.appendChild(viewOnline);
-        wrapper.appendChild(row);
-        
-        // Also show in title area if not already
-        if(titleEl && !card.querySelector('.zed-badge-top')){
-          const topBadge=document.createElement('span');
-          topBadge.className='zed-badge-top';
-          topBadge.style.cssText='background:#8CFF8A;color:#000;font-size:8px;font-weight:800;padding:2px 8px;border-radius:999px;margin-left:8px;vertical-align:middle;';
-          topBadge.textContent='DOWNLOADED';
-          titleEl.appendChild(topBadge);
+        }
+
+        const parent=link.parentElement;
+        if(parent){
+          parent.innerHTML='';
+          parent.appendChild(wrapper);
+          card.dataset.zedV6='1';
         }
       }
-      
-      const parent=link.parentElement;
-      if(parent){
-        parent.innerHTML='';
-        parent.appendChild(wrapper);
+    }catch(e){ console.log('patch err',e); }
+    _patchRunning=false;
+  }
+  window._zedPatch=patchDownloads;
+
+  async function updateLibBtnCount(){
+    try{
+      const all=await getAllDownloaded();
+      const btn=document.getElementById('zed-offline-library-btn');
+      if(btn){
+        let c=btn.querySelector('.zed-count-badge');
+        if(!c){
+          c=document.createElement('div');
+          c.className='zed-count-badge';
+          c.style.cssText='position:absolute;top:-6px;right:-6px;background:#8CFF8A;color:#000;font-size:10px;font-weight:800;min-width:20px;height:20px;border-radius:999px;display:flex;align-items:center;justify-content:center;padding:0 5px;border:2px solid #1A1917;';
+          btn.appendChild(c);
+        }
+        c.textContent=all.length;
+        c.style.display=all.length>0?'flex':'none';
       }
-    }
+    }catch{}
   }
 
-  // Also create Offline Library floating button
   function createOfflineLibraryBtn(){
-    if(document.getElementById('zed-offline-library-btn')) return;
+    if(document.getElementById('zed-offline-library-btn')){ updateLibBtnCount(); return; }
     const btn=document.createElement('button');
     btn.id='zed-offline-library-btn';
     btn.style.cssText='position:fixed;bottom:90px;right:16px;z-index:9998;background:#1A1917;border:2px solid #8CFF8A;color:#8CFF8A;width:56px;height:56px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:24px;cursor:pointer;box-shadow:0 6px 20px rgba(0,0,0,0.4);';
     btn.innerHTML='📚';
-    btn.title='My Downloads - View Offline Papers';
-    btn.onclick=async ()=>{
-      const all=await getAllDownloaded();
-      if(all.length===0){showToast('No offline papers yet - Download some first!');return;}
-      let list=all.map(f=>`• ${f.title} (${formatSize(f.size)})`).join('\n');
-      let msg=`You have ${all.length} offline papers:\n\n${list}\n\nTap any paper's View Offline button to open with no data!\nFiles also in Phone Downloads folder.`;
-      alert(msg);
-    };
+    btn.title='My Offline Papers';
+    btn.onclick=()=>window.showRealOfflineLibrary();
     document.body.appendChild(btn);
+    updateLibBtnCount();
   }
 
-  // Run cleanup once on load to remove fake entries
-  setTimeout(()=>{ try{ cleanupOldCorrupted().then(()=> patchDownloads()); }catch(e){} }, 1500);
-
-  const observer=new MutationObserver(()=>{patchDownloads();createOfflineLibraryBtn();});
-  observer.observe(document.body,{childList:true,subtree:true});
-  setInterval(()=>{patchDownloads();createOfflineLibraryBtn();},1200);
-  document.addEventListener('DOMContentLoaded',()=>{setTimeout(()=>{patchDownloads();createOfflineLibraryBtn();},800);});
-  window.addEventListener('load',()=>{setTimeout(()=>{patchDownloads();createOfflineLibraryBtn();},1000);});
-})();
-</script>
-
-
-<script>
-// V5 - Real Offline Library Modal + Ensure View Button Visible (Supabase Maintained)
-(function(){
-  const DB_NAME='zed_internal_storage_v2', STORE_NAME='offline_files';
-  function openDB(){return new Promise((res,rej)=>{ const r=indexedDB.open(DB_NAME,2); r.onupgradeneeded=e=>{ const db=e.target.result; if(!db.objectStoreNames.contains(STORE_NAME)){db.createObjectStore(STORE_NAME,{keyPath:'id'});}}; r.onsuccess=()=>res(r.result); r.onerror=()=>rej(r.error); });}
-  async function getAll(){ try{ const db=await openDB(); return new Promise((res,rej)=>{ const tx=db.transaction(STORE_NAME,'readonly'); const req=tx.objectStore(STORE_NAME).getAll(); req.onsuccess=()=>res(req.result||[]); req.onerror=()=>rej(req.error); }); }catch{return [];} }
-  async function getOne(id){ try{ const db=await openDB(); return new Promise((res,rej)=>{ const tx=db.transaction(STORE_NAME,'readonly'); const req=tx.objectStore(STORE_NAME).get(id); req.onsuccess=()=>res(req.result||null); req.onerror=()=>rej(req.error); }); }catch{return null;} }
-  async function removeOne(id){ const db=await openDB(); return new Promise((res,rej)=>{ const tx=db.transaction(STORE_NAME,'readwrite'); const req=tx.objectStore(STORE_NAME).delete(id); req.onsuccess=()=>res(); req.onerror=()=>rej(req.error); }); }
-  function formatSize(b){ if(!b) return '0 B'; if(b<1024) return b+' B'; if(b<1024*1024) return (b/1024).toFixed(1)+' KB'; return (b/1024/1024).toFixed(2)+' MB'; }
-  
+  // --- SEARCHABLE OFFLINE LIBRARY MODAL V6 ---
   window.showRealOfflineLibrary = async function(){
-    const all=await getAll();
+    const all=await getAllDownloaded();
     let old=document.getElementById('zed-offline-lib-modal'); if(old) old.remove();
     const modal=document.createElement('div');
     modal.id='zed-offline-lib-modal';
-    modal.style.cssText='position:fixed;inset:0;z-index:999999;background:rgba(0,0,0,0.85);display:flex;align-items:center;justify-content:center;padding:20px;';
-    let listHtml='';
-    if(all.length===0){
-      listHtml='<div style="text-align:center;padding:20px;color:#9A9590;">No offline papers yet<br><small style="font-size:11px;">Tap ⬇ Download to Phone on any paper first (needs data once)</small></div>';
-    }else{
-      listHtml=all.map(f=>`
-        <div style="background:#1A1917;border:1px solid #2A2825;border-radius:12px;padding:12px;margin-bottom:10px;">
-          <div style="color:#F5F1E8;font-size:13px;font-weight:600;margin-bottom:4px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">${(f.title||'Paper').slice(0,60)}</div>
-          <div style="color:#8CFF8A;font-size:11px;margin-bottom:10px;">${formatSize(f.size)} • ${new Date(f.savedAt).toLocaleDateString()}</div>
-          <div style="display:flex;gap:8px;">
-            <button data-id="${f.id}" class="zed-lib-view" style="flex:1;height:48px;border-radius:12px;background:#8CFF8A;color:#000;font-weight:800;border:none;cursor:pointer;font-size:14px;">▶ View Offline</button>
-            <button data-id="${f.id}" class="zed-lib-del" style="width:48px;height:48px;border-radius:12px;background:transparent;border:1px solid #ff9a9a;color:#ff9a9a;cursor:pointer;">✕</button>
-          </div>
-        </div>
-      `).join('');
-    }
+    modal.style.cssText='position:fixed;inset:0;z-index:999999;background:rgba(0,0,0,0.88);display:flex;align-items:center;justify-content:center;padding:16px;backdrop-filter:blur(6px);';
+
+    // Build modal structure with search
     modal.innerHTML=`
-      <div style="background:#0F0E0D;border:2px solid #8CFF8A;border-radius:16px;width:100%;max-width:420px;max-height:85vh;display:flex;flex-direction:column;box-shadow:0 20px 60px rgba(0,0,0,0.8);">
-        <div style="padding:16px;border-bottom:1px solid #2A2825;display:flex;justify-content:space-between;align-items:center;">
-          <div style="color:#F5F1E8;font-weight:700;font-size:15px;">📚 My Offline Papers (${all.length})</div>
-          <button id="zed-lib-close" style="background:#F5F1E8;color:#000;border:none;padding:8px 14px;border-radius:10px;font-weight:700;cursor:pointer;">✕</button>
+      <div style="background:#0F0E0D;border:2px solid #8CFF8A;border-radius:18px;width:100%;max-width:440px;max-height:88vh;display:flex;flex-direction:column;box-shadow:0 20px 60px rgba(0,0,0,0.9);overflow:hidden;">
+        <div style="padding:14px 16px;border-bottom:1px solid #2A2825;display:flex;justify-content:space-between;align-items:center;gap:12px;">
+          <div style="color:#F5F1E8;font-weight:800;font-size:15px;display:flex;align-items:center;gap:8px;"><span>📚</span><span id="zed-lib-title">My Offline Papers (${all.length})</span></div>
+          <button id="zed-lib-close" style="background:#F5F1E8;color:#000;border:none;width:36px;height:36px;border-radius:10px;font-weight:800;cursor:pointer;display:flex;align-items:center;justify-content:center;">✕</button>
         </div>
-        <div style="padding:16px;overflow-y:auto;flex:1;-webkit-overflow-scrolling:touch;">${listHtml}</div>
-        <div style="padding:12px;border-top:1px solid #2A2825;text-align:center;color:#9A9590;font-size:10px;">Supabase files • Works with no data • Also in Phone Downloads folder</div>
+        <div style="padding:12px 16px;border-bottom:1px solid #1F1D1B;background:#141312;">
+          <div style="position:relative;">
+            <span style="position:absolute;left:12px;top:50%;transform:translateY(-50%);font-size:14px;">🔍</span>
+            <input id="zed-lib-search" type="text" placeholder="Search my offline papers..." autocomplete="off" style="width:100%;height:42px;background:#1A1917;border:1px solid #2A2825;border-radius:12px;padding:0 14px 0 38px;color:#F5F1E8;font-size:13px;outline:none;font-family:inherit;">
+          </div>
+          <div id="zed-lib-search-info" style="font-size:11px;color:#9A9590;margin-top:8px;display:none;"></div>
+        </div>
+        <div id="zed-lib-list-wrap" style="padding:12px 16px;overflow-y:auto;flex:1;-webkit-overflow-scrolling:touch;min-height:200px;"></div>
+        <div style="padding:10px 16px;border-top:1px solid #2A2825;text-align:center;color:#9A9590;font-size:10px;letter-spacing:0.02em;">Private app storage • Works with no data • Only in My Offline Papers</div>
       </div>
     `;
     document.body.appendChild(modal);
-    modal.onclick=(e)=>{ if(e.target===modal) modal.remove(); };
-    document.getElementById('zed-lib-close').onclick=()=>modal.remove();
-    modal.querySelectorAll('.zed-lib-view').forEach(btn=>{
-      btn.onclick=async ()=>{
-        const id=btn.dataset.id;
-        const rec=await getOne(id);
-        if(rec&&rec.blob){
-          modal.remove();
-          // Use existing openOfflineViewer if available
-          if(window._zedOpenViewer){ window._zedOpenViewer(rec.blob,{title:rec.title}); }
-          else{
-            const url=URL.createObjectURL(rec.blob);
-            const win=window.open(url,'_blank');
-            if(!win){
-              // fallback iframe modal
-              let m=document.getElementById('zed-pdf-modal');
-              if(m){ m.style.display='flex'; document.getElementById('zed-pdf-viewer').src=url; }
-            }
-          }
-        }
-      };
-    });
-    modal.querySelectorAll('.zed-lib-del').forEach(btn=>{
-      btn.onclick=async ()=>{
-        if(confirm('Remove this paper from phone?')){
-          await removeOne(btn.dataset.id);
-          modal.remove();
-          setTimeout(()=>window.showRealOfflineLibrary(),300);
-          // Trigger patch to update cards
-          if(window._zedPatch) window._zedPatch();
-        }
-      };
-    });
-  };
-  
-  // Override the old 📚 button to use real modal
-  function hookLibraryBtn(){
-    const oldBtn=document.getElementById('zed-offline-library-btn');
-    if(oldBtn){
-      oldBtn.onclick=window.showRealOfflineLibrary;
+    const closeBtn=document.getElementById('zed-lib-close');
+    const searchInput=document.getElementById('zed-lib-search');
+    const listWrap=document.getElementById('zed-lib-list-wrap');
+    const titleEl=document.getElementById('zed-lib-title');
+    const infoEl=document.getElementById('zed-lib-search-info');
+
+    function formatDate(ts){
+      try{ return new Date(ts).toLocaleDateString(); }catch{ return ''; }
     }
-    // Also hook clean button if exists
-  }
-  setInterval(hookLibraryBtn,1000);
-  document.addEventListener('DOMContentLoaded',()=>{ setTimeout(hookLibraryBtn,1000); });
-  window.addEventListener('load',()=>{ setTimeout(hookLibraryBtn,1500); });
-  
-  // Expose for other scripts
-  window._zedPatch=null;
-  window._zedOpenViewer=null;
-  
-  // Fix cards visibility continuously
-  setInterval(()=>{
-    document.querySelectorAll('div[class*="bg-"][class*="border"][class*="rounded"]').forEach(card=>{
-      if(card.textContent.includes('MATHEMATICS')||card.textContent.includes('Download')||card.textContent.includes('DOWNLOADED')){
-        card.style.height='auto';
-        card.style.minHeight='auto';
-        card.style.overflow='visible';
+
+    function renderList(items, query){
+      if(!items || items.length===0){
+        if(all.length===0){
+          listWrap.innerHTML='<div style="text-align:center;padding:30px 20px;color:#9A9590;"><div style="font-size:32px;margin-bottom:10px;">📄</div>No offline papers yet<br><small style="font-size:11px;line-height:1.4;display:block;margin-top:6px;">Tap ⬇ Download to Phone on any paper first<br>(needs data once, then works offline)</small></div>';
+          infoEl.style.display='none';
+        } else {
+          listWrap.innerHTML=`<div style="text-align:center;padding:24px 16px;color:#9A9590;"><div style="font-size:22px;margin-bottom:8px;">🔍</div>No match for "<span style="color:#F5F1E8;font-weight:600;">${(query||'').slice(0,30)}</span>"<br><button id="zed-clear-search" style="margin-top:12px;background:#2A2825;color:#F5F1E8;border:1px solid #3A3632;padding:8px 14px;border-radius:8px;font-size:11px;cursor:pointer;">Clear search</button></div>`;
+          const clr=document.getElementById('zed-clear-search');
+          if(clr) clr.onclick=()=>{ searchInput.value=''; renderList(all,''); titleEl.textContent=`My Offline Papers (${all.length})`; infoEl.style.display='none'; searchInput.focus(); };
+          infoEl.style.display='block';
+          infoEl.textContent=`0 results for "${query}"`;
+        }
+        return;
+      }
+      if(query){
+        infoEl.style.display='block';
+        infoEl.innerHTML=`<span style="color:#8CFF8A;font-weight:700;">${items.length}</span> found for "<span style="color:#F5F1E8;">${query.slice(0,30)}</span>"`;
+      } else {
+        infoEl.style.display='none';
+      }
+      titleEl.textContent=`My Offline Papers (${all.length})${query?` • ${items.length} shown`:''}`;
+      listWrap.innerHTML=items.map(f=>`
+        <div class="zed-offline-item" data-title="${(f.title||'').replace(/"/g,'&quot;')}" style="background:#1A1917;border:1px solid #2A2825;border-radius:12px;padding:12px;margin-bottom:10px;transition:border-color 0.2s;">
+          <div style="color:#F5F1E8;font-size:13px;font-weight:600;margin-bottom:4px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">${(f.title||'Paper').slice(0,65)}</div>
+          <div style="color:#8CFF8A;font-size:11px;margin-bottom:10px;display:flex;gap:8px;align-items:center;"><span>${formatSize(f.size)}</span><span style="color:#3A3632;">•</span><span style="color:#9A9590;">${formatDate(f.savedAt)}</span></div>
+          <div style="display:flex;gap:8px;">
+            <button data-id="${f.id}" class="zed-lib-view" style="flex:1;height:44px;border-radius:11px;background:#8CFF8A;color:#000;font-weight:800;border:none;cursor:pointer;font-size:13px;display:flex;align-items:center;justify-content:center;gap:6px;">▶ View Offline</button>
+            <button data-id="${f.id}" class="zed-lib-del" style="width:44px;height:44px;border-radius:11px;background:transparent;border:1px solid #3a2a2a;color:#ff9a9a;cursor:pointer;display:flex;align-items:center;justify-content:center;font-size:16px;">✕</button>
+          </div>
+        </div>
+      `).join('');
+
+      // Attach events
+      listWrap.querySelectorAll('.zed-lib-view').forEach(btn=>{
+        btn.onclick=async ()=>{
+          const id=btn.dataset.id;
+          const db=await openDB();
+          const rec=await new Promise((res,rej)=>{const tx=db.transaction(STORE_NAME,'readonly');const req=tx.objectStore(STORE_NAME).get(id);req.onsuccess=()=>res(req.result||null);req.onerror=()=>rej(req.error);});
+          if(rec&&rec.blob){
+            modal.remove();
+            openOfflineViewer(rec.blob,{title:rec.title});
+          } else {
+            showToast('File not found',true);
+          }
+        };
+      });
+      listWrap.querySelectorAll('.zed-lib-del').forEach(btn=>{
+        btn.onclick=async ()=>{
+          if(confirm('Remove this paper from phone?')){
+            await removeFromInternalStorage(btn.dataset.id);
+            // Update local all array
+            const idx=all.findIndex(x=>x.id===btn.dataset.id);
+            if(idx>-1) all.splice(idx,1);
+            showToast('Removed');
+            const q=searchInput.value.trim();
+            const filtered=q? all.filter(f=>(f.title||'').toLowerCase().includes(q.toLowerCase())) : all;
+            renderList(filtered,q);
+            patchDownloads();
+            updateLibBtnCount();
+          }
+        };
+      });
+    }
+
+    // Initial render
+    renderList(all,'');
+
+    // Search handler - instant filter
+    searchInput.addEventListener('input', ()=>{
+      const q=searchInput.value.trim();
+      const filtered=q? all.filter(f=>(f.title||'').toLowerCase().includes(q.toLowerCase())) : all;
+      renderList(filtered,q);
+    });
+
+    // Close handlers
+    modal.onclick=(e)=>{ if(e.target===modal) modal.remove(); };
+    closeBtn.onclick=()=>modal.remove();
+    // Focus search after open
+    setTimeout(()=>{ searchInput.focus(); },100);
+  };
+
+  // Remove any old Save to Documents / Downloads folder mentions continuously
+  function cleanOldUI(){
+    document.querySelectorAll('button, a, div, span').forEach(el=>{
+      const t=(el.textContent||'').trim();
+      if(t==='Save to Documents' && el.tagName==='BUTTON'){
+        // hide export button that leaks to Downloads
+        el.style.display='none';
       }
     });
-  },1000);
+    // Remove footer text Also in Phone Downloads folder
+    document.querySelectorAll('div').forEach(d=>{
+      if(d.textContent && d.textContent.includes('Also in Phone Downloads folder')){
+        d.textContent='Private app storage • Works with no data • Only in My Offline Papers';
+        d.style.fontSize='10px';
+        d.style.color='#9A9590';
+      }
+    });
+  }
+
+  // Observers & intervals - faster refresh
+  const observer=new MutationObserver(()=>{
+    patchDownloads();
+    createOfflineLibraryBtn();
+    cleanOldUI();
+  });
+  setTimeout(()=>{
+    observer.observe(document.getElementById('root')||document.body,{childList:true,subtree:true});
+    patchDownloads();
+    createOfflineLibraryBtn();
+    cleanOldUI();
+  },500);
+
+  setInterval(()=>{ patchDownloads(); createOfflineLibraryBtn(); cleanOldUI(); updateLibBtnCount(); },1200);
+
+  document.addEventListener('DOMContentLoaded',()=>{ setTimeout(()=>{patchDownloads();createOfflineLibraryBtn();},300); });
+  window.addEventListener('load',()=>{ setTimeout(()=>{patchDownloads();createOfflineLibraryBtn();},600); });
+
+  // Also patch on custom event
+  window.addEventListener('zed-offline-updated', ()=>{ setTimeout(patchDownloads,100); });
 })();
 </script>
 
