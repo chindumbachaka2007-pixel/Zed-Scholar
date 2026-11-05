@@ -1694,7 +1694,15 @@ input, select, textarea {
 @keyframes toastSlide{from{transform:translateY(20px);opacity:0}to{transform:translateY(0);opacity:1}}
 .zed-no-results{display:none;text-align:center;padding:32px 16px;background:#1A1A1A;border:1px solid #2A2A2A;border-radius:14px;margin-top:16px;color:#888;}
 .zed-no-results.show{display:block}
-</style></head>
+</style>
+  <link rel="manifest" href="./manifest.json">
+  <meta name="theme-color" content="#8CFF8A">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-title" content="ZED MOTEL">
+  <link rel="apple-touch-icon" href="./icon-192.png">
+  <link rel="icon" type="image/png" sizes="192x192" href="./icon-192.png">
+  <link rel="icon" type="image/png" sizes="512x512" href="./icon-512.png">
+</head>
 <body>
 
 <div id="zed-splash-screen">
@@ -2120,5 +2128,30 @@ alter table profiles add column if not exists account_code text;
 })();
 </script>
 
+
+<script>
+// PWA Links - Manifest + Service Worker - BY HOPECHAKA - Install Fix
+if ('serviceWorker' in navigator) {
+  window.addEventListener('load', async () => {
+    try {
+      const reg = await navigator.serviceWorker.register('./sw.js', {scope: './'});
+      console.log('✅ SW registered:', reg.scope);
+    } catch(e){ console.log('❌ SW failed', e); }
+  });
+}
+window.addEventListener('beforeinstallprompt', e => {
+  console.log('✅ PWA is installable!');
+  e.preventDefault();
+  window.deferredPrompt = e;
+  let hint = document.createElement('div');
+  hint.style.cssText='position:fixed;bottom:20px;left:16px;right:16px;background:#8CFF8A;color:#000;padding:14px;border-radius:12px;z-index:999999;font-weight:700;text-align:center;box-shadow:0 8px 32px rgba(0,0,0,0.4);cursor:pointer;';
+  hint.innerHTML='📲 Tap to Install ZED MOTEL<br><small style="font-weight:400">Click here to install as app</small>';
+  hint.onclick = async () => {
+    if(window.deferredPrompt){ window.deferredPrompt.prompt(); const c = await window.deferredPrompt.userChoice; console.log(c.outcome); hint.remove(); }
+  };
+  document.body.appendChild(hint);
+  setTimeout(()=>{ try{hint.remove()}catch{} }, 15000);
+});
+</script>
 </body>
 </html>
