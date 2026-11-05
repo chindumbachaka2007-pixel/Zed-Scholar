@@ -4202,7 +4202,7 @@ const db=await openDB();return new Promise((res,rej)=>{const tx=db.transaction(S
       if(wrap.classList.contains('yt-loaded')) return;
       wrap.classList.add('yt-loaded');
       let iframe = document.createElement('iframe');
-      iframe.src = 'https://www.youtube-nocookie.com/embed/' + videoId + '?autoplay=1&modestbranding=1&rel=0&iv_load_policy=3&playsinline=1';
+      iframe.src = 'https://www.youtube-nocookie.com/embed/' + videoId + '?autoplay=1&modestbranding=1&rel=0&iv_load_policy=3&playsinline=1&controls=1&fs=1&enablejsapi=1';
       iframe.setAttribute('allow', 'accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture');
       iframe.setAttribute('allowfullscreen', '');
       iframe.setAttribute('title', title || 'YouTube video');
@@ -4601,6 +4601,112 @@ input[placeholder="search here"], input[placeholder="Search here"] {
       setTimeout(fixInput, 50);
     }
   });
+})();
+</script>
+
+
+<style>
+/* V25 FIX - MAKE CONTROLS TAPPABLE */
+.yt-lite.yt-loaded::before {
+  display: none !important;
+  content: none !important;
+}
+.yt-lite.yt-loaded .yt-play-btn,
+.yt-lite.yt-loaded .yt-title-bar {
+  display: none !important;
+}
+.yt-lite.yt-loaded {
+  background: #000 !important;
+  cursor: default !important;
+}
+.yt-lite.yt-loaded iframe {
+  position: relative !important;
+  z-index: 10 !important;
+  pointer-events: auto !important;
+  width: 100% !important;
+  height: 100% !important;
+  display: block !important;
+}
+/* Ensure parent card doesn't intercept clicks when playing */
+.grid.md\:grid-cols-2.gap-4 > div:has(.yt-lite.yt-loaded) {
+  pointer-events: auto !important;
+}
+</style>
+<script>
+// V25 - Fix pause/seek controls
+(function(){
+  function enhanceIframes(){
+    document.querySelectorAll('.yt-lite.yt-loaded iframe').forEach(iframe=>{
+      if(iframe.dataset.controlsFixed) return;
+      iframe.dataset.controlsFixed = '1';
+      // Ensure iframe allows all needed
+      iframe.setAttribute('allow', 'accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; fullscreen');
+      iframe.setAttribute('allowfullscreen', '');
+      // Stop parent click handlers from closing player when interacting with video
+      iframe.addEventListener('click', (e)=>{
+        e.stopPropagation();
+      });
+      // Also the wrapper should not close on click when video is loaded
+      let lite = iframe.closest('.yt-lite');
+      if(lite){
+        lite.addEventListener('click', (e)=>{
+          // If already loaded, don't re-trigger play, let iframe handle it
+          if(lite.classList.contains('yt-loaded')){
+            e.stopPropagation();
+          }
+        }, true);
+        // Remove any card-level close behavior
+        let card = lite.closest('div[class*="bg-"][class*="border"]') || lite.parentElement?.parentElement;
+        if(card){
+          // Clone to remove old listeners? Instead override onclick
+          card.style.cursor = 'default';
+        }
+      }
+    });
+  }
+
+  // Patch createFacade to add controls=1 and better params
+  const origCreateFacade = window.createFacade;
+  // Override our earlier facade creation by patching the global function if exists, else patch via mutation
+  function patchFacadeCreation(){
+    document.querySelectorAll('.yt-lite:not(.yt-loaded)').forEach(lite=>{
+      if(lite.dataset.patchedControls) return;
+      lite.dataset.patchedControls = '1';
+      // Re-bind click to use better iframe url
+      lite.addEventListener('click', function handler(e){
+        if(lite.classList.contains('yt-loaded')) return;
+        // This will be handled by the original facade click, but we ensure our CSS fix runs after
+        setTimeout(enhanceIframes, 100);
+        setTimeout(enhanceIframes, 500);
+      });
+    });
+  }
+
+  // Override the iframe src creation in the V19 script by monkey patching the wrapper's click
+  // Find all yt-lite and ensure they create iframe with controls=1
+  document.addEventListener('click', (e)=>{
+    let lite = e.target.closest('.yt-lite');
+    if(lite && !lite.classList.contains('yt-loaded')){
+      // Let original handler run first, then fix
+      setTimeout(()=>{
+        let iframe = lite.querySelector('iframe');
+        if(iframe && !iframe.src.includes('controls=1')){
+          let src = iframe.src;
+          if(!src.includes('controls=')){
+            iframe.src = src + '&controls=1&fs=1&playsinline=1';
+          }
+          enhanceIframes();
+        }
+      }, 200);
+    }
+  }, true);
+
+  setInterval(()=>{
+    enhanceIframes();
+    patchFacadeCreation();
+  }, 800);
+
+  console.log('✅ V25 Controls fix - overlay removed, pause/seek now works');
 })();
 </script>
 
