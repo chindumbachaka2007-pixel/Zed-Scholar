@@ -1822,16 +1822,76 @@ if (typeof pdfjsLib !== 'undefined') {
 
   <link rel="preconnect" href="https://img.youtube.com">
   <link rel="preconnect" href="https://i.ytimg.com">
-  <link rel="dns-prefetch" href="https://img.youtube.com">
+  <link rel="preconnect" href="https://www.youtube.com">
   <style>
-  .zed-lite-yt{position:relative;width:100%;aspect-ratio:16/9;background:#0a0a0a;cursor:pointer;overflow:hidden}
-  .zed-lite-yt img{width:100%;height:100%;object-fit:cover;display:block}
-  .zed-lite-yt .zed-play{position:absolute;width:48px;height:48px;border-radius:50%;background:rgba(140,255,138,0.95);display:flex;align-items:center;justify-content:center;box-shadow:0 6px 20px rgba(0,0,0,.5)}
-  .zed-lite-yt .zed-play::after{content:'';margin-left:2px;border-left:12px solid #000;border-top:8px solid transparent;border-bottom:8px solid transparent;display:block}
-  .grid.md\:grid-cols-2.gap-4{display:grid !important;grid-template-columns:repeat(2,minmax(0,1fr)) !important;gap:10px !important}
-  .zed-skeleton{background:linear-gradient(90deg,#1a1a1a 25%,#222 50%,#1a1a1a 75%);background-size:200% 100%;animation:zedShim 1.2s infinite;border-radius:14px;height:180px}
-  @keyframes zedShim{0%{background-position:200% 0}100%{background-position:-200% 0}}
-  #zed-v22-wrap{grid-column:1 / -1;display:flex;flex-direction:column;align-items:center;gap:12px;padding:16px 0}
+  /* V24 - LIST NOT GRID */
+  .grid.md\:grid-cols-2.gap-4{
+    display:flex !important;
+    flex-direction:column !important;
+    gap:18px !important;
+    grid-template-columns:none !important;
+  }
+  .zed-list-card{
+    width:100% !important;
+    max-width:640px;
+    margin:0 auto;
+    background:var(--surface, #1A1A1A);
+    border:1px solid var(--border, #2A2A2A);
+    border-radius:18px;
+    overflow:hidden;
+    cursor:pointer;
+    transition:transform .15s;
+  }
+  .zed-list-card:active{transform:scale(0.98)}
+  .zed-thumb-wrap{
+    position:relative;
+    width:100%;
+    aspect-ratio:16/9;
+    background:#000;
+    overflow:hidden;
+  }
+  .zed-thumb-wrap img{
+    width:100%;height:100%;object-fit:cover;display:block;
+  }
+  .zed-play-big{
+    position:absolute;left:50%;top:50%;transform:translate(-50%,-50%);
+    width:64px;height:64px;border-radius:50%;
+    background:#8CFF8A;color:#000;
+    display:flex;align-items:center;justify-content:center;
+    box-shadow:0 8px 30px rgba(0,0,0,0.5);
+    font-size:0;
+  }
+  .zed-play-big::after{
+    content:'';
+    margin-left:4px;
+    border-left:18px solid #000;
+    border-top:11px solid transparent;
+    border-bottom:11px solid transparent;
+    display:block;
+  }
+  .zed-tap-hint{
+    position:absolute;bottom:10px;right:10px;
+    background:rgba(0,0,0,0.75);color:#fff;
+    font-size:11px;font-weight:700;
+    padding:6px 12px;border-radius:999px;
+    letter-spacing:0.04em;
+  }
+  #zed-big-modal{
+    position:fixed;inset:0;z-index:9999999;
+    background:rgba(0,0,0,0.96);
+    display:none;flex-direction:column;
+    align-items:center;justify-content:center;
+    padding:12px;
+  }
+  #zed-big-video-wrap{
+    width:100%;max-width:900px;
+    aspect-ratio:16/9;
+    background:#000;border-radius:16px;
+    overflow:hidden;position:relative;
+  }
+  #zed-big-video-wrap iframe{
+    width:100%;height:100%;border:0;display:block;
+  }
   </style>
 </head>
 <body>
@@ -3704,11 +3764,10 @@ const db=await openDB();return new Promise((res,rej)=>{const tx=db.transaction(S
 <script>// V18 disabled</script>
 
 
-
 <script>
-// ZED V23 - 4 AT A TIME + BIG PLAYER MODAL - FIX PLAY
+// ZED V24 - 4 VIDEOS LIST (NO GRID) + WORKING BIG PLAYER
 (function(){
-  console.log('✅ V23 BIG PLAYER + 4 at a time');
+  console.log('✅ V24 LIST 4 + BIG PLAYER FIX');
   const SUPA_URL = "https://biastmylavwhlsccvpyu.supabase.co";
   const SUPA_KEY = "sb_publishable_74vo5_RlNXb0U0TrNLCdCQ_8zjDwFni";
   const PAGE_SIZE = 4;
@@ -3719,46 +3778,66 @@ const db=await openDB();return new Promise((res,rej)=>{const tx=db.transaction(S
   
   function getYTId(url){
     if(!url) return null;
-    let m = url.match(/(?:youtube\.com\/watch\?v=|youtu\.be\/|youtube\.com\/embed\/|youtube-nocookie\.com\/embed\/)([^&\s?"'\/]+)/);
-    return m ? m[1] : null;
+    // More robust regex
+    url = url.trim();
+    let patterns = [
+      /(?:youtube\.com\/watch\?v=|youtu\.be\/|youtube\.com\/embed\/)([^&\s?"'\/]+)/,
+      /youtube-nocookie\.com\/embed\/([^&\s?"'\/]+)/
+    ];
+    for(let p of patterns){
+      let m = url.match(p);
+      if(m) return m[1];
+    }
+    // If url itself is just ID
+    if(/^[a-zA-Z0-9_-]{11}$/.test(url)) return url;
+    return null;
   }
   
-  // --- BIG PLAYER MODAL ---
-  function ensureBigModal(){
-    if(document.getElementById('zed-big-modal')) return document.getElementById('zed-big-modal');
-    let modal = document.createElement('div');
+  function ensureModal(){
+    let modal = document.getElementById('zed-big-modal');
+    if(modal) return modal;
+    modal = document.createElement('div');
     modal.id='zed-big-modal';
-    modal.style.cssText='position:fixed;inset:0;z-index:9999999;background:rgba(0,0,0,0.94);display:none;flex-direction:column;align-items:center;justify-content:center;padding:16px;backdrop-filter:blur(10px);';
     modal.innerHTML=`
-      <div style="width:100%;max-width:960px;display:flex;justify-content:space-between;align-items:center;margin-bottom:14px;gap:12px;">
-        <div id="zed-big-title" style="color:#F5F1E8;font-weight:700;font-size:15px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;flex:1;">Video</div>
-        <button id="zed-big-close" style="background:#F5F1E8;color:#000;border:none;min-width:44px;height:44px;border-radius:50%;font-weight:800;font-size:16px;cursor:pointer;display:flex;align-items:center;justify-content:center;box-shadow:0 4px 20px rgba(0,0,0,0.4);">✕</button>
+      <div style="width:100%;max-width:900px;display:flex;justify-content:space-between;align-items:center;margin-bottom:12px;gap:12px;">
+        <div id="zed-big-title" style="color:#fff;font-weight:700;font-size:15px;flex:1;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;"></div>
+        <button id="zed-big-close" style="background:#fff;color:#000;border:none;width:44px;height:44px;border-radius:50%;font-weight:800;font-size:18px;cursor:pointer;flex-shrink:0;">✕</button>
       </div>
-      <div id="zed-big-video-wrap" style="width:100%;max-width:960px;aspect-ratio:16/9;background:#000;border-radius:16px;overflow:hidden;box-shadow:0 20px 80px rgba(0,0,0,0.9);position:relative;border:1px solid #222;"></div>
-      <div style="margin-top:14px;display:flex;gap:8px;align-items:center;">
-        <div style="color:#8CFF8A;font-size:11px;background:rgba(140,255,138,0.12);border:1px solid rgba(140,255,138,0.2);padding:6px 12px;border-radius:999px;">🔊 Tap speaker for sound if muted</div>
-        <div style="color:#888;font-size:11px;">Esc to close</div>
+      <div id="zed-big-video-wrap"></div>
+      <div style="margin-top:12px;color:#888;font-size:12px;text-align:center;">If video doesn't play, tap the YouTube logo to open in YouTube app<br><span style="color:#8CFF8A;">Pinch to zoom • Esc to close</span></div>
+      <div style="margin-top:16px;display:flex;gap:10px;">
+        <button id="zed-open-yt" style="background:#FF0000;color:#fff;border:none;padding:10px 18px;border-radius:999px;font-weight:700;font-size:12px;cursor:pointer;">Open in YouTube</button>
+        <button id="zed-close2" style="background:#222;color:#fff;border:1px solid #444;padding:10px 18px;border-radius:999px;font-weight:700;font-size:12px;cursor:pointer;">Close</button>
       </div>
     `;
     document.body.appendChild(modal);
-    modal.addEventListener('click', (e)=>{ if(e.target===modal) closeBig(); });
-    document.getElementById('zed-big-close').addEventListener('click', closeBig);
-    document.addEventListener('keydown', (e)=>{ if(e.key==='Escape') closeBig(); });
+    modal.addEventListener('click', (e)=>{ if(e.target===modal) closeModal(); });
+    document.getElementById('zed-big-close').addEventListener('click', closeModal);
+    document.getElementById('zed-close2').addEventListener('click', closeModal);
+    document.getElementById('zed-open-yt').addEventListener('click', ()=>{
+      let ytId = modal.dataset.ytId;
+      if(ytId) window.open(`https://www.youtube.com/watch?v=${ytId}`, '_blank');
+    });
+    document.addEventListener('keydown', (e)=>{ if(e.key==='Escape') closeModal(); });
     return modal;
   }
   
   function openBig(ytId, title){
-    let modal = ensureBigModal();
-    document.getElementById('zed-big-title').textContent = title || 'Playing video';
+    if(!ytId){ alert('No YouTube ID found for this video'); return; }
+    let modal = ensureModal();
+    modal.dataset.ytId = ytId;
+    document.getElementById('zed-big-title').textContent = title || 'Video';
     let wrap = document.getElementById('zed-big-video-wrap');
-    // Use youtube.com (not nocookie) + fs=1 + enable fullscreen - this fixes Error 153 and play issues
-    wrap.innerHTML = `<iframe src="https://www.youtube.com/embed/${ytId}?autoplay=1&modestbranding=1&rel=0&playsinline=1&fs=1&enablejsapi=1&origin=${encodeURIComponent(location.origin)}" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; fullscreen" allowfullscreen="true" title="${(title||'').replace(/"/g,'')}" style="width:100%;height:100%;border:0;display:block;"></iframe>`;
+    // FIX: No autoplay, let user tap play inside - more reliable on mobile
+    // Use youtube.com not nocookie for better play
+    let embedUrl = `https://www.youtube.com/embed/${ytId}?modestbranding=1&rel=0&playsinline=1&fs=1&iv_load_policy=3`;
+    wrap.innerHTML = `<iframe src="${embedUrl}" allow="accelerometer; clipboard-write; encrypted-media; gyroscope; picture-in-picture; fullscreen" allowfullscreen title="${(title||'video').replace(/"/g,'')}" loading="eager"></iframe>`;
     modal.style.display='flex';
     document.body.style.overflow='hidden';
-    console.log('▶️ Big player opened', ytId);
+    console.log('▶️ Opening big player', ytId, embedUrl);
   }
   
-  function closeBig(){
+  function closeModal(){
     let modal = document.getElementById('zed-big-modal');
     if(!modal) return;
     modal.style.display='none';
@@ -3766,117 +3845,90 @@ const db=await openDB();return new Promise((res,rej)=>{const tx=db.transaction(S
     if(wrap) wrap.innerHTML='';
     document.body.style.overflow='';
   }
-  window._zedCloseBig = closeBig;
+  window._zedClose = closeModal;
   
-  // --- CARDS ---
-  function createCard(video){
+  function createListCard(video){
     let ytId = getYTId(video.video_url || video.youtube_url || video.url || '');
+    console.log('Card video', video.title, 'url', video.video_url, 'ytId', ytId);
     let card = document.createElement('div');
-    card.className = 'bg-[var(--surface)] border border-[var(--border)] rounded-[14px] overflow-hidden';
+    card.className='zed-list-card';
     card.dataset.search = (video.title+' '+(video.subject||'')+' '+(video.grade||'')+' '+(video.topic||'')+' '+(video.description||'')).toLowerCase();
     card.dataset.vid = video.id;
-    card.style.cursor='pointer';
     
-    let aspect = document.createElement('div');
-    aspect.className='aspect-video bg-black';
-    aspect.style.position='relative';
+    let thumbWrap = document.createElement('div');
+    thumbWrap.className='zed-thumb-wrap';
     
     if(ytId){
-      let wrap = document.createElement('div');
-      wrap.className='zed-lite-yt';
-      wrap.style.cssText='position:relative;width:100%;aspect-ratio:16/9;background:#0a0a0a;cursor:pointer;overflow:hidden;display:flex;align-items:center;justify-content:center;';
       let img = document.createElement('img');
       img.loading='lazy';
-      img.decoding='async';
-      img.dataset.src = `https://img.youtube.com/vi/${ytId}/mqdefault.jpg`;
-      img.alt = video.title||'';
-      img.style.cssText='width:100%;height:100%;object-fit:cover;display:block;background:#111;';
-      img.onerror=function(){ this.src=`https://img.youtube.com/vi/${ytId}/hqdefault.jpg`; };
+      img.src=`https://img.youtube.com/vi/${ytId}/hqdefault.jpg`;
+      img.alt=video.title||'';
+      img.onerror=function(){ this.src=`https://img.youtube.com/vi/${ytId}/mqdefault.jpg`; };
       let play = document.createElement('div');
-      play.className='zed-play';
-      play.style.cssText='position:absolute;width:48px;height:48px;border-radius:50%;background:rgba(140,255,138,0.95);display:flex;align-items:center;justify-content:center;box-shadow:0 6px 20px rgba(0,0,0,.5);';
-      play.innerHTML='<span style="margin-left:2px;border-left:12px solid #000;border-top:8px solid transparent;border-bottom:8px solid transparent;display:block;"></span>';
-      // Big play hint
+      play.className='zed-play-big';
       let hint = document.createElement('div');
-      hint.style.cssText='position:absolute;bottom:8px;right:8px;background:rgba(0,0,0,0.7);color:#fff;font-size:9px;padding:3px 8px;border-radius:999px;letter-spacing:0.05em;';
-      hint.textContent='TAP TO PLAY BIG';
-      wrap.appendChild(img);
-      wrap.appendChild(play);
-      wrap.appendChild(hint);
-      wrap.addEventListener('click', (e)=>{
-        e.stopPropagation();
-        openBig(ytId, video.title);
-      });
-      aspect.appendChild(wrap);
+      hint.className='zed-tap-hint';
+      hint.textContent='▶ TAP TO PLAY BIG';
+      thumbWrap.appendChild(img);
+      thumbWrap.appendChild(play);
+      thumbWrap.appendChild(hint);
     } else {
-      aspect.innerHTML='<div style="display:flex;align-items:center;justify-content:center;height:100%;color:#555;font-size:11px;">No preview</div>';
+      thumbWrap.innerHTML='<div style="display:flex;align-items:center;justify-content:center;height:100%;color:#666;">No YouTube link</div>';
     }
     
     let body = document.createElement('div');
-    body.className='p-3';
-    body.style.cursor='pointer';
+    body.style.cssText='padding:14px 16px;';
     body.innerHTML=`
-      <div style="font-size:10px;text-transform:uppercase;color:#8CFF8A;letter-spacing:.06em;">${(video.subject||'Video')} • G${video.grade||''}</div>
-      <div style="font-weight:600;font-size:13px;margin-top:4px;line-height:1.3;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden;">${(video.title||'').slice(0,80)}</div>
+      <div style="font-size:11px;text-transform:uppercase;color:#8CFF8A;letter-spacing:0.06em;font-weight:700;">${(video.subject||'Video')} • Grade ${video.grade||''}</div>
+      <div style="font-weight:700;font-size:16px;margin-top:6px;line-height:1.35;color:#F5F1E8;">${(video.title||'Untitled')}</div>
+      <div style="font-size:13px;color:#9A9590;margin-top:6px;line-height:1.4;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden;">${(video.description||'Tap to watch in big player').slice(0,120)}</div>
+      <div style="margin-top:12px;display:inline-flex;align-items:center;gap:6px;background:#1A1A1A;border:1px solid #8CFF8A;color:#8CFF8A;padding:8px 14px;border-radius:999px;font-size:12px;font-weight:700;">▶ Play Big Screen</div>
     `;
-    body.addEventListener('click', ()=>{
-      if(ytId) openBig(ytId, video.title);
+    
+    card.appendChild(thumbWrap);
+    card.appendChild(body);
+    
+    // Make whole card clickable
+    card.addEventListener('click', (e)=>{
+      e.preventDefault();
+      if(ytId){
+        openBig(ytId, video.title);
+      } else {
+        alert('This video has no YouTube link: '+(video.video_url||'missing'));
+      }
     });
     
-    card.appendChild(aspect);
-    card.appendChild(body);
     return card;
   }
   
   function getGrid(){
-    let grids = Array.from(document.querySelectorAll('.grid.md\:grid-cols-2.gap-4')).filter(g=>!g.className.includes('grid-cols-3'));
-    return grids.find(g=>g.children.length>=0) || grids[0];
-  }
-  
-  let imgObserver = new IntersectionObserver((entries)=>{
-    entries.forEach(e=>{
-      if(e.isIntersecting){
-        let img = e.target;
-        if(img.dataset.src){ img.src = img.dataset.src; img.removeAttribute('data-src'); }
-        imgObserver.unobserve(img);
-      }
-    });
-  }, {rootMargin:'400px'});
-  
-  function observeImages(root){
-    (root||document).querySelectorAll('img[data-src]').forEach(img=>imgObserver.observe(img));
+    let grids = document.querySelectorAll('.grid.md\:grid-cols-2.gap-4');
+    return grids[0] || document.querySelector('.grid');
   }
   
   async function fetch4(page){
     if(isLoading || !hasMore) return [];
     isLoading=true;
-    let btn = document.getElementById('zed-v22-btn');
-    let info = document.getElementById('zed-v22-info');
+    let btn = document.getElementById('zed-list-btn');
+    let info = document.getElementById('zed-list-info');
     if(btn){ btn.disabled=true; btn.textContent='Loading 4...'; }
-    if(info) info.textContent=`Loading ${PAGE_SIZE} videos... Page ${page+1}`;
-    
+    if(info) info.textContent=`Loading page ${page+1}...`;
     try{
       let offset = page * PAGE_SIZE;
       let cols = 'id,title,video_url,subject,grade,description,topic,created_at';
       let url = `${SUPA_URL}/rest/v1/videos?select=${cols}&order=created_at.desc&limit=${PAGE_SIZE}&offset=${offset}`;
-      let res = await fetch(url, {headers:{apikey:SUPA_KEY, Authorization:'Bearer '+SUPA_KEY}, cache:'default'});
+      let res = await fetch(url, {headers:{apikey:SUPA_KEY, Authorization:'Bearer '+SUPA_KEY}});
       if(!res.ok) throw new Error(res.status);
       let data = await res.json();
+      console.log('Fetched', data.length, 'page', page, data);
       if(data.length < PAGE_SIZE) hasMore=false;
-      try{
-        let key='zed_v23_cache_4';
-        let existing = page===0 ? [] : JSON.parse(localStorage.getItem(key)||'[]');
-        let merged = [...existing, ...data];
-        let dedup = Array.from(new Map(merged.map(v=>[v.id,v])).values()).slice(0,100);
-        localStorage.setItem(key, JSON.stringify(dedup));
-      }catch{}
+      try{ localStorage.setItem('zed_v24_cache', JSON.stringify([...(JSON.parse(localStorage.getItem('zed_v24_cache')||'[]').slice(0,80)), ...data].slice(0,100))); }catch{}
       return data;
     }catch(e){
-      console.log('fetch error', e);
+      console.error('fetch error', e);
       try{
-        let cached = JSON.parse(localStorage.getItem('zed_v23_cache_4')||'[]');
+        let cached = JSON.parse(localStorage.getItem('zed_v24_cache')||'[]');
         if(cached.length>0){
-          if(page===0) return cached.slice(0,PAGE_SIZE);
           let offset = page*PAGE_SIZE;
           return cached.slice(offset, offset+PAGE_SIZE);
         }
@@ -3884,7 +3936,7 @@ const db=await openDB();return new Promise((res,rej)=>{const tx=db.transaction(S
       return [];
     }finally{
       isLoading=false;
-      if(btn){ btn.disabled=false; btn.textContent = hasMore ? `Load 4 more` : 'All loaded ✓'; }
+      if(btn){ btn.disabled=false; btn.textContent= hasMore ? 'Load 4 more videos' : 'All loaded ✓'; }
     }
   }
   
@@ -3894,50 +3946,38 @@ const db=await openDB();return new Promise((res,rej)=>{const tx=db.transaction(S
     if(!append) grid.innerHTML='';
     videos.forEach(v=>{
       if(grid.querySelector(`[data-vid="${v.id}"]`)) return;
-      grid.appendChild(createCard(v));
+      grid.appendChild(createListCard(v));
     });
-    observeImages(grid);
     ensureUI();
     updateInfo();
   }
   
   function ensureUI(){
-    if(document.getElementById('zed-v22-wrap')) return;
+    if(document.getElementById('zed-list-wrap')) return;
     let grid = getGrid();
     if(!grid) return;
     let wrap = document.createElement('div');
-    wrap.id='zed-v22-wrap';
-    wrap.style.cssText='grid-column:1 / -1;display:flex;flex-direction:column;align-items:center;gap:10px;padding:18px 0;';
+    wrap.id='zed-list-wrap';
+    wrap.style.cssText='display:flex;flex-direction:column;align-items:center;gap:10px;padding:20px 0;max-width:640px;margin:0 auto;width:100%;';
     wrap.innerHTML=`
-      <button id="zed-v22-btn" style="background:#1A1A1A;border:2px solid #8CFF8A;color:#8CFF8A;padding:14px 32px;border-radius:999px;font-weight:800;font-size:14px;cursor:pointer;box-shadow:0 4px 20px rgba(140,255,138,0.15);">Load 4 more</button>
-      <div id="zed-v22-info" style="font-size:11px;color:#888;text-align:center;"></div>
-      <div style="font-size:10px;color:#555;">Tap video = BIG player • 4 at a time • Works offline</div>
+      <button id="zed-list-btn" style="background:#8CFF8A;color:#000;border:none;padding:14px 32px;border-radius:999px;font-weight:800;font-size:14px;cursor:pointer;width:100%;max-width:320px;box-shadow:0 6px 24px rgba(140,255,138,0.25);">Load 4 more videos</button>
+      <div id="zed-list-info" style="font-size:12px;color:#888;text-align:center;"></div>
     `;
     grid.parentNode.insertBefore(wrap, grid.nextSibling);
-    document.getElementById('zed-v22-btn').addEventListener('click', loadMore);
+    document.getElementById('zed-list-btn').addEventListener('click', loadMore);
   }
   
   function updateInfo(){
     let grid = getGrid();
-    let info = document.getElementById('zed-v22-info');
-    let btn = document.getElementById('zed-v22-btn');
+    let info = document.getElementById('zed-list-info');
+    let btn = document.getElementById('zed-list-btn');
     if(!grid || !info) return;
     let count = grid.querySelectorAll('[data-vid]').length;
-    info.textContent = hasMore ? `Showing ${count} • Tap to play BIG • Page ${currentPage}` : `All ${count} videos loaded • Cached for offline`;
+    info.textContent = hasMore ? `Showing ${count} videos • Vertical list • Tap any to play BIG` : `All ${count} videos shown • End of list`;
     if(btn) btn.style.display = hasMore ? 'block' : 'none';
   }
   
   async function loadMore(){
-    let prefetched = window._zedPrefetched;
-    if(prefetched && prefetched.length>0){
-      render(prefetched, true);
-      allVideos=[...allVideos,...prefetched];
-      window._zedPrefetched=null;
-      currentPage++;
-      updateInfo();
-      setTimeout(async ()=>{ window._zedPrefetched = await fetch4(currentPage); }, 500);
-      return;
-    }
     let data = await fetch4(currentPage);
     if(data.length>0){
       allVideos=[...allVideos,...data];
@@ -3950,59 +3990,18 @@ const db=await openDB();return new Promise((res,rej)=>{const tx=db.transaction(S
     currentPage=0; allVideos=[]; hasMore=true;
     let grid = getGrid();
     if(grid){
-      grid.innerHTML = Array(PAGE_SIZE).fill(0).map(()=>'<div style="background:linear-gradient(90deg,#1a1a1a 25%,#222 50%,#1a1a1a 75%);background-size:200% 100%;animation:zedShim 1.2s infinite;border-radius:14px;height:170px;"></div>').join('');
+      grid.innerHTML = Array(PAGE_SIZE).fill(0).map(()=>'<div style="height:260px;background:linear-gradient(90deg,#1a1a1a 25%,#222 50%,#1a1a1a 75%);background-size:200% 100%;animation:zedShim 1.2s infinite;border-radius:18px;"></div>').join('');
     }
     let data = await fetch4(0);
     allVideos=data;
     render(data,false);
     currentPage=1;
-    setTimeout(async ()=>{ window._zedPrefetched = await fetch4(1); }, 1200);
-    setupSearch();
   }
   
-  function setupSearch(){
-    let grid = getGrid();
-    if(!grid || document.getElementById('zed-v23-search')) return;
-    let wrap = document.createElement('div');
-    wrap.id='zed-v23-search';
-    wrap.style.cssText='margin:12px 0;';
-    wrap.innerHTML=`
-      <div style="display:flex;align-items:center;gap:10px;background:#1a1a1a;border:1px solid #333;border-radius:9999px;padding:12px 16px;">
-        <span>🔍</span>
-        <input id="zed-v23-input" placeholder="SEARCH 4 videos here" style="flex:1;background:transparent;border:none;outline:none;color:white;font-size:14px;font-weight:600;" />
-      </div>
-    `;
-    grid.parentNode.insertBefore(wrap, grid);
-    let input = document.getElementById('zed-v23-input');
-    let debounce;
-    input.addEventListener('input', ()=>{
-      clearTimeout(debounce);
-      debounce=setTimeout(()=>{
-        let q = input.value.trim().toLowerCase();
-        let cards = Array.from(grid.querySelectorAll('[data-vid]'));
-        let vis=0;
-        cards.forEach(c=>{
-          if(!q){ c.style.display=''; vis++; }
-          else if((c.dataset.search||'').includes(q)){ c.style.display=''; vis++; }
-          else { c.style.display='none'; }
-        });
-        let info = document.getElementById('zed-v22-info');
-        if(info) info.textContent = q ? `${vis} found for "${q}"` : `Showing ${vis} • Tap to play BIG`;
-      },200);
-    });
-  }
+  setTimeout(initial, 500);
+  setTimeout(initial, 1800);
   
-  setTimeout(initial, 700);
-  setTimeout(initial, 2200);
-  
-  window.addEventListener('scroll', ()=>{
-    if(!hasMore || isLoading) return;
-    if(window.innerHeight + window.scrollY >= document.body.offsetHeight - 700){
-      loadMore();
-    }
-  });
-  
-  console.log('✅ V23 BIG PLAYER ready');
+  console.log('✅ V24 LIST 4 ready - no grid, big player');
 })();
 </script>
 
