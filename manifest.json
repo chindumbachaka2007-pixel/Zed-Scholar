@@ -1,66 +1,115 @@
 {
+  "id": "/",
   "name": "ZED STUDY MOTEL SECURE EDITION BY HOPECHAKA",
   "short_name": "ZED MOTEL",
   "description": "Zambian ECZ Study App - Grade 10-12, Form 1-5 Past Papers, Videos, Docs, Quizzes - Offline Ready",
-  "start_url": "./",
-  "display": "standalone",
-  "background_color": "#0F0E0B",
-  "theme_color": "#8CFF8A",
-  "orientation": "any",
+  "start_url": "./index.html",
   "scope": "./",
+  "display": "standalone",
+  "display_override": [
+    "window-controls-overlay",
+    "standalone",
+    "browser"
+  ],
+  "orientation": "any",
+  "dir": "ltr",
   "lang": "en",
+  "theme_color": "#8CFF8A",
+  "background_color": "#0F0E0B",
   "categories": [
     "education",
     "productivity"
   ],
   "icons": [
     {
-      "src": "icon-192.png",
+      "src": "./icon-192.png",
       "sizes": "192x192",
       "type": "image/png",
       "purpose": "any"
     },
     {
-      "src": "icon-512.png",
+      "src": "./icon-512.png",
       "sizes": "512x512",
       "type": "image/png",
       "purpose": "any"
     },
     {
-      "src": "icon-maskable-192.png",
+      "src": "./icon-192.png",
       "sizes": "192x192",
       "type": "image/png",
       "purpose": "maskable"
     },
     {
-      "src": "icon-maskable-512.png",
+      "src": "./icon-512.png",
       "sizes": "512x512",
       "type": "image/png",
       "purpose": "maskable"
-    },
-    {
-      "src": "icon-180.png",
-      "sizes": "180x180",
-      "type": "image/png",
-      "purpose": "any"
     }
   ],
-  "screenshots": [],
+  "screenshots": [
+    {
+      "src": "./icon-512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "form_factor": "narrow"
+    }
+  ],
   "shortcuts": [
     {
-      "name": "Papers",
-      "url": "./?tab=papers",
-      "description": "View past papers"
+      "name": "Past Papers",
+      "url": "./index.html",
+      "description": "View ECZ past papers",
+      "icons": [
+        {
+          "src": "./icon-192.png",
+          "sizes": "192x192"
+        }
+      ]
     },
     {
       "name": "Videos",
-      "url": "./?tab=videos",
+      "url": "./index.html",
       "description": "Watch study videos"
     },
     {
       "name": "Quizzes",
-      "url": "./?tab=quizzes",
+      "url": "./index.html",
       "description": "Take quizzes"
+    }
+  ],
+  "launch_handler": {
+    "client_mode": [
+      "navigate-existing",
+      "auto"
+    ]
+  },
+  "handle_links": "preferred",
+  "edge_side_panel": {
+    "preferred_width": 400
+  },
+  "file_handlers": [
+    {
+      "action": "./index.html",
+      "accept": {
+        "application/pdf": [
+          ".pdf"
+        ]
+      }
+    }
+  ],
+  "share_target": {
+    "action": "./index.html",
+    "method": "GET",
+    "params": {
+      "title": "title",
+      "text": "text",
+      "url": "url"
+    }
+  },
+  "protocol_handlers": [
+    {
+      "protocol": "web+zedmotel",
+      "url": "./index.html?protocol=%s"
     }
   ]
 }
