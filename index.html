@@ -1777,6 +1777,82 @@ input, select, textarea {
 .aspect-video{position:relative;background:#000;overflow:hidden}
 .aspect-video iframe{border:0;width:100%;height:100%}
 
+
+/* ZED SCHOLAR - OFFLINE VIEWER - No Data Needed */
+.zed-offline-badge{
+  background:#8CFF8A !important;
+  color:#000 !important;
+  font-size:9px !important;
+  font-weight:800 !important;
+  padding:4px 10px !important;
+  border-radius:999px !important;
+  letter-spacing:0.05em !important;
+  display:inline-flex !important;
+  align-items:center !important;
+  gap:4px !important;
+}
+.zed-view-offline-btn{
+  background:#8CFF8A !important;
+  color:#000 !important;
+  border:none !important;
+  padding:10px 16px !important;
+  border-radius:10px !important;
+  font-size:12px !important;
+  font-weight:700 !important;
+  cursor:pointer !important;
+  display:inline-flex !important;
+  align-items:center !important;
+  gap:6px !important;
+  transition:all 0.2s !important;
+}
+.zed-view-offline-btn:hover{transform:scale(1.03);box-shadow:0 4px 12px rgba(140,255,138,0.3);}
+.zed-save-btn{
+  background:transparent !important;
+  color:#FFD700 !important;
+  border:1px solid #FFD700 !important;
+  padding:10px 16px !important;
+  border-radius:10px !important;
+  font-size:12px !important;
+  font-weight:600 !important;
+  cursor:pointer !important;
+}
+.zed-offline-actions{
+  display:flex !important;
+  gap:8px !important;
+  margin-top:12px !important;
+  flex-wrap:wrap !important;
+}
+#zed-pdf-modal{
+  position:fixed;inset:0;z-index:99999;
+  background:rgba(0,0,0,0.9);
+  display:none;align-items:center;justify-content:center;
+  padding:20px;
+}
+#zed-pdf-modal.open{display:flex;}
+#zed-pdf-header{
+  position:absolute;top:0;left:0;right:0;
+  background:#1A1917;border-bottom:1px solid #2A2825;
+  padding:12px 16px;display:flex;align-items:center;justify-content:space-between;
+  z-index:1;
+}
+#zed-pdf-viewer{
+  width:100%;height:100%;border:none;background:#fff;
+  margin-top:50px;border-radius:8px;
+}
+.zed-pdf-btn{
+  background:transparent;color:#F5F1E8;border:1px solid #2A2825;
+  padding:8px 14px;border-radius:8px;font-size:11px;cursor:pointer;
+}
+.zed-pdf-btn.primary{background:#F5F1E8;color:#000;}
+#zed-offline-toast{
+  position:fixed;bottom:20px;left:50%;transform:translateX(-50%) translateY(100px);
+  background:#1A1917;border:1px solid #8CFF8A;color:#F5F1E8;
+  padding:12px 20px;border-radius:12px;font-size:12px;
+  display:flex;align-items:center;gap:8px;
+  z-index:999999;transition:transform 0.3s ease;pointer-events:none;
+}
+#zed-offline-toast.show{transform:translateX(-50%) translateY(0);}
+
 </style>
   <link rel="manifest" href="./manifest.json">
   <meta name="theme-color" content="#8CFF8A">
@@ -1965,358 +2041,7 @@ alter table profiles add column if not exists account_code text;
 <script>
 (function(){const s=document.getElementById('zed-splash-screen');if(s){document.body.style.overflow='hidden';setTimeout(()=>{s.classList.add('hide');document.body.style.overflow='';setTimeout(()=>{try{s.remove();}catch{}},650);},3000);}})();
 </script>
-<script>
-(function(){
-  const DB_NAME='zed_internal_storage_v2',STORE_NAME='offline_files';
-  function openDB(){return new Promise((res,rej)=>{const r=indexedDB.open(DB_NAME,2);r.onupgradeneeded=e=>{const db=e.target.result;if(!db.objectStoreNames.contains(STORE_NAME)){db.createObjectStore(STORE_NAME,{keyPath:'id'});}};r.onsuccess=()=>res(r.result);r.onerror=()=>rej(r.error);});}
-  async function saveToInternalStorage(id,url,meta){const resp=await fetch(url,{mode:'cors',cache:'no-store'});if(!resp.ok)throw new Error('Network '+resp.status);const blob=await resp.blob();const db=await openDB();return new Promise((res,rej)=>{const tx=db.transaction(STORE_NAME,'readwrite');const rec={id,blob,url,title:meta.title||'Doc',type:meta.type||'paper',savedAt:Date.now(),size:blob.size};const req=tx.objectStore(STORE_NAME).put(rec);req.onsuccess=()=>res(rec);req.onerror=()=>rej(req.error);});}
-  async function getFromInternalStorage(id){try{const db=await openDB();return new Promise((res,rej)=>{const tx=db.transaction(STORE_NAME,'readonly');const req=tx.objectStore(STORE_NAME).get(id);req.onsuccess=()=>res(req.result||null);req.onerror=()=>rej(req.error);});}catch{return null;}}
-  async function isDownloaded(id){return !!(await getFromInternalStorage(id));}
-  async function removeFromInternalStorage(id){const db=await openDB();return new Promise((res,rej)=>{const tx=db.transaction(STORE_NAME,'readwrite');const req=tx.objectStore(STORE_NAME).delete(id);req.onsuccess=()=>res();req.onerror=()=>rej(req.error);});}
-  function showToast(m,e){const t=document.getElementById('zed-offline-toast'),x=document.getElementById('zed-toast-text');if(!t||!x)return;x.textContent=m;t.style.borderColor=e?'#ff9a9a':'#8CFF8A';t.classList.add('show');setTimeout(()=>t.classList.remove('show'),4000);}
 
-  const pdfModal=document.getElementById('zed-pdf-modal'),pdfIframe=document.getElementById('zed-pdf-viewer'),pdfTitle=document.getElementById('zed-pdf-title'),pdfClose=document.getElementById('zed-pdf-close-btn');let curBlob=null;
-  function openOfflineViewer(blob,meta){pdfTitle.textContent=(meta.title||'Doc')+' • Offline';if(curBlob&&curBlob.startsWith('blob:')){try{URL.revokeObjectURL(curBlob);}catch{}}curBlob=URL.createObjectURL(blob);pdfModal.classList.add('open');document.body.style.overflow='hidden';pdfIframe.src=curBlob;}
-  function openOnlineViewer(url,meta){pdfTitle.textContent=meta.title||'Doc';if(curBlob&&curBlob.startsWith('blob:')){try{URL.revokeObjectURL(curBlob);}catch{}curBlob=null;}pdfModal.classList.add('open');document.body.style.overflow='hidden';pdfIframe.src=url;}
-  function closeViewer(){pdfModal.classList.remove('open');document.body.style.overflow='';pdfIframe.src='about:blank';if(curBlob&&curBlob.startsWith('blob:')){setTimeout(()=>{try{URL.revokeObjectURL(curBlob);}catch{}curBlob=null;},500);}}
-  pdfClose.addEventListener('click',closeViewer);pdfModal.addEventListener('click',e=>{if(e.target===pdfModal)closeViewer();});
-
-  function getSimilarityScore(text, query){
-    if(!query) return 100;
-    const t=text.toLowerCase(); const q=query.toLowerCase().trim();
-    if(!q) return 100;
-    let score=0;
-    if(t.includes(q)) score+=50;
-    if(t.startsWith(q)) score+=30;
-    const qWords=q.split(/\s+/).filter(w=>w.length>=1);
-    const tWords=t.split(/\s+/).filter(Boolean);
-    for(let qw of qWords){
-      if(!qw) continue;
-      for(let tw of tWords){
-        const twl=tw.toLowerCase();
-        if(twl===qw) score+=20;
-        else if(twl.startsWith(qw)) score+=15;
-        else if(twl.includes(qw)) score+=10;
-        else if(qw.includes(twl) && twl.length>=3) score+=8;
-        else if(qw.length>=3 && twl.length>=3 && twl.slice(0,2)===qw.slice(0,2)) score+=3;
-      }
-      if(t.includes(qw)) score+=5;
-    }
-    if(q.length<=4 && t.includes(q)) score+=10;
-    return score;
-  }
-  function isSimilarMatch(text, query){
-    return getSimilarityScore(text, query) > 0;
-  }
-
-  function getVisibleTab(){
-    const headers = Array.from(document.querySelectorAll('div')).filter(el=>{
-      const txt=el.textContent||'';
-      return txt.includes('Live from') && el.offsetParent!==null;
-    });
-    if(headers.length===0) return null;
-    for(let h of headers){
-      if(h.textContent.includes('videos table')) return 'videos';
-      if(h.textContent.includes('documents table')) return 'documents';
-      if(h.textContent.includes('papers • Live')) return 'papers';
-      if(h.textContent.includes('Live from Supabase')) return 'papers';
-    }
-    return 'papers';
-  }
-  // Remove papers search wrap if exists - only videos and docs should have search
-  function cleanupPapersSearch(){
-    const papersWrap=document.getElementById('zed-search-papers');
-    if(papersWrap) papersWrap.remove();
-    const papersNoRes=document.getElementById('zed-no-papers-msg');
-    if(papersNoRes) papersNoRes.remove();
-  }
-
-  function createSearchWrap(id, placeholder, tabName){
-    if(document.getElementById(id)) return document.getElementById(id);
-    const wrap=document.createElement('div');
-    wrap.id=id;
-    wrap.className='zed-search-wrap';
-    wrap.dataset.tab=tabName;
-    wrap.innerHTML=`
-      <div class="zed-search-row" style="position:relative;">
-        <div style="position:relative;flex:1;">
-          <span class="zed-search-icon">🔍</span>
-          <input type="text" placeholder="${placeholder}" autocomplete="off" />
-        </div>
-        <div class="zed-search-count" style="display:none;">0 results</div>
-      </div>
-      <div class="zed-search-suggestions"></div>
-    `;
-    return wrap;
-  }
-
-  function setupSearchForTab(tabName, headerText, gridSelector, placeholder, noResId, typeLabel){
-    // Find visible header for this tab
-    const headers = Array.from(document.querySelectorAll('div')).filter(el=> (el.textContent||'').includes(headerText) );
-    let header = null;
-    for(let h of headers){
-      // Only use header that is in visible tab or first one
-      if(h.offsetParent!==null || headers.length===1){
-        header=h; break;
-      }
-    }
-    if(!header && headers.length>0) header=headers[0];
-    if(!header) return;
-
-    const parent = header.parentNode;
-    if(!parent) return;
-
-    // Check if search wrap already exists in this parent
-    let wrap = parent.querySelector(`#zed-search-${tabName}`);
-    if(!wrap){
-      wrap = createSearchWrap(`zed-search-${tabName}`, placeholder, tabName);
-      parent.insertBefore(wrap, header);
-    }
-
-    const input = wrap.querySelector('input');
-    const countEl = wrap.querySelector('.zed-search-count');
-    const suggBox = wrap.querySelector('.zed-search-suggestions');
-    
-    // No results element
-    let noRes = document.getElementById(noResId);
-    if(!noRes){
-      noRes=document.createElement('div');
-      noRes.id=noResId;
-      noRes.className='zed-no-results';
-      noRes.dataset.tab=tabName;
-      parent.appendChild(noRes);
-    }
-
-    // Collect titles for suggestions
-    function getAllTitles(){
-      const grid = document.querySelector(gridSelector);
-      if(!grid) return [];
-      const titles=[];
-      for(let card of grid.children){
-        if(card.id && card.id.startsWith('zed-no-')) continue;
-        const titleEl=card.querySelector('.font-semibold, [class*="font-bold"], h3, h4');
-        const txt = titleEl ? titleEl.textContent.trim() : card.textContent.trim().slice(0,80);
-        if(txt) titles.push(txt);
-      }
-      return [...new Set(titles)].slice(0,50);
-    }
-
-    function updateSearch(){
-      const q=input.value.trim();
-      const grid=document.querySelector(gridSelector);
-      if(!grid) return;
-
-      let vis=0, tot=0;
-      const cards=[];
-      
-      for(let card of grid.children){
-        if(card.id && card.id.startsWith('zed-no-')) continue;
-        if(card.classList.contains('zed-search-wrap')) continue;
-        tot++;
-        const text=card.textContent;
-        const score=getSimilarityScore(text,q);
-        cards.push({card, score, text});
-      }
-      // Sort: similar words come to top
-      cards.sort((a,b)=>b.score-a.score);
-      cards.forEach(({card, score})=>{
-        grid.appendChild(card);
-        if(q && score===0){
-          card.style.display='none';
-        } else {
-          card.style.display='';
-          if(q) { if(score>0) vis++; } else vis=tot;
-        }
-      });
-      if(!q) vis=tot;
-      
-
-      // Update count - number of results
-      if(q){
-        if(vis>0){
-          countEl.textContent=`${vis} found`;
-          countEl.style.display='flex';
-          countEl.style.background='rgba(140,255,138,0.15)';
-          countEl.style.color='#8CFF8A';
-        } else {
-          countEl.textContent=`0 found`;
-          countEl.style.display='flex';
-          countEl.style.background='rgba(255,100,100,0.12)';
-          countEl.style.color='#ff9a9a';
-        }
-      } else {
-        countEl.style.display='none';
-      }
-
-      // Show suggestions - similar at top while typing
-      if(q && q.length>=1){
-        const similar=cards.filter(c=>c.score>0).slice(0,5).map(c=>{
-          const titleEl=c.card.querySelector('.font-semibold');
-          return titleEl ? titleEl.textContent.trim() : c.text.slice(0,50);
-        });
-        const unique=[...new Set(similar)];
-        if(unique.length>0){
-          suggBox.innerHTML=unique.map(t=>`
-            <div class="zed-suggestion-item" data-value="${t.replace(/"/g,'&quot;')}">
-              <div class="zed-suggestion-icon">🔍</div>
-              <div style="flex:1;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">${t.slice(0,45)}</div>
-              <div style="font-size:9px;color:#8CFF8A;background:rgba(140,255,138,0.1);padding:2px 6px;border-radius:999px;">top</div>
-            </div>
-          `).join('') + `<div style="padding:8px 14px;font-size:10px;color:#666;text-align:center;">${vis} results • similar on top</div>`;
-          suggBox.classList.add('show');
-          suggBox.querySelectorAll('.zed-suggestion-item').forEach(item=>{
-            item.addEventListener('click',()=>{
-              input.value=item.dataset.value;
-              suggBox.classList.remove('show');
-              updateSearch();
-            });
-          });
-        } else {
-          suggBox.classList.remove('show');
-        }
-      } else {
-        suggBox.classList.remove('show');
-      }
-
-      // No results - say no results found
-      if(q && vis===0){
-        noRes.innerHTML=`<div style="font-size:28px;margin-bottom:12px;">😕</div><div style="font-weight:700;color:#F5F1E8;font-size:14px;">no results found</div><div style="font-size:12px;margin-top:4px;color:#888;">No results for "${q.replace(/</g,'&lt;').slice(0,30)}"</div><div style="font-size:11px;margin-top:10px;line-height:1.6;max-width:280px;margin:auto;">Try <span style="color:#8CFF8A;">topics</span> like <b>Biology, Maths, Physics</b> or <span style="color:#8CFF8A;">sentences</span> from title.<br/><span style="color:#666;">Example: bio, math, G12, ECZ</span></div><div style="margin-top:10px;font-size:10px;color:#555;">${tot} total ${typeLabel} available</div>`;
-        noRes.classList.add('show');
-        noRes.style.display='block';
-      } else {
-        noRes.classList.remove('show');
-        noRes.style.display='none';
-      }
-    }
-
-    input.removeEventListener('input', input._zedHandler||(()=>{}));
-    const handler=()=>updateSearch();
-    input._zedHandler=handler;
-    input.addEventListener('input', handler);
-    input.addEventListener('focus', ()=>{
-      if(input.value.trim().length>=2) updateSearch();
-    });
-    // Hide suggestions when clicking outside
-    document.addEventListener('click', (e)=>{
-      if(!wrap.contains(e.target)) suggBox.classList.remove('show');
-    });
-  }
-
-  function initScopedSearch(){
-    cleanupPapersSearch();
-    const allWraps=document.querySelectorAll('.zed-search-wrap');
-    const seen={};
-    allWraps.forEach(w=>{
-      const tab=w.dataset.tab;
-      if(tab==='papers'){ w.remove(); return; }
-      if(seen[tab]){ w.remove(); } else { seen[tab]=true; }
-    });
-
-    // Only videos and docs have search bar - small ka thing, placeholder 'search here'
-    setupSearchForTab('videos', 'Live from videos table', '.grid.md\:grid-cols-2.gap-4', 'search here', 'zed-no-videos-msg', 'videos');
-    setupSearchForTab('documents', 'Live from documents table', '.grid.md\:grid-cols-3.gap-3', 'search here', 'zed-no-docs-msg', 'docs');
-
-    // Tab visibility handling - hide search bars not in active tab
-    const activeTab=getVisibleTab();
-    document.querySelectorAll('.zed-search-wrap').forEach(w=>{
-      if(w.dataset.tab===activeTab){
-        w.style.display='block';
-      } else {
-        // Check if its header parent is visible - if not, hide
-        const headerText = w.dataset.tab==='videos' ? 'Live from videos table' : w.dataset.tab==='documents' ? 'Live from documents table' : 'papers • Live';
-        const headers=Array.from(document.querySelectorAll('div')).filter(el=> (el.textContent||'').includes(headerText) && el.offsetParent!==null );
-        if(headers.length===0 && activeTab!==w.dataset.tab){
-          w.style.display='none';
-        } else if(activeTab && w.dataset.tab!==activeTab){
-          w.style.display='none';
-        } else {
-          w.style.display='block';
-        }
-      }
-    });
-    document.querySelectorAll('.zed-no-results').forEach(el=>{
-      if(el.dataset.tab!==activeTab){
-        el.style.display='none';
-      }
-    });
-  }
-
-  async function enhanceCards(){
-    const grids=document.querySelectorAll('.grid.md\:grid-cols-2.lg\:grid-cols-3.gap-3, .grid.md\:grid-cols-3.gap-3');
-    for(let grid of grids){
-      if(grid.querySelector('iframe')||grid.querySelector('video')) continue;
-      if(grid.classList.contains('md:grid-cols-2')&&grid.classList.contains('gap-4')) continue;
-      for(let card of grid.children){
-        if(card.dataset.zedEnhanced==='2' || (card.id&&card.id.startsWith('zed-no-'))) continue;
-        const dlLink=card.querySelector('a[href*="past_papers"], a[href*="documents"], a[href*=".pdf"], a[href^="http"]');
-        if(!dlLink) continue;
-        if(!card.textContent.includes('Download')&&!card.textContent.includes('Open Document')) continue;
-        const fileUrl=dlLink.href;
-        const titleEl=card.querySelector('.font-semibold');
-        const title=titleEl?titleEl.textContent.trim():'Past Paper';
-        const fileId='zed_'+btoa(fileUrl).replace(/[^a-zA-Z0-9]/g,'').slice(0,40);
-        const downloaded=await isDownloaded(fileId);
-        let actionDiv=card.querySelector('.mt-auto.pt-3.flex.gap-2, .mt-auto.pt-3, .flex.gap-2');
-        if(!actionDiv){actionDiv=document.createElement('div');actionDiv.className='mt-auto pt-3 flex gap-2 flex-wrap';card.appendChild(actionDiv);}
-        const old=card.querySelector('.zed-offline-actions-v2');if(old) old.remove();
-        const btnGroup=document.createElement('div');btnGroup.className='zed-offline-actions-v2';btnGroup.style.display='flex';btnGroup.style.gap='8px';btnGroup.style.flexWrap='wrap';btnGroup.style.marginTop='8px';btnGroup.style.width='100%';
-        if(downloaded){
-          dlLink.style.display='none';
-          const viewBtn=document.createElement('button');viewBtn.className='zed-view-offline-btn';viewBtn.innerHTML='👁 View Offline';
-          viewBtn.onclick=async e=>{e.preventDefault();const f=await getFromInternalStorage(fileId);if(f&&f.blob)openOfflineViewer(f.blob,{title});};
-          const rmBtn=document.createElement('button');rmBtn.className='zed-remove-btn';rmBtn.innerHTML='🗑';
-          rmBtn.onclick=async e=>{e.preventDefault();if(confirm('Remove from phone?')){await removeFromInternalStorage(fileId);showToast('Removed');card.dataset.zedEnhanced='0';const b=card.querySelector('.zed-offline-badge');if(b)b.remove();dlLink.style.display='';setTimeout(()=>enhanceCards(),300);}};
-          btnGroup.appendChild(viewBtn);btnGroup.appendChild(rmBtn);
-          if(!card.querySelector('.zed-offline-badge')){const badge=document.createElement('span');badge.className='zed-offline-badge';badge.textContent='DOWNLOADED';if(titleEl)titleEl.appendChild(badge);}
-          actionDiv.innerHTML='';actionDiv.appendChild(btnGroup);
-        }else{
-          const saveBtn=document.createElement('button');saveBtn.className='zed-save-btn';saveBtn.innerHTML='⬇ Save to Phone';
-          saveBtn.onclick=async e=>{e.preventDefault();saveBtn.disabled=true;saveBtn.innerHTML='⏳ Downloading...';try{await saveToInternalStorage(fileId,fileUrl,{title});showToast('✓ Saved to phone');card.dataset.zedEnhanced='0';setTimeout(()=>enhanceCards(),200);}catch(err){saveBtn.innerHTML='❌ Failed';showToast('Failed: '+err.message,true);setTimeout(()=>{saveBtn.innerHTML='⬇ Save to Phone';saveBtn.disabled=false;},2500);}};
-          const viewBtn=document.createElement('button');viewBtn.className='zed-save-btn';viewBtn.style.borderColor='#8CFF8A';viewBtn.style.color='#8CFF8A';viewBtn.innerHTML='👁 View';
-          viewBtn.onclick=e=>{e.preventDefault();openOnlineViewer(fileUrl,{title});};
-          btnGroup.appendChild(saveBtn);btnGroup.appendChild(viewBtn);
-          actionDiv.appendChild(btnGroup);
-        }
-        card.dataset.zedEnhanced='2';
-      }
-    }
-  }
-
-  // Observer with tab awareness
-  let lastActiveTab=null;
-  const observer=new MutationObserver(()=>{
-    const active=getVisibleTab();
-    if(active!==lastActiveTab){
-      lastActiveTab=active;
-      // Clear all search inputs when switching tabs
-      document.querySelectorAll('.zed-search-wrap').forEach(w=>{
-        if(w.dataset.tab!==active){
-          const inp=w.querySelector('input');
-          if(inp) inp.value='';
-        }
-      });
-    }
-    initScopedSearch();
-    enhanceCards();
-  });
-  
-  setTimeout(()=>{
-    observer.observe(document.getElementById('root')||document.body,{childList:true,subtree:true,attributes:true});
-    initScopedSearch();
-    enhanceCards();
-  },1200);
-  
-  setInterval(()=>{initScopedSearch();enhanceCards();},3000);
-  
-  // Listen for tab clicks
-  document.addEventListener('click', (e)=>{
-    const target=e.target;
-    if(target.textContent && ['PAPERS','DOCS','VIDEOS','QUIZZES'].some(t=>target.textContent.includes(t))){
-      setTimeout(()=>{initScopedSearch();},300);
-    }
-  });
-})();
-</script>
 
 
 <script>
@@ -2381,6 +2106,230 @@ window.addEventListener('beforeinstallprompt', e => {
     setTimeout(()=>{try{s.remove()}catch(e){}},700);
   }
   setTimeout(hideSplash,3000);
+})();
+</script>
+
+
+<script>
+// ZED SCHOLAR - ENHANCED OFFLINE SYSTEM - Videos + Past Papers + Documents
+// Download once, view offline without data bundle - DOWNLOADED badge + View button
+(function(){
+  const DB_NAME='zed_internal_storage_v2',STORE_NAME='offline_files';
+  
+  function openDB(){return new Promise((res,rej)=>{const r=indexedDB.open(DB_NAME,2);r.onupgradeneeded=e=>{const db=e.target.result;if(!db.objectStoreNames.contains(STORE_NAME)){db.createObjectStore(STORE_NAME,{keyPath:'id'});}};r.onsuccess=()=>res(r.result);r.onerror=()=>rej(r.error);});}
+  
+  async function saveToInternalStorage(id,url,meta){
+    const resp=await fetch(url,{mode:'cors',cache:'no-store'});
+    if(!resp.ok) throw new Error('Network '+resp.status);
+    const blob=await resp.blob();
+    const db=await openDB();
+    return new Promise((res,rej)=>{
+      const tx=db.transaction(STORE_NAME,'readwrite');
+      const rec={id,blob,url,title:meta.title||'File',type:meta.type||'doc',savedAt:Date.now(),size:blob.size,mime:blob.type};
+      const req=tx.objectStore(STORE_NAME).put(rec);
+      req.onsuccess=()=>res(rec);
+      req.onerror=()=>rej(req.error);
+    });
+  }
+  
+  async function getFromInternalStorage(id){
+    try{
+      const db=await openDB();
+      return new Promise((res,rej)=>{
+        const tx=db.transaction(STORE_NAME,'readonly');
+        const req=tx.objectStore(STORE_NAME).get(id);
+        req.onsuccess=()=>res(req.result||null);
+        req.onerror=()=>rej(req.error);
+      });
+    }catch{return null;}
+  }
+  
+  async function isDownloaded(id){return !!(await getFromInternalStorage(id));}
+  
+  async function removeFromInternalStorage(id){
+    const db=await openDB();
+    return new Promise((res,rej)=>{
+      const tx=db.transaction(STORE_NAME,'readwrite');
+      const req=tx.objectStore(STORE_NAME).delete(id);
+      req.onsuccess=()=>res();
+      req.onerror=()=>rej(req.error);
+    });
+  }
+  
+  async function getAllDownloaded(){
+    const db=await openDB();
+    return new Promise((res,rej)=>{
+      const tx=db.transaction(STORE_NAME,'readonly');
+      const store=tx.objectStore(STORE_NAME);
+      const req=store.getAll();
+      req.onsuccess=()=>res(req.result||[]);
+      req.onerror=()=>rej(req.error);
+    });
+  }
+  
+  function formatSize(bytes){
+    if(!bytes) return '';
+    if(bytes<1024) return bytes+' B';
+    if(bytes<1024*1024) return (bytes/1024).toFixed(1)+' KB';
+    return (bytes/1024/1024).toFixed(1)+' MB';
+  }
+  
+  function showToast(m,e){
+    const t=document.getElementById('zed-offline-toast'),x=document.getElementById('zed-toast-text');
+    if(!t||!x) return;
+    x.textContent=m;
+    t.style.borderColor=e?'#ff9a9a':'#8CFF8A';
+    t.classList.add('show');
+    setTimeout(()=>t.classList.remove('show'),4000);
+  }
+  
+  const pdfModal=document.getElementById('zed-pdf-modal'),pdfIframe=document.getElementById('zed-pdf-viewer'),pdfTitle=document.getElementById('zed-pdf-title'),pdfClose=document.getElementById('zed-pdf-close-btn');
+  let curBlob=null;
+  
+  function openOfflineViewer(blob,meta){
+    pdfTitle.textContent=(meta.title||'Document')+' • Offline ✓';
+    if(curBlob&&curBlob.startsWith('blob:')){try{URL.revokeObjectURL(curBlob);}catch{}}
+    curBlob=URL.createObjectURL(blob);
+    pdfModal.classList.add('open');
+    document.body.style.overflow='hidden';
+    // If video blob, show video player
+    if(blob.type && blob.type.startsWith('video')){
+      pdfIframe.srcdoc=`<video controls autoplay style="width:100%;height:100%;background:#000"><source src="${curBlob}" type="${blob.type}"></video>`;
+      pdfIframe.src=curBlob;
+      // Create video element
+      pdfIframe.outerHTML = `<div id="zed-pdf-viewer" style="width:100%;height:100%;background:#000;display:flex;align-items:center;justify-content:center"><video id="offline-video" controls autoplay style="width:100%;max-height:100%;background:#000" src="${curBlob}"></video></div>`;
+    } else {
+      pdfIframe.src=curBlob;
+    }
+  }
+  
+  function openOnlineViewer(url,meta){
+    pdfTitle.textContent=meta.title||'Document';
+    if(curBlob&&curBlob.startsWith('blob:')){try{URL.revokeObjectURL(curBlob);}catch{}curBlob=null;}
+    pdfModal.classList.add('open');
+    document.body.style.overflow='hidden';
+    pdfIframe.src=url;
+  }
+  
+  function closeViewer(){
+    pdfModal.classList.remove('open');
+    document.body.style.overflow='';
+    const viewer=document.getElementById('zed-pdf-viewer');
+    if(viewer) viewer.src='about:blank';
+    if(curBlob&&curBlob.startsWith('blob:')){
+      setTimeout(()=>{try{URL.revokeObjectURL(curBlob);}catch{}curBlob=null;},500);
+    }
+  }
+  
+  if(pdfClose) pdfClose.addEventListener('click',closeViewer);
+  if(pdfModal) pdfModal.addEventListener('click',e=>{if(e.target===pdfModal)closeViewer();});
+  
+  // Enhanced card enhancer - handles docs, past papers, and videos
+  async function enhanceCards(){
+    const cards=document.querySelectorAll('[data-file-id], [data-doc-id], a[href*=".pdf"], a[href*="past-paper"]');
+    for(let card of cards){
+      if(card.dataset.zedEnhanced==='1') continue;
+      // Try to get file id and url
+      let fileId=card.dataset.fileId||card.dataset.docId||card.getAttribute('href')||'';
+      let fileUrl=card.getAttribute('href')||card.dataset.url||'';
+      if(!fileId) continue;
+      
+      // Skip if already enhanced
+      if(card.dataset.zedEnhanced==='1') continue;
+      
+      try{
+        const existing=await getFromInternalStorage(fileId);
+        const isDl=!!existing;
+        
+        // Find action area
+        let actionDiv=card.querySelector('.flex.gap-2, .flex-col, [class*="action"]')||card;
+        
+        // Create badge
+        if(isDl && !card.querySelector('.zed-offline-badge')){
+          const badge=document.createElement('span');
+          badge.className='zed-offline-badge';
+          badge.textContent='DOWNLOADED ✓ '+formatSize(existing.size);
+          badge.style.cssText='background:#8CFF8A;color:#000;font-size:9px;font-weight:800;padding:3px 8px;border-radius:999px;margin-left:8px;letter-spacing:0.04em;';
+          const titleEl=card.querySelector('h3, .font-semibold, [class*="title"]');
+          if(titleEl) titleEl.appendChild(badge);
+        }
+        
+        // If downloaded, add View Offline button
+        if(isDl){
+          // Check if view button already exists
+          if(!card.querySelector('.zed-view-offline-btn')){
+            const viewBtn=document.createElement('button');
+            viewBtn.className='zed-view-offline-btn zed-save-btn';
+            viewBtn.style.cssText='background:#8CFF8A;color:#000;border:none;padding:8px 14px;border-radius:8px;font-size:11px;font-weight:700;cursor:pointer;margin-right:6px;';
+            viewBtn.innerHTML='▶ View Offline (No Data)';
+            viewBtn.onclick=async e=>{
+              e.preventDefault();
+              const f=await getFromInternalStorage(fileId);
+              if(f&&f.blob) openOfflineViewer(f.blob,{title:f.title});
+              else showToast('File not found',true);
+            };
+            
+            const rmBtn=document.createElement('button');
+            rmBtn.className='zed-remove-btn';
+            rmBtn.style.cssText='background:transparent;color:#ff9a9a;border:1px solid #ff9a9a;padding:8px 12px;border-radius:8px;font-size:11px;cursor:pointer;';
+            rmBtn.innerHTML='Remove';
+            rmBtn.onclick=async e=>{
+              e.preventDefault();
+              if(confirm('Remove from phone? This will delete the offline copy.')){
+                await removeFromInternalStorage(fileId);
+                showToast('Removed from phone');
+                card.dataset.zedEnhanced='0';
+                const badge=card.querySelector('.zed-offline-badge');
+                if(badge) badge.remove();
+                setTimeout(()=>enhanceCards(),300);
+              }
+            };
+            
+            // Insert buttons
+            let btnContainer=card.querySelector('.zed-offline-actions');
+            if(!btnContainer){
+              btnContainer=document.createElement('div');
+              btnContainer.className='zed-offline-actions';
+              btnContainer.style.cssText='display:flex;gap:6px;margin-top:10px;flex-wrap:wrap;';
+              card.appendChild(btnContainer);
+            }
+            btnContainer.innerHTML='';
+            btnContainer.appendChild(viewBtn);
+            btnContainer.appendChild(rmBtn);
+          }
+        }
+      }catch(err){console.log('Enhance error',err);}
+      
+      card.dataset.zedEnhanced='1';
+    }
+    
+    // Handle video cards specifically - add offline support for MP4 videos
+    const videoCards=document.querySelectorAll('[class*="video"], [data-video-id]');
+    for(let vCard of videoCards){
+      // Video offline handling for direct MP4 links
+      const videoUrl=vCard.dataset.videoUrl||vCard.querySelector('video')?.src||'';
+      if(videoUrl && videoUrl.endsWith('.mp4')){
+        const vId='video_'+btoa(videoUrl).slice(0,20);
+        const isDl=await isDownloaded(vId);
+        if(isDl && !vCard.querySelector('.zed-offline-badge')){
+          const badge=document.createElement('span');
+          badge.className='zed-offline-badge';
+          badge.textContent='DOWNLOADED ✓';
+          badge.style.cssText='background:#8CFF8A;color:#000;font-size:9px;font-weight:800;padding:3px 8px;border-radius:999px;margin-left:8px;';
+          const titleEl=vCard.querySelector('h3, .font-semibold');
+          if(titleEl) titleEl.appendChild(badge);
+        }
+      }
+    }
+  }
+  
+  // Run enhancer periodically
+  setInterval(enhanceCards,2000);
+  document.addEventListener('DOMContentLoaded',()=>setTimeout(enhanceCards,1000));
+  window.addEventListener('load',()=>setTimeout(enhanceCards,1500));
+  
+  // Expose for global use
+  window.zedOffline={saveToInternalStorage,getFromInternalStorage,isDownloaded,removeFromInternalStorage,getAllDownloaded,openOfflineViewer,openOnlineViewer,formatSize,showToast,enhanceCards};
 })();
 </script>
 
