@@ -2,7 +2,7 @@
 // ZED STUDY MOTEL - Perfect Service Worker - BY HOPECHAKA
 // Passes PWABuilder offline check + periodic sync + cache first
 
-const CACHE_NAME = 'zed-scholar-final-clean-v13-grade10-12-v2';
+const CACHE_NAME = 'zed-scholar-offline-download-fixed-v15-grade10-12-v2';
 const OFFLINE_URL = './index.html';
 const ASSETS = [
   './',
