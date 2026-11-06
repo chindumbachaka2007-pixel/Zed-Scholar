@@ -1,0 +1,3 @@
+User-agent: *
+Allow: /
+Sitemap: https://zedscholar.vercel.app/sitemap.xml
