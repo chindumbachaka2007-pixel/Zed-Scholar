@@ -1,7 +1,7 @@
 // ZED SCHOLAR - Auto-Update Service Worker V25
 // Bump this version every time you push a new build - this FORCES update check
-const CACHE_NAME = 'zed-scholar-v26-pwa-auto';
-const CACHE_VERSION = 'v26'; // change to v26, v27 on next push
+const CACHE_NAME = 'zed-scholar-v27-fix-motel'; // ← NUMBER 1: change v27 to v28 on next push
+const CACHE_VERSION = 'v27'; // ← NUMBER 2: change v27 to v28 on next push
 
 const ASSETS_TO_CACHE = [
   './',
