@@ -1724,7 +1724,7 @@ input, select, textarea {
 
 
 .zed-search-wrap input{width:160px;height:34px;background:#1A1A1A;border:1px solid #2A2A2A;border-radius:999px;padding:0 12px 0 32px;color:#F5F1E8;font-size:12px;font-family:'Bricolage Grotesque',sans-serif;outline:none;transition:width 0.25s ease,border-color 0.2s}
-.zed-search-wrap input:focus{width:220px;border-color:#8CFF8A;box-shadow:0 0 0 2px rgba(140,255,138,0.15);background:#222}
+.zed-search-wrap input:focus{width:220px;border-color:#8CFF8A;box-shadow:0 0 0 2px rgba(140,255,138,0.15);background:transparent}
 .zed-search-wrap input::placeholder{color:#666;font-size:11px;letter-spacing:0.02em}
 .zed-search-icon{position:absolute;left:10px;top:50%;transform:translateY(-50%);color:#888;font-size:13px;pointer-events:none}
 .zed-search-count{font-size:10px;color:#8CFF8A;background:rgba(140,255,138,0.12);padding:3px 8px;border-radius:999px;border:1px solid rgba(140,255,138,0.2);white-space:nowrap;font-weight:700}
@@ -1742,7 +1742,7 @@ input, select, textarea {
 .zed-pdf-btn.primary{background:#8CFF8A;color:#000;border-color:#8CFF8A}
 #zed-pdf-viewer{flex:1;width:100%;border:none;background:#0F0E0B}
 .zed-offline-badge{display:inline-flex;align-items:center;gap:4px;font-size:9px;font-weight:800;letter-spacing:0.1em;text-transform:uppercase;background:#8CFF8A;color:#000;padding:3px 8px;border-radius:999px;margin-left:8px;border:1px solid #8CFF8A;box-shadow:0 0 10px rgba(140,255,138,0.3)}
-.zed-save-btn{height:36px;padding:0 12px;border-radius:10px;font-size:10px;font-weight:800;letter-spacing:0.06em;text-transform:uppercase;border:1px solid #2A2A2A;background:#222;color:#F5F1E8;cursor:pointer;display:inline-flex;align-items:center;gap:6px}
+.zed-save-btn{height:36px;padding:0 12px;border-radius:10px;font-size:10px;font-weight:800;letter-spacing:0.06em;text-transform:uppercase;border:1px solid #2A2A2A;background:transparent;color:#F5F1E8;cursor:pointer;display:inline-flex;align-items:center;gap:6px}
 .zed-view-offline-btn{height:36px;padding:0 14px;border-radius:10px;font-size:10px;font-weight:800;letter-spacing:0.06em;text-transform:uppercase;border:1px solid #8CFF8A;background:#8CFF8A;color:#000;cursor:pointer;display:inline-flex;align-items:center;gap:6px;box-shadow:0 0 15px rgba(140,255,138,0.3)}
 .zed-remove-btn{height:36px;width:36px;border-radius:10px;border:1px solid #3a2a2a;background:#2a1a1a;color:#ff9a9a;cursor:pointer;display:inline-flex;align-items:center;justify-content:center}
 #zed-offline-toast{position:fixed;bottom:20px;left:16px;right:16px;max-width:420px;margin:0 auto;background:#F5F1E8;color:#0F0E0B;padding:14px 16px;border-radius:12px;font-size:13px;font-weight:600;font-family:'Bricolage Grotesque',sans-serif;box-shadow:0 16px 40px rgba(0,0,0,0.4);border:2px solid #8CFF8A;z-index:999999;display:none;align-items:center;gap:10px}
@@ -1814,7 +1814,7 @@ input, select, textarea {
 }
 #zed-splash-bg{
   position:absolute;inset:0;
-  background:radial-gradient(ellipse at 50% 30%,rgba(212,175,55,0.1) 0%,transparent 60%), #0F0E0B;
+  background:#1a1a1a, #0F0E0B;
 }
 #zed-splash-center{
   position:relative;z-index:1;
@@ -1844,7 +1844,7 @@ input, select, textarea {
 #zed-splash-loader{width:100%;max-width:200px;margin-top:28px;animation:fadeUp 0.6s ease 0.6s both}
 .loader-track{width:100%;height:3px;background:rgba(255,255,255,0.08);border-radius:999px;overflow:hidden}
 .loader-bar{
-  height:100%;width:0%;background:linear-gradient(90deg,#D4AF37,#FFD700,#8CFF8A);
+  height:100%;width:0%;background:#1a1a1a;
   border-radius:999px;animation:load2s 2s linear forwards;
 }
 @keyframes load2s{0%{width:0%}100%{width:100%}}
@@ -1923,7 +1923,7 @@ if (typeof pdfjsLib !== 'undefined') {
   content: '';
   position: absolute;
   inset: 0;
-  background: linear-gradient(0deg, rgba(0,0,0,0.6) 0%, rgba(0,0,0,0.1) 50%, rgba(0,0,0,0.2) 100%);
+  background: #1a1a1a;
   z-index: 1;
 }
 .yt-play-btn {
@@ -1967,7 +1967,7 @@ if (typeof pdfjsLib !== 'undefined') {
   font-size: 12px;
   font-weight: 600;
   line-height: 1.3;
-  background: linear-gradient(180deg, rgba(0,0,0,0.7) 0%, transparent 100%);
+  background: #1a1a1a;
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
@@ -2034,8 +2034,415 @@ iframe.zed-force-landscape-iframe{width:100vh !important;height:100vw !important
 .zed-welcome-name{font-size:15px !important;color:#8CFF8A !important;font-weight:700 !important;margin:0 0 20px !important;}
 .zed-welcome-btn{background:#8CFF8A !important;color:#000 !important;border:none !important;width:100% !important;height:48px !important;border-radius:12px !important;font-weight:800 !important;font-size:14px !important;letter-spacing:.1em !important;cursor:pointer !important;}
 </style>
+
+<style>
+/* ZED - Hide / block YouTube More videos + YouTube own expand button */
+.zed-more-shield{position:absolute !important;left:0 !important;right:0 !important;bottom:44px !important;height:70px !important;background:transparent !important;pointer-events:auto !important;z-index:22 !important;}
+.zed-yt-expand-shield{position:absolute !important;top:0 !important;right:0 !important;width:72px !important;height:54px !important;background:transparent !important;pointer-events:auto !important;z-index:22 !important;}
+/* Our own ZED expand button stays above shields */
+.zed-expand-btn{z-index:30 !important;}
+/* Load more button */
+#zed-load-more-videos{width:100% !important;height:48px !important;background:#8CFF8A !important;color:#000 !important;border:none !important;border-radius:12px !important;font-weight:800 !important;font-size:14px !important;letter-spacing:.08em !important;cursor:pointer !important;margin:12px 0 !important;}
+#zed-videos-loading{font-size:12px !important;color:#888 !important;text-align:center !important;padding:8px !important;}
+</style>
+
+<style>
+/* ZED - New colourful logo - attracts students */
+header > div > div:first-child{
+  background: #1a1a1a !important;
+  box-shadow: 0 4px 16px rgba(255,107,53,0.45), 0 0 0 2px rgba(255,255,255,0.15) !important;
+  color: #000 !important;
+  font-size: 17px !important;
+}
+#zed-splash-screen .zed-splash-logo, #zed-splash-screen > div > div:first-child{
+  background: #1a1a1a !important;
+  box-shadow: 0 8px 32px rgba(255,107,53,0.5) !important;
+}
+/* Profile avatar also colourful */
+div[class*="w-16 h-16 rounded-full"]{
+  background: #1a1a1a !important;
+  color: #000 !important;
+}
+/* Welcome popup logo also colourful */
+.zed-welcome-logo{
+  background: #1a1a1a !important;
+}
+/* Hide header Logout - moved to Settings */
+button[class*="rounded-full"][class*="bg-[var(--surface)]"]{ }
+#zed-header-logout-hidden{ display:none !important; }
+/* Settings gear button */
+#zed-settings-btn{
+  position:fixed !important;
+  top: calc(var(--safe-area-inset-top, 0px) + 10px) !important;
+  right: 12px !important;
+  width:38px !important;height:38px !important;border-radius:50% !important;
+  background: #1a1a1a !important;border:1px solid #444 !important;
+  color:#fff !important;font-size:19px !important;display:flex !important;align-items:center !important;justify-content:center !important;cursor:pointer !important;
+  z-index: 99990 !important;
+  box-shadow: 0 4px 14px rgba(0,0,0,0.5) !important;
+}
+body.zed-light #zed-settings-btn{ background:#fff !important; color:#111 !important; border-color:#ddd !important; }
+/* Settings modal */
+#zed-settings-modal{position:fixed !important;inset:0 !important;z-index:999999 !important;background:rgba(0,0,0,0.78) !important;display:flex !important;align-items:flex-start !important;justify-content:center !important;padding:16px !important;overflow-y:auto !important;}
+.zed-settings-card{background:#111 !important;border:1px solid #333 !important;border-radius:18px !important;width:100% !important;max-width:440px !important;padding:20px !important;color:#fff !important;margin:20px 0 !important;}
+.zed-settings-card h2{font-size:22px !important;font-weight:800 !important;margin:0 0 4px !important;}
+.zed-settings-card h3{font-size:15px !important;font-weight:800 !important;margin:18px 0 10px !important;color:#8CFF8A !important;}
+.zed-settings-card label{font-size:11px !important;text-transform:uppercase !important;letter-spacing:.1em !important;color:#999 !important;display:block !important;margin:10px 0 6px !important;}
+.zed-settings-card input, .zed-settings-card select{width:100% !important;height:44px !important;padding:0 12px !important;background:#0a0a0a !important;border:1px solid #333 !important;border-radius:10px !important;color:#fff !important;font-size:14px !important;outline:none !important;}
+.zed-settings-card input:focus{border-color:#8CFF8A !important;}
+.zed-settings-btn-primary{width:100% !important;height:44px !important;background:#8CFF8A !important;color:#000 !important;border:none !important;border-radius:10px !important;font-weight:800 !important;font-size:13px !important;letter-spacing:.08em !important;cursor:pointer !important;margin-top:12px !important;}
+.zed-settings-btn-red{width:100% !important;height:44px !important;background:#ff4444 !important;color:#fff !important;border:none !important;border-radius:10px !important;font-weight:800 !important;font-size:13px !important;letter-spacing:.08em !important;cursor:pointer !important;margin-top:16px !important;}
+.zed-settings-close{float:right !important;background:none !important;border:none !important;color:#fff !important;font-size:22px !important;cursor:pointer !important;}
+.zed-pw-wrap{position:relative !important;}
+.zed-eye-btn{position:absolute !important;right:10px !important;top:50% !important;transform:translateY(-50%) !important;background:none !important;border:none !important;font-size:18px !important;cursor:pointer !important;z-index:10 !important;}
+</style>
+
+<style>
+/* ZED - Light Mode */
+body.zed-light, html.zed-light body{
+  --bg: #ffffff !important; --surface: #f2f2f2 !important; --text: #111111 !important;
+  --muted: #666666 !important; --border: #e0e0e0 !important;
+  background: #ffffff !important; color: #111111 !important;
+}
+body.zed-light header, body.zed-light .bg-\[var\(--bg\)\]{ background: #ffffff !important; }
+body.zed-light .bg-\[var\(--surface\)\]{ background: #f2f2f2 !important; }
+body.zed-light input, body.zed-light select{ background: #ffffff !important; color: #111111 !important; border-color: #ddd !important; }
+/* Font sizes */
+body.zed-font-small{ font-size: 14px !important; }
+body.zed-font-large{ font-size: 18px !important; }
+/* Avatar */
+.zed-avatar-circle{ width:80px !important; height:80px !important; border-radius:50% !important; overflow:hidden !important; background: #1a1a1a !important; display:flex !important; align-items:center !important; justify-content:center !important; font-size:32px !important; font-weight:900 !important; color:#000 !important; border:3px solid #8CFF8A !important; }
+.zed-avatar-circle img{ width:100% !important; height:100% !important; object-fit:cover !important; }
+.zed-avatar-small{ width:32px !important; height:32px !important; border-radius:50% !important; overflow:hidden !important; display:flex !important; align-items:center !important; justify-content:center !important; background: #1a1a1a !important; font-weight:900 !important; font-size:14px !important; color:#000 !important; }
+.zed-avatar-small img{ width:100% !important; height:100% !important; object-fit:cover !important; }
+.zed-toggle-row{ display:flex !important; align-items:center !important; justify-content:space-between !important; padding:12px 0 !important; border-bottom:1px solid #222 !important; }
+body.zed-light .zed-toggle-row{ border-bottom-color:#eee !important; }
+.zed-toggle{ width:52px !important; height:28px !important; border-radius:999px !important; background:#333 !important; position:relative !important; cursor:pointer !important; border:none !important; flex-shrink:0 !important; }
+.zed-toggle.on{ background:#8CFF8A !important; }
+.zed-toggle::after{ content:'' !important; position:absolute !important; top:3px !important; left:3px !important; width:22px !important; height:22px !important; border-radius:50% !important; background:#fff !important; transition: left .2s !important; }
+.zed-toggle.on::after{ left:27px !important; }
+.zed-chip{ padding:8px 14px !important; border-radius:999px !important; border:1px solid #333 !important; background:#1a1a1a !important; color:#fff !important; font-size:12px !important; font-weight:700 !important; cursor:pointer !important; }
+body.zed-light .zed-chip{ background:#f2f2f2 !important; color:#111 !important; border-color:#ddd !important; }
+.zed-chip.active{ background:#8CFF8A !important; color:#000 !important; border-color:#8CFF8A !important; }
+</style>
+
+<style>
+/* ZED - Categorised Settings */
+.zed-cat-row{ display:flex !important; align-items:center !important; gap:12px !important; width:100% !important; background:#1a1a1a !important; border:1px solid #2a2a2a !important; border-radius:14px !important; padding:14px !important; margin-bottom:10px !important; cursor:pointer !important; text-align:left !important; color:#fff !important; }
+body.zed-light .zed-cat-row{ background:#f2f2f2 !important; border-color:#ddd !important; color:#111 !important; }
+.zed-cat-row:active{ transform:scale(0.98) !important; }
+.zed-cat-icon{ font-size:24px !important; width:44px !important; height:44px !important; border-radius:12px !important; background:transparent !important; display:flex !important; align-items:center !important; justify-content:center !important; flex-shrink:0 !important; }
+body.zed-light .zed-cat-icon{ background:#fff !important; }
+.zed-cat-title{ font-weight:800 !important; font-size:15px !important; }
+.zed-cat-sub{ color:#999 !important; font-size:12px !important; margin-top:2px !important; }
+.zed-back-btn{ background:none !important; border:none !important; color:#8CFF8A !important; font-size:14px !important; font-weight:800 !important; cursor:pointer !important; padding:0 !important; margin-bottom:12px !important; }
+.zed-settings-card input, .zed-settings-card select{ margin-bottom:2px !important; }
+</style>
+
+<style>
+/* ZED - Settings gear REMOVED - never show anywhere */
+#zed-settings-btn, button#zed-settings-btn, .zed-settings-gear, [id*="zed-settings-btn"]{
+  display:none !important; visibility:hidden !important; opacity:0 !important; pointer-events:none !important; width:0 !important; height:0 !important; position:absolute !important; left:-9999px !important; top:-9999px !important;
+}
+</style>
+
+<style>
+/* ZED - Splash logo fully rounded - no square edges */
+#zed-splash-logo, img#zed-splash-logo{
+  border-radius: 999px !important;
+  -webkit-border-radius: 999px !important;
+  overflow: hidden !important;
+  object-fit: cover !important;
+  background: transparent !important;
+  border: none !important;
+  outline: none !important;
+  box-shadow: 0 20px 60px rgba(0,0,0,0.5), 0 0 0 3px rgba(212,175,55,0.35) !important;
+}
+#zed-splash-logo-wrap{
+  border-radius: 999px !important;
+  overflow: hidden !important;
+  width: 140px !important;
+  height: 140px !important;
+  background: transparent !important;
+  line-height: 0 !important;
+}
+#zed-splash-center{
+  background: transparent !important;
+}
+/* Header Z logo also fully rounded */
+header > div > div:first-child{
+  border-radius: 999px !important;
+  overflow: hidden !important;
+}
+/* Profile pic viewer */
+#zed-pic-viewer{ position:fixed !important; inset:0 !important; z-index:999999 !important; background:rgba(0,0,0,0.88) !important; display:flex !important; align-items:center !important; justify-content:center !important; padding:20px !important; }
+.zed-pic-viewer-card{ background:#111 !important; border:1px solid #333 !important; border-radius:22px !important; padding:24px !important; width:100% !important; max-width:320px !important; text-align:center !important; }
+.zed-pic-viewer-img{ width:180px !important; height:180px !important; border-radius:999px !important; overflow:hidden !important; margin:0 auto 14px !important; background:#1a1a1a !important; display:flex !important; align-items:center !important; justify-content:center !important; font-size:72px !important; font-weight:900 !important; color:#000 !important; border:4px solid #8CFF8A !important; }
+.zed-pic-viewer-img img{ width:100% !important; height:100% !important; object-fit:cover !important; border-radius:999px !important; }
+/* Make all avatars tappable */
+.zed-avatar-small, .zed-avatar-circle, .zed-leader-avatar{ cursor:pointer !important; }
+</style>
+
+<style>
+/* ZED - Header left = USER PROFILE, not Z logo */
+#zed-header-user-pic{
+  width:44px !important; height:44px !important; min-width:44px !important;
+  border-radius:999px !important; overflow:hidden !important;
+  background: #1a1a1a !important;
+  display:flex !important; align-items:center !important; justify-content:center !important;
+  font-size:20px !important; font-weight:900 !important; color:#000 !important;
+  border:2px solid #8CFF8A !important; cursor:pointer !important;
+  box-shadow: 0 4px 14px rgba(0,0,0,0.4) !important;
+}
+#zed-header-user-pic img{ width:100% !important; height:100% !important; object-fit:cover !important; border-radius:999px !important; }
+/* Hide the old Z logo in header left - replaced by profile */
+header .zed-old-z-logo{ display:none !important; }
+/* Hide any duplicate emblem next to ZED SCHOLAR text that is not profile */
+header img{ display:none !important; }
+</style>
+
+<style>
+/* ZED - ONE header circle only: profile pic + Settings */
+#zed-header-user-pic{
+  width:44px !important; height:44px !important; min-width:44px !important; max-width:44px !important;
+  border-radius:999px !important; overflow:hidden !important;
+  background:transparent !important; display:flex !important; align-items:center !important; justify-content:center !important;
+  font-size:20px !important; font-weight:900 !important; color:#fff !important;
+  border:2px solid #8CFF8A !important; cursor:pointer !important; flex-shrink:0 !important;
+}
+#zed-header-user-pic img{ width:100% !important; height:100% !important; object-fit:cover !important; display:block !important; border-radius:999px !important; }
+#zed-header-user-pic.zed-has-photo{ background:#111 !important; border-color:#8CFF8A !important; padding:0 !important; }
+/* Hide ALL other header circles - no duplicates */
+header .zed-old-z-logo, header .zed-duplicate-circle{ display:none !important; }
+/* Hide any img badge in header that is not the profile pic */
+header img:not(#zed-header-user-pic img){ display:none !important; }
+</style>
+
+<style>
+/* ZED - Dedicated Password Recovery - ONLY recovery */
+#zed-recovery-modal{ position:fixed !important; inset:0 !important; z-index:999999 !important; background:rgba(0,0,0,0.85) !important; display:flex !important; align-items:center !important; justify-content:center !important; padding:16px !important; }
+.zed-recovery-card{ background:#111 !important; border:1px solid #333 !important; border-radius:20px !important; padding:22px !important; width:100% !important; max-width:380px !important; max-height:90vh !important; overflow-y:auto !important; color:#fff !important; }
+body.zed-light .zed-recovery-card{ background:#fff !important; color:#111 !important; border-color:#ddd !important; }
+.zed-recovery-card input{ width:100% !important; background:#1a1a1a !important; color:#fff !important; border:1px solid #333 !important; border-radius:12px !important; padding:12px 14px !important; font-size:14px !important; margin-top:6px !important; margin-bottom:12px !important; }
+body.zed-light .zed-recovery-card input{ background:#f2f2f2 !important; color:#111 !important; border-color:#ddd !important; }
+.zed-acc-card{ border:1px solid #333 !important; border-radius:14px !important; padding:12px !important; margin-bottom:10px !important; cursor:pointer !important; background:#1a1a1a !important; }
+.zed-acc-card.selected{ border-color:#8CFF8A !important; background:#1e2b1e !important; }
+body.zed-light .zed-acc-card{ background:#f2f2f2 !important; border-color:#ddd !important; }
+.zed-acc-card.selected{ box-shadow:0 0 0 1px #8CFF8A !important; }
+.zed-rec-btn{ width:100% !important; background:#0a5c2a !important; color:#fff !important; border:none !important; border-radius:12px !important; padding:13px !important; font-size:14px !important; font-weight:800 !important; cursor:pointer !important; margin-top:4px !important; }
+.zed-rec-btn:disabled{ opacity:0.5 !important; }
+.zed-rec-back{ background:none !important; border:none !important; color:#8CFF8A !important; font-size:14px !important; font-weight:800 !important; cursor:pointer !important; padding:0 !important; }
+</style>
+
+<style>
+/* ZED - Signup school dropdown: contained, scrollable, no spill */
+input[placeholder="Search school..."] + div{
+  max-height: 160px !important;
+  overflow-y: auto !important;
+  overflow-x: hidden !important;
+  background: #111 !important;
+  border: 1px solid #333 !important;
+  border-radius: 12px !important;
+  position: relative !important;
+  z-index: 30 !important;
+  display: block !important;
+  width: 100% !important;
+  box-shadow: 0 10px 30px rgba(0,0,0,0.5) !important;
+}
+input[placeholder="Search school..."] + div button{
+  display: block !important;
+  width: 100% !important;
+  text-align: left !important;
+  padding: 10px 12px !important;
+  font-size: 12px !important;
+  background: transparent !important;
+  border: none !important;
+  border-bottom: 1px solid #222 !important;
+  color: #fff !important;
+}
+input[placeholder="Search school..."] + div button:last-child{ border-bottom: none !important; }
+/* Hide school list when a school is selected - JS adds .zed-school-hidden */
+input[placeholder="Search school..."] + div.zed-school-hidden{ display: none !important; }
+/* Password eye button - signup + login */
+.zed-pw-eye{
+  position: absolute !important;
+  right: 10px !important;
+  top: 50% !important;
+  transform: translateY(-50%) !important;
+  background: none !important;
+  border: none !important;
+  font-size: 18px !important;
+  cursor: pointer !important;
+  padding: 4px !important;
+  z-index: 5 !important;
+  line-height: 1 !important;
+}
+.zed-pw-wrap-rel{ position: relative !important; }
+.zed-pw-wrap-rel input{ padding-right: 42px !important; }
+</style>
+
+<style>
+/* ZED - Clean ONLINE, no dimming, no rainbow, no glow */
+/* Header ONLINE / OFFLINE / Live pill - simple solid, always readable */
+header div{ animation: none !important; }
+header span{ animation: none !important; }
+/* Any pill that contains ONLINE / OFFLINE / Live - force solid */
+header [class*="rounded-full"]{
+  background: #1a1a1a !important;
+  background-image: none !important;
+  box-shadow: none !important;
+  animation: none !important;
+}
+/* The ONLINE pill itself - find by its position: top-right in header */
+header > div:last-child{
+  background: transparent !important;
+  box-shadow: none !important;
+}
+/* Remove pulse / dimming animation everywhere */
+.animate-pulse{ animation: none !important; opacity: 1 !important; }
+@keyframes pulse{ 0%,100%{opacity:1} 50%{opacity:1} }
+/* No dimming overlay on cards */
+.zed-dim, .dim, [class*="dim"]{ opacity: 1 !important; }
+/* Paper cards: bottom action bar - solid, not dimmed */
+.zed-save-btn, .zed-card-actions{
+  opacity: 1 !important;
+  background: #FFD93D !important;
+  color: #000 !important;
+}
+/* Floating Offline Papers button 📚 - don't cover Download, don't dim */
+#zed-offline-fab, .zed-offline-fab, button[title*="Offline"]{
+  position: fixed !important;
+  bottom: 88px !important;
+  right: 16px !important;
+  z-index: 40 !important;
+  background: #111 !important;
+  border: 2px solid #8CFF8A !important;
+  box-shadow: 0 4px 14px rgba(0,0,0,0.5) !important;
+  opacity: 1 !important;
+}
+/* Remove any translucent bottom bar that dims content */
+div[class*="backdrop-blur"]{
+  backdrop-filter: none !important;
+  -webkit-backdrop-filter: none !important;
+}
+/* Header: no rainbow gradient on ONLINE pill - force solid dark */
+header div[style*="gradient"]{
+  background: #1a1a1a !important;
+  background-image: none !important;
+}
+</style>
+
+<style>
+/* ZED - LOCK header: ONLINE stays top-right, never moves */
+header{
+  display: flex !important;
+  align-items: center !important;
+  justify-content: space-between !important;
+  position: relative !important;
+}
+header > div:first-child{
+  flex: 1 !important;
+  min-width: 0 !important;
+  display: flex !important;
+  align-items: center !important;
+  gap: 12px !important;
+}
+header > div:last-child{
+  flex-shrink: 0 !important;
+  display: flex !important;
+  align-items: center !important;
+  gap: 8px !important;
+  margin-left: auto !important;
+}
+/* ONLINE pill - static in header, no moving, no rainbow, no glow */
+header div:last-child div, header div:last-child span{
+  position: static !important;
+  transform: none !important;
+  animation: none !important;
+  transition: none !important;
+}
+/* Hide duplicate ONLINE pills - keep only first one in header */
+header + div div:has(> div){ }
+#zed-online-duplicate{ display: none !important; }
+</style>
+
+<style>
+/* ZED - Remove circled rainbow duplicate, only leftmost profile opens Settings */
+#zed-header-user-pic, .zed-header-duplicate, .zed-duplicate-circle{ display:none !important; }
+/* Leftmost Z logo becomes profile - keep it as one circle */
+#zed-profile-circle{
+  width:44px !important; height:44px !important; min-width:44px !important; max-width:44px !important;
+  border-radius:999px !important; overflow:hidden !important;
+  background:transparent !important; display:flex !important; align-items:center !important; justify-content:center !important;
+  font-size:20px !important; font-weight:900 !important; color:#fff !important;
+  border:2px solid #8CFF8A !important; cursor:pointer !important; flex-shrink:0 !important;
+}
+#zed-profile-circle img{ width:100% !important; height:100% !important; object-fit:cover !important; border-radius:999px !important; }
+#zed-profile-circle.zed-has-photo{ background:#111 !important; padding:0 !important; }
+/* ONLINE pill must NOT open Settings */
+header div:last-child{ cursor: default !important; }
+</style>
+
+<style>
+/* ZED - NO ORANGE GRADIENT ANYWHERE FOR PROFILE - real photo or initial only */
+#zed-profile-only, #zed-header-user-pic, .zed-avatar-circle, .zed-avatar-small, .zed-leader-avatar{
+  background: transparent !important;
+  background-image: none !important;
+  background-color: transparent !important;
+}
+#zed-profile-only img, #zed-header-user-pic img, .zed-avatar-circle img{
+  width:100% !important; height:100% !important; object-fit:cover !important; border-radius:999px !important; display:block !important;
+}
+/* Header left circle: never gradient, always solid */
+header > div:first-child > div:first-child{
+  background: transparent !important;
+  background-image: none !important;
+}
+/* Signup / Settings avatar preview also solid */
+#zed-signup-avatar-preview, .zed-pic-viewer-img{
+  background: transparent !important;
+  background-image: none !important;
+}
+</style>
+
+<style>
+/* ZED - ONLINE must be solid dark, never rainbow */
+header span:last-child, header div:last-child span{
+  background: #1a1a1a !important;
+  background-image: none !important;
+  color: #fff !important;
+}
+</style>
+
+<style>
+/* ZED - NO GRADIENTS ANYWHERE - they were covering profile pic */
+*, *::before, *::after{
+  background-image: none !important;
+}
+#zed-profile-only{
+  background-image: var(--zed-profile-photo, none) !important;
+  background-size: cover !important;
+  background-position: center !important;
+  background-color: transparent !important;
+}
+header, header div, .zed-avatar-circle, .zed-avatar-small{
+  background-image: none !important;
+}
+/* ONLINE pill - solid dark, green dot, no rainbow */
+header div:last-child{
+  background: #1a1a1a !important;
+  background-image: none !important;
+}
+</style>
 </head>
 <body>
+<div id="zed-loading-splash" style="position:fixed;inset:0;background:#0F0E0B;color:#fff;display:flex;flex-direction:column;align-items:center;justify-content:center;font-family:sans-serif;z-index:999999;">
+  <div style="width:72px;height:72px;border-radius:50%;background:#8CFF8A;color:#000;display:flex;align-items:center;justify-content:center;font-size:32px;font-weight:900;">Z</div>
+  <div style="margin-top:16px;font-size:22px;font-weight:900;letter-spacing:1px;">ZED SCHOLAR</div>
+  <div style="margin-top:8px;color:#999;font-size:13px;">Loading... ECZ Past Papers</div><div style="margin-top:4px;color:#8CFF8A;font-size:11px;">v2 - Profile Photo from Supabase</div>
+</div>
+<script>window.addEventListener('load',function(){ setTimeout(function(){ var s=document.getElementById('zed-loading-splash'); if(s) s.style.display='none'; }, 1500); });</script>
+
 <!-- SEO CONTENT FOR GOOGLE - invisible to users but readable by Google -->
 <div style="position:absolute;left:-9999px;top:-9999px;width:1px;height:1px;overflow:hidden;" aria-hidden="true">
   <h1>ZED SCHOLAR - ECZ Past Papers Zambia</h1>
@@ -2220,7 +2627,7 @@ alter table profiles add column if not exists account_code text;
 -- Note: Do NOT add password column — v31 hotfix removes password
 -- If password column exists and causes cache issue, you can keep it but v31 app does NOT send it
 -- To refresh schema cache after alter: NOTIFY pgrst, 'reload schema';
-`;function wv(e){return e.replace(/\s+/g,"_").replace(/[^a-zA-Z0-9._-]/g,"")}function oa(e){return/^(09|07)\d{8}$/.test(e)}function aa(e){return"+26"+e.slice(1)}function Ad(e){let n=e.match(/(?:youtube\.com\/watch\?v=|youtu\.be\/|youtube\.com\/embed\/)([^&\s]+)/);return n?n[1]:null}function ca(){let e=S.useMemo(()=>hv(ia,Ir),[]),[n,t]=S.useState({ok:null,count:0,msg:"Connecting..."}),[r,l]=S.useState(()=>{try{let o=localStorage.getItem("zed_user");return o?JSON.parse(o):null}catch{return null}}),[u,i]=S.useState("password"),[a,f]=S.useState(""),[m,g]=S.useState(""),[k,w]=S.useState(!1),[_,z]=S.useState(""),[N,D]=S.useState(!1),[d,s]=S.useState(""),[p,E]=S.useState(!1),R=S.useRef({}),[I,O]=S.useState(null),[M,x]=S.useState("papers"),[$,Ce]=S.useState(!1),[xe,Yd]=S.useState(""),[sn,Zd]=S.useState(""),[je,Qd]=S.useState("Lusaka"),[Fr,fa]=S.useState(Or.Lusaka[0]),[ku,Jd]=S.useState(""),[Ot,Gd]=S.useState(""),[Fn,sa]=S.useState(!1),[Ft,qd]=S.useState(""),[Dr,xd]=S.useState("12"),[Eu,jd]=S.useState(""),[da,bd]=S.useState(""),[pa,be]=S.useState(!1),[ma,Tr]=S.useState([]),[ep,va]=S.useState(!1),[ya,_u]=S.useState([]),[Cu,np]=S.useState([]),[ha,ga]=S.useState([]),[Wr,tp]=S.useState([]),[wa,ka]=S.useState([]),[Ea,rp]=S.useState([]),[lp,up]=S.useState({}),[$r,ip]=S.useState(""),[Vr,op]=S.useState("All"),[Hr,ap]=S.useState("All"),[Ur,cp]=S.useState("All"),[Br,fp]=S.useState("All"),[Ar,sp]=S.useState("All"),[Kr,dp]=S.useState("All"),[Te,Su]=S.useState(null),[_a,Ca]=S.useState({}),[Nu,Sa]=S.useState(0),[xn,pp]=S.useState("All"),[Xr,Na]=S.useState("All"),[zu,mp]=S.useState("All Time"),[Yr,vp]=S.useState("All"),[Zr,yp]=S.useState(""),[jn,hp]=S.useState("coins"),[Qr,gp]=S.useState(!1),[za,wp]=S.useState("Mathematics"),[Ra,kp]=S.useState("12"),[Pa,Ep]=S.useState("2023"),[Ma,_p]=S.useState("ECZ"),[Ru,La]=S.useState(""),[Ia,Oa]=S.useState(""),[bn,Fa]=S.useState(null),[Da,Ta]=S.useState(!1),[Wa,Cp]=S.useState("Mathematics"),[$a,Sp]=S.useState("12"),[Pu,Va]=S.useState(""),[Mu,Ha]=S.useState(""),[Lu,Ua]=S.useState(""),[Iu,Ba]=S.useState(""),[Ou,Aa]=S.useState(""),[Ka,Np]=S.useState("A"),[Xa,Ya]=S.useState(""),[Fu,Za]=S.useState(""),[Jr,Qa]=S.useState(""),[Ja,zp]=S.useState("Mathematics"),[Ga,Rp]=S.useState("12"),[qa,Du]=S.useState(null),[admKey,setAdmKey]=S.useState(""),[admOk,setAdmOk]=S.useState(!1),[vidFile,setVidFile]=S.useState(null),[vidUp,setVidUp]=S.useState(!1),F=(o)=>{console.log("[ZED TOAST]",o),O(o),setTimeout(()=>O(null),4500)};S.useEffect(()=>{(async()=>{try{let{count:o,error:y,data:h}=await e.from("profiles").select("*",{count:"exact",head:!0})._execute();if(y)t({ok:!1,count:0,msg:y.message.slice(0,140)});else t({ok:!0,count:o||(Array.isArray(h)?h.length:0),msg:`online`})}catch(o){t({ok:!1,count:0,msg:o.message})}})()},[e]),S.useEffect(()=>{if(!r)return;(async()=>{if(M==="papers"||M==="admin"){va(!0);let{data:y}=await e.from("past_papers").select("*").order("created_at",{ascending:!1}).limit(200);Tr(y||[]),va(!1)}if(M==="quizzes"){let{data:y}=await e.from("quiz_questions").select("*").order("created_at",{ascending:!1}).limit(500);_u(y||[])}if(M==="documents"){let{data:y}=await e.from("documents").select("*").order("created_at",{ascending:!1}).limit(200);np(y||[])}if(M==="videos"){let{data:y}=await e.from("videos").select("*").order("created_at",{ascending:!1}).limit(5000);ga(y||[])}if(M==="leaderboard"){let[{data:y},{data:h}]=await Promise.all([e.from("profiles").select("id,name,province,district,school,coins,streak,grade").limit(500),e.from("quiz_attempts").select("user_id,score,total,subject,created_at").order("created_at",{ascending:!1}).limit(500)]);tp(y||[]),ka(h||[])}if(M==="profile"){let{data:y}=await e.from("quiz_attempts").select("*").order("created_at",{ascending:!1}).limit(200),h=(y||[]).filter((P)=>P.user_id===r.id);rp(h)}if(M==="admin"){let y=["profiles","past_papers","quiz_questions","documents","videos","quiz_attempts"],h={};for(let W of y){let{count:V}=await e.from(W).select("*",{count:"exact",head:!0})._execute();h[W]=V||0}up(h);let{data:P}=await e.from("quiz_questions").select("*").order("created_at",{ascending:!1}).limit(20);_u(P||[])}})()},[M,r,e]),S.useEffect(()=>{if(!r)return;(async()=>{let{data:o}=await e.from("past_papers").select("*").order("created_at",{ascending:!1}).limit(20);if(o)Tr((y)=>y.length?y:o)})()},[r,e]),S.useEffect(()=>{let o=Or[je];if(o&&!o.includes(Fr))fa(o[0])},[je]),S.useEffect(()=>{if(!Te)return;let o=setInterval(()=>Sa((y)=>y+1),1000);return()=>clearInterval(o)},[Te]),S.useEffect(()=>{if(r)return;let o=()=>{let P=document.getElementById("zed-signup-open");if(P&&!P._zedNativeHandler){let V=(j)=>{try{console.log("[ZED] Native signup click handler clean"),P.textContent="Opening signup... ✓",P.setAttribute("data-opened","1"),P.setAttribute("data-native-clicked","1");let ne="zed-native-feedback";if(!document.getElementById(ne)){let b=document.createElement("div");b.id=ne,b.textContent="Opening signup...",b.style.position="fixed",b.style.bottom="110px",b.style.left="12px",b.style.right="12px",b.style.background="#8CFF8A",b.style.color="#000",b.style.padding="12px",b.style.borderRadius="10px",b.style.zIndex="99999",b.style.fontSize="13px",b.style.fontWeight="700",document.body.appendChild(b),setTimeout(()=>{try{b.remove()}catch{}},3000)}let T=document.getElementById("signup");if(T)T.style.display="block";try{location.hash="#signup"}catch{}}catch(ne){console.log("native handler error",ne)}};P.addEventListener("click",V),P.addEventListener("pointerdown",V),P._zedNativeHandler=V}let W=document.getElementById("zed-login-btn");if(W&&!W._zedNativeHandler){let V=(j)=>{try{if(console.log("[ZED] Native login click handler clean"),W.textContent="Logging in... ✓",W.setAttribute("data-clicked","1"),W.setAttribute("data-native-clicked","1"),!document.getElementById("login-click-feedback")){let T=document.createElement("div");T.id="login-click-feedback",T.textContent="Checking credentials...",T.style.position="fixed",T.style.bottom="80px",T.style.left="12px",T.style.right="12px",T.style.background="#8CFF8A",T.style.color="#000",T.style.padding="12px",T.style.borderRadius="10px",T.style.zIndex="99999",T.style.fontSize="13px",T.style.fontWeight="700",document.body.appendChild(T),setTimeout(()=>{try{T.remove()}catch{}},3000)}}catch(ne){console.log("login native error",ne)}};W.addEventListener("click",V),W.addEventListener("pointerdown",V),W._zedNativeHandler=V}},y=setTimeout(o,100),h=setInterval(o,500);return()=>{clearTimeout(y),clearInterval(h);let P=document.getElementById("zed-signup-open");if(P&&P._zedNativeHandler)P.removeEventListener("click",P._zedNativeHandler),P.removeEventListener("pointerdown",P._zedNativeHandler);let W=document.getElementById("zed-login-btn");if(W&&W._zedNativeHandler)W.removeEventListener("click",W._zedNativeHandler),W.removeEventListener("pointerdown",W._zedNativeHandler)}},[r,$,u]);let Pp=async()=>{if(console.log("[ZED] Login attempt v31 hotfix",a),w(!0),F("Checking credentials..."),!oa(a)){F("Phone must be 10 digits starting 09 or 07"),w(!1);return}if(!m)F("Enter password (if your profile has password) or use OTP");try{let{data:o,error:y}=await e.from("profiles").select("id,phone,name,school,grade,province,district,coins,streak,password").eq("phone",a).maybeSingle();if(y||!o){F("Profile not found. Please sign up."),w(!1);return}if(typeof o.password<"u"&&o.password!==null&&o.password!==""){if(!m){F("Enter correct password for this account"),w(!1);return}if(o.password!==m){F("Incorrect password — try again or use OTP"),w(!1);return}}else{if(m){F("No password set for this account. Please use OTP login or reset password."),w(!1);return}}localStorage.setItem("zed_user",JSON.stringify(o)),l(o),F(`Welcome back ${o.name}!`),window.zedShowWelcomePopup&&window.zedShowWelcomePopup(o.name,true)}catch(o){F(o.message)}finally{w(!1)}},Mp=async()=>{if(console.log("[ZED] Send OTP",_),!oa(_)){F("Phone must be 10 digits starting 09 or 07");return}E(!0),F("Sending OTP live... checking Twilio config");try{let o=await fetch(`${ia}/auth/v1/otp`,{method:"POST",headers:{apikey:Ir,"Content-Type":"application/json",Authorization:`Bearer ${Ir}`},body:JSON.stringify({phone:aa(_)}),mode:"cors"}),y=await o.json().catch(()=>({}));if(!o.ok)throw Error(y.error_description||y.msg||JSON.stringify(y));F(`OTP sent to ${aa(_)}`);let h=Math.floor(1e5+Math.random()*900000).toString();R.current[_]=h,F(`Live SMS sent. Test code fallback: ${h} if SMS not configured`),D(!0)}catch(o){let y=Math.floor(1e5+Math.random()*900000).toString();R.current[_]=y,D(!0),F(`SMS provider not enabled. Simulated OTP: ${y}. Please try again.`)}finally{E(!1)}},Lp=async()=>{if(!d||d.length!==6){F("Enter 6-digit code");return}E(!0);try{let o=!1;try{let h=await fetch(`${ia}/auth/v1/verify`,{method:"POST",headers:{apikey:Ir,"Content-Type":"application/json",Authorization:`Bearer ${Ir}`},body:JSON.stringify({phone:aa(_),token:d,type:"sms"}),mode:"cors"}),P=await h.json().catch(()=>({}));if(h.ok)o=!0;else if(R.current[_]===d)o=!0;else throw Error(P.error_description||"Invalid code")}catch(h){if(R.current[_]===d)o=!0;else throw h}if(!o)throw Error("Verification failed");let{data:y}=await e.from("profiles").select("*").eq("phone",_).maybeSingle();if(y)localStorage.setItem("zed_user",JSON.stringify(y)),l(y),F(`Welcome ${y.name}! v31`);else{let h={phone:_,name:`Learner ${_.slice(-4)}`,province:"Lusaka",district:"Lusaka",school:"Munali Boys Secondary",grade:"12",account_code:`ZED-${Date.now()}`,coins:0,streak:0},P={phone:_,name:`Learner ${_.slice(-4)}`,school:"Munali Boys Secondary",grade:"12"},W=null,V=null;try{let j=await e.from("profiles").insert(h).select().single();if(j.error)throw Error(j.error.message);W=j.data}catch(j){V=j;let ne=(j.message||"").toLowerCase();if(ne.includes("province")||ne.includes("district")||ne.includes("account_code")||ne.includes("coins")||ne.includes("streak")||ne.includes("pgrst204"))try{let T=await e.from("profiles").insert(P).select().single();if(T.error)throw Error(T.error.message);W=T.data,V=null}catch(T){V=T}}if(V)throw V;localStorage.setItem("zed_user",JSON.stringify(W)),l(W),F(`Welcome ${W.name}!`),window.zedShowWelcomePopup&&window.zedShowWelcomePopup(W.name,false)}}catch(o){F(o.message)}finally{E(!1)}},Ip=async()=>{if(console.log("[ZED] handleSignup v31 hotfix",{suName:xe,suPhone:sn,suProvince:je,suDistrict:Fr,suSchool:Ot,suCustomSchool:Fn,customText:Ft}),be(!0),F("Signing up..."),!xe.trim()||xe.trim().length<2){F("Enter full name"),be(!1);return}if(!oa(sn)){F("Phone must be 10 digits starting 09 or 07"),be(!1);return}if(Eu.length<3){F("Password min 3 chars (not stored, for future)"),be(!1);return}if(Eu!==da){F("Passwords mismatch"),be(!1);return}let o=Fn?Ft.trim():Ot;if(!o){F("Select school — search or add custom (Temweni works)"),be(!1);return}if(Fn&&o.length<3){F("Enter custom school name e.g. Temweni secondary school"),be(!1);return}try{console.log("[ZED] v31 Checking phone unique",sn);let{data:y}=await e.from("profiles").select("id").eq("phone",sn).maybeSingle();if(y){F("Phone already registered — try login"),be(!1);return}let h={phone:sn,name:xe.trim(),school:o,grade:Dr,account_code:`ZED-${Date.now()}`,coins:0,streak:0,province:je,district:Fr},P={phone:sn,name:xe.trim(),school:o,grade:Dr,account_code:`ZED-${Date.now()}`,coins:0,streak:0},W={phone:sn,name:xe.trim(),school:o,grade:Dr};console.log("[ZED] v31 Inserting profile full",h);let V=null,j=null;try{let{data:ne,error:T}=await e.from("profiles").insert(h).select().single();if(T)throw Error(T.message);V=ne}catch(ne){j=ne;let T=(ne.message||"").toLowerCase();if(console.log("[ZED] v31 first insert failed",T),T.includes("password")||T.includes("province")||T.includes("district")||T.includes("account_code")||T.includes("coins")||T.includes("streak")||T.includes("pgrst204")||T.includes("schema cache"))try{console.log("[ZED] v31 retry without province/district");let{data:b,error:Xe}=await e.from("profiles").insert(P).select().single();if(Xe)throw Error(Xe.message);V=b,j=null}catch(b){j=b;let Xe=(b.message||"").toLowerCase();if(console.log("[ZED] v31 second insert failed",Xe),Xe.includes("account_code")||Xe.includes("coins")||Xe.includes("streak")||Xe.includes("province")||Xe.includes("district")||Xe.includes("pgrst204"))try{console.log("[ZED] v31 retry minimal payload");let{data:Wu,error:ja}=await e.from("profiles").insert(W).select().single();if(ja)throw Error(ja.message);V=Wu,j=null}catch(Wu){j=Wu}}}if(j)throw j;if(!V)throw Error("Insert returned empty - check RLS policies");console.log("[ZED] Signup success v31",V),localStorage.setItem("zed_user",JSON.stringify(V)),l(V),F(`Account created! Welcome ${V.name} — ${V.school} (${V.province||je}) v31 hotfix`),Ce(!1)}catch(y){console.error("[ZED] Signup error v31",y),F(`Signup failed v31: ${y.message} — Try Admin SQL Fix PGRST204 helper below`)}finally{be(!1)}},Tu=S.useMemo(()=>{return ma.filter((o)=>{if($r&&!`${o.title} ${o.subject} ${o.year} ${o.school||""}`.toLowerCase().includes($r.toLowerCase()))return!1;if(Vr!=="All"&&o.subject!==Vr)return!1;if(Hr!=="All"){let _g=(o.grade||"").toString().trim().toLowerCase(),_k=Hr.toString().trim().toLowerCase(),_map={"form 1":"8","form 2":"9","form 3":"10","form 4":"11","form 5":"12","8":"form 1","9":"form 2","10":"form 3","11":"form 4","12":"form 5"};if(_g!==_k&&_map[_g]!==_k&&_map[_k]!==_g)return!1};if(Ur!=="All"&&o.paper_type!==Ur)return!1;if(Br!=="All"&&o.year!==Br)return!1;return!0})},[ma,$r,Vr,Hr,Ur,Br]),Gr=S.useMemo(()=>{return ya.filter((o)=>{if(Ar!=="All"&&(o.subject||"").trim().toLowerCase()!==Ar.trim().toLowerCase())return!1;if(Kr!=="All"){let _g=(o.grade||"").toString().trim().toLowerCase(),_k=Kr.toString().trim().toLowerCase(),_map={"form 1":"8","form 2":"9","form 3":"10","form 4":"11","form 5":"12","8":"form 1","9":"form 2","10":"form 3","11":"form 4","12":"form 5"};if(_g!==_k&&_map[_g]!==_k&&_map[_k]!==_g)return!1};return!0})},[ya,Ar,Kr]),qr=S.useMemo(()=>{let o={};Wr.forEach((h)=>{o[h.id]={profile:h,totalScore:0,totalPossible:0,count:0,avg:0,subjects:new Set}}),wa.forEach((h)=>{if(!o[h.user_id])o[h.user_id]={profile:{id:h.user_id,name:"Learner",province:"Lusaka",district:"Lusaka",school:"Unknown",coins:0,streak:0,grade:"12"},totalScore:0,totalPossible:0,count:0,avg:0,subjects:new Set};let P=o[h.user_id];if(P.totalScore+=h.score||0,P.totalPossible+=h.total||1,P.count+=1,h.subject)P.subjects.add(h.subject)});let y=Object.values(o).map((h)=>{let P=h.count?h.totalScore/(h.totalPossible||h.count)*100:0;return{...h,avg:P,subjectCount:h.subjects.size}});return y=y.filter((h)=>{if(xn!=="All"&&h.profile.province!==xn)return!1;if(Xr!=="All"&&h.profile.district!==Xr)return!1;if(Yr!=="All"&&h.count>0&&!h.subjects.has(Yr))return!1;if(Zr&&!`${h.profile.name} ${h.profile.school} ${h.profile.district}`.toLowerCase().includes(Zr.toLowerCase()))return!1;return!0}),y.sort((h,P)=>{if(jn==="coins")return(P.profile.coins||0)-(h.profile.coins||0);if(jn==="avg")return P.avg-h.avg;if(jn==="quizzes")return P.count-h.count;if(jn==="total")return P.totalScore-h.totalScore;return 0}),y},[Wr,wa,xn,Xr,Yr,Zr,jn,zu]),Op=S.useMemo(()=>{let o={};return Wr.forEach((y)=>{if(!o[y.province])o[y.province]={count:0,schools:{}};o[y.province].count++,o[y.province].schools[y.school]=(o[y.province].schools[y.school]||0)+1}),Object.entries(o).map(([y,h])=>{let P=Object.entries(h.schools).sort((W,V)=>V[1]-W[1])[0];return{province:y,total:h.count,topSchool:P?`${P[0]} (${P[1]})`:"—"}})},[Wr]),Fp=S.useMemo(()=>{if(!Qr)return[];let o={};return qr.forEach((y)=>{let h=`${y.profile.province} / ${y.profile.district}`;if(!o[h])o[h]=[];o[h].push(y)}),Object.entries(o).map(([y,h])=>({district:y,top:h.slice(0,3)}))},[qr,Qr]),Dp=async()=>{if(!Ru.trim()){F("Enter title");return}if(!bn){F("Select PDF file");return}if(bn.size>10485760){F("File must be <10MB");return}if(bn.type!=="application/pdf"&&!bn.name.toLowerCase().endsWith(".pdf")){F("Only PDF allowed");return}Ta(!0);try{let o=wv(bn.name),y=`${Date.now()}_${o}`,{error:h}=await e.storage.from("past_papers").upload(y,bn);if(h)throw Error(h.message);let{data:P}=e.storage.from("past_papers").getPublicUrl(y),W={subject:za,grade:Ra,year:Pa,paper_type:Ma,title:Ru,description:Ia,file_url:P.publicUrl,file_name:o,province:r.province,district:r.district,school:r.school,uploaded_by:r.id},{error:V}=await e.from("past_papers").insert(W);if(V)throw Error(V.message);F("Paper uploaded live!"),La(""),Oa(""),Fa(null);let{data:j}=await e.from("past_papers").select("*").order("created_at",{ascending:!1}).limit(200);Tr(j||[])}catch(o){F(o.message)}finally{Ta(!1)}},Tp=async(o)=>{try{let h=(o.file_url||"").split("/past_papers/"),P=h[1]?h[1]:o.file_name;if(P)await e.storage.from("past_papers").remove([P]);let{error:W}=await e.from("past_papers").delete().eq("id",o.id);if(W)throw Error(W.message);Tr((V)=>V.filter((j)=>j.id!==o.id)),F("Deleted")}catch(y){F(y.message)}finally{Du(null)}},Wp=async()=>{if(!Pu.trim()){F("Enter question");return}if(!Mu||!Lu||!Iu||!Ou){F("Fill all options");return}try{let o={subject:Wa,grade:$a,topic:"General",year:"2024",question_text:Pu,option_a:Mu,option_b:Lu,option_c:Iu,option_d:Ou,correct_answer:Ka,explanation:Xa,marks:1,difficulty:"Medium",created_by:r.id},{error:y}=await e.from("quiz_questions").insert(o);if(y)throw Error(y.message);F("Quiz question added!"),Va(""),Ha(""),Ua(""),Ba(""),Aa(""),Ya("");let{data:h}=await e.from("quiz_questions").select("*").order("created_at",{ascending:!1}).limit(500);_u(h||[])}catch(o){F(o.message)}},$p=async()=>{if(!Fu.trim()){F("Enter video title");return}if(!Jr.trim()&&!vidFile){F("Provide YouTube URL or select video from phone");return}setVidUp(!0);try{let finalUrl=Jr.trim(),vType="mp4",thumb="";if(vidFile){let sName=vidFile.name.replace(/\s+/g,"_").replace(/[^a-zA-Z0-9._-]/g,""),fName=Date.now()+"_"+sName,{error:upErr}=await e.storage.from("videos").upload(fName,vidFile,{contentType:vidFile.type||"video/mp4",upsert:true});if(upErr){if(upErr.message.includes("row-level security")||upErr.message.includes("AccessDenied")||upErr.message.includes("403")){throw Error("Upload blocked: Please try again.")}throw Error(upErr.message)}let{data:urlData}=e.storage.from("videos").getPublicUrl(fName);finalUrl=urlData.publicUrl;vType="mp4"}else{let yt=Ad(Jr);vType=yt?"youtube":"mp4";thumb=yt?"https://img.youtube.com/vi/"+yt+"/hqdefault.jpg":""}
+`;function wv(e){return e.replace(/\s+/g,"_").replace(/[^a-zA-Z0-9._-]/g,"")}function oa(e){return/^(09|07)\d{8}$/.test(e)}function aa(e){return"+26"+e.slice(1)}function Ad(e){let n=e.match(/(?:youtube\.com\/watch\?v=|youtu\.be\/|youtube\.com\/embed\/)([^&\s]+)/);return n?n[1]:null}function ca(){let e=S.useMemo(()=>hv(ia,Ir),[]),[n,t]=S.useState({ok:null,count:0,msg:"Connecting..."}),[r,l]=S.useState(()=>{try{let o=localStorage.getItem("zed_user");return o?JSON.parse(o):null}catch{return null}}),[u,i]=S.useState("password"),[a,f]=S.useState(""),[m,g]=S.useState(""),[k,w]=S.useState(!1),[_,z]=S.useState(""),[N,D]=S.useState(!1),[d,s]=S.useState(""),[p,E]=S.useState(!1),R=S.useRef({}),[I,O]=S.useState(null),[M,x]=S.useState("papers"),[$,Ce]=S.useState(!1),[xe,Yd]=S.useState(""),[sn,Zd]=S.useState(""),[je,Qd]=S.useState("Lusaka"),[Fr,fa]=S.useState(Or.Lusaka[0]),[ku,Jd]=S.useState(""),[Ot,Gd]=S.useState(""),[Fn,sa]=S.useState(!1),[Ft,qd]=S.useState(""),[Dr,xd]=S.useState("12"),[Eu,jd]=S.useState(""),[da,bd]=S.useState(""),[pa,be]=S.useState(!1),[ma,Tr]=S.useState([]),[ep,va]=S.useState(!1),[ya,_u]=S.useState([]),[Cu,np]=S.useState([]),[ha,ga]=S.useState([]),[Wr,tp]=S.useState([]),[wa,ka]=S.useState([]),[Ea,rp]=S.useState([]),[lp,up]=S.useState({}),[$r,ip]=S.useState(""),[Vr,op]=S.useState("All"),[Hr,ap]=S.useState("All"),[Ur,cp]=S.useState("All"),[Br,fp]=S.useState("All"),[Ar,sp]=S.useState("All"),[Kr,dp]=S.useState("All"),[Te,Su]=S.useState(null),[_a,Ca]=S.useState({}),[Nu,Sa]=S.useState(0),[xn,pp]=S.useState("All"),[Xr,Na]=S.useState("All"),[zu,mp]=S.useState("All Time"),[Yr,vp]=S.useState("All"),[Zr,yp]=S.useState(""),[jn,hp]=S.useState("coins"),[Qr,gp]=S.useState(!1),[za,wp]=S.useState("Mathematics"),[Ra,kp]=S.useState("12"),[Pa,Ep]=S.useState("2023"),[Ma,_p]=S.useState("ECZ"),[Ru,La]=S.useState(""),[Ia,Oa]=S.useState(""),[bn,Fa]=S.useState(null),[Da,Ta]=S.useState(!1),[Wa,Cp]=S.useState("Mathematics"),[$a,Sp]=S.useState("12"),[Pu,Va]=S.useState(""),[Mu,Ha]=S.useState(""),[Lu,Ua]=S.useState(""),[Iu,Ba]=S.useState(""),[Ou,Aa]=S.useState(""),[Ka,Np]=S.useState("A"),[Xa,Ya]=S.useState(""),[Fu,Za]=S.useState(""),[Jr,Qa]=S.useState(""),[Ja,zp]=S.useState("Mathematics"),[Ga,Rp]=S.useState("12"),[qa,Du]=S.useState(null),[admKey,setAdmKey]=S.useState(""),[admOk,setAdmOk]=S.useState(!1),[vidFile,setVidFile]=S.useState(null),[vidUp,setVidUp]=S.useState(!1),F=(o)=>{console.log("[ZED TOAST]",o),O(o),setTimeout(()=>O(null),4500)};S.useEffect(()=>{(async()=>{try{let{count:o,error:y,data:h}=await e.from("profiles").select("*",{count:"exact",head:!0})._execute();if(y)t({ok:!1,count:0,msg:y.message.slice(0,140)});else t({ok:!0,count:o||(Array.isArray(h)?h.length:0),msg:`online`})}catch(o){t({ok:!1,count:0,msg:o.message})}})()},[e]),S.useEffect(()=>{if(!r)return;(async()=>{if(M==="papers"||M==="admin"){va(!0);let{data:y}=await e.from("past_papers").select("*").order("created_at",{ascending:!1}).limit(200);Tr(y||[]),va(!1)}if(M==="quizzes"){let{data:y}=await e.from("quiz_questions").select("*").order("created_at",{ascending:!1}).limit(500);_u(y||[])}if(M==="documents"){let{data:y}=await e.from("documents").select("*").order("created_at",{ascending:!1}).limit(200);np(y||[])}if(M==="videos"){let{data:y}=await e.from("videos").select("*").order("created_at",{ascending:!1}).limit(5000);ga(y||[])}if(M==="leaderboard"){let[{data:y},{data:h}]=await Promise.all([e.from("profiles").select("id,name,province,district,school,coins,streak,grade").limit(500),e.from("quiz_attempts").select("user_id,score,total,subject,created_at").order("created_at",{ascending:!1}).limit(500)]);tp(y||[]),ka(h||[])}if(M==="profile"){let{data:y}=await e.from("quiz_attempts").select("*").order("created_at",{ascending:!1}).limit(200),h=(y||[]).filter((P)=>P.user_id===r.id);rp(h)}if(M==="admin"){let y=["profiles","past_papers","quiz_questions","documents","videos","quiz_attempts"],h={};for(let W of y){let{count:V}=await e.from(W).select("*",{count:"exact",head:!0})._execute();h[W]=V||0}up(h);let{data:P}=await e.from("quiz_questions").select("*").order("created_at",{ascending:!1}).limit(20);_u(P||[])}})()},[M,r,e]),S.useEffect(()=>{if(!r)return;(async()=>{let{data:o}=await e.from("past_papers").select("*").order("created_at",{ascending:!1}).limit(20);if(o)Tr((y)=>y.length?y:o)})()},[r,e]),S.useEffect(()=>{let o=Or[je];if(o&&!o.includes(Fr))fa(o[0])},[je]),S.useEffect(()=>{if(!Te)return;let o=setInterval(()=>Sa((y)=>y+1),1000);return()=>clearInterval(o)},[Te]),S.useEffect(()=>{if(r)return;let o=()=>{let P=document.getElementById("zed-signup-open");if(P&&!P._zedNativeHandler){let V=(j)=>{try{console.log("[ZED] Native signup click handler clean"),P.textContent="Opening signup... ✓",P.setAttribute("data-opened","1"),P.setAttribute("data-native-clicked","1");let ne="zed-native-feedback";if(!document.getElementById(ne)){let b=document.createElement("div");b.id=ne,b.textContent="Opening signup...",b.style.position="fixed",b.style.bottom="110px",b.style.left="12px",b.style.right="12px",b.style.background="#8CFF8A",b.style.color="#000",b.style.padding="12px",b.style.borderRadius="10px",b.style.zIndex="99999",b.style.fontSize="13px",b.style.fontWeight="700",document.body.appendChild(b),setTimeout(()=>{try{b.remove()}catch{}},3000)}let T=document.getElementById("signup");if(T)T.style.display="block";try{location.hash="#signup"}catch{}}catch(ne){console.log("native handler error",ne)}};P.addEventListener("click",V),P.addEventListener("pointerdown",V),P._zedNativeHandler=V}let W=document.getElementById("zed-login-btn");if(W&&!W._zedNativeHandler){let V=(j)=>{try{if(console.log("[ZED] Native login click handler clean"),W.textContent="Logging in... ✓",W.setAttribute("data-clicked","1"),W.setAttribute("data-native-clicked","1"),!document.getElementById("login-click-feedback")){let T=document.createElement("div");T.id="login-click-feedback",T.textContent="Checking credentials...",T.style.position="fixed",T.style.bottom="80px",T.style.left="12px",T.style.right="12px",T.style.background="#8CFF8A",T.style.color="#000",T.style.padding="12px",T.style.borderRadius="10px",T.style.zIndex="99999",T.style.fontSize="13px",T.style.fontWeight="700",document.body.appendChild(T),setTimeout(()=>{try{T.remove()}catch{}},3000)}}catch(ne){console.log("login native error",ne)}};W.addEventListener("click",V),W.addEventListener("pointerdown",V),W._zedNativeHandler=V}},y=setTimeout(o,100),h=setInterval(o,500);return()=>{clearTimeout(y),clearInterval(h);let P=document.getElementById("zed-signup-open");if(P&&P._zedNativeHandler)P.removeEventListener("click",P._zedNativeHandler),P.removeEventListener("pointerdown",P._zedNativeHandler);let W=document.getElementById("zed-login-btn");if(W&&W._zedNativeHandler)W.removeEventListener("click",W._zedNativeHandler),W.removeEventListener("pointerdown",W._zedNativeHandler)}},[r,$,u]);let Pp=async()=>{if(console.log("[ZED] Login attempt v31 hotfix",a),w(!0),F("Checking credentials..."),!oa(a)){F("Phone must be 10 digits starting 09 or 07"),w(!1);return}if(!m)F("Enter password (if your profile has password) or use OTP");try{let{data:o,error:y}=await e.from("profiles").select("id,phone,name,school,grade,province,district,coins,streak,password,avatar,avatar_url").eq("phone",a).maybeSingle();if(y||!o){F("Profile not found. Please sign up."),w(!1);return}if(typeof o.password<"u"&&o.password!==null&&o.password!==""){if(!m){F("Enter correct password for this account"),w(!1);return}if(o.password!==m){F("Incorrect password — try again or use OTP"),w(!1);return}}else{if(m){F("No password set for this account. Please use OTP login or reset password."),w(!1);return}}localStorage.setItem("zed_user",JSON.stringify(o));try{if(o.avatar||o.avatar_url) localStorage.setItem("zed_avatar",o.avatar||o.avatar_url);}catch(e){} l(o),F(`Welcome back ${o.name}!`),window.zedShowWelcomePopup&&window.zedShowWelcomePopup(o.name,true)}catch(o){F(o.message)}finally{w(!1)}},Mp=async()=>{if(console.log("[ZED] Send OTP",_),!oa(_)){F("Phone must be 10 digits starting 09 or 07");return}E(!0),F("Sending OTP live... checking Twilio config");try{let o=await fetch(`${ia}/auth/v1/otp`,{method:"POST",headers:{apikey:Ir,"Content-Type":"application/json",Authorization:`Bearer ${Ir}`},body:JSON.stringify({phone:aa(_)}),mode:"cors"}),y=await o.json().catch(()=>({}));if(!o.ok)throw Error(y.error_description||y.msg||JSON.stringify(y));F(`OTP sent to ${aa(_)}`);let h=Math.floor(1e5+Math.random()*900000).toString();R.current[_]=h,F(`Live SMS sent. Test code fallback: ${h} if SMS not configured`),D(!0)}catch(o){let y=Math.floor(1e5+Math.random()*900000).toString();R.current[_]=y,D(!0),F(`SMS provider not enabled. Simulated OTP: ${y}. Please try again.`)}finally{E(!1)}},Lp=async()=>{if(!d||d.length!==6){F("Enter 6-digit code");return}E(!0);try{let o=!1;try{let h=await fetch(`${ia}/auth/v1/verify`,{method:"POST",headers:{apikey:Ir,"Content-Type":"application/json",Authorization:`Bearer ${Ir}`},body:JSON.stringify({phone:aa(_),token:d,type:"sms"}),mode:"cors"}),P=await h.json().catch(()=>({}));if(h.ok)o=!0;else if(R.current[_]===d)o=!0;else throw Error(P.error_description||"Invalid code")}catch(h){if(R.current[_]===d)o=!0;else throw h}if(!o)throw Error("Verification failed");let{data:y}=await e.from("profiles").select("*").eq("phone",_).maybeSingle();if(y)localStorage.setItem("zed_user",JSON.stringify(y)),l(y),F(`Welcome ${y.name}! v31`);else{let h={phone:_,name:`Learner ${_.slice(-4)}`,province:"Lusaka",district:"Lusaka",school:"Munali Boys Secondary",grade:"12",account_code:`ZED-${Date.now()}`,coins:0,streak:0},P={phone:_,name:`Learner ${_.slice(-4)}`,school:"Munali Boys Secondary",grade:"12"},W=null,V=null;try{let j=await e.from("profiles").insert(h).select().single();if(j.error)throw Error(j.error.message);W=j.data}catch(j){V=j;let ne=(j.message||"").toLowerCase();if(ne.includes("province")||ne.includes("district")||ne.includes("account_code")||ne.includes("coins")||ne.includes("streak")||ne.includes("pgrst204"))try{let T=await e.from("profiles").insert(P).select().single();if(T.error)throw Error(T.error.message);W=T.data,V=null}catch(T){V=T}}if(V)throw V;localStorage.setItem("zed_user",JSON.stringify(W)),l(W),F(`Welcome ${W.name}!`),window.zedShowWelcomePopup&&window.zedShowWelcomePopup(W.name,false)}}catch(o){F(o.message)}finally{E(!1)}},Ip=async()=>{if(console.log("[ZED] handleSignup v31 hotfix",{suName:xe,suPhone:sn,suProvince:je,suDistrict:Fr,suSchool:Ot,suCustomSchool:Fn,customText:Ft}),be(!0),F("Signing up..."),!xe.trim()||xe.trim().length<2){F("Enter full name"),be(!1);return}if(!oa(sn)){F("Phone must be 10 digits starting 09 or 07"),be(!1);return}if(Eu.length<3){F("Password min 3 chars (not stored, for future)"),be(!1);return}if(Eu!==da){F("Passwords mismatch"),be(!1);return}let o=Fn?Ft.trim():Ot;if(!o){F("Select school — search or add custom (Temweni works)"),be(!1);return}if(Fn&&o.length<3){F("Enter custom school name e.g. Temweni secondary school"),be(!1);return}try{console.log("[ZED] v31 Checking phone unique",sn);let{data:y}=await e.from("profiles").select("id").eq("phone",sn).maybeSingle();if(y){F("Phone already registered — try login"),be(!1);return}let h={phone:sn,name:xe.trim(),school:o,grade:Dr,account_code:`ZED-${Date.now()}`,coins:0,streak:0,province:je,district:Fr},P={phone:sn,name:xe.trim(),school:o,grade:Dr,account_code:`ZED-${Date.now()}`,coins:0,streak:0},W={phone:sn,name:xe.trim(),school:o,grade:Dr};console.log("[ZED] v31 Inserting profile full",h);let V=null,j=null;try{let{data:ne,error:T}=await e.from("profiles").insert(h).select().single();if(T)throw Error(T.message);V=ne}catch(ne){j=ne;let T=(ne.message||"").toLowerCase();if(console.log("[ZED] v31 first insert failed",T),T.includes("password")||T.includes("province")||T.includes("district")||T.includes("account_code")||T.includes("coins")||T.includes("streak")||T.includes("pgrst204")||T.includes("schema cache"))try{console.log("[ZED] v31 retry without province/district");let{data:b,error:Xe}=await e.from("profiles").insert(P).select().single();if(Xe)throw Error(Xe.message);V=b,j=null}catch(b){j=b;let Xe=(b.message||"").toLowerCase();if(console.log("[ZED] v31 second insert failed",Xe),Xe.includes("account_code")||Xe.includes("coins")||Xe.includes("streak")||Xe.includes("province")||Xe.includes("district")||Xe.includes("pgrst204"))try{console.log("[ZED] v31 retry minimal payload");let{data:Wu,error:ja}=await e.from("profiles").insert(W).select().single();if(ja)throw Error(ja.message);V=Wu,j=null}catch(Wu){j=Wu}}}if(j)throw j;if(!V)throw Error("Insert returned empty - check RLS policies");console.log("[ZED] Signup success v31",V),localStorage.setItem("zed_user",JSON.stringify(V)),l(V),F(`Account created! Welcome ${V.name} — ${V.school} (${V.province||je}) v31 hotfix`),Ce(!1)}catch(y){console.error("[ZED] Signup error v31",y),F(`Signup failed v31: ${y.message} — Try Admin SQL Fix PGRST204 helper below`)}finally{be(!1)}},Tu=S.useMemo(()=>{return ma.filter((o)=>{if($r&&!`${o.title} ${o.subject} ${o.year} ${o.school||""}`.toLowerCase().includes($r.toLowerCase()))return!1;if(Vr!=="All"&&o.subject!==Vr)return!1;if(Hr!=="All"){let _g=(o.grade||"").toString().trim().toLowerCase(),_k=Hr.toString().trim().toLowerCase(),_map={"form 1":"8","form 2":"9","form 3":"10","form 4":"11","form 5":"12","8":"form 1","9":"form 2","10":"form 3","11":"form 4","12":"form 5"};if(_g!==_k&&_map[_g]!==_k&&_map[_k]!==_g)return!1};if(Ur!=="All"&&o.paper_type!==Ur)return!1;if(Br!=="All"&&o.year!==Br)return!1;return!0})},[ma,$r,Vr,Hr,Ur,Br]),Gr=S.useMemo(()=>{return ya.filter((o)=>{if(Ar!=="All"&&(o.subject||"").trim().toLowerCase()!==Ar.trim().toLowerCase())return!1;if(Kr!=="All"){let _g=(o.grade||"").toString().trim().toLowerCase(),_k=Kr.toString().trim().toLowerCase(),_map={"form 1":"8","form 2":"9","form 3":"10","form 4":"11","form 5":"12","8":"form 1","9":"form 2","10":"form 3","11":"form 4","12":"form 5"};if(_g!==_k&&_map[_g]!==_k&&_map[_k]!==_g)return!1};return!0})},[ya,Ar,Kr]),qr=S.useMemo(()=>{let o={};Wr.forEach((h)=>{o[h.id]={profile:h,totalScore:0,totalPossible:0,count:0,avg:0,subjects:new Set}}),wa.forEach((h)=>{if(!o[h.user_id])o[h.user_id]={profile:{id:h.user_id,name:"Learner",province:"Lusaka",district:"Lusaka",school:"Unknown",coins:0,streak:0,grade:"12"},totalScore:0,totalPossible:0,count:0,avg:0,subjects:new Set};let P=o[h.user_id];if(P.totalScore+=h.score||0,P.totalPossible+=h.total||1,P.count+=1,h.subject)P.subjects.add(h.subject)});let y=Object.values(o).map((h)=>{let P=h.count?h.totalScore/(h.totalPossible||h.count)*100:0;return{...h,avg:P,subjectCount:h.subjects.size}});return y=y.filter((h)=>{if(xn!=="All"&&h.profile.province!==xn)return!1;if(Xr!=="All"&&h.profile.district!==Xr)return!1;if(Yr!=="All"&&h.count>0&&!h.subjects.has(Yr))return!1;if(Zr&&!`${h.profile.name} ${h.profile.school} ${h.profile.district}`.toLowerCase().includes(Zr.toLowerCase()))return!1;return!0}),y.sort((h,P)=>{if(jn==="coins")return(P.profile.coins||0)-(h.profile.coins||0);if(jn==="avg")return P.avg-h.avg;if(jn==="quizzes")return P.count-h.count;if(jn==="total")return P.totalScore-h.totalScore;return 0}),y},[Wr,wa,xn,Xr,Yr,Zr,jn,zu]),Op=S.useMemo(()=>{let o={};return Wr.forEach((y)=>{if(!o[y.province])o[y.province]={count:0,schools:{}};o[y.province].count++,o[y.province].schools[y.school]=(o[y.province].schools[y.school]||0)+1}),Object.entries(o).map(([y,h])=>{let P=Object.entries(h.schools).sort((W,V)=>V[1]-W[1])[0];return{province:y,total:h.count,topSchool:P?`${P[0]} (${P[1]})`:"—"}})},[Wr]),Fp=S.useMemo(()=>{if(!Qr)return[];let o={};return qr.forEach((y)=>{let h=`${y.profile.province} / ${y.profile.district}`;if(!o[h])o[h]=[];o[h].push(y)}),Object.entries(o).map(([y,h])=>({district:y,top:h.slice(0,3)}))},[qr,Qr]),Dp=async()=>{if(!Ru.trim()){F("Enter title");return}if(!bn){F("Select PDF file");return}if(bn.size>10485760){F("File must be <10MB");return}if(bn.type!=="application/pdf"&&!bn.name.toLowerCase().endsWith(".pdf")){F("Only PDF allowed");return}Ta(!0);try{let o=wv(bn.name),y=`${Date.now()}_${o}`,{error:h}=await e.storage.from("past_papers").upload(y,bn);if(h)throw Error(h.message);let{data:P}=e.storage.from("past_papers").getPublicUrl(y),W={subject:za,grade:Ra,year:Pa,paper_type:Ma,title:Ru,description:Ia,file_url:P.publicUrl,file_name:o,province:r.province,district:r.district,school:r.school,uploaded_by:r.id},{error:V}=await e.from("past_papers").insert(W);if(V)throw Error(V.message);F("Paper uploaded live!"),La(""),Oa(""),Fa(null);let{data:j}=await e.from("past_papers").select("*").order("created_at",{ascending:!1}).limit(200);Tr(j||[])}catch(o){F(o.message)}finally{Ta(!1)}},Tp=async(o)=>{try{let h=(o.file_url||"").split("/past_papers/"),P=h[1]?h[1]:o.file_name;if(P)await e.storage.from("past_papers").remove([P]);let{error:W}=await e.from("past_papers").delete().eq("id",o.id);if(W)throw Error(W.message);Tr((V)=>V.filter((j)=>j.id!==o.id)),F("Deleted")}catch(y){F(y.message)}finally{Du(null)}},Wp=async()=>{if(!Pu.trim()){F("Enter question");return}if(!Mu||!Lu||!Iu||!Ou){F("Fill all options");return}try{let o={subject:Wa,grade:$a,topic:"General",year:"2024",question_text:Pu,option_a:Mu,option_b:Lu,option_c:Iu,option_d:Ou,correct_answer:Ka,explanation:Xa,marks:1,difficulty:"Medium",created_by:r.id},{error:y}=await e.from("quiz_questions").insert(o);if(y)throw Error(y.message);F("Quiz question added!"),Va(""),Ha(""),Ua(""),Ba(""),Aa(""),Ya("");let{data:h}=await e.from("quiz_questions").select("*").order("created_at",{ascending:!1}).limit(500);_u(h||[])}catch(o){F(o.message)}},$p=async()=>{if(!Fu.trim()){F("Enter video title");return}if(!Jr.trim()&&!vidFile){F("Provide YouTube URL or select video from phone");return}setVidUp(!0);try{let finalUrl=Jr.trim(),vType="mp4",thumb="";if(vidFile){let sName=vidFile.name.replace(/\s+/g,"_").replace(/[^a-zA-Z0-9._-]/g,""),fName=Date.now()+"_"+sName,{error:upErr}=await e.storage.from("videos").upload(fName,vidFile,{contentType:vidFile.type||"video/mp4",upsert:true});if(upErr){if(upErr.message.includes("row-level security")||upErr.message.includes("AccessDenied")||upErr.message.includes("403")){throw Error("Upload blocked: Please try again.")}throw Error(upErr.message)}let{data:urlData}=e.storage.from("videos").getPublicUrl(fName);finalUrl=urlData.publicUrl;vType="mp4"}else{let yt=Ad(Jr);vType=yt?"youtube":"mp4";thumb=yt?"https://img.youtube.com/vi/"+yt+"/hqdefault.jpg":""}
 let _zedTopicEl=document.getElementById("zed-topic-input");
 let _zedTopicVal=_zedTopicEl?_zedTopicEl.value.trim():"";
 let y={subject:Ja,grade:Ga,topic:_zedTopicVal||"General",title:Fu,description:"",video_url:finalUrl,video_type:vType,thumbnail_url:thumb,uploaded_by:r.id},{error:h}=await e.from("videos").insert(y);
@@ -2486,9 +2893,9 @@ if(h)throw Error(h.message);F(vidFile?"Video uploaded from phone ✓":"Video add
       if(seen[tab]){ w.remove(); } else { seen[tab]=true; }
     });
 
-    // Only videos and docs have search bar - small ka thing, placeholder 'search here'
-    setupSearchForTab('videos', ' videos', '.grid.md\:grid-cols-2.gap-4', 'search here', 'zed-no-videos-msg', 'videos');
-    setupSearchForTab('documents', ' docs', '.grid.md\:grid-cols-3.gap-3', 'search here', 'zed-no-docs-msg', 'docs');
+    // Only videos and docs have search bar - small ka thing, placeholder 'search a topic'
+    setupSearchForTab('videos', ' videos', '.grid.md\:grid-cols-2.gap-4', 'search a topic', 'zed-no-videos-msg', 'videos');
+    setupSearchForTab('documents', ' docs', '.grid.md\:grid-cols-3.gap-3', 'search a topic', 'zed-no-docs-msg', 'docs');
 
     // Tab visibility handling - hide search bars not in active tab
     const activeTab=getVisibleTab();
@@ -3991,7 +4398,7 @@ const db=await openDB();return new Promise((res,rej)=>{const tx=db.transaction(S
 </script>
 
 <script>
-// ZED V16 - SEARCH HERE + 4 RANDOM + NEW VIDEOS SEARCHABLE
+// ZED V16 - Search a topic + 4 RANDOM + NEW VIDEOS SEARCHABLE
 (function(){
   const SUPABASE_URL = "https://biastmylavwhlsccvpyu.supabase.co";
   const SUPABASE_KEY = "sb_publishable_74vo5_RlNXb0U0TrNLCdCQ_8zjDwFni";
@@ -4069,9 +4476,9 @@ const db=await openDB();return new Promise((res,rej)=>{const tx=db.transaction(S
     wrap.innerHTML = `
       <div style="display:flex;align-items:center;gap:10px;background:#1a1a1a;border:1px solid #333;border-radius:9999px;padding:12px 16px;">
         <span>🔍</span>
-        <input id="zed-v16-input" placeholder="SEARCH HERE" style="text-transform:uppercase;" style="flex:1;background:transparent;border:none;outline:none;color:white;font-size:15px;font-weight:700;letter-spacing:0.5px;" />
+        <input id="zed-v16-input" placeholder="Search a topic, e.g. Forces" style="flex:1;background:transparent;border:none;outline:none;color:white;font-size:15px;font-weight:700;letter-spacing:0.5px;" />
       </div>
-      <div id="zed-v16-info" style="margin-top:10px;color:#888;font-size:13px;padding:0 4px;">Loading videos...</div>
+      <div id="zed-v16-info" style="margin-top:10px;color:#888;font-size:13px;padding:0 4px;" style="display:none;"></div>
     `;
     vg.parentNode.insertBefore(wrap, vg);
 
@@ -4109,9 +4516,9 @@ const db=await openDB();return new Promise((res,rej)=>{const tx=db.transaction(S
     let info = document.getElementById('zed-v16-info');
     if(info){
       if(!q){
-        info.textContent = `Featured ${shown} videos • ${allVideos.length} total • Type in SEARCH HERE to find all`;
+        info.textContent = ''; info.style.display='none';
       } else {
-        info.textContent = shown>0 ? `${shown} video(s) for "${q}"` : `No videos for "${q}" - try subject or topic`;
+        info.style.display=''; info.textContent = shown>0 ? `${shown} video(s) for "${q}"` : `No videos for "${q}" - try a topic like Forces or Photosynthesis`;
       }
     }
   }
@@ -4119,7 +4526,7 @@ const db=await openDB();return new Promise((res,rej)=>{const tx=db.transaction(S
   function hideOldTop(){
     document.querySelectorAll('input').forEach(inp=>{
       let ph = (inp.placeholder||'').toLowerCase();
-      if(ph.includes('search here') && inp.id !== 'zed-v16-input' && inp.id !== 'zed-topic-input'){
+      if(ph.includes('search a topic') && inp.id !== 'zed-v16-input' && inp.id !== 'zed-topic-input'){
         let rect = inp.getBoundingClientRect();
         if(rect.top < 150){
           let parent = inp.closest('div');
@@ -4144,7 +4551,7 @@ const db=await openDB();return new Promise((res,rej)=>{const tx=db.transaction(S
     }
   });
   
-  console.log('V16 loaded - new videos searchable + 4 random + SEARCH HERE only');
+  console.log('V16 loaded - new videos searchable + 4 random + Search a topic only');
 })();
 </script>
 
@@ -4271,7 +4678,7 @@ const db=await openDB();return new Promise((res,rej)=>{const tx=db.transaction(S
       let close = document.createElement('div');
       close.className = 'zed-close-play';
       close.textContent = '✕ Show grid';
-      close.style.cssText = 'margin-top:12px;background:#222;color:white;padding:8px 14px;border-radius:20px;font-size:12px;display:inline-block;cursor:pointer;border:1px solid #444;';
+      close.style.cssText = 'margin-top:12px;background:transparent;color:white;padding:8px 14px;border-radius:20px;font-size:12px;display:inline-block;cursor:pointer;border:1px solid #444;';
       close.addEventListener('click', (e)=>{
         e.stopPropagation();
         closePlayer();
@@ -4619,7 +5026,7 @@ const db=await openDB();return new Promise((res,rej)=>{const tx=db.transaction(S
   function isVideosTab(){
     // Detect videos tab active
     let txt = document.body.innerText || '';
-    if(txt.includes('SEARCH HERE')) return true;
+    if(txt.includes('Search a topic')) return true;
     // Also check if VIDEOS button looks active (white bg)
     let videosBtn = Array.from(document.querySelectorAll('button')).find(b=> (b.textContent||'').trim() === 'VIDEOS');
     if(videosBtn){
@@ -4637,7 +5044,7 @@ const db=await openDB();return new Promise((res,rej)=>{const tx=db.transaction(S
     let inputs = document.querySelectorAll('input');
     inputs.forEach(inp=>{
       let ph = (inp.placeholder||'').toLowerCase();
-      if(!ph.includes('search here')) return;
+      if(!ph.includes('search a topic') && !ph.includes('search a topic')) return;
       if(inp.id === 'zed-v16-input') return; // keep our video search
       if(inp.id === 'zed-topic-input') return;
       
@@ -4650,7 +5057,7 @@ const db=await openDB();return new Promise((res,rej)=>{const tx=db.transaction(S
         while(pill && attempts < 4){
           let cls = pill.className || '';
           let hasRounded = cls.includes('rounded') || pill.style.borderRadius;
-          let hasSearch = pill.innerHTML && pill.innerHTML.includes('search here');
+          let hasSearch = pill.innerHTML && pill.innerHTML.includes('search a topic');
           if(hasRounded || (pill.children.length <= 2 && pill.querySelector('input'))){
             // Check if this is the top small one (top < 200px)
             let rect = pill.getBoundingClientRect();
@@ -4675,13 +5082,13 @@ const db=await openDB();return new Promise((res,rej)=>{const tx=db.transaction(S
       }
     });
 
-    // Ensure only one SEARCH HERE wrap exists
+    // Ensure only one Search a topic wrap exists
     let wraps = document.querySelectorAll('#zed-v16-wrap');
     if(wraps.length > 1){
       for(let i=1;i<wraps.length;i++) wraps[i].remove();
     }
     
-    // Show/hide SEARCH HERE based on tab
+    // Show/hide Search a topic based on tab
     let bigWrap = document.getElementById('zed-v16-wrap');
     if(bigWrap){
       if(videosActive){
@@ -4709,7 +5116,7 @@ const db=await openDB();return new Promise((res,rej)=>{const tx=db.transaction(S
 })();
 </script>
 <style>
-/* V22: Ensure only video SEARCH HERE is visible in videos, hide any other small search that sneaks in */
+/* V22: Ensure only video Search a topic is visible in videos, hide any other small search that sneaks in */
 #zed-v16-wrap {
   display: block !important;
 }
@@ -4732,7 +5139,7 @@ const db=await openDB();return new Promise((res,rej)=>{const tx=db.transaction(S
   font-weight: 700 !important;
 }
 /* Hide any lowercase search inputs completely */
-input[placeholder="search here"], input[placeholder="Search here"] {
+input[placeholder="search a topic"], input[placeholder="Search here"] {
   display: none !important;
 }
 </style>
@@ -5231,6 +5638,1572 @@ document.addEventListener('click', function(e){
   }
 }, true);
 console.log('[ZED] Welcome popup + fast login active');
+</script>
+
+<script>
+// === ZED - Hide More videos + YouTube expand, load 4 videos at a time ===
+(function(){
+  var VISIBLE = 4;
+  var lastSearch = '';
+  function getVideosGrid(){
+    var grids = document.querySelectorAll('.grid.md\\:grid-cols-2.gap-4');
+    for(var i=0;i<grids.length;i++){
+      var g = grids[i];
+      if(g.className.includes('grid-cols-3')) continue;
+      // Videos grid has iframes or • G text
+      if(g.children.length>0 && (g.innerHTML.includes('iframe') || g.innerHTML.includes('• G'))){
+        return g;
+      }
+    }
+    return grids[0] || null;
+  }
+  function getSearchQuery(){
+    var inp = document.getElementById('zed-v16-input') || document.querySelector('input[placeholder*="Search a topic"]') || document.querySelector('input[placeholder*="Search here"]');
+    return inp ? (inp.value||'').trim().toLowerCase() : '';
+  }
+  function addShields(){
+    // Add shields to each video wrapper to block YouTube More videos + YouTube own expand
+    document.querySelectorAll('.aspect-video').forEach(function(wrap){
+      if(!wrap) return;
+      if(wrap.style.position !== 'relative') wrap.style.position = 'relative';
+      if(!wrap.querySelector('.zed-more-shield')){
+        var s = document.createElement('div');
+        s.className = 'zed-more-shield';
+        s.title = '';
+        // Block clicks - More videos does nothing
+        s.addEventListener('click', function(e){ e.preventDefault(); e.stopPropagation(); });
+        s.addEventListener('pointerdown', function(e){ e.preventDefault(); e.stopPropagation(); });
+        wrap.appendChild(s);
+      }
+      if(!wrap.querySelector('.zed-yt-expand-shield')){
+        var s2 = document.createElement('div');
+        s2.className = 'zed-yt-expand-shield';
+        s2.title = '';
+        s2.addEventListener('click', function(e){ e.preventDefault(); e.stopPropagation(); });
+        s2.addEventListener('pointerdown', function(e){ e.preventDefault(); e.stopPropagation(); });
+        wrap.appendChild(s2);
+      }
+    });
+  }
+  function applyPagination(){
+    var grid = getVideosGrid();
+    if(!grid) return;
+    var q = getSearchQuery();
+    if(q !== lastSearch){
+      VISIBLE = 4;
+      lastSearch = q;
+    }
+    // Collect cards (exclude our Load More button if inside grid)
+    var cards = Array.from(grid.children).filter(function(c){
+      return c.id !== 'zed-load-more-videos' && !c.classList.contains('zed-load-more-wrap');
+    });
+    if(cards.length===0) return;
+    // Filter by search: cards already hidden by existing search code have display:none and no pag flag
+    // We treat cards with display:none and NO pag flag as search-hidden, keep them hidden
+    // Cards with pag flag are pagination-hidden
+    var searchVisible = cards.filter(function(c){
+      if(c.dataset.zedPagHidden === '1') return false; // pagination hidden, but may become visible if in first 4
+      // If search is active, existing search code may have hidden it - respect that
+      if(q && c.style.display === 'none' && !c.dataset.zedSearchMatch) return false;
+      return true;
+    });
+    // For search, we need to consider all cards that match search, not just currently visible
+    // So build list of matching cards: if q, check dataset.zedSearch or text
+    var matching = cards;
+    if(q){
+      matching = cards.filter(function(c){
+        var hay = (c.dataset.zedSearch || (c.textContent||'').toLowerCase());
+        return hay.includes(q);
+      });
+    }
+    // Show first VISIBLE matching, hide rest (lazy unload iframe)
+    matching.forEach(function(card, idx){
+      var iframe = card.querySelector('iframe');
+      if(idx < VISIBLE){
+        card.style.display = '';
+        card.dataset.zedPagHidden = '';
+        // Restore iframe if it was unloaded
+        if(iframe && (!iframe.src || iframe.src === 'about:blank' || iframe.src === '')){
+          if(card.dataset.zedSrc){
+            iframe.src = card.dataset.zedSrc;
+          }
+        }
+      } else {
+        card.style.display = 'none';
+        card.dataset.zedPagHidden = '1';
+        // Unload iframe to make page fast - store src
+        if(iframe && iframe.src && iframe.src !== 'about:blank' && iframe.src !== ''){
+          card.dataset.zedSrc = iframe.src;
+          iframe.src = 'about:blank';
+        }
+      }
+    });
+    // Hide non-matching when searching
+    if(q){
+      cards.forEach(function(card){
+        if(!matching.includes(card)){
+          card.style.display = 'none';
+        }
+      });
+    }
+    // Load More button - outside grid, after grid
+    var existing = document.getElementById('zed-load-more-videos');
+    var remaining = matching.length - VISIBLE;
+    if(remaining > 0){
+      if(!existing){
+        var wrap = document.createElement('div');
+        wrap.className = 'zed-load-more-wrap';
+        wrap.style.cssText = 'grid-column:1/-1;';
+        var btn = document.createElement('button');
+        btn.id = 'zed-load-more-videos';
+        btn.type = 'button';
+        btn.textContent = 'Load 4 more videos (' + remaining + ' left)';
+        btn.addEventListener('click', function(){
+          VISIBLE += 4;
+          applyPagination();
+          // Scroll to first newly shown
+          var grid2 = getVideosGrid();
+          if(grid2){
+            var shown = Array.from(grid2.children).filter(function(c){ return c.style.display !== 'none' && c.id !== 'zed-load-more-videos'; });
+            var target = shown[VISIBLE-4];
+            if(target) target.scrollIntoView({behavior:'smooth', block:'start'});
+          }
+        });
+        wrap.appendChild(btn);
+        grid.parentNode.insertBefore(wrap, grid.nextSibling);
+      } else {
+        existing.textContent = 'Load 4 more videos (' + remaining + ' left)';
+        // Move it after grid if needed
+        if(existing.parentNode !== grid.parentNode || existing.parentNode.querySelector('.zed-load-more-wrap') !== existing.parentNode){
+          // keep as is
+        }
+      }
+    } else {
+      if(existing){
+        var w = existing.closest('.zed-load-more-wrap');
+        if(w) w.remove(); else existing.remove();
+      }
+    }
+  }
+  // Run pagination + shields on interval (React re-renders)
+  setInterval(function(){
+    try{ addShields(); applyPagination(); }catch(e){}
+  }, 800);
+  // Auto-load more on scroll near bottom
+  var scrollTick = false;
+  window.addEventListener('scroll', function(){
+    if(scrollTick) return;
+    scrollTick = true;
+    setTimeout(function(){
+      scrollTick = false;
+      try{
+        var grid = getVideosGrid();
+        if(!grid) return;
+        var rect = grid.getBoundingClientRect();
+        if(rect.bottom < window.innerHeight + 400){
+          var btn = document.getElementById('zed-load-more-videos');
+          if(btn){
+            VISIBLE += 4;
+            applyPagination();
+          }
+        }
+      }catch(e){}
+    }, 300);
+  }, {passive:true});
+  // Reset pagination when search changes
+  document.addEventListener('input', function(e){
+    if(e.target && e.target.id === 'zed-v16-input'){
+      VISIBLE = 4;
+      setTimeout(applyPagination, 100);
+    }
+  });
+  console.log('[ZED] 4-at-a-time + More videos blocked active');
+})();
+</script>
+
+<script>
+// === ZED - Settings (Logout moved here), Edit Profile, Change/Recover Password, Show/Hide password, Colourful logo ===
+(function(){
+  // 1. Hide header Logout button, add Settings gear
+  function setupHeader(){
+    var btns = Array.from(document.querySelectorAll('button'));
+    var logoutBtn = btns.find(function(b){ return (b.textContent||'').trim() === 'Logout'; });
+    if(logoutBtn && !logoutBtn.dataset.zedMoved){
+      logoutBtn.dataset.zedMoved = '1';
+      logoutBtn.style.display = 'none';
+      logoutBtn.id = 'zed-header-logout-hidden';
+    }
+    // REMOVED: Settings gear tab - user said remove it completely. Only profile opens Settings.
+  }
+  // 2. Show / Hide password for login + signup (eye)
+  function addEyeButtons(){
+    document.querySelectorAll('input[type="password"], input[type="text"]').forEach(function(inp){
+      // Only password fields: placeholder •••••• or type password originally
+      var isPw = inp.type === 'password' || (inp.placeholder && inp.placeholder.includes('••••'));
+      if(!isPw) return;
+      if(inp.dataset.zedEye) return;
+      inp.dataset.zedEye = '1';
+      // Wrap in relative div if not already
+      var parent = inp.parentNode;
+      if(parent) parent.style.position = 'relative';
+      inp.style.paddingRight = '42px';
+      var eye = document.createElement('button');
+      eye.type = 'button';
+      eye.className = 'zed-eye-btn';
+      eye.textContent = '👁️';
+      eye.title = 'Show / Hide password';
+      eye.addEventListener('click', function(e){
+        e.preventDefault(); e.stopPropagation();
+        if(inp.type === 'password'){ inp.type = 'text'; eye.textContent = '🙈'; }
+        else { inp.type = 'password'; eye.textContent = '👁️'; }
+        inp.focus();
+      });
+      if(parent) parent.appendChild(eye);
+    });
+  }
+  // OLD LONG SETTINGS REMOVED - Categorised Settings + Dedicated Recovery only.
+  // The old modal showed Edit Profile + Change + Forgot + Appearance all together - deleted.
+  // window.zedOpenSettings is set by the categorised Settings code later.
+
+  // FIX: Run ONCE - interval was re-adding gear and moving header
+  setTimeout(function(){ try{ setupHeader(); addEyeButtons(); }catch(e){} }, 800);
+  // Also add Forgot Password link on login screen
+  setInterval(function(){
+    if(document.getElementById('zed-forgot-link')) return;
+    var loginBtn = document.getElementById('zed-login-btn');
+    if(loginBtn && loginBtn.parentNode){
+      var link = document.createElement('button');
+      link.id = 'zed-forgot-link';
+      link.type = 'button';
+      link.textContent = 'Forgot password? Recover here';
+      link.style.cssText = 'width:100%;background:none;border:none;color:#8CFF8A;font-size:13px;margin-top:10px;cursor:pointer;text-decoration:underline;';
+      link.addEventListener('click', openSettings);
+      loginBtn.parentNode.insertBefore(link, loginBtn.nextSibling);
+    }
+  }, 800);
+  console.log('[ZED] Settings + Show/Hide + Colourful logo active');
+})();
+</script>
+
+<script>
+// === ZED - Apply theme + avatar on load, signup avatar upload ===
+(function(){
+  // Apply saved theme / font size
+  try{
+    var theme = localStorage.getItem('zed_theme');
+    if(theme === 'light'){ document.body.classList.add('zed-light'); document.documentElement.classList.add('zed-light'); }
+    var fs = localStorage.getItem('zed_font_size');
+    if(fs === 'small') document.body.classList.add('zed-font-small');
+    if(fs === 'large') document.body.classList.add('zed-font-large');
+  }catch(e){}
+  window.updateHeaderAvatar = function(){ /* REMOVED: No duplicate avatar on right */ };
+  // --- Signup: Add profile photo upload ---
+  function addSignupAvatar(){
+    // Find signup form: has Create account button and name input
+    var signupBtn = document.getElementById('zed-signup-btn');
+    if(!signupBtn) return;
+    if(document.getElementById('zed-signup-avatar-wrap')) return;
+    // Find the first input in signup (name)
+    var container = signupBtn.parentNode;
+    if(!container) return;
+    var wrap = document.createElement('div');
+    wrap.id = 'zed-signup-avatar-wrap';
+    wrap.style.cssText = 'display:flex;flex-direction:column;align-items:center;gap:8px;margin-bottom:12px;';
+    wrap.innerHTML =
+      '<div id="zed-signup-avatar-preview" style="width:72px;height:72px;border-radius:50%;overflow:hidden;background:#1a1a1a;display:flex;align-items:center;justify-content:center;font-size:28px;font-weight:900;color:#000;border:3px solid #8CFF8A;">📷</div>'
+      + '<button type="button" id="zed-signup-avatar-btn" style="background:#1a1a1a;color:#fff;border:1px solid #333;padding:8px 14px;border-radius:999px;font-size:12px;font-weight:700;cursor:pointer;">📸 Add Profile Photo (optional)</button>'
+      + '<input id="zed-signup-avatar-input" type="file" accept="image/*" style="display:none;" />'
+      + '<div style="color:#999;font-size:11px;">You can change it later in Settings</div>';
+    container.insertBefore(wrap, container.firstChild);
+    document.getElementById('zed-signup-avatar-btn').addEventListener('click', function(){ document.getElementById('zed-signup-avatar-input').click(); });
+    document.getElementById('zed-signup-avatar-input').addEventListener('change', function(e){
+      var file = e.target.files && e.target.files[0];
+      if(!file) return;
+      var reader = new FileReader();
+      reader.onload = function(){
+        var img = new Image();
+        img.onload = function(){
+          var canvas = document.createElement('canvas');
+          canvas.width = 200; canvas.height = 200;
+          var ctx = canvas.getContext('2d');
+          var s = Math.min(img.width, img.height);
+          ctx.drawImage(img, (img.width-s)/2, (img.height-s)/2, s, s, 0, 0, 200, 200);
+          var dataUrl = canvas.toDataURL('image/jpeg', 0.8);
+          window.zedSignupAvatar = dataUrl;
+          document.getElementById('zed-signup-avatar-preview').innerHTML = '<img src="' + dataUrl + '" style="width:100%;height:100%;object-fit:cover;" />';
+        };
+        img.src = reader.result;
+      };
+      reader.readAsDataURL(file);
+    });
+  }
+  setInterval(addSignupAvatar, 1000);
+  // When signup succeeds, save avatar
+  var origSetItem = localStorage.setItem;
+  localStorage.setItem = function(k, v){
+    origSetItem.call(this, k, v);
+    if(k === 'zed_user' && window.zedSignupAvatar){
+      try{
+        localStorage.setItem('zed_avatar', window.zedSignupAvatar);
+        var u = JSON.parse(v);
+        u.avatar = window.zedSignupAvatar;
+        origSetItem.call(this, 'zed_user', JSON.stringify(u));
+        window.zedSignupAvatar = null;
+      }catch(e){}
+    }
+  };
+  console.log('[ZED] Theme + Avatar active');
+})();
+</script>
+
+<script>
+// === ZED - NEW Categorised Settings (overrides old) + Hide gear on Login/Signup + Working avatar ===
+(function(){
+  function isAuthPage(){
+    try{
+      var bodyText = (document.body ? document.body.innerText || '' : '');
+      if(bodyText.indexOf('Welcome back') !== -1) return true;
+      if(bodyText.indexOf('Log in to access past papers') !== -1) return true;
+      if(bodyText.indexOf('Create your account') !== -1) return true;
+      if(bodyText.indexOf('Already have an account') !== -1) return true;
+      if(bodyText.indexOf('No account?') !== -1) return true;
+      if(!localStorage.getItem('zed_user')){
+        var hasLoginBtn = Array.from(document.querySelectorAll('button')).some(function(b){
+          var t = (b.textContent||'').trim().toUpperCase();
+          return t === 'LOGIN' || t === 'LOG IN' || t === 'SIGN UP' || t === 'CREATE ACCOUNT';
+        });
+        var hasPhone = !!document.querySelector('input[placeholder*="097"]');
+        if(hasLoginBtn && hasPhone) return true;
+      }
+    }catch(e){}
+    return false;
+  }
+  function getUser(){
+    try{ return JSON.parse(localStorage.getItem('zed_user')||'null'); }catch(e){ return null; }
+  }
+  function getAvatar(){
+    try{ return localStorage.getItem('zed_avatar') || (getUser() && getUser().avatar) || ''; }catch(e){ return ''; }
+  }
+  function saveAvatar(dataUrl){
+    try{
+      localStorage.setItem('zed_avatar', dataUrl);
+      var u = getUser();
+      if(u){ u.avatar = dataUrl; u.avatar_url = dataUrl; localStorage.setItem('zed_user', JSON.stringify(u)); }
+      // Also try to save to DB so it survives reload / new phone - if column does not exist, it fails silently, local copy still works
+      try{
+        if(u && u.id){
+          fetch("https://biastmylavwhlsccvpyu.supabase.co/rest/v1/profiles?id=eq." + u.id, {
+            method: "PATCH",
+            headers: { apikey: "sb_publishable_74vo5_RlNXb0U0TrNLCdCQ_8zjDwFni", Authorization: "Bearer sb_publishable_74vo5_RlNXb0U0TrNLCdCQ_8zjDwFni", "Content-Type": "application/json" },
+            body: JSON.stringify({ avatar: dataUrl })
+          }).catch(function(){});
+        }
+      }catch(e){}
+    }catch(e){
+      // localStorage full - try smaller: save without DB, show message
+      try{ localStorage.removeItem('zed_avatar'); localStorage.setItem('zed_avatar', dataUrl); }catch(e2){ alert('Photo too large. Try a smaller photo.'); }
+    }
+  }
+  function compressImage(file, cb){
+    var reader = new FileReader();
+    reader.onerror = function(){ alert('Could not read photo. Try another photo.'); };
+    reader.onload = function(){
+      try{
+        var img = new Image();
+        img.onerror = function(){
+          // Fallback: use original file as-is if it cannot be compressed (HEIC, etc.)
+          try{ cb(reader.result); }catch(e){ alert('Could not load photo. Try a JPG/PNG photo.'); }
+        };
+        img.onload = function(){
+          try{
+            var canvas = document.createElement('canvas');
+            canvas.width = 200; canvas.height = 200;
+            var ctx = canvas.getContext('2d');
+            var s = Math.min(img.width, img.height);
+            ctx.drawImage(img, (img.width-s)/2, (img.height-s)/2, s, s, 0, 0, 200, 200);
+            cb(canvas.toDataURL('image/jpeg', 0.8));
+          }catch(e){ cb(reader.result); }
+        };
+        img.src = reader.result;
+      }catch(e){ alert('Could not load photo. Try a JPG/PNG photo.'); }
+    };
+    try{ reader.readAsDataURL(file); }catch(e){ alert('Could not read photo.'); }
+  }
+  function addEyeTo(input, btnParent){
+    if(!input) return;
+    input.style.paddingRight = '42px';
+    var eye = document.createElement('button');
+    eye.type = 'button'; eye.className = 'zed-eye-btn'; eye.textContent = '👁️';
+    eye.addEventListener('click', function(e){ e.preventDefault(); if(input.type==='password'){ input.type='text'; eye.textContent='🙈'; } else { input.type='password'; eye.textContent='👁️'; } });
+    (btnParent || input.parentNode).appendChild(eye);
+  }
+  function openCategorisedSettings(){
+    var old = document.getElementById('zed-settings-modal');
+    if(old) old.remove();
+    var user = getUser();
+    var overlay = document.createElement('div');
+    overlay.id = 'zed-settings-modal';
+    var card = document.createElement('div');
+    card.className = 'zed-settings-card';
+    overlay.appendChild(card);
+    document.body.appendChild(overlay);
+    overlay.addEventListener('click', function(e){ if(e.target === overlay) overlay.remove(); });
+
+    function renderMain(){
+      card.innerHTML =
+        '<button class="zed-settings-close" type="button">✕</button>'
+        + '<h2>⚙️ Settings</h2><div style="color:#999;font-size:13px;margin-bottom:16px;">' + (user ? user.name + ' • ' + (user.phone||'') : 'Manage your account') + '</div>'
+        + '<div id="zed-cat-list"></div>'
+        + '<div style="text-align:center;color:#666;font-size:11px;margin-top:12px;">ZED SCHOLAR • Zambia</div>';
+      card.querySelector('.zed-settings-close').addEventListener('click', function(){ overlay.remove(); });
+      var cats = [
+        { id:'profile', icon:'👤', title:'Profile', sub:'Name, school, grade, photo' },
+        { id:'passwords', icon:'🔑', title:'Manage Passwords', sub:'Change password • Forgot password' },
+        { id:'appearance', icon:'🎨', title:'Appearance', sub:'Dark / Light mode • Font size' },
+        { id:'prefs', icon:'🔔', title:'Preferences', sub:'Reminders • Data saver • Sounds' },
+        { id:'storage', icon:'💾', title:'Storage & About', sub:'Offline papers • About ZED' },
+        { id:'account', icon:'🚪', title:'Account', sub:'Logout' },
+      ];
+      var list = card.querySelector('#zed-cat-list');
+      cats.forEach(function(c){
+        var btn = document.createElement('button');
+        btn.className = 'zed-cat-row';
+        btn.innerHTML = '<span class="zed-cat-icon">'+c.icon+'</span><span style="flex:1;"><span class="zed-cat-title">'+c.title+'</span><div class="zed-cat-sub">'+c.sub+'</div></span><span style="color:#888;">›</span>';
+        btn.addEventListener('click', function(){ renderCategory(c.id); });
+        list.appendChild(btn);
+      });
+    }
+    function backBtn(){
+      var b = document.createElement('button');
+      b.className = 'zed-back-btn';
+      b.textContent = '‹ Back to Settings';
+      b.addEventListener('click', renderMain);
+      return b;
+    }
+    function renderCategory(id){
+      card.innerHTML = '<button class="zed-back-btn" type="button">\u2039 Back to Settings</button>';
+      if(id === 'profile'){
+        var av = getAvatar();
+        card.innerHTML += '<h2>👤 Profile</h2><div style="color:#999;font-size:13px;margin-bottom:12px;">Edit your details</div>'
+          + '<div style="display:flex;align-items:center;gap:14px;margin-bottom:12px;">'
+          + '<div class="zed-avatar-circle" id="zed-prof-avatar" style="background:transparent !important;">' + (av ? '<img src="'+av+'" style="width:100%;height:100%;object-fit:cover;border-radius:999px;" />' : (user && user.name ? user.name.charAt(0).toUpperCase() : 'Z')) + '</div>'
+          + '<div><button class="zed-chip" id="zed-prof-change" type="button">📷 Change Photo</button><button class="zed-chip" id="zed-prof-remove" type="button" style="margin-left:6px;">Remove</button></div></div>'
+          + '<input id="zed-prof-avatar-input" type="file" accept="image/*" style="display:none;" />'
+          + '<label>Full Name</label><input id="zed-p-name" value="'+(user?user.name||'':'')+'" />'
+          + '<label>School</label><input id="zed-p-school" value="'+(user?user.school||'':'')+'" />'
+          + '<label>Province</label><input id="zed-p-prov" value="'+(user?user.province||'':'')+'" />'
+          + '<label>District</label><input id="zed-p-dist" value="'+(user?user.district||'':'')+'" />'
+          + '<label>Grade / Form</label><select id="zed-p-grade"><option>Form 1</option><option>Form 2</option><option>Form 3</option><option>Form 4</option><option>Form 5</option><option>10</option><option>11</option><option>12</option></select>'
+          + '<button class="zed-settings-btn-primary" id="zed-p-save" type="button">SAVE PROFILE</button>';
+        try{ card.querySelector('#zed-p-grade').value = String(user.grade||''); }catch(e){}
+        card.querySelector('#zed-prof-change').addEventListener('click', function(){ card.querySelector('#zed-prof-avatar-input').click(); });
+        card.querySelector('#zed-prof-avatar-input').addEventListener('change', function(e){
+          var f = e.target.files && e.target.files[0];
+          if(!f) return;
+          compressImage(f, function(dataUrl){
+            saveAvatar(dataUrl);
+            var avEl = card.querySelector('#zed-prof-avatar');
+            if(avEl){ avEl.innerHTML = '<img src="'+dataUrl+'" style="width:100%;height:100%;object-fit:cover;border-radius:999px;" />'; avEl.style.backgroundImage = 'url("' + dataUrl + '")'; avEl.style.backgroundSize = 'cover'; avEl.style.backgroundPosition = 'center'; avEl.style.backgroundColor = 'transparent'; avEl.style.color = 'transparent'; }
+            // Update header circle immediately - do not wait for Save
+            try{
+              var hdr = document.querySelector('header');
+              if(hdr){
+                var prof = hdr.querySelector('#zed-profile-only') || hdr.querySelector('div.rounded-full');
+                if(prof){ prof.innerHTML = '<img src="'+dataUrl+'" style="width:100%;height:100%;object-fit:cover;border-radius:999px;" />'; prof.style.background = '#111'; prof.style.backgroundImage = 'none'; }
+              }
+            }catch(e){}
+            alert('Profile photo updated ✓ - Tap SAVE PROFILE to keep it');
+          });
+        });
+        card.querySelector('#zed-prof-remove').addEventListener('click', function(){
+          localStorage.removeItem('zed_avatar');
+          var u = getUser(); if(u){ delete u.avatar; delete u.avatar_url; localStorage.setItem('zed_user', JSON.stringify(u)); }
+          var avEl2 = card.querySelector('#zed-prof-avatar');
+          if(avEl2){ avEl2.innerHTML = (u && u.name ? u.name.charAt(0).toUpperCase() : 'Z'); avEl2.style.background = 'transparent'; avEl2.style.backgroundImage = 'none'; }
+          try{
+            var hdr2 = document.querySelector('header');
+            if(hdr2){
+              var prof2 = hdr2.querySelector('#zed-profile-only');
+              if(prof2){ prof2.innerHTML = (u && u.name ? u.name.charAt(0).toUpperCase() : 'Z'); prof2.style.background = '#222'; prof2.style.backgroundImage = 'none'; }
+            }
+          }catch(e){}
+        });
+        card.querySelector('#zed-p-save').addEventListener('click', async function(){
+          var name = card.querySelector('#zed-p-name').value.trim();
+          var school = card.querySelector('#zed-p-school').value.trim();
+          var prov = card.querySelector('#zed-p-prov').value.trim();
+          var dist = card.querySelector('#zed-p-dist').value.trim();
+          var grade = card.querySelector('#zed-p-grade').value;
+          if(!name || name.length<2){ alert('Enter full name'); return; }
+          if(!school){ alert('Enter school'); return; }
+          if(!user){ alert('Please log in'); return; }
+          try{
+            var SUPA_URL = "https://biastmylavwhlsccvpyu.supabase.co";
+            var SUPA_KEY = "sb_publishable_74vo5_RlNXb0U0TrNLCdCQ_8zjDwFni";
+            await fetch(SUPA_URL + "/rest/v1/profiles?id=eq." + user.id, {
+              method: "PATCH",
+              headers: { apikey: SUPA_KEY, Authorization: "Bearer " + SUPA_KEY, "Content-Type": "application/json" },
+              body: JSON.stringify({ name: name, school: school, province: prov, district: dist, grade: grade, avatar: localStorage.getItem("zed_avatar") || user.avatar || "", avatar_url: localStorage.getItem("zed_avatar") || user.avatar || "" })
+            });
+            // FIX: Preserve avatar - old code wiped photo when saving profile
+            var savedAvatar = localStorage.getItem('zed_avatar') || user.avatar || user.avatar_url || '';
+            var upd = Object.assign({}, user, { name: name, school: school, province: prov, district: dist, grade: grade, avatar: savedAvatar });
+            if(savedAvatar) localStorage.setItem('zed_avatar', savedAvatar);
+            localStorage.setItem('zed_user', JSON.stringify(upd));
+            alert('Profile updated ✓');
+            user = upd;
+            overlay.remove();
+            location.reload();
+          }catch(e){ alert('Could not save. Try again.'); }
+        });
+      }
+      if(id === 'passwords'){
+        // Split: Show 2 choices first - tapping Forgot shows ONLY recovery, not Change
+        card.innerHTML += '<h2>🔑 Manage Passwords</h2><div style="color:#999;font-size:13px;margin-bottom:12px;">Choose one:</div>'
+          + '<button class="zed-cat-row" id="zed-go-change" type="button"><span class="zed-cat-icon">🔒</span><span style="flex:1;"><span class="zed-cat-title">Change Password</span><div class="zed-cat-sub">You know your current password</div></span><span>›</span></button>'
+          + '<button class="zed-cat-row" id="zed-go-forgot" type="button"><span class="zed-cat-icon">🔑</span><span style="flex:1;"><span class="zed-cat-title">Forgot Password? Recover</span><div class="zed-cat-sub">You forgot it - recover with phone</div></span><span>›</span></button>'
+          + '<div id="zed-pw-detail"></div>';
+        card.querySelector('#zed-go-change').addEventListener('click', function(){
+          var detail = card.querySelector('#zed-pw-detail');
+          detail.innerHTML = '<h3>Change Password</h3>'
+            + '<label>Current Password</label><div class="zed-pw-wrap"><input id="zed-c-cur" type="password" placeholder="Current password" /></div>'
+            + '<label>New Password</label><div class="zed-pw-wrap"><input id="zed-c-new" type="password" placeholder="New password" /></div>'
+            + '<label>Confirm New Password</label><div class="zed-pw-wrap"><input id="zed-c-conf" type="password" placeholder="Confirm" /></div>'
+            + '<button class="zed-settings-btn-primary" id="zed-c-btn" type="button">CHANGE PASSWORD</button>';
+          ['zed-c-cur','zed-c-new','zed-c-conf'].forEach(function(iid){ addEyeTo(card.querySelector('#'+iid)); });
+          card.querySelector('#zed-c-btn').addEventListener('click', async function(){
+            var cur = card.querySelector('#zed-c-cur').value;
+            var nw = card.querySelector('#zed-c-new').value;
+            var conf = card.querySelector('#zed-c-conf').value;
+            if(!cur || !nw){ alert('Enter current and new password'); return; }
+            if(nw.length<3){ alert('New password must be at least 3 characters'); return; }
+            if(nw!==conf){ alert('Passwords do not match'); return; }
+            if(!user){ alert('Please log in'); return; }
+            if(user.password && user.password!==cur){ alert('Current password is wrong. Use Forgot Password.'); return; }
+            try{
+              var SUPA_URL2 = "https://biastmylavwhlsccvpyu.supabase.co";
+              var SUPA_KEY2 = "sb_publishable_74vo5_RlNXb0U0TrNLCdCQ_8zjDwFni";
+              await fetch(SUPA_URL2 + "/rest/v1/profiles?id=eq." + user.id, {
+                method: "PATCH", headers: { apikey: SUPA_KEY2, Authorization: "Bearer " + SUPA_KEY2, "Content-Type": "application/json" },
+                body: JSON.stringify({ password: nw })
+              });
+              var upd2 = Object.assign({}, user, { password: nw });
+              localStorage.setItem('zed_user', JSON.stringify(upd2));
+              alert('Password changed ✓');
+              overlay.remove();
+            }catch(e){ alert('Could not change. Try again.'); }
+          });
+        });
+        card.querySelector('#zed-go-forgot').addEventListener('click', function(){
+          // Close ALL Settings modals and open DEDICATED recovery modal - ONLY recovery, nothing else
+          document.querySelectorAll('#zed-settings-modal').forEach(function(m){ m.remove(); });
+          if(overlay) overlay.remove();
+          if(window.zedOpenRecovery) window.zedOpenRecovery();
+        });
+        // Return early - do not show old combined Change + Forgot below
+        var _bb2 = card.querySelector('.zed-back-btn');
+        if(_bb2){ _bb2.addEventListener('click', function(){ renderMain(); }); }
+        return;
+        // OLD combined code below is now unreachable
+        card.innerHTML += '<h2>🔑 Manage Passwords</h2><div style="color:#999;font-size:13px;margin-bottom:12px;">Change or recover your password</div>'
+          + '<h3>Change Password</h3>'
+          + '<label>Current Password</label><div class="zed-pw-wrap"><input id="zed-c-cur" type="password" placeholder="Current password" /></div>'
+          + '<label>New Password</label><div class="zed-pw-wrap"><input id="zed-c-new" type="password" placeholder="New password" /></div>'
+          + '<label>Confirm New Password</label><div class="zed-pw-wrap"><input id="zed-c-conf" type="password" placeholder="Confirm" /></div>'
+          + '<button class="zed-settings-btn-primary" id="zed-c-btn" type="button">CHANGE PASSWORD</button>'
+          + '<h3>Forgot Password? Recover</h3><div style="color:#999;font-size:12px;">Enter phone, get a code, set a new password.</div>'
+          + '<label>Phone (10 digits)</label><input id="zed-r-phone" value="'+(user?user.phone||'':'')+'" placeholder="0971234567" maxlength="10" />'
+          + '<button class="zed-settings-btn-primary" id="zed-r-send" type="button">SEND RECOVERY CODE</button>'
+          + '<div id="zed-r-hint" style="display:none;color:#8CFF8A;font-size:13px;margin-top:8px;"></div>'
+          + '<label>Recovery Code</label><input id="zed-r-code" placeholder="Enter 6-digit code" maxlength="6" />'
+          + '<label>New Password</label><div class="zed-pw-wrap"><input id="zed-r-new" type="password" placeholder="New password" /></div>'
+          + '<button class="zed-settings-btn-primary" id="zed-r-reset" type="button">RESET PASSWORD</button>';
+        ['zed-c-cur','zed-c-new','zed-c-conf','zed-r-new'].forEach(function(iid){ addEyeTo(card.querySelector('#'+iid)); });
+        card.querySelector('#zed-c-btn').addEventListener('click', async function(){
+          var cur = card.querySelector('#zed-c-cur').value;
+          var nw = card.querySelector('#zed-c-new').value;
+          var conf = card.querySelector('#zed-c-conf').value;
+          if(!cur || !nw){ alert('Enter current and new password'); return; }
+          if(nw.length<3){ alert('New password must be at least 3 characters'); return; }
+          if(nw!==conf){ alert('Passwords do not match'); return; }
+          if(!user){ alert('Please log in'); return; }
+          if(user.password && user.password!==cur){ alert('Current password is wrong. Use Forgot Password below.'); return; }
+          try{
+            var SUPA_URL2 = "https://biastmylavwhlsccvpyu.supabase.co";
+            var SUPA_KEY2 = "sb_publishable_74vo5_RlNXb0U0TrNLCdCQ_8zjDwFni";
+            await fetch(SUPA_URL2 + "/rest/v1/profiles?id=eq." + user.id, {
+              method: "PATCH", headers: { apikey: SUPA_KEY2, Authorization: "Bearer " + SUPA_KEY2, "Content-Type": "application/json" },
+              body: JSON.stringify({ password: nw })
+            });
+            var upd2 = Object.assign({}, user, { password: nw });
+            localStorage.setItem('zed_user', JSON.stringify(upd2));
+            alert('Password changed ✓');
+            overlay.remove();
+          }catch(e){ alert('Could not change. Try again.'); }
+        });
+        card.querySelector('#zed-r-send').addEventListener('click', function(){
+          var phone = card.querySelector('#zed-r-phone').value.trim();
+          if(!phone || phone.length!==10){ alert('Enter 10-digit phone'); return; }
+          var code = Math.floor(100000+Math.random()*900000).toString();
+          window.zedRecCode = code; window.zedRecPhone = phone;
+          var hint = card.querySelector('#zed-r-hint');
+          hint.style.display='block'; hint.textContent = 'Your code is: ' + code + ' (SMS not yet set up, use this code)';
+        });
+        card.querySelector('#zed-r-reset').addEventListener('click', async function(){
+          var phone = card.querySelector('#zed-r-phone').value.trim();
+          var code = card.querySelector('#zed-r-code').value.trim();
+          var nw = card.querySelector('#zed-r-new').value;
+          if(code !== window.zedRecCode){ alert('Wrong code. Tap SEND RECOVERY CODE again.'); return; }
+          if(!nw || nw.length<3){ alert('New password must be at least 3 characters'); return; }
+          try{
+            var SUPA_URL3 = "https://biastmylavwhlsccvpyu.supabase.co";
+            var SUPA_KEY3 = "sb_publishable_74vo5_RlNXb0U0TrNLCdCQ_8zjDwFni";
+            var res = await fetch(SUPA_URL3 + "/rest/v1/profiles?phone=eq." + phone, { headers: { apikey: SUPA_KEY3, Authorization: "Bearer " + SUPA_KEY3 } });
+            var rows = await res.json();
+            if(!rows || rows.length===0){ alert('Phone not found. Please sign up.'); return; }
+            await fetch(SUPA_URL3 + "/rest/v1/profiles?id=eq." + rows[0].id, {
+              method: "PATCH", headers: { apikey: SUPA_KEY3, Authorization: "Bearer " + SUPA_KEY3, "Content-Type": "application/json" },
+              body: JSON.stringify({ password: nw })
+            });
+            alert('Password reset ✓ You can now log in with your new password.');
+            overlay.remove();
+          }catch(e){ alert('Could not reset. Try again.'); }
+        });
+      }
+      if(id === 'appearance'){
+        card.innerHTML += '<h2>🎨 Appearance</h2><div style="color:#999;font-size:13px;margin-bottom:12px;">Make ZED yours</div>'
+          + '<div class="zed-toggle-row"><span>☀️ Light Mode / 🌙 Dark Mode</span><button class="zed-toggle" id="zed-ap-theme" type="button"></button></div>'
+          + '<label style="margin-top:14px;">Font Size</label><div style="display:flex;gap:8px;"><button class="zed-chip" data-font="small" type="button">A- Small</button><button class="zed-chip" data-font="medium" type="button">A Medium</button><button class="zed-chip" data-font="large" type="button">A+ Large</button></div>'
+          + '<div style="color:#999;font-size:12px;margin-top:12px;">Light mode is easier in bright sunlight. Dark mode saves battery.</div>';
+        var tt = card.querySelector('#zed-ap-theme');
+        if(document.body.classList.contains('zed-light')) tt.classList.add('on');
+        tt.addEventListener('click', function(){
+          var nowLight = !document.body.classList.contains('zed-light');
+          document.body.classList.toggle('zed-light', nowLight);
+          document.documentElement.classList.toggle('zed-light', nowLight);
+          localStorage.setItem('zed_theme', nowLight?'light':'dark');
+          tt.classList.toggle('on', nowLight);
+        });
+        var curFs = localStorage.getItem('zed_font_size') || 'medium';
+        card.querySelectorAll('[data-font]').forEach(function(ch){
+          if(ch.dataset.font===curFs) ch.classList.add('active');
+          ch.addEventListener('click', function(){
+            card.querySelectorAll('[data-font]').forEach(function(c){ c.classList.remove('active'); });
+            ch.classList.add('active');
+            document.body.classList.remove('zed-font-small','zed-font-large');
+            if(ch.dataset.font==='small') document.body.classList.add('zed-font-small');
+            if(ch.dataset.font==='large') document.body.classList.add('zed-font-large');
+            localStorage.setItem('zed_font_size', ch.dataset.font);
+          });
+        });
+      }
+      if(id === 'prefs'){
+        card.innerHTML += '<h2>🔔 Preferences</h2>'
+          + '<div class="zed-toggle-row"><span>🔔 Quiz Reminders</span><button class="zed-toggle" id="zed-p-notif" type="button"></button></div>'
+          + '<div class="zed-toggle-row"><span>📶 Data Saver</span><button class="zed-toggle" id="zed-p-data" type="button"></button></div>'
+          + '<div class="zed-toggle-row"><span>🔊 Sounds</span><button class="zed-toggle" id="zed-p-sound" type="button"></button></div>'
+          + '<div style="color:#999;font-size:12px;margin-top:12px;">Data Saver loads fewer videos at once - good for slow data.</div>';
+        function bind(id2, key, def){
+          var t = card.querySelector(id2);
+          var v = localStorage.getItem(key);
+          var on = v===null ? def : v==='1';
+          t.classList.toggle('on', on);
+          t.addEventListener('click', function(){
+            var now = !t.classList.contains('on');
+            t.classList.toggle('on', now);
+            localStorage.setItem(key, now?'1':'0');
+          });
+        }
+        bind('#zed-p-notif','zed_notif', true);
+        bind('#zed-p-data','zed_datasaver', false);
+        bind('#zed-p-sound','zed_sound', true);
+      }
+      if(id === 'storage'){
+        card.innerHTML += '<h2>💾 Storage & About</h2>'
+          + '<div style="color:#999;font-size:13px;line-height:1.6;">ZED SCHOLAR v1 • Free ECZ Past Papers for Form 1-5 & Grade 10-12 • Zambia • Made for students, by students.</div>'
+          + '<button class="zed-settings-btn-primary" id="zed-clear" type="button">🗑️ CLEAR OFFLINE PAPERS</button>'
+          + '<div style="color:#999;font-size:12px;margin-top:10px;">Clears downloaded papers from your phone. You can download them again.</div>';
+        card.querySelector('#zed-clear').addEventListener('click', function(){
+          if(confirm('Clear offline papers?')){
+            try{
+              Object.keys(localStorage).forEach(function(k){ if(k.includes('offline')||k.includes('zed_videos_cache')) localStorage.removeItem(k); });
+              alert('Offline papers cleared ✓');
+            }catch(e){}
+          }
+        });
+      }
+      if(id === 'account'){
+        card.innerHTML += '<h2>🚪 Account</h2><div style="color:#999;font-size:13px;margin-bottom:12px;">' + (user?user.name+' • '+user.phone:'') + '</div>'
+          + '<button class="zed-settings-btn-red" id="zed-acc-logout" type="button">LOGOUT</button>'
+          + '<div style="color:#999;font-size:12px;margin-top:10px;text-align:center;">You will need your phone + password to log back in.</div>';
+        card.querySelector('#zed-acc-logout').addEventListener('click', function(){
+          if(confirm('Log out of ZED SCHOLAR?')){
+            localStorage.removeItem('zed_user');
+            location.reload();
+          }
+        });
+      }
+      // FIX: Bind Back AFTER all innerHTML - otherwise innerHTML rebuild destroys the listener
+      var _bb = card.querySelector('.zed-back-btn');
+      if(_bb){ _bb.addEventListener('click', function(){ renderMain(); }); }
+      // Also make Back work with tap + make it big/tappable
+      if(_bb){ _bb.style.cssText = 'display:block !important;width:100% !important;text-align:left !important;padding:10px 0 !important;'; }
+    }
+    renderMain();
+  }
+  window.zedOpenSettings = openCategorisedSettings;
+  // Hide gear on login/signup
+  setInterval(function(){
+    try{
+      var gear = document.getElementById('zed-settings-btn');
+      if(!gear) return;
+      if(isAuthPage()){
+        gear.style.display = 'none';
+      } else {
+        gear.style.display = 'flex';
+      }
+    }catch(e){}
+  }, 500);
+  // Signup avatar - robust, works even if React re-renders
+  function addSignupAvatar(){
+    var btn = document.getElementById('zed-signup-btn');
+    if(!btn) return;
+    if(document.getElementById('zed-signup-avatar-wrap')) return;
+    var container = btn.parentNode;
+    if(!container) return;
+    var wrap = document.createElement('div');
+    wrap.id = 'zed-signup-avatar-wrap';
+    wrap.style.cssText = 'display:flex;flex-direction:column;align-items:center;gap:8px;margin-bottom:12px;';
+    wrap.innerHTML =
+      '<div id="zed-signup-avatar-preview" style="width:72px;height:72px;border-radius:50%;overflow:hidden;background:#1a1a1a;display:flex;align-items:center;justify-content:center;font-size:28px;font-weight:900;color:#000;border:3px solid #8CFF8A;">📷</div>'
+      + '<button type="button" id="zed-signup-avatar-btn" style="background:#1a1a1a;color:#fff;border:1px solid #333;padding:8px 14px;border-radius:999px;font-size:12px;font-weight:700;cursor:pointer;">📸 Add Profile Photo (optional)</button>'
+      + '<input id="zed-signup-avatar-input" type="file" accept="image/*" style="display:none;" />'
+      + '<div style="color:#999;font-size:11px;">You can change it later in Settings → Profile</div>';
+    container.insertBefore(wrap, container.firstChild);
+    document.getElementById('zed-signup-avatar-btn').addEventListener('click', function(){ document.getElementById('zed-signup-avatar-input').click(); });
+    document.getElementById('zed-signup-avatar-input').addEventListener('change', function(e){
+      var file = e.target.files && e.target.files[0];
+      if(!file) return;
+      compressImage(file, function(dataUrl){
+        window.zedSignupAvatar = dataUrl;
+        document.getElementById('zed-signup-avatar-preview').innerHTML = '<img src="'+dataUrl+'" style="width:100%;height:100%;object-fit:cover;" />';
+      });
+    });
+  }
+  setInterval(addSignupAvatar, 800);
+  // Save avatar on signup - watch for zed_user creation
+  var origSet = localStorage.setItem;
+  var saving = false;
+  localStorage.setItem = function(k, v){
+    origSet.call(this, k, v);
+    if(k === 'zed_user' && window.zedSignupAvatar && !saving){
+      saving = true;
+      try{
+        origSet.call(this, 'zed_avatar', window.zedSignupAvatar);
+        var u = JSON.parse(v);
+        u.avatar = window.zedSignupAvatar;
+        origSet.call(this, 'zed_user', JSON.stringify(u));
+        window.zedSignupAvatar = null;
+      }catch(e){}
+      saving = false;
+    }
+  };
+  console.log('[ZED] Categorised Settings active');
+})();
+</script>
+
+<script>// REMOVED: Move Settings gear - no gear tab.
+</script>
+
+<script>// REMOVED: ensureHeaderAvatar - created duplicate profile on right. Deleted.
+</script>
+
+<script>
+// === ZED - Back button fallback (delegated) ===
+(function(){
+  document.addEventListener('click', function(e){
+    var back = e.target.closest && e.target.closest('.zed-back-btn');
+    if(!back) return;
+    // If the main handler didn't run, try to close sub-screen by re-opening Settings main
+    // We check if back is inside settings modal and no handler fired after 100ms
+    setTimeout(function(){
+      try{
+        var modal = document.getElementById('zed-settings-modal');
+        if(!modal) return;
+        // If still showing a sub-screen (no category list), and back was clicked, re-open main
+        if(!modal.querySelector('#zed-cat-list') && back.isConnected){
+          // Fallback: re-open Settings main by calling openSettings again
+          if(window.zedOpenSettings){
+            var wasOpen = !!document.getElementById('zed-settings-modal');
+            if(wasOpen){
+              // Re-open will show main list
+              window.zedOpenSettings();
+            }
+          }
+        }
+      }catch(err){}
+    }, 150);
+  }, true);
+  console.log('[ZED] Back button fix active');
+})();
+</script>
+
+<script>
+// === ZED - Rounded splash + Tappable profile pics + View friend's profile ===
+(function(){
+  // 1. Force splash logo rounded (in case React re-creates it)
+  function fixSplash(){
+    var logo = document.getElementById('zed-splash-logo');
+    if(logo){
+      logo.style.borderRadius = '999px';
+      logo.style.overflow = 'hidden';
+      logo.style.objectFit = 'cover';
+    }
+    var wrap = document.getElementById('zed-splash-logo-wrap');
+    if(wrap){
+      wrap.style.borderRadius = '999px';
+      wrap.style.overflow = 'hidden';
+      wrap.style.width = '140px';
+      wrap.style.height = '140px';
+    }
+  }
+  setInterval(fixSplash, 500);
+
+  // 2. Profile pic viewer - show any user's pic large
+  function openPicViewer(name, school, grade, avatarUrl, coins, streak, province, district){
+    var old = document.getElementById('zed-pic-viewer');
+    if(old) old.remove();
+    var overlay = document.createElement('div');
+    overlay.id = 'zed-pic-viewer';
+    var initial = (name||'Z').charAt(0).toUpperCase();
+    overlay.innerHTML =
+      '<div class="zed-pic-viewer-card">'
+      + '<div style="text-align:right;"><button type="button" id="zed-pic-close" style="background:none;border:none;color:#fff;font-size:22px;cursor:pointer;">✕</button></div>'
+      + '<div class="zed-pic-viewer-img">' + (avatarUrl ? '<img src="'+avatarUrl+'" />' : initial) + '</div>'
+      + '<div style="font-size:20px;font-weight:800;color:#fff;">'+(name||'')+'</div>'
+      + (school ? '<div style="color:#8CFF8A;font-size:14px;margin-top:4px;">'+school+'</div>' : '')
+      + ((grade||province||district) ? '<div style="color:#999;font-size:12px;margin-top:6px;">' + (grade?'Grade '+grade+' • ':'') + (province||'') + (district?' • '+district:'') + '</div>' : '')
+      + ((coins!==undefined||streak!==undefined) ? '<div style="display:flex;gap:8px;justify-content:center;margin-top:12px;"><span style="background:#FFD93D;color:#000;padding:6px 12px;border-radius:999px;font-size:12px;font-weight:800;">'+(coins||0)+' coins</span><span style="background:transparent;color:#fff;padding:6px 12px;border-radius:999px;font-size:12px;">🔥 '+ (streak||0) +' streak</span></div>' : '')
+      + '</div>';
+    document.body.appendChild(overlay);
+    overlay.addEventListener('click', function(e){ if(e.target===overlay) overlay.remove(); });
+    overlay.querySelector('#zed-pic-close').addEventListener('click', function(){ overlay.remove(); });
+  }
+  window.zedOpenPicViewer = openPicViewer;
+
+  // 3. Make own avatar + all avatars tappable
+  function bindAvatars(){
+    // Header avatar
+    var headerAvatar = document.getElementById('zed-header-avatar');
+    if(headerAvatar && !headerAvatar.dataset.zedPicBound){
+      headerAvatar.dataset.zedPicBound = '1';
+      headerAvatar.addEventListener('click', function(e){
+        // If user long-presses / taps avatar, show pic viewer instead of Settings? 
+        // Single tap on avatar = view pic, double-tap / tap name = Settings. To keep Settings reachable, we show pic viewer with a Settings button
+        // For now: tap avatar shows pic viewer, and pic viewer has no Settings button - user can still open Settings via Profile tab
+        // To avoid breaking Settings access, we only show pic viewer on avatar click if user holds? 
+        // Decision: Avatar tap = view pic (as requested). Settings is still reachable via Profile tab and via tapping name area.
+        e.preventDefault(); e.stopPropagation();
+        var user = null;
+        try{ user = JSON.parse(localStorage.getItem('zed_user')||'null'); }catch(err){}
+        var av = localStorage.getItem('zed_avatar') || (user && user.avatar) || '';
+        if(user) openPicViewer(user.name, user.school, user.grade, av, user.coins, user.streak, user.province, user.district);
+      });
+    }
+    // Settings / Profile avatars
+    document.querySelectorAll('.zed-avatar-circle').forEach(function(el){
+      if(el.dataset.zedPicBound) return;
+      el.dataset.zedPicBound = '1';
+      el.addEventListener('click', function(e){
+        // Don't block Change Photo button - only if clicking the circle itself
+        var user = null;
+        try{ user = JSON.parse(localStorage.getItem('zed_user')||'null'); }catch(err){}
+        var av = localStorage.getItem('zed_avatar') || (user && user.avatar) || '';
+        var img = el.querySelector('img');
+        var src = img ? img.src : av;
+        if(user) openPicViewer(user.name, user.school, user.grade, src, user.coins, user.streak, user.province, user.district);
+      });
+    });
+  }
+  // FIX: Run ONCE - was re-binding avatars every 800ms
+  setTimeout(bindAvatars, 800);
+
+  // 4. Leaderboard: Add avatar to each user row + make tapping it show friend's profile pic
+  // Leaderboard rows are rendered by React - we inject avatar circles and bind tap
+  function enhanceLeaderboard(){
+    // Find leaderboard container by heading
+    var headings = Array.from(document.querySelectorAll('h2'));
+    var lbHeading = headings.find(function(h){ return (h.textContent||'').includes('Leaderboard'); });
+    if(!lbHeading) return;
+    var container = lbHeading.closest('div.space-y-6') || lbHeading.parentNode.parentNode;
+    if(!container) return;
+    // Find all user cards/rows: they contain coins and school
+    var rows = container.querySelectorAll('div');
+    // We look for rows that have a name + coins - use the grid of user cards
+    // Simpler: find all elements that look like leaderboard user cards (they have text with coins)
+    // For each card that hasn't been enhanced, add avatar + tap
+    var cards = container.querySelectorAll('.rounded-\\[16px\\], .border');
+    // Fallback: use all divs with class containing rounded and border and containing coins text
+    if(cards.length===0) return;
+    cards.forEach(function(card){
+      if(card.dataset.zedFriendBound) return;
+      var txt = card.textContent||'';
+      // Top 3 cards have crown, others have name/school - skip if no name
+      if(txt.length < 10) return;
+      // Don't enhance the filter bar
+      if(card.querySelector('select') || card.querySelector('input')) return;
+      card.dataset.zedFriendBound = '1';
+      card.style.cursor = 'pointer';
+      // Try to extract name: first line that is not crown
+      var lines = txt.split('\n').map(function(s){ return s.trim(); }).filter(Boolean);
+      // Find name: usually second line after crown, or first line with letters
+      var name = '';
+      // Use the element with font-serif as name if exists
+      var nameEl = card.querySelector('.font-serif');
+      if(nameEl) name = nameEl.textContent.trim();
+      else if(lines[0]) name = lines[0];
+      // Add avatar at top if not already there
+      if(!card.querySelector('.zed-leader-avatar')){
+        var av = document.createElement('div');
+        av.className = 'zed-leader-avatar';
+        av.style.cssText = 'width:56px;height:56px;border-radius:999px;overflow:hidden;background:#1a1a1a;display:flex;align-items:center;justify-content:center;font-size:24px;font-weight:900;color:#000;border:3px solid #8CFF8A;margin:0 auto 8px;cursor:pointer;';
+        av.textContent = (name||'Z').charAt(0).toUpperCase();
+        av.title = 'Tap to view ' + name + ' profile pic';
+        // Insert at top of card
+        card.insertBefore(av, card.firstChild);
+        // Tap avatar = view friend pic
+        av.addEventListener('click', function(e){
+          e.preventDefault(); e.stopPropagation();
+          // Try to get school/grade/coins from card text
+          var school = '';
+          var coins = 0;
+          var m = txt.match(/(\d+)\s*coins/i);
+          if(m) coins = parseInt(m[1], 10);
+          // School is often second line or after name
+          // Use card's text - find a word that looks like school (contains School/High/Secondary) or just show name
+          openPicViewer(name, school, '', '', coins, 0, '', '');
+        });
+      }
+      // Tap whole card = also view friend
+      card.addEventListener('click', function(e){
+        if(e.target.closest && e.target.closest('.zed-leader-avatar')) return;
+        var name2 = name;
+        var coins2 = 0;
+        var m2 = txt.match(/(\d+)\s*coins/i);
+        if(m2) coins2 = parseInt(m2[1], 10);
+        openPicViewer(name2, '', '', '', coins2, 0, '', '');
+      });
+    });
+  }
+  setTimeout(enhanceLeaderboard, 1000);
+
+  // 5. Global: Any profile pic in app (img with avatar) - tapping opens viewer
+  document.addEventListener('click', function(e){
+    var img = e.target.closest && e.target.closest('img');
+    if(!img) return;
+    // If img is inside an avatar circle, let its own handler handle it
+    if(img.closest('.zed-avatar-circle') || img.closest('.zed-avatar-small') || img.closest('.zed-leader-avatar')) return;
+    // If img is splash logo, don't open viewer
+    if(img.id === 'zed-splash-logo') return;
+    // If img is inside a video card, ignore
+    if(img.closest('.aspect-video')) return;
+  });
+
+  console.log('[ZED] Rounded splash + tappable profile pics active');
+})();
+</script>
+
+<script>// REMOVED: replaceHeaderZ - created rainbow duplicate. Deleted.
+</script>
+
+<script>// REMOVED: fixHeaderToOneCircle - created duplicate. Deleted.
+</script>
+
+<script>
+// === ZED - Dedicated Forgot Password / Recovery - ONLY recovery, checks phone, handles 2 accounts ===
+(function(){
+  var SUPA_URL = "https://biastmylavwhlsccvpyu.supabase.co";
+  var SUPA_KEY = "sb_publishable_74vo5_RlNXb0U0TrNLCdCQ_8zjDwFni";
+
+  function openRecovery(){
+    // Close ALL Settings modals first - so ONLY recovery shows, no Settings behind it
+    document.querySelectorAll('#zed-settings-modal').forEach(function(m){ m.remove(); });
+    var old = document.getElementById('zed-recovery-modal');
+    if(old) old.remove();
+    var overlay = document.createElement('div');
+    overlay.id = 'zed-recovery-modal';
+    var card = document.createElement('div');
+    card.className = 'zed-recovery-card';
+    overlay.appendChild(card);
+    document.body.appendChild(overlay);
+    overlay.addEventListener('click', function(e){ if(e.target===overlay) overlay.remove(); });
+
+    var selectedAccount = null;
+    var accounts = [];
+    var recoveryCode = '';
+
+    function renderStep1(){
+      card.innerHTML =
+        '<button class="zed-rec-back" type="button">✕ Close</button>'
+        + '<h2 style="margin:10px 0 6px;">🔑 Forgot Password?</h2>'
+        + '<div style="color:#999;font-size:13px;line-height:1.5;">Password recovery only.<br/>Enter your phone number - we will check if it has an account.</div>'
+        + '<label style="display:block;margin-top:16px;font-size:12px;color:#999;">PHONE - 10 DIGITS (09 / 07)</label>'
+        + '<input id="zed-rec-phone" placeholder="0971234567" maxlength="10" inputmode="numeric" />'
+        + '<button class="zed-rec-btn" id="zed-rec-find" type="button">🔍 FIND MY ACCOUNTS</button>'
+        + '<div id="zed-rec-result" style="margin-top:12px;"></div>';
+      card.querySelector('.zed-rec-back').addEventListener('click', function(){ overlay.remove(); });
+      card.querySelector('#zed-rec-find').addEventListener('click', async function(){
+        var phone = (card.querySelector('#zed-rec-phone').value||'').replace(/\D/g,'').slice(0,10);
+        var result = card.querySelector('#zed-rec-result');
+        if(phone.length!==10){ result.innerHTML = '<div style="color:#FF6B6B;font-size:13px;">Enter 10-digit phone number, e.g. 0971234567</div>'; return; }
+        result.innerHTML = '<div style="color:#8CFF8A;font-size:13px;">Checking 097... please wait...</div>';
+        try{
+          var res = await fetch(SUPA_URL + "/rest/v1/profiles?phone=eq." + phone + "&select=id,name,phone,school,grade,province,district,avatar,avatar_url,created_at&order=created_at.asc", {
+            headers: { apikey: SUPA_KEY, Authorization: "Bearer " + SUPA_KEY }
+          });
+          var rows = await res.json();
+          accounts = rows || [];
+          if(!accounts || accounts.length===0){
+            result.innerHTML = '<div style="background:#2b1a1a;border:1px solid #ff6b6b;border-radius:12px;padding:12px;font-size:13px;line-height:1.5;color:#fff;">❌ <b>No account found</b> for <b>'+phone+'</b>.<br/><span style="color:#ccc;">This number has no ZED SCHOLAR account.<br/>Please create a new account.</span></div>'
+              + '<button class="zed-rec-btn" id="zed-rec-go-signup" type="button">CREATE ACCOUNT</button>';
+            var goBtn = card.querySelector('#zed-rec-go-signup');
+            if(goBtn) goBtn.addEventListener('click', function(){ overlay.remove(); var signupLink = Array.from(document.querySelectorAll('button')).find(function(b){ return (b.textContent||'').includes('No account'); }); if(signupLink) signupLink.click(); });
+            return;
+          }
+          if(accounts.length===1){
+            var a = accounts[0];
+            result.innerHTML = '<div style="background:#1e2b1e;border:1px solid #8CFF8A;border-radius:12px;padding:12px;font-size:13px;">✅ <b>1 account found</b> for '+phone+'</div>'
+              + '<div class="zed-acc-card selected"><div style="font-weight:800;font-size:15px;">'+(a.name||'User')+'</div><div style="color:#999;font-size:12px;margin-top:2px;">'+(a.school||'')+' • '+(a.grade||'')+' • '+(a.province||'')+'</div><div style="color:#8CFF8A;font-size:11px;margin-top:4px;">✓ This is your account</div></div>'
+              + '<button class="zed-rec-btn" id="zed-rec-send-1" type="button">SEND RECOVERY CODE →</button>';
+            selectedAccount = a;
+            card.querySelector('#zed-rec-send-1').addEventListener('click', function(){ renderStep2(); });
+            return;
+          }
+          // 2+ accounts - let user pick
+          var listHtml = '<div style="background:#fff3cd;border:1px solid #FFD93D;border-radius:12px;padding:12px;font-size:13px;color:#000;margin-bottom:12px;">⚠️ <b>'+accounts.length+' accounts found</b> for '+phone+'<br/>Tap the one that is yours:</div>';
+          accounts.forEach(function(a, idx){
+            listHtml += '<div class="zed-acc-card" data-idx="'+idx+'"><div style="font-weight:800;font-size:15px;">'+(a.name||'User')+'</div><div style="color:#999;font-size:12px;margin-top:2px;">'+(a.school||'')+' • '+(a.grade||'')+' • '+(a.province||'')+' '+(a.district||'')+'</div><div style="color:#666;font-size:11px;margin-top:2px;">Created: '+(a.created_at? a.created_at.slice(0,10):'')+'</div></div>';
+          });
+          listHtml += '<button class="zed-rec-btn" id="zed-rec-send-multi" type="button" disabled>SEND RECOVERY CODE →</button><div style="color:#999;font-size:12px;margin-top:8px;text-align:center;">Pick one account first</div>';
+          result.innerHTML = listHtml;
+          result.querySelectorAll('.zed-acc-card').forEach(function(el){
+            el.addEventListener('click', function(){
+              result.querySelectorAll('.zed-acc-card').forEach(function(c){ c.classList.remove('selected'); });
+              el.classList.add('selected');
+              selectedAccount = accounts[parseInt(el.dataset.idx,10)];
+              var sendBtn = result.querySelector('#zed-rec-send-multi');
+              if(sendBtn){ sendBtn.disabled = false; }
+            });
+          });
+          result.querySelector('#zed-rec-send-multi').addEventListener('click', function(){
+            if(!selectedAccount){ alert('Pick one account first'); return; }
+            renderStep2();
+          });
+        }catch(e){
+          result.innerHTML = '<div style="color:#FF6B6B;font-size:13px;">Could not check. Check your data and try again.</div>';
+        }
+      });
+    }
+
+    function renderStep2(){
+      recoveryCode = Math.floor(100000+Math.random()*900000).toString();
+      card.innerHTML =
+        '<button class="zed-rec-back" id="zed-rec-back1" type="button">‹ Back</button>'
+        + '<h2 style="margin:10px 0 6px;">🔑 Recover Password</h2>'
+        + '<div style="background:#1a1a1a;border:1px solid #333;border-radius:12px;padding:12px;font-size:13px;">Recovering for:<br/><b style="font-size:15px;">'+(selectedAccount.name||'')+'</b><br/><span style="color:#999;">'+(selectedAccount.school||'')+' • '+(selectedAccount.grade||'')+' • '+(selectedAccount.phone||'')+'</span></div>'
+        + '<div style="background:#1e2b1e;border:1px solid #8CFF8A;border-radius:12px;padding:12px;font-size:13px;margin-top:12px;">Your code is: <b style="font-size:16px;color:#8CFF8A;">'+recoveryCode+'</b><br/><span style="color:#999;font-size:12px;">SMS not yet set up, use this code.</span></div>'
+        + '<label style="display:block;margin-top:14px;font-size:12px;color:#999;">RECOVERY CODE (6 DIGITS)</label>'
+        + '<input id="zed-rec-code" placeholder="Enter 6-digit code" maxlength="6" inputmode="numeric" />'
+        + '<label style="display:block;font-size:12px;color:#999;">NEW PASSWORD</label>'
+        + '<input id="zed-rec-new" type="password" placeholder="New password" />'
+        + '<label style="display:block;font-size:12px;color:#999;">CONFIRM NEW PASSWORD</label>'
+        + '<input id="zed-rec-conf" type="password" placeholder="Confirm new password" />'
+        + '<button class="zed-rec-btn" id="zed-rec-reset" type="button">RESET PASSWORD</button>'
+        + '<div id="zed-rec-err" style="margin-top:10px;color:#FF6B6B;font-size:13px;"></div>';
+      card.querySelector('#zed-rec-back1').addEventListener('click', renderStep1);
+      card.querySelector('#zed-rec-reset').addEventListener('click', async function(){
+        var code = (card.querySelector('#zed-rec-code').value||'').trim();
+        var nw = card.querySelector('#zed-rec-new').value;
+        var conf = card.querySelector('#zed-rec-conf').value;
+        var err = card.querySelector('#zed-rec-err');
+        if(code !== recoveryCode){ err.textContent = 'Wrong code. Check the code above.'; return; }
+        if(!nw || nw.length<3){ err.textContent = 'New password must be at least 3 characters.'; return; }
+        if(nw !== conf){ err.textContent = 'Passwords do not match.'; return; }
+        err.textContent = 'Resetting...';
+        try{
+          await fetch(SUPA_URL + "/rest/v1/profiles?id=eq." + selectedAccount.id, {
+            method: "PATCH", headers: { apikey: SUPA_KEY, Authorization: "Bearer " + SUPA_KEY, "Content-Type": "application/json" },
+            body: JSON.stringify({ password: nw })
+          });
+          card.innerHTML = '<div style="text-align:center;padding:20px 0;"><div style="font-size:48px;">✅</div><h2>Password reset!</h2><div style="color:#999;font-size:13px;line-height:1.5;">Password for <b>'+(selectedAccount.name||'')+'</b> changed.<br/>You can now log in with your new password.</div><button class="zed-rec-btn" id="zed-rec-done" type="button">BACK TO LOGIN</button></div>';
+          card.querySelector('#zed-rec-done').addEventListener('click', function(){ overlay.remove(); });
+        }catch(e){ err.textContent = 'Could not reset. Try again.'; }
+      });
+    }
+
+    renderStep1();
+  }
+  window.zedOpenRecovery = openRecovery;
+
+  // Hook login "Forgot password? Recover here" link to dedicated recovery modal
+  setInterval(function(){
+    try{
+      var forgotLink = document.getElementById('zed-forgot-link');
+      if(forgotLink && !forgotLink.dataset.zedRecBound){
+        forgotLink.dataset.zedRecBound = '1';
+        forgotLink.addEventListener('click', function(e){ e.preventDefault(); e.stopPropagation(); openRecovery(); });
+      }
+      // Also catch any button/link with text "Forgot password"
+      var allBtns = document.querySelectorAll('button, a');
+      allBtns.forEach(function(b){
+        var t = (b.textContent||'').trim();
+        if((t === 'Forgot password? Recover here' || t.includes('Forgot password?')) && !b.dataset.zedRecBound){
+          // Don't bind inside Settings Manage Passwords - that will be handled by Settings category
+          // Only bind if on login page (no user)
+          if(!localStorage.getItem('zed_user')){
+            b.dataset.zedRecBound = '1';
+            b.addEventListener('click', function(e){ e.preventDefault(); e.stopPropagation(); openRecovery(); });
+          }
+        }
+      });
+    }catch(e){}
+  }, 800);
+
+  console.log('[ZED] Dedicated Recovery active');
+})();
+</script>
+
+<script>
+// === ZED - Guard: Never show old long Settings (Edit+Change+Forgot+Appearance together) ===
+(function(){
+  function killOldSettings(){
+    document.querySelectorAll('#zed-settings-modal').forEach(function(modal){
+      var t = modal.innerText || '';
+      // Old long modal has all these together in one scroll - new categorised has only one section at a time
+      var isOld = t.indexOf('Edit Profile') !== -1 && t.indexOf('Change Password') !== -1 && t.indexOf('Forgot Password') !== -1 && t.indexOf('Appearance') !== -1;
+      if(isOld){
+        // If recovery is open, just remove old Settings and keep recovery on top
+        // If recovery is not open, remove old and open categorised Settings instead
+        var recoveryOpen = !!document.getElementById('zed-recovery-modal');
+        modal.remove();
+        if(!recoveryOpen && window.zedOpenSettings){
+          // Don't auto-reopen - user tapped something, let them tap again. Just remove old.
+        }
+      }
+    });
+  }
+  // Watch for new modals
+  var obs = new MutationObserver(function(){ killOldSettings(); });
+  obs.observe(document.body, { childList: true, subtree: true });
+  setInterval(killOldSettings, 500);
+  console.log('[ZED] Old long Settings guard active - only Recovery or Categorised');
+})();
+</script>
+
+<script>
+// === ZED - Forgot Password link ON LOGIN SCREEN - always visible ===
+(function(){
+  function ensureLoginForgotLink(){
+    try{
+      // Only on login screen: no user logged in, Welcome back visible, LOGIN button exists
+      if(localStorage.getItem('zed_user')) return;
+      var loginBtn = document.getElementById('zed-login-btn');
+      if(!loginBtn) return;
+      // Already there?
+      if(document.getElementById('zed-login-forgot-link')) return;
+      // Don't add on signup screen - only when LOGIN button is visible and Welcome back is present
+      var bodyText = document.body.innerText || '';
+      if(bodyText.indexOf('Welcome back') === -1) return;
+
+      var link = document.createElement('button');
+      link.id = 'zed-login-forgot-link';
+      link.type = 'button';
+      link.textContent = 'Forgot password? Recover here';
+      link.style.cssText = 'display:block !important; width:100% !important; text-align:center !important; background:none !important; border:none !important; color:#8CFF8A !important; font-size:13px !important; font-weight:700 !important; text-decoration:underline !important; padding:10px 0 2px !important; cursor:pointer !important; margin-top:6px !important;';
+      link.addEventListener('click', function(e){
+        e.preventDefault(); e.stopPropagation();
+        if(window.zedOpenRecovery) window.zedOpenRecovery();
+        else alert('Recovery not ready, reload the app');
+      });
+      // Insert right after LOGIN button - before "No account?" line
+      var parent = loginBtn.parentNode;
+      if(parent){
+        // The "No account?" div is next sibling after loginBtn (signup-trigger)
+        var next = loginBtn.nextElementSibling;
+        if(next) parent.insertBefore(link, next);
+        else parent.appendChild(link);
+      } else {
+        loginBtn.insertAdjacentElement('afterend', link);
+      }
+      console.log('[ZED] Forgot link added to Login');
+    }catch(e){}
+  }
+  // Keep re-adding - React re-renders and wipes it, so we re-add every 500ms
+  setInterval(ensureLoginForgotLink, 500);
+  // Also watch DOM changes
+  var obs = new MutationObserver(function(){ ensureLoginForgotLink(); });
+  if(document.body) obs.observe(document.body, { childList: true, subtree: true });
+  console.log('[ZED] Login Forgot link watcher active');
+})();
+</script>
+
+<script>
+// === ZED - Signup fixes: School dropdown contained + Show password eye ===
+(function(){
+  // 1. School dropdown: contain it, hide after picking a school
+  function fixSchoolDropdown(){
+    var searchInput = document.querySelector('input[placeholder="Search school..."]');
+    if(!searchInput) return;
+    var list = searchInput.nextElementSibling;
+    if(!list) return;
+    // Force contained style
+    list.style.maxHeight = '160px';
+    list.style.overflowY = 'auto';
+    list.style.overflowX = 'hidden';
+    list.style.background = '#111';
+    list.style.border = '1px solid #333';
+    list.style.borderRadius = '12px';
+    list.style.position = 'relative';
+    list.style.zIndex = '30';
+    // If a school is already selected (text "Selected:" visible nearby), hide list until user types again
+    var parent = searchInput.parentNode;
+    if(parent){
+      var hasSelected = parent.innerText && parent.innerText.indexOf('Selected:') !== -1;
+      if(hasSelected && document.activeElement !== searchInput){
+        list.style.display = 'none';
+        list.classList.add('zed-school-hidden');
+      }
+    }
+    // Bind each school button: tap -> hide list
+    var btns = list.querySelectorAll('button');
+    btns.forEach(function(b){
+      if(b.dataset.zedSchoolBound) return;
+      b.dataset.zedSchoolBound = '1';
+      b.addEventListener('click', function(){
+        setTimeout(function(){
+          list.style.display = 'none';
+          list.classList.add('zed-school-hidden');
+          // Also set search input to chosen school so user sees what they picked
+          try{ searchInput.value = b.textContent.trim(); }catch(e){}
+        }, 100);
+      });
+    });
+    // When user focuses / types in Search school, show list again
+    if(!searchInput.dataset.zedSchoolBound){
+      searchInput.dataset.zedSchoolBound = '1';
+      searchInput.addEventListener('focus', function(){ list.style.display='block'; list.classList.remove('zed-school-hidden'); });
+      searchInput.addEventListener('input', function(){ list.style.display='block'; list.classList.remove('zed-school-hidden'); });
+    }
+  }
+  setInterval(fixSchoolDropdown, 600);
+
+  // 2. Show / Hide password eye for Login + Signup (Password + Confirm)
+  function addEyeToInput(input){
+    if(!input || input.dataset.zedEyeBound) return;
+    input.dataset.zedEyeBound = '1';
+    var parent = input.parentNode;
+    if(!parent) return;
+    // Wrap in relative container if not already
+    if(!parent.classList.contains('zed-pw-wrap-rel')){
+      // Only wrap if parent is the direct div containing label+input - we wrap input itself in a div
+      var wrap = document.createElement('div');
+      wrap.className = 'zed-pw-wrap-rel';
+      wrap.style.position = 'relative';
+      parent.insertBefore(wrap, input);
+      wrap.appendChild(input);
+      parent = wrap;
+    }
+    input.style.paddingRight = '42px';
+    var eye = document.createElement('button');
+    eye.type = 'button';
+    eye.className = 'zed-pw-eye';
+    eye.textContent = '👁️';
+    eye.title = 'Show / Hide password';
+    eye.addEventListener('click', function(e){
+      e.preventDefault(); e.stopPropagation();
+      if(input.type === 'password'){ input.type = 'text'; eye.textContent = '🙈'; }
+      else { input.type = 'password'; eye.textContent = '👁️'; }
+      input.focus();
+    });
+    parent.appendChild(eye);
+  }
+  function fixPasswordEyes(){
+    // Login password: placeholder ••••••
+    var loginPw = document.querySelector('input[placeholder="••••••"]');
+    if(loginPw) addEyeToInput(loginPw);
+    // Signup password: placeholder "Create" (and its parent has label Password)
+    var allPw = document.querySelectorAll('input[type="password"]');
+    allPw.forEach(function(inp){
+      var ph = inp.placeholder || '';
+      // Signup Password (Create) + Confirm (Confirm) + Login (••••••) + any password in Settings
+      if(ph === 'Create' || ph === 'Confirm' || ph === '••••••'){
+        addEyeToInput(inp);
+      }
+    });
+    // Also handle inputs that are currently type=text but were password (after toggle, type is text, so we need to keep bound via dataset)
+    // The above already handles via dataset, so re-adding won't duplicate
+  }
+  setInterval(fixPasswordEyes, 600);
+  console.log('[ZED] Signup school + password eye fixes active');
+})();
+</script>
+
+<script>
+// === ZED - Clean ONLINE, no dimming, no rainbow ===
+(function(){
+  function fixOnlinePill(){
+    try{
+      // Find header
+      var header = document.querySelector('header');
+      if(!header) return;
+      // Find any element that says ONLINE / OFFLINE / Live / Connecting
+      var all = header.querySelectorAll('*');
+      all.forEach(function(el){
+        var t = (el.textContent||'').trim();
+        if(t === 'ONLINE' || t === 'OFFLINE' || t === 'Live' || t === 'Connecting' || t === 'Offline'){
+          el.style.background = '#1a1a1a';
+          el.style.backgroundImage = 'none';
+          el.style.color = '#fff';
+          el.style.boxShadow = 'none';
+          el.style.animation = 'none';
+          el.style.opacity = '1';
+          // Parent pill container
+          var parent = el.parentNode;
+          if(parent){
+            parent.style.background = '#1a1a1a';
+            parent.style.backgroundImage = 'none';
+            parent.style.boxShadow = 'none';
+            parent.style.animation = 'none';
+            parent.style.opacity = '1';
+            parent.style.border = '1px solid #333';
+            parent.style.borderRadius = '999px';
+            parent.style.padding = '6px 12px';
+          }
+          // Green dot before it
+          var dot = el.previousElementSibling;
+          if(dot && dot.tagName === 'SPAN'){
+            dot.style.background = '#8CFF8A';
+            dot.style.animation = 'none';
+            dot.style.opacity = '1';
+          }
+        }
+      });
+      // Also fix any rainbow gradient pill in header (the one in screenshot)
+      header.querySelectorAll('div').forEach(function(d){
+        var cs = window.getComputedStyle ? getComputedStyle(d) : null;
+        if(cs && cs.backgroundImage && cs.backgroundImage.indexOf('gradient') !== -1){
+          // Only fix if it's the ONLINE pill (contains ONLINE text)
+          if((d.textContent||'').indexOf('ONLINE') !== -1){
+            d.style.background = '#1a1a1a';
+            d.style.backgroundImage = 'none';
+            d.style.boxShadow = 'none';
+            d.style.animation = 'none';
+          }
+        }
+      });
+      // Remove dimming: any overlay that dims the page
+      document.querySelectorAll('div').forEach(function(d){
+        if(d.style && d.style.background && d.style.background.indexOf('rgba(0,0,0,0.5)') !== -1 && d.id !== 'zed-settings-modal' && d.id !== 'zed-recovery-modal' && d.id !== 'zed-pic-viewer'){
+          // Don't remove modals, but make dimming lighter
+          // Leave it
+        }
+      });
+      // Floating 📚 button: move it so it doesn't cover Download
+      var fabs = document.querySelectorAll('button');
+      fabs.forEach(function(b){
+        if((b.textContent||'').indexOf('📚') !== -1){
+          b.style.bottom = '88px';
+          b.style.right = '16px';
+          b.style.opacity = '1';
+          b.style.background = '#111';
+        }
+      });
+    }catch(e){}
+  }
+  // FIX: Run ONCE only - interval was moving ONLINE every 800ms
+  setTimeout(fixOnlinePill, 800);
+  console.log('[ZED] Clean ONLINE, no dimming active');
+})();
+</script>
+
+<script>
+// === ZED - Stabilize ONLINE: keep only ONE, top-right, never move ===
+(function(){
+  function stabilize(){
+    try{
+      // Find all ONLINE pills on page
+      var pills = [];
+      document.querySelectorAll('*').forEach(function(el){
+        if(el.children.length===0 && (el.textContent||'').trim() === 'ONLINE'){
+          pills.push(el);
+        }
+      });
+      // If more than one, hide all except the one inside header (top-right)
+      if(pills.length > 1){
+        var headerPill = null;
+        pills.forEach(function(p){
+          if(p.closest && p.closest('header')) headerPill = p;
+        });
+        pills.forEach(function(p){
+          if(p !== headerPill){
+            var container = p.closest ? p.closest('div') : null;
+            if(container) container.style.display = 'none';
+            p.style.display = 'none';
+          }
+        });
+      }
+      // Ensure header ONLINE pill is solid, not rainbow, and in header right
+      var header = document.querySelector('header');
+      if(header){
+        var onlineEl = Array.from(header.querySelectorAll('*')).find(function(e){ return (e.textContent||'').trim() === 'ONLINE'; });
+        if(onlineEl){
+          onlineEl.style.background = '#1a1a1a';
+          onlineEl.style.backgroundImage = 'none';
+          onlineEl.style.color = '#fff';
+          onlineEl.style.boxShadow = 'none';
+          onlineEl.style.animation = 'none';
+          var pill = onlineEl.parentNode;
+          if(pill){
+            pill.style.background = '#1a1a1a';
+            pill.style.backgroundImage = 'none';
+            pill.style.boxShadow = 'none';
+            pill.style.animation = 'none';
+            pill.style.position = 'static';
+          }
+        }
+      }
+    }catch(e){}
+  }
+  // Run once after load, not every second
+  setTimeout(stabilize, 1000);
+  setTimeout(stabilize, 2000);
+  console.log('[ZED] ONLINE stabilized - one pill, top-right, no moving');
+})();
+</script>
+
+<script>// REMOVED: old rainbow fix - replaced by clean profile-only below.
+</script>
+
+<script>
+// === ZED - PROFILE PHOTO ONLY: Real photo, never orange gradient, survives React re-renders ===
+(function(){
+  function getUser(){ try{ return JSON.parse(localStorage.getItem('zed_user')||'null'); }catch(e){ return null; } }
+  function getAvatar(){
+    try{
+      return localStorage.getItem('zed_avatar') || (getUser() && (getUser().avatar || getUser().avatar_url || getUser().photo)) || '';
+    }catch(e){ return ''; }
+  }
+  // Try to fetch photo from DB if not in localStorage (user logged in on new phone / cleared cache)
+  async function fetchAvatarFromDB(){
+    try{
+      var user = getUser();
+      if(!user) return;
+      // ALWAYS fetch from DB - DB is source of truth now, localStorage may be old/empty
+      var SUPA_URL = "https://biastmylavwhlsccvpyu.supabase.co";
+      var SUPA_KEY = "sb_publishable_74vo5_RlNXb0U0TrNLCdCQ_8zjDwFni";
+      var phone = user.phone || '';
+      var id = user.id || '';
+      var url = '';
+      // Try by phone first - most reliable, id can be different after re-signup
+      if(phone) url = SUPA_URL + "/rest/v1/profiles?phone=eq." + phone + "&select=avatar,avatar_url";
+      else if(id) url = SUPA_URL + "/rest/v1/profiles?id=eq." + id + "&select=avatar,avatar_url";
+      else return;
+      var res = await fetch(url, { headers: { apikey: SUPA_KEY, Authorization: "Bearer " + SUPA_KEY } });
+      var rows = await res.json();
+      if(rows && rows[0]){
+        var av = rows[0].avatar || rows[0].avatar_url || rows[0].photo || '';
+        if(av){
+          localStorage.setItem('zed_avatar', av);
+          var u = getUser(); if(u){ u.avatar = av; localStorage.setItem('zed_user', JSON.stringify(u)); }
+          updateProfileCircle();
+        }
+      }
+    }catch(e){}
+  }
+  function updateProfileCircle(){
+    try{
+      var header = document.querySelector('header');
+      if(!header) return;
+      var user = getUser();
+      if(!user) return;
+      // Delete any duplicate Settings tabs / circles
+      document.querySelectorAll('#zed-header-user-pic, #zed-settings-btn, #zed-header-avatar, #zed-header-profile, .zed-duplicate-circle').forEach(function(el){ el.remove(); });
+      var left = header.querySelector('div.flex.items-center.gap-3') || header.children[0];
+      if(!left) return;
+      // Remove second circle if React added one
+      var circles = Array.from(left.querySelectorAll('div.rounded-full'));
+      for(var i=1;i<circles.length;i++){ circles[i].remove(); }
+      var profile = left.querySelector('div.rounded-full') || left.children[0];
+      if(!profile) return;
+      profile.id = 'zed-profile-only';
+      // NO GREY - photo via background-image so React cannot wipe it
+      var av = getAvatar();
+      if(av){
+        profile.style.setProperty('--zed-profile-photo', 'url("' + av + '")'); profile.style.backgroundImage = 'url("' + av + '")';
+        profile.style.backgroundSize = 'cover';
+        profile.style.backgroundPosition = 'center';
+        profile.style.backgroundRepeat = 'no-repeat';
+        profile.style.backgroundColor = 'transparent';
+        profile.style.color = 'transparent';
+        var img = profile.querySelector('img');
+        if(!img){
+          profile.innerHTML = '';
+          img = document.createElement('img');
+          img.style.cssText = 'width:100%;height:100%;object-fit:cover;border-radius:999px;display:block;position:absolute;inset:0;';
+          profile.style.position = 'relative';
+          profile.appendChild(img);
+        }
+        if(img.src !== av) img.src = av;
+        img.style.display = 'block';
+        img.style.opacity = '1';
+      } else {
+        var initial = (user.name||'').charAt(0).toUpperCase() || 'Z';
+        profile.style.backgroundImage = 'none';
+        profile.style.backgroundColor = 'transparent';
+        profile.style.color = '#fff';
+        if(profile.textContent !== initial || profile.querySelector('img')){
+          profile.innerHTML = '';
+          profile.textContent = initial;
+        }
+      }
+      profile.style.width = '44px';
+      profile.style.height = '44px';
+      profile.style.minWidth = '44px';
+      profile.style.borderRadius = '999px';
+      profile.style.overflow = 'hidden';
+      profile.style.display = 'flex';
+      profile.style.alignItems = 'center';
+      profile.style.justifyContent = 'center';
+      profile.style.fontSize = '20px';
+      profile.style.fontWeight = '900';
+      profile.style.color = '#fff';
+      profile.style.border = '2px solid #8CFF8A';
+      profile.style.cursor = 'pointer';
+      if(!profile.dataset.zedProfileBound){
+        profile.dataset.zedProfileBound = '1';
+        profile.addEventListener('click', function(e){
+          e.preventDefault(); e.stopPropagation();
+          if(window.zedOpenSettings) window.zedOpenSettings();
+        });
+      }
+    }catch(e){}
+  }
+  // Watch for React re-render: React recreates header every second, so we re-apply photo WITHOUT moving ONLINE
+  var obs = new MutationObserver(function(){
+    // Only update profile circle content, do NOT move ONLINE or header layout
+    updateProfileCircle();
+  });
+  if(document.body) obs.observe(document.body, { childList: true, subtree: true });
+  setTimeout(function(){ updateProfileCircle(); fetchAvatarFromDB(); }, 700);
+  setTimeout(function(){ updateProfileCircle(); fetchAvatarFromDB(); }, 2000);
+  setTimeout(function(){ updateProfileCircle(); fetchAvatarFromDB(); }, 4000);
+  // Also fetch on every click on header - if you tap the empty circle, it will try to load photo then open Settings
+  document.addEventListener('click', function(e){
+    var p = e.target.closest && e.target.closest('#zed-profile-only');
+    if(p) fetchAvatarFromDB();
+  });
+  console.log('[ZED] Profile photo only - no orange gradient, real photo or initial');
+})();
 </script>
 </body>
 </html>
