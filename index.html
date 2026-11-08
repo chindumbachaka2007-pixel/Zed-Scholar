@@ -2313,7 +2313,7 @@ header > div:last-child{
 #zed-offline-fab, .zed-offline-fab, button[title*="Offline"]{
   position: fixed !important;
   bottom: 88px !important;
-  right: 16px !important;
+  right: 12px !important;
   z-index: 40 !important;
   background: #111 !important;
   border: 2px solid #8CFF8A !important;
@@ -2433,6 +2433,187 @@ header div:last-child{
   background: #1a1a1a !important;
   background-image: none !important;
 }
+</style>
+
+<style>
+/* ZED - PORTRAIT FIT + NO GRADIENTS + LIVE PILL */
+*{box-sizing:border-box}
+html,body{overflow-x:hidden !important;max-width:100vw !important}
+body{margin:0}
+/* Kill ALL gradients, glows, shadows that were causing orange/green rings */
+*{background-image:none !important;box-shadow:none !important;text-shadow:none !important}
+#zed-profile-only{background-image:var(--zed-profile-photo, none) !important}
+/* LIVE pill - solid dark, no gradient, green dot */
+header div{flex-wrap:wrap}
+@media (max-width: 480px){
+  /* Header fits */
+  header{padding:8px 10px !important;gap:8px !important}
+  header div:first-child{max-width:62vw}
+  header div:first-child div{font-size:13px !important;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+  /* Tabs - scrollable, last tab visible */
+  header + div, div[class*="overflow-x-auto"]{overflow-x:auto !important;-webkit-overflow-scrolling:touch;padding-bottom:4px}
+  /* Filters - 2 per row, never cut off */
+  select{max-width:100%}
+  /* Cards - padding fits */
+  div[class*="px-"]{padding-left:12px !important;padding-right:12px !important}
+  /* AI Tutor button + Offline books button - smaller, not covering Download */
+  #zed-ai-btn{bottom:auto !important;left:auto !important;right:auto !important;padding:9px 12px !important;font-size:12px !important}
+  #zed-ai-panel{width:100vw !important;max-width:100vw !important}
+  #zed-ai-panel > div:nth-child(2){flex-wrap:wrap !important}
+  #zed-ai-panel select{flex:1 1 calc(50% - 4px) !important;min-width:0 !important}
+  #zed-ai-inputrow{padding-bottom:max(10px, env(safe-area-inset-bottom)) !important}
+}
+/* AI Tutor panel selects - never cut off */
+#zed-ai-panel > div:nth-child(2){display:flex !important;gap:8px !important;padding:10px 12px !important;width:100% !important;box-sizing:border-box !important}
+#zed-ai-panel select{box-sizing:border-box !important;min-width:0 !important}
+/* Main content bottom padding so floating buttons don't cover Download */
+main, div[class*="min-h"]{padding-bottom:180px !important}
+</style>
+
+<style>
+/* ZED - BUTTONS SEPARATED: AI left, Offline right, never together */
+#zed-ai-btn{left:auto !important;right:auto !important;bottom:auto !important;z-index:9999 !important;min-width:110px;min-height:44px}
+#zed-offline-library-btn{right:12px !important;left:auto !important;bottom:88px !important;z-index:9999 !important;width:56px !important;height:56px !important;min-width:56px;min-height:56px}
+#zed-ai-btn, #zed-offline-library-btn{box-shadow:0 4px 12px rgba(0,0,0,.5) !important}
+/* LIVE pill - solid dark, no gradient, no glow */
+header div:last-child, header span:last-child{ background:transparent !important; background-image:none !important; box-shadow:none !important; border:1px solid #333 !important; }
+header div:last-child span{ background:transparent !important; border:none !important; }
+</style>
+
+<style>
+/* ZED - LIVE = solid GREEN, OFFLINE = solid RED, NO gradient, NO glow, NO dark */
+header div:last-child, header span:last-child{
+  background-image:none !important; box-shadow:none !important; text-shadow:none !important; animation:none !important;
+}
+/* Pill itself - JS sets data-live attribute */
+header [data-live="true"]{
+  background:#22C55E !important; background-image:none !important; color:#000 !important; border:none !important;
+}
+header [data-live="false"]{
+  background:#FF3B30 !important; background-image:none !important; color:#fff !important; border:none !important;
+}
+/* The dot inside LIVE pill */
+header [data-live="true"] span:first-child{ background:#000 !important; }
+header [data-live="false"] span:first-child{ background:#fff !important; }
+</style>
+
+<style>
+/* ZED FINAL - LIVE green / OFFLINE red, wins over all old dark rules */
+header [data-live="true"], header div[data-live="true"], header span[data-live="true"]{
+  background:#22C55E !important; background-image:none !important; color:#000 !important; border:none !important; box-shadow:none !important;
+}
+header [data-live="false"], header div[data-live="false"], header span[data-live="false"]{
+  background:#FF3B30 !important; background-image:none !important; color:#fff !important; border:none !important; box-shadow:none !important;
+}
+/* ZED - Floating buttons stack, same side (right), draggable */
+#zed-fab-stack{position:fixed;right:12px;bottom:88px;z-index:9999;display:flex;flex-direction:column;gap:10px;align-items:flex-end;touch-action:none}
+#zed-fab-stack.dragging{opacity:0.9;transform:scale(1.05)}
+#zed-fab-stack #zed-ai-btn{position:static !important;left:auto !important;right:auto !important;bottom:auto !important}
+#zed-fab-stack #zed-offline-library-btn{position:static !important;left:auto !important;right:auto !important;bottom:auto !important}
+#zed-fab-hint{position:fixed;left:50%;transform:translateX(-50%);bottom:170px;background:#1a1a1a;color:#fff;padding:8px 14px;border-radius:999px;font-size:12px;z-index:10000;display:none;pointer-events:none}
+#zed-fab-hint.show{display:block}
+</style>
+
+<style>
+/* ZED - NEVER show FABs on Login/Signup, even if JS is late */
+body.zed-on-auth #zed-fab-stack,
+body.zed-on-auth #zed-ai-btn,
+body.zed-on-auth #zed-chat-btn,
+body.zed-on-auth #zed-offline-library-btn{
+  display:none !important; visibility:hidden !important; opacity:0 !important; pointer-events:none !important;
+}
+</style>
+
+<style>
+/* ZED CHATS - Unread number badge */
+#zed-chat-btn{position:relative !important}
+#zed-chat-unread-badge{position:absolute;top:-8px;right:-8px;background:#FF3B30;color:#fff;font-size:12px;font-weight:900;min-width:22px;height:22px;border-radius:999px;display:none;align-items:center;justify-content:center;padding:0 5px;border:2px solid #0F0E0B}
+#zed-chat-unread-badge.show{display:flex}
+.zed-chat-count-badge{background:#FF3B30;color:#fff;font-size:11px;font-weight:900;min-width:22px;height:22px;border-radius:999px;display:inline-flex;align-items:center;justify-content:center;padding:0 6px}
+</style>
+
+<style>
+/* ===== ZED SCHOLAR - POLISHED v1 - Clean, arranged, no overlap ===== */
+:root{ --green:#8CFF8A; --bg:#0F0E0B; --card:#1A1A1A; --line:#2A2A2A; --muted:#9CA3AF; }
+*{ -webkit-tap-highlight-color:transparent; }
+body{ background:var(--bg) !important; }
+button{ font-family:inherit; }
+
+/* Header - clean */
+header{ background:#111 !important; border-bottom:1px solid var(--line) !important; box-shadow:none !important; }
+
+/* Top tabs - pill bar, clean scroll */
+header nav, div[class*="tab"]{ scrollbar-width:none; }
+button[class*="tab"], header button{ border-radius:999px !important; }
+
+/* Main content - leave space so FABs never cover last Download */
+main, #root, div[id*="content"], div[class*="content"]{ padding-bottom:120px !important; }
+
+/* Cards - clean, same look */
+.zed-card, div[class*="card"]{ background:var(--card) !important; border:1px solid var(--line) !important; border-radius:16px !important; box-shadow:0 2px 10px rgba(0,0,0,.25) !important; }
+.zed-card-actions button, button[class*="download"], button[class*="Download"]{ background:var(--green) !important; color:#000 !important; border:none !important; border-radius:12px !important; font-weight:800 !important; padding:10px 14px !important; box-shadow:none !important; }
+
+/* All primary buttons - one style */
+button[class*="primary"], button[style*="8CFF8A"]{ border-radius:12px !important; font-weight:800 !important; }
+
+/* Inputs - clean */
+input, select, textarea{ background:#1E1E1E !important; border:1px solid #333 !important; border-radius:12px !important; color:#fff !important; }
+
+/* ===== FAB STACK - SMALL CIRCLES - neat, same side, never overlapping ===== */
+#zed-fab-stack{
+  position:fixed !important; right:12px !important; bottom:92px !important; left:auto !important; top:auto !important;
+  z-index:9999 !important; display:flex !important; flex-direction:column !important; gap:12px !important; align-items:center !important;
+  width:56px !important; max-width:56px !important;
+}
+#zed-fab-stack button{
+  width:52px !important; height:52px !important; min-width:52px !important; min-height:52px !important; max-width:52px !important;
+  display:flex !important; align-items:center !important; justify-content:center !important;
+  padding:0 !important; margin:0 !important; border-radius:50% !important;
+  font-size:22px !important; line-height:1 !important; font-weight:900 !important;
+  box-shadow:0 4px 14px rgba(0,0,0,.45) !important; border:none !important; cursor:pointer !important;
+  white-space:nowrap !important; overflow:hidden !important; position:relative !important;
+}
+#zed-ai-btn{ background:var(--green) !important; color:#000 !important; }
+#zed-offline-library-btn{ background:#fff !important; color:#000 !important; }
+#zed-chat-btn{ background:#1E1E1E !important; color:#fff !important; border:1.5px solid #333 !important; }
+/* Chats badge - small red circle on top-right of circle */
+#zed-chat-unread-badge{
+  position:absolute !important; top:-2px !important; right:-2px !important;
+  width:20px !important; height:20px !important; min-width:20px !important;
+  background:#FF3B30 !important; color:#fff !important; font-size:11px !important; font-weight:900 !important;
+  border-radius:50% !important; display:none !important; align-items:center !important; justify-content:center !important;
+  border:2px solid #0F0E0B !important; z-index:2 !important;
+}
+#zed-chat-unread-badge.show{ display:flex !important; }
+#zed-fab-stack.dragging{ opacity:.92 !important; transform:scale(1.05) !important; }
+/* Small label under each circle - tiny, clean */
+#zed-fab-stack button::after{
+  content:attr(data-label); position:absolute; bottom:-15px; left:50%; transform:translateX(-50%);
+  font-size:8px; font-weight:800; letter-spacing:.4px; color:#999; white-space:nowrap;
+}
+
+/* Chat panel - clean */
+#zed-chat-panel{ background:var(--bg) !important; }
+#zed-chat-head{ background:#111 !important; border-bottom:1px solid var(--line) !important; }
+#zed-chat-tabs button{ border-radius:999px !important; font-weight:800 !important; }
+#zed-chat-tabs button#zed-tab-chats{ background:var(--green) !important; color:#000 !important; }
+
+/* Remove gradients / glows that made it messy */
+*{ background-image:none !important; }
+#zed-splash-bg{ background:#0F0E0B !important; }
+
+/* LIVE pill - keep green/red */
+header [data-live="true"]{ background:#22C55E !important; color:#000 !important; }
+header [data-live="false"]{ background:#FF3B30 !important; color:#fff !important; }
+
+/* Login / Signup - clean, no FABs (handled by JS) */
+body.zed-on-auth #zed-fab-stack{ display:none !important; }
+</style>
+
+<style>
+/* Extra polish - videos, papers, chats all tidy */
+#zed-chat-panel{ border-radius:18px 18px 0 0 !important; }
+button[class*="expand"], button[title*="Expand"]{ border-radius:50% !important; width:36px !important; height:36px !important; }
 </style>
 </head>
 <body>
@@ -2637,7 +2818,7 @@ if(!h && _zedTopicVal && _zedTopicVal.toLowerCase()!=="general"){
     if(!ex || ex.length===0){ await e.from("topics").insert({subject_name:Ja, grade:Ga, name:_zedTopicVal}); }
   }catch(_e){ console.log("topic auto-create error", _e); }
 }
-if(h)throw Error(h.message);F(vidFile?"Video uploaded from phone ✓":"Video added live!"),Za(""),Qa(""),setVidFile(null);let _tEl=document.getElementById("zed-topic-input");if(_tEl)_tEl.value="";let{data:P}=await e.from("videos").select("*").order("created_at",{ascending:!1}).limit(200);ga(P||[])}catch(o){F(o.message)}finally{setVidUp(!1)}},Vp=(o)=>{Su(o),Ca({}),Sa(0)},Hp=async()=>{if(!Te)return;let o=0;Te.forEach((y,h)=>{if(_a[h]===y.correct_answer)o++});try{let y={user_id:r.id,subject:Te[0]?.subject||"General",year:Te[0]?.year||"2024",score:o,total:Te.length,time_spent:Nu},{error:h}=await e.from("quiz_attempts").insert(y);if(h)throw Error(h.message);let P=(r.coins||0)+o*5;await e.from("profiles").update({coins:P}).eq("id",r.id);let W={...r,coins:P};l(W),localStorage.setItem("zed_user",JSON.stringify(W)),F(`Quiz submitted: ${o}/${Te.length} • +${o*5} coins`),Su(null);let{data:V}=await e.from("quiz_attempts").select("user_id,score,total,subject,created_at").order("created_at",{ascending:!1}).limit(500);ka(V||[])}catch(y){F(y.message)}},xa=S.useMemo(()=>{let o=ku.toLowerCase();return gv.filter((y)=>y.province===je&&y.name.toLowerCase().includes(o)).slice(0,20)},[je,ku]);if(!r)return v("div",{className:"min-h-screen bg-[var(--bg)] text-[var(--text)] flex flex-col",style:{paddingTop:"var(--safe-area-inset-top)",boxSizing:"border-box"},children:[v("header",{className:"sticky top-[var(--safe-area-inset-top)] z-30 bg-[var(--bg)]/95 backdrop-blur-xl border-b border-[var(--border)] px-4 md:px-6 h-[60px] flex items-center justify-between",children:[v("div",{className:"flex items-center gap-3",children:[c("div",{className:"w-9 h-9 rounded-full bg-[var(--green)] flex items-center justify-center text-black font-extrabold text-[15px]",children:"Z"}),v("div",{children:[c("div",{className:"font-serif text-[18px] leading-none tracking-[-0.02em]",children:"ZED SCHOLAR"}),c("div",{className:"text-[10px] uppercase tracking-[0.18em] text-[var(--muted)]",children:"ZAMBIA • GRADE 10-12 • FORM 1-5"})]})]}),v("div",{className:"flex items-center gap-2 text-[11px]",children:[c("span",{className:`w-2 h-2 rounded-full ${n.ok?"bg-[var(--green)]":n.ok===!1?"bg-[#ff9a9a]":"bg-[var(--yellow)] animate-pulse"}`}),c("span",{className:"text-[10px] uppercase tracking-[0.12em] text-[var(--muted)]",children:n.ok?"Live":n.ok===!1?"Offline":"Connecting"})]})]}),c("div",{className:"flex-1 flex justify-center px-4 py-6 md:py-10",children:c("div",{className:"w-full max-w-[460px]",children:!$?v("div",{className:"bg-[var(--surface)] border border-[var(--border)] rounded-[22px] p-6 md:p-8 shadow-[0_16px_40px_rgba(0,0,0,0.35)]",children:[v("div",{className:"flex gap-2 mb-6 p-1 bg-[var(--bg)] rounded-full w-fit border border-[var(--border)]",children:[c("button",{onClick:()=>i("password"),className:`px-5 h-9 rounded-full text-[11px] uppercase tracking-[0.14em] font-bold transition ${u==="password"?"bg-[var(--text)] text-[var(--bg)]":"text-[var(--muted)]"}`,children:"Password"}),c("button",{onClick:()=>i("otp"),className:`px-5 h-9 rounded-full text-[11px] uppercase tracking-[0.14em] font-bold transition ${u==="otp"?"bg-[var(--text)] text-[var(--bg)]":"text-[var(--muted)]"}`,children:"SMS OTP"})]}),u==="password"?v("div",{className:"space-y-4",children:[v("div",{children:[c("h2",{className:"font-serif text-[30px] leading-[0.95] tracking-[-0.02em]",children:"Welcome back"}),c("p",{className:"text-[13px] text-[var(--muted)] mt-2 leading-snug",children:"Log in to access past papers, quizzes and your school leaderboard."})]}),v("div",{children:[c("label",{className:"text-[11px] uppercase tracking-[0.12em] text-[var(--muted)]",children:"Phone — 10 digits (09 / 07)"}),c("input",{value:a,onChange:(o)=>f(o.target.value.replace(/\D/g,"").slice(0,10)),placeholder:"0971234567",className:"mt-1.5 w-full h-11 px-4 rounded-[12px] bg-[var(--bg)] border border-[var(--border)] outline-none focus:border-[var(--green)] text-[14px]"})]}),v("div",{children:[c("label",{className:"text-[11px] uppercase tracking-[0.12em] text-[var(--muted)]",children:"Password"}),c("input",{type:"password",value:m,onChange:(o)=>g(o.target.value),placeholder:"••••••",className:"mt-1.5 w-full h-11 px-4 rounded-[12px] bg-[var(--bg)] border border-[var(--border)] outline-none focus:border-[var(--green)] text-[14px]"})]}),c("button",{id:"zed-login-btn",disabled:k,onPointerDown:(o)=>{try{if(o.currentTarget.setAttribute("data-clicked","1"),o.currentTarget.textContent="Logging in...",!document.getElementById("login-click-feedback")){let h=document.createElement("div");h.id="login-click-feedback",h.textContent="Login checking credentials...",h.style.position="fixed",h.style.bottom="80px",h.style.left="12px",h.style.right="12px",h.style.background="#8CFF8A",h.style.color="#000",h.style.padding="10px",h.style.borderRadius="10px",h.style.zIndex="9999",document.body.appendChild(h),setTimeout(()=>{try{h.remove()}catch{}},3000)}}catch{}},onClick:(o)=>{try{if(o.currentTarget.setAttribute("data-clicked","1"),o.currentTarget.textContent="Logging in...",!document.getElementById("login-click-feedback")){let h=document.createElement("div");h.id="login-click-feedback",h.textContent="Login checking credentials...",h.style.position="fixed",h.style.bottom="80px",h.style.left="12px",h.style.right="12px",h.style.background="#8CFF8A",h.style.color="#000",h.style.padding="10px",h.style.borderRadius="10px",h.style.zIndex="9999",document.body.appendChild(h),setTimeout(()=>{try{h.remove()}catch{}},3000)}}catch{}Pp()},className:"w-full h-11 rounded-[12px] bg-[var(--green)] text-black font-bold uppercase tracking-[0.12em] text-[12px] hover:brightness-110 disabled:opacity-60",children:k?"Logging in...":"Login"}),v("div",{className:"text-[13px] text-[var(--muted)] text-center pt-2",id:"signup-trigger",children:["No account? ",c("button",{id:"zed-signup-open",type:"button","data-testid":"signup-zambia-btn",onClick:(o)=>{try{let y=o.currentTarget;y.textContent="Opening signup... ✓",y.setAttribute("data-opened","1"),y.setAttribute("aria-expanded","true"),y.style.color="var(--green)";let h="zed-signup-feedback-live",P=document.getElementById(h);if(!P)P=document.createElement("div"),P.id=h,P.textContent="Opening signup — create your profile",P.style.position="fixed",P.style.bottom="90px",P.style.left="16px",P.style.right="16px",P.style.background="#F5F1E8",P.style.color="#0F0E0B",P.style.padding="10px 14px",P.style.borderRadius="10px",P.style.zIndex="9999",P.style.fontSize="12px",P.style.fontWeight="600",document.body.appendChild(P),setTimeout(()=>{try{P.remove()}catch{}},3000);location.hash="#signup",document.documentElement.setAttribute("data-signup","open"),window.scrollTo(0,0),console.log("[ZED] Signup trigger clicked - clean auth v31")}catch(y){console.log("[ZED] signup open error",y)}Ce(!0),F("Opening signup — choose province → district → school")},className:"underline text-[var(--text)] font-semibold",children:"Create account"})]})]}):v("div",{className:"space-y-4",children:[v("div",{children:[c("h2",{className:"font-serif text-[30px] leading-[0.95] tracking-[-0.02em]",children:"Phone OTP"}),c("p",{className:"text-[13px] text-[var(--muted)] mt-2 leading-snug",children:"We'll send a 6-digit code to your Zambian number."})]}),v("div",{children:[c("label",{className:"text-[11px] uppercase tracking-[0.12em] text-[var(--muted)]",children:"Phone — 10 digits"}),c("input",{value:_,onChange:(o)=>z(o.target.value.replace(/\D/g,"").slice(0,10)),placeholder:"0971234567",className:"mt-1.5 w-full h-11 px-4 rounded-[12px] bg-[var(--bg)] border border-[var(--border)] outline-none focus:border-[var(--green)] text-[14px]"})]}),!N?c("button",{disabled:p,onClick:Mp,className:"w-full h-11 rounded-[12px] bg-[var(--yellow)] text-black font-bold uppercase tracking-[0.12em] text-[12px] disabled:opacity-60",children:p?"Sending...":"Send OTP"}):v(wu,{children:[v("div",{children:[c("label",{className:"text-[11px] uppercase tracking-[0.12em] text-[var(--muted)]",children:"6-digit code"}),c("input",{value:d,onChange:(o)=>s(o.target.value.replace(/\D/g,"").slice(0,6)),placeholder:"123456",className:"mt-1.5 w-full h-11 px-4 rounded-[12px] bg-[var(--bg)] border border-[var(--border)] outline-none focus:border-[var(--green)] text-[14px] tracking-[0.2em]"})]}),c("button",{disabled:p,onClick:Lp,className:"w-full h-11 rounded-[12px] bg-[var(--green)] text-black font-bold uppercase tracking-[0.12em] text-[12px] disabled:opacity-60",children:p?"Verifying...":"Verify & Login"}),c("button",{onClick:()=>{D(!1),s("")},className:"w-full h-9 text-[11px] uppercase tracking-[0.12em] text-[var(--muted)]",children:"Resend code"})]}),v("div",{className:"text-[13px] text-[var(--muted)] text-center",children:["Have password? ",c("button",{type:"button",onClick:()=>i("password"),className:"underline text-[var(--text)]",children:"Use password"})," • ",c("button",{type:"button",onClick:()=>{Ce(!0),F("Opening signup")},className:"underline text-[var(--text)]",children:"Sign up"})]})]})]}):v("div",{className:"bg-[var(--surface)] border border-[var(--border)] rounded-[22px] p-6 md:p-8 shadow-[0_16px_40px_rgba(0,0,0,0.35)] space-y-4",id:"signup",children:[c("button",{type:"button",onClick:()=>{Ce(!1);try{location.hash="",document.documentElement.removeAttribute("data-signup")}catch{}},className:"text-[11px] uppercase tracking-[0.12em] text-[var(--muted)] hover:text-[var(--text)]",children:"← Back to login"}),v("div",{children:[c("h2",{className:"font-serif text-[30px] leading-[0.95] tracking-[-0.02em]",children:"Create account"}),c("p",{className:"text-[13px] text-[var(--muted)] mt-2",children:"Choose province → district → school. Can't find yours? Add Temweni secondary school as custom."})]}),v("div",{className:"grid gap-3.5",children:[v("div",{children:[c("label",{className:"text-[11px] uppercase tracking-[0.12em] text-[var(--muted)]",children:"Full Name"}),c("input",{value:xe,onChange:(o)=>Yd(o.target.value),placeholder:"Bwalya Mwansa",className:"mt-1.5 w-full h-11 px-4 rounded-[12px] bg-[var(--bg)] border border-[var(--border)] outline-none focus:border-[var(--green)] text-[14px]"})]}),v("div",{children:[c("label",{className:"text-[11px] uppercase tracking-[0.12em] text-[var(--muted)]",children:"Phone — 10 digits (09 / 07)"}),c("input",{value:sn,onChange:(o)=>Zd(o.target.value.replace(/\D/g,"").slice(0,10)),placeholder:"097...",className:"mt-1.5 w-full h-11 px-4 rounded-[12px] bg-[var(--bg)] border border-[var(--border)] outline-none focus:border-[var(--green)] text-[14px]"})]}),v("div",{className:"grid grid-cols-2 gap-3",children:[v("div",{children:[c("label",{className:"text-[11px] uppercase tracking-[0.12em] text-[var(--muted)]",children:"Province"}),c("select",{value:je,onChange:(o)=>Qd(o.target.value),className:"mt-1.5 w-full h-11 px-3 rounded-[12px] bg-[var(--bg)] border border-[var(--border)] text-[13px]",children:Hd.map((o)=>c("option",{children:o},o))})]}),v("div",{children:[c("label",{className:"text-[11px] uppercase tracking-[0.12em] text-[var(--muted)]",children:"District"}),c("select",{value:Fr,onChange:(o)=>fa(o.target.value),className:"mt-1.5 w-full h-11 px-3 rounded-[12px] bg-[var(--bg)] border border-[var(--border)] text-[13px]",children:Or[je]?.map((o)=>c("option",{children:o},o))})]})]}),v("div",{children:[c("label",{className:"text-[11px] uppercase tracking-[0.12em] text-[var(--muted)]",children:"School — searchable (150+)"}),c("input",{value:ku,onChange:(o)=>Jd(o.target.value),placeholder:"Search school...",className:"mt-1.5 w-full h-10 px-3 rounded-[12px] bg-[var(--bg)] border border-[var(--border)] text-[13px]"}),v("div",{className:"mt-2 max-h-[160px] overflow-auto rounded-[12px] border border-[var(--border)] bg-[var(--bg)]",children:[xa.map((o)=>c("button",{onClick:()=>{Gd(o.name),sa(!1)},className:`w-full text-left px-3 py-2.5 text-[12px] hover:bg-[var(--surface)] transition ${Ot===o.name?"bg-[var(--surface-2)] text-[var(--green)] font-semibold":""}`,children:o.name},o.name)),xa.length===0&&c("div",{className:"px-3 py-3 text-[11px] text-[var(--muted)]",children:"No match — tick custom below for Temweni."})]}),v("div",{className:"mt-3 flex items-center gap-2",children:[c("input",{type:"checkbox",checked:Fn,onChange:(o)=>sa(o.target.checked),className:"w-4 h-4 rounded"}),c("span",{className:"text-[11px] uppercase tracking-[0.08em] text-[var(--muted)]",children:"Add custom school"})]}),Fn&&c("input",{value:Ft,onChange:(o)=>qd(o.target.value),placeholder:"e.g. Temweni secondary school",className:"mt-2 w-full h-11 px-3 rounded-[12px] bg-[var(--bg)] border border-[var(--border)] text-[13px] outline-none focus:border-[var(--green)]"}),Ot&&!Fn&&v("div",{className:"mt-2 text-[11px] text-[var(--green)]",children:["Selected: ",Ot]}),Fn&&Ft&&v("div",{className:"mt-2 text-[11px] text-[var(--green)]",children:["Custom: ",Ft]})]}),v("div",{className:"grid grid-cols-2 gap-3",children:[v("div",{children:[c("label",{className:"text-[11px] uppercase tracking-[0.12em] text-[var(--muted)]",children:"Grade"}),c("select",{value:Dr,onChange:(o)=>xd(o.target.value),className:"mt-1.5 w-full h-11 px-3 rounded-[12px] bg-[var(--bg)] border border-[var(--border)] text-[13px]",children:["10","11","12","Form 1","Form 2","Form 3","Form 4","Form 5"].map(o=>c("option",{children:o},o))})]}),v("div",{children:[c("label",{className:"text-[11px] uppercase tracking-[0.12em] text-[var(--muted)]",children:"Account Code"}),v("div",{className:"mt-1.5 h-11 px-3 rounded-[12px] bg-[var(--bg)] border border-[var(--border)] flex items-center text-[11px] font-mono text-[var(--muted)]",children:["ZED-",Date.now().toString().slice(-6)]})]})]}),v("div",{className:"grid grid-cols-2 gap-3",children:[v("div",{children:[c("label",{className:"text-[11px] uppercase tracking-[0.12em] text-[var(--muted)]",children:"Password"}),c("input",{type:"password",value:Eu,onChange:(o)=>jd(o.target.value),placeholder:"Create",className:"mt-1.5 w-full h-11 px-3 rounded-[12px] bg-[var(--bg)] border border-[var(--border)] text-[13px] outline-none focus:border-[var(--green)]"})]}),v("div",{children:[c("label",{className:"text-[11px] uppercase tracking-[0.12em] text-[var(--muted)]",children:"Confirm"}),c("input",{type:"password",value:da,onChange:(o)=>bd(o.target.value),placeholder:"Confirm",className:"mt-1.5 w-full h-11 px-3 rounded-[12px] bg-[var(--bg)] border border-[var(--border)] text-[13px] outline-none focus:border-[var(--green)]"})]})]}),c("button",{id:"zed-signup-btn",disabled:pa,onClick:()=>{console.log("[ZED] zed-signup-btn clean -> sd() Temweni"),Ip()},className:"w-full h-11 rounded-[12px] bg-[var(--green)] text-black font-bold uppercase tracking-[0.12em] text-[12px] disabled:opacity-60 disabled:cursor-not-allowed hover:brightness-110",children:pa?"Signing up...":"Create account"})]})]})})}),I&&c("div",{className:"fixed bottom-4 left-4 right-4 md:left-auto md:right-4 md:w-[380px] z-50 bg-[var(--text)] text-[var(--bg)] px-4 py-3 rounded-[12px] text-[13px] font-medium shadow-xl border-2 border-[var(--green)]",children:I})]});return v("div",{className:"min-h-screen bg-[var(--bg)] text-[var(--text)]",style:{paddingTop:"var(--safe-area-inset-top)",boxSizing:"border-box"},children:[v("header",{className:"sticky top-[var(--safe-area-inset-top)] z-30 bg-[var(--bg)]/90 backdrop-blur-xl border-b border-[var(--border)] px-4 md:px-6 h-[56px] flex items-center justify-between",children:[v("div",{className:"flex items-center gap-3",children:[c("div",{className:"w-9 h-9 rounded-full bg-[var(--green)] flex items-center justify-center text-black font-extrabold",children:"Z"}),v("div",{children:[c("div",{className:"font-serif text-[16px] leading-none tracking-[-0.02em]",children:"ZED SCHOLAR v1"}),c("div",{className:"text-[10px] uppercase tracking-[0.16em] text-[var(--muted)] hidden md:block",children:"Zambia • ECZ Past Papers"})]})]}),v("div",{className:"flex items-center gap-3",children:[v("div",{className:"flex items-center gap-2 px-3 h-7 rounded-full bg-[var(--surface)] border border-[var(--border)] text-[10px]",children:[c("span",{className:`w-1.5 h-1.5 rounded-full ${n.ok?"bg-[var(--green)]":"bg-[#ff9a9a]"}`}),c("span",{className:"text-[11px] uppercase tracking-[0.12em] text-[var(--muted)]",children:n.ok?"online":"offline"})]}),v("div",{className:"hidden md:flex items-center gap-2",children:[c("span",{className:"text-[11px] text-[var(--muted)]",children:r.name}),v("span",{className:"px-2 py-0.5 rounded-full bg-[var(--yellow)] text-black text-[10px] font-bold",children:[r.coins||0," coins"]})]}),c("button",{onClick:()=>{localStorage.removeItem("zed_user"),l(null)},className:"h-8 px-3 rounded-full bg-[var(--surface)] border border-[var(--border)] text-[11px] uppercase tracking-[0.08em]",children:"Logout"})]})]}),v("div",{className:"border-b border-[var(--border)] bg-[var(--surface)] px-2 md:px-6 h-[37px] flex items-center gap-1 overflow-x-auto",children:[[{id:"papers",label:"Papers"},{id:"quizzes",label:"Quizzes"},{id:"documents",label:"Docs"},{id:"videos",label:"Videos"},{id:"leaderboard",label:"Leaderboard"},{id:"admin",label:"Admin"},{id:"profile",label:"Profile"}].map((o)=>c("button",{onClick:()=>x(o.id),className:`h-7 px-3 rounded-full text-[11px] uppercase tracking-[0.12em] font-semibold border whitespace-nowrap ${M===o.id?"bg-[var(--text)] text-[var(--bg)] border-[var(--text)]":"bg-transparent border-[var(--border)] text-[var(--muted)]"}`,children:o.label},o.id)),v("div",{className:"ml-auto hidden md:flex items-center gap-2 text-[10px] text-[var(--muted)]",children:[v("span",{children:[r.province," • ",r.district]}),c("span",{className:"px-2 py-0.5 rounded-full bg-[var(--surface-2)]",children:r.school})]})]}),v("main",{className:"max-w-[1200px] mx-auto px-4 md:px-6 py-6",children:[M==="papers"&&v("div",{className:"space-y-4",children:[v("div",{className:"flex flex-wrap gap-2 items-center",children:[c("input",{value:$r,onChange:(o)=>ip(o.target.value),placeholder:"Search papers...",className:"h-9 px-3 rounded-[10px] bg-[var(--surface)] border border-[var(--border)] text-[13px] w-[200px]"}),v("select",{value:Vr,onChange:(o)=>op(o.target.value),className:"h-9 px-2 rounded-[10px] bg-[var(--surface)] border border-[var(--border)] text-[11px]",children:[c("option",{children:"All"}),It.map((o)=>c("option",{children:o},o))]}),v("select",{value:Hr,onChange:(o)=>ap(o.target.value),className:"h-9 px-2 rounded-[10px] bg-[var(--surface)] border border-[var(--border)] text-[11px]",children:[c("option",{children:"All"}),["10","11","12","Form 1","Form 2","Form 3","Form 4","Form 5"].map(o=>c("option",{children:o},o))]}),v("select",{value:Ur,onChange:(o)=>cp(o.target.value),className:"h-9 px-2 rounded-[10px] bg-[var(--surface)] border border-[var(--border)] text-[11px]",children:[c("option",{children:"All"}),c("option",{children:"ECZ"}),c("option",{children:"Mock"}),c("option",{children:"Test"})]}),v("select",{value:Br,onChange:(o)=>fp(o.target.value),className:"h-9 px-2 rounded-[10px] bg-[var(--surface)] border border-[var(--border)] text-[11px]",children:[c("option",{children:"All"}),c("option",{children:"2024"}),c("option",{children:"2023"}),c("option",{children:"2022"}),c("option",{children:"2021"}),c("option",{children:"2020"})]}),v("span",{className:"ml-auto text-[11px] text-[var(--muted)]",children:[Tu.length," papers"]})]}),ep?c("div",{className:"grid md:grid-cols-3 gap-3",children:Array.from({length:6}).map((o,y)=>c("div",{className:"h-[140px] rounded-[14px] bg-[var(--surface)] animate-pulse"},y))}):v(wu,{children:[c("div",{className:"grid md:grid-cols-2 lg:grid-cols-3 gap-3",children:Tu.slice(0,20).map((o)=>v("div",{className:"bg-[var(--surface)] border border-[var(--border)] rounded-[14px] p-4 flex flex-col",children:[v("div",{className:"flex items-start justify-between gap-2",children:[v("div",{children:[v("div",{className:"text-[11px] uppercase tracking-[0.12em] text-[var(--yellow)]",children:[o.subject," • G",o.grade," • ",o.year]}),c("div",{className:"font-semibold text-[14px] leading-tight mt-1 line-clamp-2",children:o.title}),v("div",{className:"text-[11px] text-[var(--muted)] mt-1",children:[o.paper_type," • ",o.province||""," ",o.district||""]})]}),c("span",{className:"text-[10px] px-2 py-0.5 rounded-full bg-[var(--surface-2)] border border-[var(--border)]",children:o.file_name?.slice(-3).toUpperCase()||"PDF"})]}),c("div",{className:"text-[12px] text-[var(--muted)] mt-2 line-clamp-2",children:o.description}),v("div",{className:"mt-auto pt-3 flex gap-2",children:[c("a",{href:o.file_url,target:"_blank",rel:"noopener",className:"flex-1 h-8 rounded-[8px] bg-[var(--text)] text-[var(--bg)] flex items-center justify-center text-[11px] font-semibold uppercase tracking-[0.08em]",children:"Download"}),o.uploaded_by===r.id&&c("button",{onClick:()=>Du(o),className:"h-8 px-3 rounded-[8px] bg-[var(--surface-2)] border border-[var(--border)] text-[11px]",children:"Delete"})]}),v("div",{className:"mt-2 text-[10px] text-[var(--muted-2)]",children:["by ",o.uploaded_by?.slice(0,8)||"—"," • ",new Date(o.created_at).toLocaleDateString()]})]},o.id))}),Tu.length===0&&c("div",{className:"text-center py-8 text-[var(--muted)] text-[13px]",children:"No papers yet."})]})]}),M==="quizzes"&&v("div",{className:"space-y-4",children:[v("div",{className:"flex flex-wrap gap-2 items-center",children:[v("select",{value:Ar,onChange:(o)=>sp(o.target.value),className:"h-9 px-2 rounded-[10px] bg-[var(--surface)] border border-[var(--border)] text-[11px]",children:[c("option",{children:"All"}),It.map((o)=>c("option",{children:o},o))]}),v("select",{value:Kr,onChange:(o)=>dp(o.target.value),className:"h-9 px-2 rounded-[10px] bg-[var(--surface)] border border-[var(--border)] text-[11px]",children:[c("option",{children:"All"}),["10","11","12","Form 1","Form 2","Form 3","Form 4","Form 5"].map(o=>c("option",{children:o},o))]}),c("button",{onClick:()=>{let s=[...Gr];for(let i=s.length-1;i>0;i--){let j=Math.floor(Math.random()*(i+1));[s[i],s[j]]=[s[j],s[i]]}let q=s.slice(0,20);q.length&&Vp(q)},className:"h-9 px-4 rounded-[10px] bg-[var(--green)] text-black font-bold text-[11px] uppercase tracking-[0.12em]",children:"Take Quiz (20 Random)"}),c("span",{className:"ml-auto text-[11px] text-[var(--muted)]",children:"+5 coins per correct"})]}),c("div",{className:"grid md:grid-cols-2 gap-3",children:Gr.map((o,y)=>v("div",{className:"bg-[var(--surface)] border border-[var(--border)] rounded-[14px] p-4",children:[v("div",{className:"text-[11px] uppercase tracking-[0.12em] text-[var(--green)]",children:[o.subject," • G",o.grade," • ",o.topic," • ",o.year]}),v("div",{className:"font-medium text-[14px] mt-2 leading-snug",children:[y+1,". ",o.question_text]}),c("div",{className:"mt-3 grid grid-cols-1 gap-1.5",children:["A","B","C","D"].map((h)=>v("div",{className:"flex gap-2 text-[12px] bg-[var(--bg)] border border-[var(--border)] rounded-[8px] px-3 py-2",children:[v("span",{className:"font-bold",children:[h,"."]}),c("span",{children:o[`option_${h.toLowerCase()}`]})]},h))}),v("div",{className:"mt-2 text-[11px] text-[var(--muted)]",children:["Correct: ",o.correct_answer," • ",o.explanation?.slice(0,80)]})]},o.id))}),Gr.length===0&&c("div",{className:"text-center py-8 text-[var(--muted)]",children:"No quiz questions — add in Admin."}),Te&&c("div",{className:"fixed inset-0 z-50 bg-black/60 backdrop-blur-sm p-4 flex items-center justify-center",children:v("div",{className:"bg-[var(--surface)] border border-[var(--border)] rounded-[16px] w-full max-w-[720px] max-h-[90vh] overflow-auto p-6",children:[v("div",{className:"flex items-center justify-between",children:[v("h3",{className:"font-serif text-[22px]",children:["Quiz — ",Te.length," questions"]}),v("div",{className:"text-[12px] text-[var(--muted)]",children:["Time: ",Math.floor(Nu/60),":",String(Nu%60).padStart(2,"0")]})]}),c("div",{className:"mt-4 space-y-6",children:Te.map((o,y)=>v("div",{className:"border-b border-[var(--border)] pb-4",children:[v("div",{className:"text-[13px] font-medium",children:[y+1,". ",o.question_text]}),c("div",{className:"mt-2 grid grid-cols-1 md:grid-cols-2 gap-2",children:["A","B","C","D"].map((h)=>v("button",{onClick:()=>Ca((P)=>({...P,[y]:h})),className:`text-left px-3 py-2 rounded-[10px] border text-[12px] ${_a[y]===h?"bg-[var(--green)] text-black border-[var(--green)]":"bg-[var(--bg)] border-[var(--border)]"}`,children:[v("span",{className:"font-bold mr-1",children:[h,"."]}),o[`option_${h.toLowerCase()}`]]},h))})]},y))}),v("div",{className:"mt-6 flex gap-2",children:[c("button",{onClick:()=>Su(null),className:"h-10 px-4 rounded-[10px] bg-[var(--surface-2)] border border-[var(--border)] text-[12px]",children:"Cancel"}),c("button",{onClick:Hp,className:"flex-1 h-10 rounded-[10px] bg-[var(--green)] text-black font-bold uppercase tracking-[0.12em] text-[12px]",children:"Submit"})]})]})})]}),M==="documents"&&v("div",{className:"space-y-4",children:[v("div",{className:"text-[11px] uppercase tracking-[0.12em] text-[var(--muted)]",children:[Cu.length," docs"]}),c("div",{className:"grid md:grid-cols-3 gap-3",children:Cu.map((o)=>v("div",{className:"bg-[var(--surface)] border border-[var(--border)] rounded-[14px] p-4",children:[v("div",{className:"text-[11px] uppercase text-[var(--yellow)]",children:[o.subject," • ",o.grade]}),c("div",{className:"font-semibold text-[14px] mt-1",children:o.title}),c("div",{className:"text-[12px] text-[var(--muted)] mt-1 line-clamp-2",children:o.description}),c("a",{href:o.file_url,target:"_blank",rel:"noopener",className:"mt-3 inline-flex h-8 px-3 rounded-[8px] bg-[var(--text)] text-[var(--bg)] text-[11px] font-semibold items-center",children:"Open Document"})]},o.id))}),Cu.length===0&&c("div",{className:"text-center py-8 text-[var(--muted)] text-[13px]",children:"No documents yet."})]}),M==="videos"&&v("div",{className:"space-y-4",children:[c("div",{className:"text-[11px] uppercase tracking-[0.12em] text-[var(--muted)]",children:[ha.length," videos"]}),c("div",{className:"grid md:grid-cols-2 gap-4",children:ha.map((o)=>{let y=Ad(o.video_url);return v("div",{className:"bg-[var(--surface)] border border-[var(--border)] rounded-[14px] overflow-hidden",children:[y?c("div",{className:"aspect-video bg-black",children:c("iframe",{src:`https://www.youtube-nocookie.com/embed/${y}?modestbranding=1&rel=0&iv_load_policy=3&controls=1&fs=1&playsinline=1&disablekb=0&showinfo=0&cc_load_policy=0`,className:"w-full h-full",loading:"lazy",allowFullScreen:!0,sandbox:"allow-scripts allow-same-origin allow-presentation",allow:"accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; fullscreen",title:o.title})}):c("video",{src:o.video_url,controls:!0,className:"w-full aspect-video bg-black"}),v("div",{className:"p-4",children:[v("div",{className:"text-[11px] uppercase text-[var(--green)]",children:[o.subject," • G",o.grade]}),c("div",{className:"font-semibold text-[14px] mt-1",children:o.title}),c("div",{className:"text-[12px] text-[var(--muted)] mt-1",children:o.description})]})]},o.id)})}),ha.length===0&&c("div",{className:"text-center py-8 text-[var(--muted)] text-[13px]",children:"No videos — add YouTube links in Admin."})]}),M==="leaderboard"&&v("div",{className:"space-y-6",children:[v("div",{className:"flex flex-wrap gap-2 items-center",children:[c("h2",{className:"font-serif text-[32px] tracking-[-0.02em]",children:"Whole Zambia Leaderboard"}),c("span",{className:"ml-auto px-3 py-1 rounded-full bg-[var(--green)] text-black text-[11px] font-bold uppercase tracking-[0.12em]",children:"Real-time +5 coins after quiz correct"})]}),v("div",{className:"flex flex-wrap gap-2",children:[v("select",{value:xn,onChange:(o)=>{pp(o.target.value),Na("All")},className:"h-9 px-2 rounded-[10px] bg-[var(--surface)] border border-[var(--border)] text-[11px]",children:[c("option",{children:"All"}),Hd.map((o)=>c("option",{children:o},o))]}),v("select",{value:Xr,onChange:(o)=>Na(o.target.value),className:"h-9 px-2 rounded-[10px] bg-[var(--surface)] border border-[var(--border)] text-[11px]",children:[c("option",{children:"All"}),(xn!=="All"?Or[xn]:Object.values(Or).flat()).map((o)=>c("option",{children:o},o))]}),v("select",{value:zu,onChange:(o)=>mp(o.target.value),className:"h-9 px-2 rounded-[10px] bg-[var(--surface)] border border-[var(--border)] text-[11px]",children:[c("option",{children:"All Time"}),c("option",{children:"This Month"}),c("option",{children:"This Week"})]}),v("select",{value:Yr,onChange:(o)=>vp(o.target.value),className:"h-9 px-2 rounded-[10px] bg-[var(--surface)] border border-[var(--border)] text-[11px]",children:[c("option",{children:"All"}),It.map((o)=>c("option",{children:o},o))]}),v("select",{value:jn,onChange:(o)=>hp(o.target.value),className:"h-9 px-2 rounded-[10px] bg-[var(--surface)] border border-[var(--border)] text-[11px]",children:[c("option",{value:"coins",children:"Sort: Coins"}),c("option",{value:"avg",children:"Avg"}),c("option",{value:"quizzes",children:"Quizzes"}),c("option",{value:"total",children:"Total"})]}),c("input",{value:Zr,onChange:(o)=>yp(o.target.value),placeholder:"Search name/school...",className:"h-9 px-3 rounded-[10px] bg-[var(--surface)] border border-[var(--border)] text-[12px] w-[180px]"}),v("label",{className:"flex items-center gap-2 text-[11px]",children:[c("input",{type:"checkbox",checked:Qr,onChange:(o)=>gp(o.target.checked)})," District top 3"]})]}),c("div",{className:"grid grid-cols-3 gap-3",children:qr.slice(0,3).map((o,y)=>v("div",{className:`rounded-[16px] p-4 border text-center ${y===0?"bg-[var(--yellow)] text-black border-[var(--yellow)] order-2":y===1?"bg-[var(--surface)] border-[var(--border)] order-1":"bg-[var(--surface)] border-[var(--border)] order-3"}`,children:[c("div",{className:"text-[20px]",children:y===0?"\uD83D\uDC51":y===1?"\uD83E\uDD48":"\uD83E\uDD49"}),c("div",{className:"font-serif text-[16px] mt-1 leading-tight",children:o.profile.name}),c("div",{className:"text-[10px] uppercase tracking-[0.08em] mt-1 opacity-70",children:o.profile.school?.slice(0,22)}),v("div",{className:"mt-2 text-[12px] font-bold",children:[o.profile.coins||0," coins • ",o.count," quizzes"]}),v("div",{className:"text-[11px]",children:["Avg ",o.avg.toFixed(1),"% • Total ",o.totalScore]})]},o.profile.id))}),c("div",{className:"grid md:grid-cols-3 lg:grid-cols-5 gap-3",children:Op.map((o)=>v("div",{className:"bg-[var(--surface)] border border-[var(--border)] rounded-[14px] p-3",children:[c("div",{className:"text-[11px] uppercase tracking-[0.12em] text-[var(--muted)]",children:o.province}),v("div",{className:"font-bold text-[14px] mt-1",children:[o.total," learners"]}),v("div",{className:"text-[10px] text-[var(--muted)] mt-1 line-clamp-2",children:["Top: ",o.topSchool]})]},o.province))}),Qr&&c("div",{className:"grid md:grid-cols-2 gap-3",children:Fp.map((o)=>v("div",{className:"bg-[var(--surface)] border border-[var(--border)] rounded-[14px] p-3",children:[c("div",{className:"text-[11px] uppercase tracking-[0.12em] text-[var(--green)]",children:o.district}),c("div",{className:"mt-2 space-y-1",children:o.top.map((y,h)=>v("div",{className:"flex justify-between text-[12px]",children:[v("span",{children:[h+1,". ",y.profile.name]}),v("span",{children:[y.profile.coins,"c"]})]},y.profile.id))})]},o.district))}),c("div",{className:"overflow-auto rounded-[14px] border border-[var(--border)]",children:v("table",{className:"w-full text-[12px]",children:[c("thead",{className:"bg-[var(--surface)] text-[11px] uppercase tracking-[0.12em] text-[var(--muted)]",children:v("tr",{children:[c("th",{className:"text-left px-3 py-2",children:"Rank"}),c("th",{className:"text-left px-3 py-2",children:"Name"}),c("th",{className:"text-left px-3 py-2",children:"School (District)"}),c("th",{className:"text-left px-3 py-2",children:"Province"}),c("th",{className:"text-left px-3 py-2",children:"Coins"}),c("th",{className:"text-left px-3 py-2",children:"Streak"}),c("th",{className:"text-left px-3 py-2",children:"Quizzes"}),c("th",{className:"text-left px-3 py-2",children:"Avg"}),c("th",{className:"text-left px-3 py-2",children:"Total"})]})}),c("tbody",{children:qr.slice(0,100).map((o,y)=>v("tr",{className:`border-t border-[var(--border)] ${o.profile.id===r.id?"bg-[var(--surface-3)]":""}`,children:[c("td",{className:"px-3 py-2",children:y+1}),v("td",{className:"px-3 py-2 font-medium",children:[o.profile.name," ",o.profile.id===r.id&&c("span",{className:"ml-1 px-1.5 py-0.5 rounded-full bg-[var(--green)] text-black text-[9px]",children:"YOU"})]}),v("td",{className:"px-3 py-2",children:[o.profile.school," ",v("span",{className:"text-[var(--muted)]",children:["(",o.profile.district,")"]})]}),c("td",{className:"px-3 py-2",children:c("span",{className:"px-2 py-0.5 rounded-full bg-[var(--surface-2)] border border-[var(--border)] text-[10px]",children:o.profile.province})}),c("td",{className:"px-3 py-2 font-bold",children:o.profile.coins||0}),c("td",{className:"px-3 py-2",children:o.profile.streak||0}),c("td",{className:"px-3 py-2",children:o.count}),v("td",{className:"px-3 py-2",children:[o.avg.toFixed(1),"%"]}),c("td",{className:"px-3 py-2",children:o.totalScore})]},o.profile.id))})]})})]}),M==="admin"&&(admOk?v("div",{className:"space-y-6",children:[v("div",{className:"flex flex-wrap gap-2",children:[c("h2",{className:"font-serif text-[28px]",children:"Admin — Uploads"}),c("div",{className:"ml-auto flex gap-2 text-[11px] flex-wrap",children:Object.entries(lp).map(([o,y])=>v("span",{className:"px-2 py-1 rounded-full bg-[var(--surface)] border border-[var(--border)]",children:[o,": ",y]},o))})]}),v("div",{className:"grid grid-cols-1 lg:grid-cols-2 gap-4 md:gap-6 w-full max-w-full",children:[v("div",{className:"bg-[var(--surface)] border border-[var(--border)] rounded-[14px] p-5",children:[c("div",{className:"text-[11px] uppercase tracking-[0.12em] text-[var(--yellow)]",children:"Upload Past Paper — PDF 10MB max • Sanitize filename spaces→_, remove special chars"}),v("div",{className:"mt-3 grid grid-cols-2 gap-2",children:[c("select",{value:za,onChange:(o)=>wp(o.target.value),className:"h-9 px-2 rounded-[10px] bg-[var(--bg)] border border-[var(--border)] text-[11px]",children:It.map((o)=>c("option",{children:o},o))}),c("select",{value:Ra,onChange:(o)=>kp(o.target.value),className:"h-9 px-2 rounded-[10px] bg-[var(--bg)] border border-[var(--border)] text-[11px]",children:["10","11","12","Form 1","Form 2","Form 3","Form 4","Form 5"].map(o=>c("option",{children:o},o))}),v("select",{value:Pa,onChange:(o)=>Ep(o.target.value),className:"h-9 px-2 rounded-[10px] bg-[var(--bg)] border border-[var(--border)] text-[11px]",children:[c("option",{children:"2024"}),c("option",{children:"2023"}),c("option",{children:"2022"}),c("option",{children:"2021"}),c("option",{children:"2020"}),c("option",{children:"2019"})]}),v("select",{value:Ma,onChange:(o)=>_p(o.target.value),className:"h-9 px-2 rounded-[10px] bg-[var(--bg)] border border-[var(--border)] text-[11px]",children:[c("option",{children:"ECZ"}),c("option",{children:"Mock"}),c("option",{children:"Test"})]})]}),c("input",{value:Ru,onChange:(o)=>La(o.target.value),placeholder:"Title e.g. Mathematics Paper 1 2023",className:"mt-3 w-full h-10 px-3 rounded-[10px] bg-[var(--bg)] border border-[var(--border)] text-[12px]"}),c("textarea",{value:Ia,onChange:(o)=>Oa(o.target.value),placeholder:"Description",className:"mt-2 w-full h-20 px-3 py-2 rounded-[10px] bg-[var(--bg)] border border-[var(--border)] text-[12px]"}),c("input",{type:"file",accept:"application/pdf",onChange:(o)=>Fa(o.target.files?.[0]||null),className:"mt-3 w-full text-[11px] file:mr-3 file:h-7 file:rounded-[8px] file:border-0 file:bg-[var(--text)] file:text-[var(--bg)] file:text-[11px] file:font-semibold file:uppercase"}),c("button",{disabled:Da,onClick:Dp,className:"mt-3 w-full h-10 rounded-[10px] bg-[var(--green)] text-black font-bold uppercase tracking-[0.12em] text-[11px] disabled:opacity-60",children:Da?"Uploading live...":"Upload → storage past_papers + insert past_papers"}),c("div",{className:"mt-2 text-[10px] text-[var(--muted)]",children:'Uses client.storage.from("past_papers").upload(Date.now()+filename) then getPublicUrl then insert into past_papers. Mode cors, apikey header.'})]}),v("div",{className:"bg-[var(--surface)] border border-[var(--border)] rounded-[14px] p-5",children:[c("div",{className:"text-[11px] uppercase tracking-[0.12em] text-[var(--green)]",children:"Add Quiz Question"}),v("div",{className:"mt-3 grid grid-cols-2 gap-2",children:[c("select",{value:Wa,onChange:(o)=>Cp(o.target.value),className:"h-9 px-2 rounded-[10px] bg-[var(--bg)] border border-[var(--border)] text-[11px]",children:It.map((o)=>c("option",{children:o},o))}),c("select",{value:$a,onChange:(o)=>Sp(o.target.value),className:"h-9 px-2 rounded-[10px] bg-[var(--bg)] border border-[var(--border)] text-[11px]",children:["10","11","12","Form 1","Form 2","Form 3","Form 4","Form 5"].map(o=>c("option",{children:o},o))})]}),c("textarea",{value:Pu,onChange:(o)=>Va(o.target.value),placeholder:"Question text",className:"mt-3 w-full h-20 px-3 py-2 rounded-[10px] bg-[var(--bg)] border border-[var(--border)] text-[12px]"}),v("div",{className:"mt-2 grid grid-cols-2 gap-2",children:[c("input",{value:Mu,onChange:(o)=>Ha(o.target.value),placeholder:"Option A",className:"h-9 px-2 rounded-[10px] bg-[var(--bg)] border border-[var(--border)] text-[12px]"}),c("input",{value:Lu,onChange:(o)=>Ua(o.target.value),placeholder:"Option B",className:"h-9 px-2 rounded-[10px] bg-[var(--bg)] border border-[var(--border)] text-[12px]"}),c("input",{value:Iu,onChange:(o)=>Ba(o.target.value),placeholder:"Option C",className:"h-9 px-2 rounded-[10px] bg-[var(--bg)] border border-[var(--border)] text-[12px]"}),c("input",{value:Ou,onChange:(o)=>Aa(o.target.value),placeholder:"Option D",className:"h-9 px-2 rounded-[10px] bg-[var(--bg)] border border-[var(--border)] text-[12px]"})]}),v("div",{className:"mt-2 flex gap-2",children:[v("select",{value:Ka,onChange:(o)=>Np(o.target.value),className:"h-9 px-2 rounded-[10px] bg-[var(--bg)] border border-[var(--border)] text-[11px]",children:[c("option",{children:"A"}),c("option",{children:"B"}),c("option",{children:"C"}),c("option",{children:"D"})]}),c("input",{value:Xa,onChange:(o)=>Ya(o.target.value),placeholder:"Explanation",className:"flex-1 h-9 px-2 rounded-[10px] bg-[var(--bg)] border border-[var(--border)] text-[11px]"})]}),c("button",{onClick:Wp,className:"mt-3 w-full h-10 rounded-[10px] bg-[var(--text)] text-[var(--bg)] font-bold uppercase tracking-[0.12em] text-[11px]",children:"Add Quiz Question"})]}),v("div",{className:"bg-[var(--surface)] border border-[var(--border)] rounded-[14px] p-5 w-full max-w-full",children:[c("div",{className:"text-[11px] uppercase tracking-[0.12em] text-[var(--yellow)]",children:"Add Video — YouTube or Phone Upload"}),c("input",{value:Fu,onChange:(o)=>Za(o.target.value),placeholder:"Video title",className:"mt-3 w-full h-10 px-3 rounded-[10px] bg-[var(--bg)] border border-[var(--border)] text-[12px]"}),c("input",{id:"zed-topic-input",placeholder:"Topic e.g. Mole Concept - makes it searchable",className:"mt-2 w-full h-10 px-3 rounded-[10px] bg-[var(--bg)] border border-[var(--border)] text-[12px] outline-none focus:border-[var(--green)]",defaultValue:""}),c("input",{value:Jr,onChange:(o)=>Qa(o.target.value),placeholder:"YouTube URL (optional if uploading file)",className:"mt-2 w-full h-10 px-3 rounded-[10px] bg-[var(--bg)] border border-[var(--border)] text-[12px]"}),c("div",{className:"mt-2 p-2 rounded-[10px] bg-[var(--bg)] border border-dashed border-[var(--border)]",children:[c("div",{className:"text-[10px] uppercase tracking-[0.12em] text-[var(--muted)]",children:"Or upload video directly from phone"}),c("input",{type:"file",accept:"video/*",onChange:(o)=>setVidFile(o.target.files?.[0]||null),className:"mt-2 w-full text-[11px] file:mr-3 file:h-8 file:rounded-[8px] file:border-0 file:bg-[var(--text)] file:text-[var(--bg)] file:text-[11px] file:font-semibold file:uppercase"}),vidFile?c("div",{className:"mt-1 text-[11px] text-[var(--green)]",children:"Selected: "+vidFile.name+" ("+(vidFile.size/1024/1024).toFixed(1)+" MB)"}):null]}),v("div",{className:"mt-3 grid grid-cols-2 gap-2",children:[c("select",{value:Ja,onChange:(o)=>zp(o.target.value),className:"h-9 px-2 rounded-[10px] bg-[var(--bg)] border border-[var(--border)] text-[11px]",children:It.map((o)=>c("option",{children:o},o))}),c("select",{value:Ga,onChange:(o)=>Rp(o.target.value),className:"h-9 px-2 rounded-[10px] bg-[var(--bg)] border border-[var(--border)] text-[11px]",children:["10","11","12","Form 1","Form 2","Form 3","Form 4","Form 5"].map(o=>c("option",{children:o},o))})]}),c("button",{disabled:vidUp,onClick:$p,className:"mt-3 w-full h-10 rounded-[10px] bg-[var(--yellow)] text-black font-bold uppercase tracking-[0.12em] text-[11px] disabled:opacity-60",children:vidUp?"Uploading video...":"Insert Video Live"}),c("div",{className:"mt-2 text-[10px] text-[var(--muted)]",children:"Supports YouTube or direct MP4/WebM upload from phone to bucket videos (Public)."})]})]})]}):v("div",{className:"min-h-[60vh] flex flex-col items-center justify-center p-6",children:[v("div",{className:"w-full max-w-[400px] bg-[var(--surface)] border border-[var(--border)] rounded-[16px] p-6",children:[c("h2",{className:"font-serif text-[22px]",children:"Admin Access — Locked"}),c("p",{className:"text-[12px] text-[var(--muted)] mt-2",children:"Enter admin key to unlock admin panel"}),c("input",{type:"password",value:admKey,onChange:e=>setAdmKey(e.target.value),placeholder:"sb_publishable_...",className:"mt-4 w-full h-11 px-4 rounded-[12px] bg-[var(--bg)] border border-[var(--border)] outline-none text-[13px]"}),c("button",{onClick:()=>{if(admKey==="sb_publishable_74vo5_RlNXb0U0TrNLCdCQ_8zjDwFni"){setAdmOk(!0),F("Admin unlocked ✓")}else{F("Invalid admin key — access denied")}},className:"mt-3 w-full h-11 rounded-[12px] bg-[var(--green)] text-black font-bold text-[12px] uppercase tracking-[0.12em]",children:"Unlock Admin"})]})]})),M==="profile"&&v("div",{className:"grid grid-cols-1 lg:grid-cols-[320px_1fr] gap-4 md:gap-6 w-full",children:[v("div",{className:"bg-[var(--surface)] border border-[var(--border)] rounded-[14px] p-5 h-fit lg:sticky lg:top-[calc(56px+var(--safe-area-inset-top)+37px)]",children:[c("div",{className:"w-16 h-16 rounded-full bg-[var(--green)] flex items-center justify-center text-black font-extrabold text-[24px]",children:r.name[0]}),c("div",{className:"font-serif text-[22px] mt-3",children:r.name}),v("div",{className:"text-[12px] text-[var(--muted)]",children:[r.phone," • ",r.account_code]}),v("div",{className:"mt-3 flex flex-wrap gap-2",children:[v("span",{className:"px-2 py-1 rounded-full bg-[var(--yellow)] text-black text-[11px] font-bold",children:[r.coins||0," coins"]}),v("span",{className:"px-2 py-1 rounded-full bg-[var(--surface-2)] border border-[var(--border)] text-[11px]",children:["Streak ",r.streak||0]}),v("span",{className:"px-2 py-1 rounded-full bg-[var(--surface-2)] border border-[var(--border)] text-[11px]",children:["Grade ",r.grade]})]}),v("div",{className:"mt-4 text-[12px] space-y-1",children:[v("div",{children:[c("span",{className:"text-[var(--muted)]",children:"Province:"})," ",r.province]}),v("div",{children:[c("span",{className:"text-[var(--muted)]",children:"District:"})," ",r.district]}),v("div",{children:[c("span",{className:"text-[var(--muted)]",children:"School:"})," ",r.school]})]})]}),v("div",{className:"space-y-4",children:[c("h3",{className:"font-serif text-[20px]",children:"Quiz History"}),v("div",{className:"grid gap-2",children:[Ea.map((o)=>v("div",{className:"bg-[var(--surface)] border border-[var(--border)] rounded-[12px] p-3 flex items-center justify-between",children:[v("div",{children:[v("div",{className:"text-[12px] font-semibold",children:[o.subject," • ",o.year]}),v("div",{className:"text-[11px] text-[var(--muted)]",children:[new Date(o.created_at).toLocaleString()," • ",o.time_spent,"s"]})]}),v("div",{className:"text-right",children:[v("div",{className:"text-[14px] font-bold",children:[o.score,"/",o.total]}),v("div",{className:"text-[11px] text-[var(--green)]",children:[(o.score/o.total*100).toFixed(1),"%"]})]})]},o.id)),Ea.length===0&&c("div",{className:"text-[13px] text-[var(--muted)] py-8 text-center",children:"No attempts yet — take a quiz to earn +5 coins per correct answer."})]})]})]})]}),c("footer",{className:"border-t border-[var(--border)] px-6 py-4 text-[11px] text-[var(--muted)] text-center",children:"ZED SCHOLAR • GRADE 10-12 • FORM 1-5 • Zambia • Online"}),I&&c("div",{className:"fixed bottom-4 left-4 right-4 md:left-auto md:right-4 md:w-[380px] z-50 bg-[var(--text)] text-[var(--bg)] px-4 py-3 rounded-[12px] text-[13px] font-medium shadow-xl border-2 border-[var(--green)]",children:I}),qa&&c("div",{className:"fixed inset-0 z-50 bg-black/60 backdrop-blur-sm flex items-center justify-center p-4",children:v("div",{className:"bg-[var(--surface)] border border-[var(--border)] rounded-[16px] p-6 w-full max-w-[400px]",children:[c("h4",{className:"font-serif text-[18px]",children:"Delete paper?"}),c("p",{className:"text-[12px] text-[var(--muted)] mt-2",children:"This will delete this item permanently."}),v("div",{className:"mt-4 flex gap-2",children:[c("button",{onClick:()=>Du(null),className:"flex-1 h-10 rounded-[10px] bg-[var(--surface-2)] border border-[var(--border)] text-[12px]",children:"Cancel"}),c("button",{onClick:()=>Tp(qa),className:"flex-1 h-10 rounded-[10px] bg-[#ff9a9a] text-black font-bold text-[12px]",children:"Delete"})]})]})})]})}Xd.createRoot(document.getElementById("root")).render(c(Kd.default.StrictMode,{children:c(ca,{})}));
+if(h)throw Error(h.message);F(vidFile?"Video uploaded from phone ✓":"Video added live!"),Za(""),Qa(""),setVidFile(null);let _tEl=document.getElementById("zed-topic-input");if(_tEl)_tEl.value="";let{data:P}=await e.from("videos").select("*").order("created_at",{ascending:!1}).limit(200);ga(P||[])}catch(o){F(o.message)}finally{setVidUp(!1)}},Vp=(o)=>{Su(o),Ca({}),Sa(0)},Hp=async()=>{if(!Te)return;let o=0;Te.forEach((y,h)=>{if(_a[h]===y.correct_answer)o++});try{let y={user_id:r.id,subject:Te[0]?.subject||"General",year:Te[0]?.year||"2024",score:o,total:Te.length,time_spent:Nu},{error:h}=await e.from("quiz_attempts").insert(y);if(h)throw Error(h.message);let P=(r.coins||0)+o*5;await e.from("profiles").update({coins:P}).eq("id",r.id);let W={...r,coins:P};l(W),localStorage.setItem("zed_user",JSON.stringify(W)),F(`Quiz submitted: ${o}/${Te.length} • +${o*5} coins`),Su(null);let{data:V}=await e.from("quiz_attempts").select("user_id,score,total,subject,created_at").order("created_at",{ascending:!1}).limit(500);ka(V||[])}catch(y){F(y.message)}},xa=S.useMemo(()=>{let o=ku.toLowerCase();return gv.filter((y)=>y.province===je&&y.name.toLowerCase().includes(o)).slice(0,20)},[je,ku]);if(!r)return v("div",{className:"min-h-screen bg-[var(--bg)] text-[var(--text)] flex flex-col",style:{paddingTop:"var(--safe-area-inset-top)",boxSizing:"border-box"},children:[v("header",{className:"sticky top-[var(--safe-area-inset-top)] z-30 bg-[var(--bg)]/95 backdrop-blur-xl border-b border-[var(--border)] px-4 md:px-6 h-[60px] flex items-center justify-between",children:[v("div",{className:"flex items-center gap-3",children:[c("div",{className:"w-9 h-9 rounded-full bg-[var(--green)] flex items-center justify-center text-black font-extrabold text-[15px]",children:"Z"}),v("div",{children:[c("div",{className:"font-serif text-[18px] leading-none tracking-[-0.02em]",children:"ZED SCHOLAR"}),c("div",{className:"text-[10px] uppercase tracking-[0.18em] text-[var(--muted)]",children:"ZAMBIA • GRADE 10-12 • FORM 1-5"})]})]}),v("div",{className:"flex items-center gap-2 text-[11px]",children:[c("span",{className:`w-2 h-2 rounded-full ${n.ok?"bg-[var(--green)]":n.ok===!1?"bg-[#ff9a9a]":"bg-[var(--yellow)] animate-pulse"}`}),c("span",{className:"text-[10px] uppercase tracking-[0.12em] text-[var(--muted)]",children:n.ok?"Live":n.ok===!1?"Offline":"Connecting"})]})]}),c("div",{className:"flex-1 flex justify-center px-4 py-6 md:py-10",children:c("div",{className:"w-full max-w-[460px]",children:!$?v("div",{className:"bg-[var(--surface)] border border-[var(--border)] rounded-[22px] p-6 md:p-8 shadow-[0_16px_40px_rgba(0,0,0,0.35)]",children:[v("div",{className:"flex gap-2 mb-6 p-1 bg-[var(--bg)] rounded-full w-fit border border-[var(--border)]",children:[c("button",{onClick:()=>i("password"),className:`px-5 h-9 rounded-full text-[11px] uppercase tracking-[0.14em] font-bold transition ${u==="password"?"bg-[var(--text)] text-[var(--bg)]":"text-[var(--muted)]"}`,children:"Password"}),c("button",{onClick:()=>i("otp"),className:`px-5 h-9 rounded-full text-[11px] uppercase tracking-[0.14em] font-bold transition ${u==="otp"?"bg-[var(--text)] text-[var(--bg)]":"text-[var(--muted)]"}`,children:"SMS OTP"})]}),u==="password"?v("div",{className:"space-y-4",children:[v("div",{children:[c("h2",{className:"font-serif text-[30px] leading-[0.95] tracking-[-0.02em]",children:"Welcome back"}),c("p",{className:"text-[13px] text-[var(--muted)] mt-2 leading-snug",children:"Log in to access past papers, quizzes and your school leaderboard."})]}),v("div",{children:[c("label",{className:"text-[11px] uppercase tracking-[0.12em] text-[var(--muted)]",children:"Phone — 10 digits (09 / 07)"}),c("input",{value:a,onChange:(o)=>f(o.target.value.replace(/\D/g,"").slice(0,10)),placeholder:"0971234567",className:"mt-1.5 w-full h-11 px-4 rounded-[12px] bg-[var(--bg)] border border-[var(--border)] outline-none focus:border-[var(--green)] text-[14px]"})]}),v("div",{children:[c("label",{className:"text-[11px] uppercase tracking-[0.12em] text-[var(--muted)]",children:"Password"}),c("input",{type:"password",value:m,onChange:(o)=>g(o.target.value),placeholder:"••••••",className:"mt-1.5 w-full h-11 px-4 rounded-[12px] bg-[var(--bg)] border border-[var(--border)] outline-none focus:border-[var(--green)] text-[14px]"})]}),c("button",{id:"zed-login-btn",disabled:k,onPointerDown:(o)=>{try{if(o.currentTarget.setAttribute("data-clicked","1"),o.currentTarget.textContent="Logging in...",!document.getElementById("login-click-feedback")){let h=document.createElement("div");h.id="login-click-feedback",h.textContent="Login checking credentials...",h.style.position="fixed",h.style.bottom="80px",h.style.left="12px",h.style.right="12px",h.style.background="#8CFF8A",h.style.color="#000",h.style.padding="10px",h.style.borderRadius="10px",h.style.zIndex="9999",document.body.appendChild(h),setTimeout(()=>{try{h.remove()}catch{}},3000)}}catch{}},onClick:(o)=>{try{if(o.currentTarget.setAttribute("data-clicked","1"),o.currentTarget.textContent="Logging in...",!document.getElementById("login-click-feedback")){let h=document.createElement("div");h.id="login-click-feedback",h.textContent="Login checking credentials...",h.style.position="fixed",h.style.bottom="80px",h.style.left="12px",h.style.right="12px",h.style.background="#8CFF8A",h.style.color="#000",h.style.padding="10px",h.style.borderRadius="10px",h.style.zIndex="9999",document.body.appendChild(h),setTimeout(()=>{try{h.remove()}catch{}},3000)}}catch{}Pp()},className:"w-full h-11 rounded-[12px] bg-[var(--green)] text-black font-bold uppercase tracking-[0.12em] text-[12px] hover:brightness-110 disabled:opacity-60",children:k?"Logging in...":"Login"}),v("div",{className:"text-[13px] text-[var(--muted)] text-center pt-2",id:"signup-trigger",children:["No account? ",c("button",{id:"zed-signup-open",type:"button","data-testid":"signup-zambia-btn",onClick:(o)=>{try{let y=o.currentTarget;y.textContent="Opening signup... ✓",y.setAttribute("data-opened","1"),y.setAttribute("aria-expanded","true"),y.style.color="var(--green)";let h="zed-signup-feedback-live",P=document.getElementById(h);if(!P)P=document.createElement("div"),P.id=h,P.textContent="Opening signup — create your profile",P.style.position="fixed",P.style.bottom="90px",P.style.left="16px",P.style.right="16px",P.style.background="#F5F1E8",P.style.color="#0F0E0B",P.style.padding="10px 14px",P.style.borderRadius="10px",P.style.zIndex="9999",P.style.fontSize="12px",P.style.fontWeight="600",document.body.appendChild(P),setTimeout(()=>{try{P.remove()}catch{}},3000);location.hash="#signup",document.documentElement.setAttribute("data-signup","open"),window.scrollTo(0,0),console.log("[ZED] Signup trigger clicked - clean auth v31")}catch(y){console.log("[ZED] signup open error",y)}Ce(!0),F("Opening signup — choose province → district → school")},className:"underline text-[var(--text)] font-semibold",children:"Create account"})]})]}):v("div",{className:"space-y-4",children:[v("div",{children:[c("h2",{className:"font-serif text-[30px] leading-[0.95] tracking-[-0.02em]",children:"Phone OTP"}),c("p",{className:"text-[13px] text-[var(--muted)] mt-2 leading-snug",children:"We'll send a 6-digit code to your Zambian number."})]}),v("div",{children:[c("label",{className:"text-[11px] uppercase tracking-[0.12em] text-[var(--muted)]",children:"Phone — 10 digits"}),c("input",{value:_,onChange:(o)=>z(o.target.value.replace(/\D/g,"").slice(0,10)),placeholder:"0971234567",className:"mt-1.5 w-full h-11 px-4 rounded-[12px] bg-[var(--bg)] border border-[var(--border)] outline-none focus:border-[var(--green)] text-[14px]"})]}),!N?c("button",{disabled:p,onClick:Mp,className:"w-full h-11 rounded-[12px] bg-[var(--yellow)] text-black font-bold uppercase tracking-[0.12em] text-[12px] disabled:opacity-60",children:p?"Sending...":"Send OTP"}):v(wu,{children:[v("div",{children:[c("label",{className:"text-[11px] uppercase tracking-[0.12em] text-[var(--muted)]",children:"6-digit code"}),c("input",{value:d,onChange:(o)=>s(o.target.value.replace(/\D/g,"").slice(0,6)),placeholder:"123456",className:"mt-1.5 w-full h-11 px-4 rounded-[12px] bg-[var(--bg)] border border-[var(--border)] outline-none focus:border-[var(--green)] text-[14px] tracking-[0.2em]"})]}),c("button",{disabled:p,onClick:Lp,className:"w-full h-11 rounded-[12px] bg-[var(--green)] text-black font-bold uppercase tracking-[0.12em] text-[12px] disabled:opacity-60",children:p?"Verifying...":"Verify & Login"}),c("button",{onClick:()=>{D(!1),s("")},className:"w-full h-9 text-[11px] uppercase tracking-[0.12em] text-[var(--muted)]",children:"Resend code"})]}),v("div",{className:"text-[13px] text-[var(--muted)] text-center",children:["Have password? ",c("button",{type:"button",onClick:()=>i("password"),className:"underline text-[var(--text)]",children:"Use password"})," • ",c("button",{type:"button",onClick:()=>{Ce(!0),F("Opening signup")},className:"underline text-[var(--text)]",children:"Sign up"})]})]})]}):v("div",{className:"bg-[var(--surface)] border border-[var(--border)] rounded-[22px] p-6 md:p-8 shadow-[0_16px_40px_rgba(0,0,0,0.35)] space-y-4",id:"signup",children:[c("button",{type:"button",onClick:()=>{Ce(!1);try{location.hash="",document.documentElement.removeAttribute("data-signup")}catch{}},className:"text-[11px] uppercase tracking-[0.12em] text-[var(--muted)] hover:text-[var(--text)]",children:"← Back to login"}),v("div",{children:[c("h2",{className:"font-serif text-[30px] leading-[0.95] tracking-[-0.02em]",children:"Create account"}),c("p",{className:"text-[13px] text-[var(--muted)] mt-2",children:"Choose province → district → school. Can't find yours? Add Temweni secondary school as custom."})]}),v("div",{className:"grid gap-3.5",children:[v("div",{children:[c("label",{className:"text-[11px] uppercase tracking-[0.12em] text-[var(--muted)]",children:"Full Name"}),c("input",{value:xe,onChange:(o)=>Yd(o.target.value),placeholder:"Bwalya Mwansa",className:"mt-1.5 w-full h-11 px-4 rounded-[12px] bg-[var(--bg)] border border-[var(--border)] outline-none focus:border-[var(--green)] text-[14px]"})]}),v("div",{children:[c("label",{className:"text-[11px] uppercase tracking-[0.12em] text-[var(--muted)]",children:"Phone — 10 digits (09 / 07)"}),c("input",{value:sn,onChange:(o)=>Zd(o.target.value.replace(/\D/g,"").slice(0,10)),placeholder:"097...",className:"mt-1.5 w-full h-11 px-4 rounded-[12px] bg-[var(--bg)] border border-[var(--border)] outline-none focus:border-[var(--green)] text-[14px]"})]}),v("div",{className:"grid grid-cols-2 gap-3",children:[v("div",{children:[c("label",{className:"text-[11px] uppercase tracking-[0.12em] text-[var(--muted)]",children:"Province"}),c("select",{value:je,onChange:(o)=>Qd(o.target.value),className:"mt-1.5 w-full h-11 px-3 rounded-[12px] bg-[var(--bg)] border border-[var(--border)] text-[13px]",children:Hd.map((o)=>c("option",{children:o},o))})]}),v("div",{children:[c("label",{className:"text-[11px] uppercase tracking-[0.12em] text-[var(--muted)]",children:"District"}),c("select",{value:Fr,onChange:(o)=>fa(o.target.value),className:"mt-1.5 w-full h-11 px-3 rounded-[12px] bg-[var(--bg)] border border-[var(--border)] text-[13px]",children:Or[je]?.map((o)=>c("option",{children:o},o))})]})]}),v("div",{children:[c("label",{className:"text-[11px] uppercase tracking-[0.12em] text-[var(--muted)]",children:"School — searchable (150+)"}),c("input",{value:ku,onChange:(o)=>Jd(o.target.value),placeholder:"Search school...",className:"mt-1.5 w-full h-10 px-3 rounded-[12px] bg-[var(--bg)] border border-[var(--border)] text-[13px]"}),v("div",{className:"mt-2 max-h-[160px] overflow-auto rounded-[12px] border border-[var(--border)] bg-[var(--bg)]",children:[xa.map((o)=>c("button",{onClick:()=>{Gd(o.name),sa(!1)},className:`w-full text-left px-3 py-2.5 text-[12px] hover:bg-[var(--surface)] transition ${Ot===o.name?"bg-[var(--surface-2)] text-[var(--green)] font-semibold":""}`,children:o.name},o.name)),xa.length===0&&c("div",{className:"px-3 py-3 text-[11px] text-[var(--muted)]",children:"No match — tick custom below for Temweni."})]}),v("div",{className:"mt-3 flex items-center gap-2",children:[c("input",{type:"checkbox",checked:Fn,onChange:(o)=>sa(o.target.checked),className:"w-4 h-4 rounded"}),c("span",{className:"text-[11px] uppercase tracking-[0.08em] text-[var(--muted)]",children:"Add custom school"})]}),Fn&&c("input",{value:Ft,onChange:(o)=>qd(o.target.value),placeholder:"e.g. Temweni secondary school",className:"mt-2 w-full h-11 px-3 rounded-[12px] bg-[var(--bg)] border border-[var(--border)] text-[13px] outline-none focus:border-[var(--green)]"}),Ot&&!Fn&&v("div",{className:"mt-2 text-[11px] text-[var(--green)]",children:["Selected: ",Ot]}),Fn&&Ft&&v("div",{className:"mt-2 text-[11px] text-[var(--green)]",children:["Custom: ",Ft]})]}),v("div",{className:"grid grid-cols-2 gap-3",children:[v("div",{children:[c("label",{className:"text-[11px] uppercase tracking-[0.12em] text-[var(--muted)]",children:"Grade"}),c("select",{value:Dr,onChange:(o)=>xd(o.target.value),className:"mt-1.5 w-full h-11 px-3 rounded-[12px] bg-[var(--bg)] border border-[var(--border)] text-[13px]",children:["10","11","12","Form 1","Form 2","Form 3","Form 4","Form 5"].map(o=>c("option",{children:o},o))})]}),v("div",{children:[c("label",{className:"text-[11px] uppercase tracking-[0.12em] text-[var(--muted)]",children:"Account Code"}),v("div",{className:"mt-1.5 h-11 px-3 rounded-[12px] bg-[var(--bg)] border border-[var(--border)] flex items-center text-[11px] font-mono text-[var(--muted)]",children:["ZED-",Date.now().toString().slice(-6)]})]})]}),v("div",{className:"grid grid-cols-2 gap-3",children:[v("div",{children:[c("label",{className:"text-[11px] uppercase tracking-[0.12em] text-[var(--muted)]",children:"Password"}),c("input",{type:"password",value:Eu,onChange:(o)=>jd(o.target.value),placeholder:"Create",className:"mt-1.5 w-full h-11 px-3 rounded-[12px] bg-[var(--bg)] border border-[var(--border)] text-[13px] outline-none focus:border-[var(--green)]"})]}),v("div",{children:[c("label",{className:"text-[11px] uppercase tracking-[0.12em] text-[var(--muted)]",children:"Confirm"}),c("input",{type:"password",value:da,onChange:(o)=>bd(o.target.value),placeholder:"Confirm",className:"mt-1.5 w-full h-11 px-3 rounded-[12px] bg-[var(--bg)] border border-[var(--border)] text-[13px] outline-none focus:border-[var(--green)]"})]})]}),c("button",{id:"zed-signup-btn",disabled:pa,onClick:()=>{console.log("[ZED] zed-signup-btn clean -> sd() Temweni"),Ip()},className:"w-full h-11 rounded-[12px] bg-[var(--green)] text-black font-bold uppercase tracking-[0.12em] text-[12px] disabled:opacity-60 disabled:cursor-not-allowed hover:brightness-110",children:pa?"Signing up...":"Create account"})]})]})})}),I&&c("div",{className:"fixed bottom-4 left-4 right-4 md:left-auto md:right-4 md:w-[380px] z-50 bg-[var(--text)] text-[var(--bg)] px-4 py-3 rounded-[12px] text-[13px] font-medium shadow-xl border-2 border-[var(--green)]",children:I})]});return v("div",{className:"min-h-screen bg-[var(--bg)] text-[var(--text)]",style:{paddingTop:"var(--safe-area-inset-top)",boxSizing:"border-box"},children:[v("header",{className:"sticky top-[var(--safe-area-inset-top)] z-30 bg-[var(--bg)]/90 backdrop-blur-xl border-b border-[var(--border)] px-4 md:px-6 h-[56px] flex items-center justify-between",children:[v("div",{className:"flex items-center gap-3",children:[c("div",{className:"w-9 h-9 rounded-full bg-[var(--green)] flex items-center justify-center text-black font-extrabold",children:"Z"}),v("div",{children:[c("div",{className:"font-serif text-[16px] leading-none tracking-[-0.02em]",children:"ZED SCHOLAR v1"}),c("div",{className:"text-[10px] uppercase tracking-[0.16em] text-[var(--muted)] hidden md:block",children:"Zambia • ECZ Past Papers"})]})]}),v("div",{className:"flex items-center gap-3",children:[v("div",{className:"flex items-center gap-2 px-3 h-7 rounded-full bg-[var(--surface)] border border-[var(--border)] text-[10px]",children:[c("span",{className:`w-1.5 h-1.5 rounded-full ${n.ok?"bg-[var(--green)]":"bg-[#ff9a9a]"}`}),c("span",{className:"text-[11px] uppercase tracking-[0.12em] text-[var(--muted)]",children:n.ok?"● LIVE":"● OFFLINE"})]}),v("div",{className:"hidden md:flex items-center gap-2",children:[c("span",{className:"text-[11px] text-[var(--muted)]",children:r.name}),v("span",{className:"px-2 py-0.5 rounded-full bg-[var(--yellow)] text-black text-[10px] font-bold",children:[r.coins||0," coins"]})]}),c("button",{onClick:()=>{localStorage.removeItem("zed_user"),l(null)},className:"h-8 px-3 rounded-full bg-[var(--surface)] border border-[var(--border)] text-[11px] uppercase tracking-[0.08em]",children:"Logout"})]})]}),v("div",{className:"border-b border-[var(--border)] bg-[var(--surface)] px-2 md:px-6 h-[37px] flex items-center gap-1 overflow-x-auto",children:[[{id:"papers",label:"Papers"},{id:"quizzes",label:"Quizzes"},{id:"documents",label:"Docs"},{id:"videos",label:"Videos"},{id:"leaderboard",label:"Leaderboard"},{id:"admin",label:"Admin"},{id:"profile",label:"Profile"}].map((o)=>c("button",{onClick:()=>x(o.id),className:`h-7 px-3 rounded-full text-[11px] uppercase tracking-[0.12em] font-semibold border whitespace-nowrap ${M===o.id?"bg-[var(--text)] text-[var(--bg)] border-[var(--text)]":"bg-transparent border-[var(--border)] text-[var(--muted)]"}`,children:o.label},o.id)),v("div",{className:"ml-auto hidden md:flex items-center gap-2 text-[10px] text-[var(--muted)]",children:[v("span",{children:[r.province," • ",r.district]}),c("span",{className:"px-2 py-0.5 rounded-full bg-[var(--surface-2)]",children:r.school})]})]}),v("main",{className:"max-w-[1200px] mx-auto px-4 md:px-6 py-6",children:[M==="papers"&&v("div",{className:"space-y-4",children:[v("div",{className:"flex flex-wrap gap-2 items-center",children:[c("input",{value:$r,onChange:(o)=>ip(o.target.value),placeholder:"Search papers...",className:"h-9 px-3 rounded-[10px] bg-[var(--surface)] border border-[var(--border)] text-[13px] w-[200px]"}),v("select",{value:Vr,onChange:(o)=>op(o.target.value),className:"h-9 px-2 rounded-[10px] bg-[var(--surface)] border border-[var(--border)] text-[11px]",children:[c("option",{children:"All"}),It.map((o)=>c("option",{children:o},o))]}),v("select",{value:Hr,onChange:(o)=>ap(o.target.value),className:"h-9 px-2 rounded-[10px] bg-[var(--surface)] border border-[var(--border)] text-[11px]",children:[c("option",{children:"All"}),["10","11","12","Form 1","Form 2","Form 3","Form 4","Form 5"].map(o=>c("option",{children:o},o))]}),v("select",{value:Ur,onChange:(o)=>cp(o.target.value),className:"h-9 px-2 rounded-[10px] bg-[var(--surface)] border border-[var(--border)] text-[11px]",children:[c("option",{children:"All"}),c("option",{children:"ECZ"}),c("option",{children:"Mock"}),c("option",{children:"Test"})]}),v("select",{value:Br,onChange:(o)=>fp(o.target.value),className:"h-9 px-2 rounded-[10px] bg-[var(--surface)] border border-[var(--border)] text-[11px]",children:[c("option",{children:"All"}),c("option",{children:"2024"}),c("option",{children:"2023"}),c("option",{children:"2022"}),c("option",{children:"2021"}),c("option",{children:"2020"})]}),v("span",{className:"ml-auto text-[11px] text-[var(--muted)]",children:[Tu.length," papers"]})]}),ep?c("div",{className:"grid md:grid-cols-3 gap-3",children:Array.from({length:6}).map((o,y)=>c("div",{className:"h-[140px] rounded-[14px] bg-[var(--surface)] animate-pulse"},y))}):v(wu,{children:[c("div",{className:"grid md:grid-cols-2 lg:grid-cols-3 gap-3",children:Tu.slice(0,20).map((o)=>v("div",{className:"bg-[var(--surface)] border border-[var(--border)] rounded-[14px] p-4 flex flex-col",children:[v("div",{className:"flex items-start justify-between gap-2",children:[v("div",{children:[v("div",{className:"text-[11px] uppercase tracking-[0.12em] text-[var(--yellow)]",children:[o.subject," • G",o.grade," • ",o.year]}),c("div",{className:"font-semibold text-[14px] leading-tight mt-1 line-clamp-2",children:o.title}),v("div",{className:"text-[11px] text-[var(--muted)] mt-1",children:[o.paper_type," • ",o.province||""," ",o.district||""]})]}),c("span",{className:"text-[10px] px-2 py-0.5 rounded-full bg-[var(--surface-2)] border border-[var(--border)]",children:o.file_name?.slice(-3).toUpperCase()||"PDF"})]}),c("div",{className:"text-[12px] text-[var(--muted)] mt-2 line-clamp-2",children:o.description}),v("div",{className:"mt-auto pt-3 flex gap-2",children:[c("a",{href:o.file_url,target:"_blank",rel:"noopener",className:"flex-1 h-8 rounded-[8px] bg-[var(--text)] text-[var(--bg)] flex items-center justify-center text-[11px] font-semibold uppercase tracking-[0.08em]",children:"Download"}),o.uploaded_by===r.id&&c("button",{onClick:()=>Du(o),className:"h-8 px-3 rounded-[8px] bg-[var(--surface-2)] border border-[var(--border)] text-[11px]",children:"Delete"})]}),v("div",{className:"mt-2 text-[10px] text-[var(--muted-2)]",children:["by ",o.uploaded_by?.slice(0,8)||"—"," • ",new Date(o.created_at).toLocaleDateString()]})]},o.id))}),Tu.length===0&&c("div",{className:"text-center py-8 text-[var(--muted)] text-[13px]",children:"No papers yet."})]})]}),M==="quizzes"&&v("div",{className:"space-y-4",children:[v("div",{className:"flex flex-wrap gap-2 items-center",children:[v("select",{value:Ar,onChange:(o)=>sp(o.target.value),className:"h-9 px-2 rounded-[10px] bg-[var(--surface)] border border-[var(--border)] text-[11px]",children:[c("option",{children:"All"}),It.map((o)=>c("option",{children:o},o))]}),v("select",{value:Kr,onChange:(o)=>dp(o.target.value),className:"h-9 px-2 rounded-[10px] bg-[var(--surface)] border border-[var(--border)] text-[11px]",children:[c("option",{children:"All"}),["10","11","12","Form 1","Form 2","Form 3","Form 4","Form 5"].map(o=>c("option",{children:o},o))]}),c("button",{onClick:()=>{let s=[...Gr];for(let i=s.length-1;i>0;i--){let j=Math.floor(Math.random()*(i+1));[s[i],s[j]]=[s[j],s[i]]}let q=s.slice(0,20);q.length&&Vp(q)},className:"h-9 px-4 rounded-[10px] bg-[var(--green)] text-black font-bold text-[11px] uppercase tracking-[0.12em]",children:"Take Quiz (20 Random)"}),c("span",{className:"ml-auto text-[11px] text-[var(--muted)]",children:"+5 coins per correct"})]}),c("div",{className:"grid md:grid-cols-2 gap-3",children:Gr.map((o,y)=>v("div",{className:"bg-[var(--surface)] border border-[var(--border)] rounded-[14px] p-4",children:[v("div",{className:"text-[11px] uppercase tracking-[0.12em] text-[var(--green)]",children:[o.subject," • G",o.grade," • ",o.topic," • ",o.year]}),v("div",{className:"font-medium text-[14px] mt-2 leading-snug",children:[y+1,". ",o.question_text]}),c("div",{className:"mt-3 grid grid-cols-1 gap-1.5",children:["A","B","C","D"].map((h)=>v("div",{className:"flex gap-2 text-[12px] bg-[var(--bg)] border border-[var(--border)] rounded-[8px] px-3 py-2",children:[v("span",{className:"font-bold",children:[h,"."]}),c("span",{children:o[`option_${h.toLowerCase()}`]})]},h))}),v("div",{className:"mt-2 text-[11px] text-[var(--muted)]",children:["Correct: ",o.correct_answer," • ",o.explanation?.slice(0,80)]})]},o.id))}),Gr.length===0&&c("div",{className:"text-center py-8 text-[var(--muted)]",children:"No quiz questions — add in Admin."}),Te&&c("div",{className:"fixed inset-0 z-50 bg-black/60 backdrop-blur-sm p-4 flex items-center justify-center",children:v("div",{className:"bg-[var(--surface)] border border-[var(--border)] rounded-[16px] w-full max-w-[720px] max-h-[90vh] overflow-auto p-6",children:[v("div",{className:"flex items-center justify-between",children:[v("h3",{className:"font-serif text-[22px]",children:["Quiz — ",Te.length," questions"]}),v("div",{className:"text-[12px] text-[var(--muted)]",children:["Time: ",Math.floor(Nu/60),":",String(Nu%60).padStart(2,"0")]})]}),c("div",{className:"mt-4 space-y-6",children:Te.map((o,y)=>v("div",{className:"border-b border-[var(--border)] pb-4",children:[v("div",{className:"text-[13px] font-medium",children:[y+1,". ",o.question_text]}),c("div",{className:"mt-2 grid grid-cols-1 md:grid-cols-2 gap-2",children:["A","B","C","D"].map((h)=>v("button",{onClick:()=>Ca((P)=>({...P,[y]:h})),className:`text-left px-3 py-2 rounded-[10px] border text-[12px] ${_a[y]===h?"bg-[var(--green)] text-black border-[var(--green)]":"bg-[var(--bg)] border-[var(--border)]"}`,children:[v("span",{className:"font-bold mr-1",children:[h,"."]}),o[`option_${h.toLowerCase()}`]]},h))})]},y))}),v("div",{className:"mt-6 flex gap-2",children:[c("button",{onClick:()=>Su(null),className:"h-10 px-4 rounded-[10px] bg-[var(--surface-2)] border border-[var(--border)] text-[12px]",children:"Cancel"}),c("button",{onClick:Hp,className:"flex-1 h-10 rounded-[10px] bg-[var(--green)] text-black font-bold uppercase tracking-[0.12em] text-[12px]",children:"Submit"})]})]})})]}),M==="documents"&&v("div",{className:"space-y-4",children:[v("div",{className:"text-[11px] uppercase tracking-[0.12em] text-[var(--muted)]",children:[Cu.length," docs"]}),c("div",{className:"grid md:grid-cols-3 gap-3",children:Cu.map((o)=>v("div",{className:"bg-[var(--surface)] border border-[var(--border)] rounded-[14px] p-4",children:[v("div",{className:"text-[11px] uppercase text-[var(--yellow)]",children:[o.subject," • ",o.grade]}),c("div",{className:"font-semibold text-[14px] mt-1",children:o.title}),c("div",{className:"text-[12px] text-[var(--muted)] mt-1 line-clamp-2",children:o.description}),c("a",{href:o.file_url,target:"_blank",rel:"noopener",className:"mt-3 inline-flex h-8 px-3 rounded-[8px] bg-[var(--text)] text-[var(--bg)] text-[11px] font-semibold items-center",children:"Open Document"})]},o.id))}),Cu.length===0&&c("div",{className:"text-center py-8 text-[var(--muted)] text-[13px]",children:"No documents yet."})]}),M==="videos"&&v("div",{className:"space-y-4",children:[c("div",{className:"text-[11px] uppercase tracking-[0.12em] text-[var(--muted)]",children:[ha.length," videos"]}),c("div",{className:"grid md:grid-cols-2 gap-4",children:ha.map((o)=>{let y=Ad(o.video_url);return v("div",{className:"bg-[var(--surface)] border border-[var(--border)] rounded-[14px] overflow-hidden",children:[y?c("div",{className:"aspect-video bg-black",children:c("iframe",{src:`https://www.youtube-nocookie.com/embed/${y}?modestbranding=1&rel=0&iv_load_policy=3&controls=1&fs=1&playsinline=1&disablekb=0&showinfo=0&cc_load_policy=0`,className:"w-full h-full",loading:"lazy",allowFullScreen:!0,sandbox:"allow-scripts allow-same-origin allow-presentation",allow:"accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; fullscreen",title:o.title})}):c("video",{src:o.video_url,controls:!0,className:"w-full aspect-video bg-black"}),v("div",{className:"p-4",children:[v("div",{className:"text-[11px] uppercase text-[var(--green)]",children:[o.subject," • G",o.grade]}),c("div",{className:"font-semibold text-[14px] mt-1",children:o.title}),c("div",{className:"text-[12px] text-[var(--muted)] mt-1",children:o.description})]})]},o.id)})}),ha.length===0&&c("div",{className:"text-center py-8 text-[var(--muted)] text-[13px]",children:"No videos — add YouTube links in Admin."})]}),M==="leaderboard"&&v("div",{className:"space-y-6",children:[v("div",{className:"flex flex-wrap gap-2 items-center",children:[c("h2",{className:"font-serif text-[32px] tracking-[-0.02em]",children:"Whole Zambia Leaderboard"}),c("span",{className:"ml-auto px-3 py-1 rounded-full bg-[var(--green)] text-black text-[11px] font-bold uppercase tracking-[0.12em]",children:"Real-time +5 coins after quiz correct"})]}),v("div",{className:"flex flex-wrap gap-2",children:[v("select",{value:xn,onChange:(o)=>{pp(o.target.value),Na("All")},className:"h-9 px-2 rounded-[10px] bg-[var(--surface)] border border-[var(--border)] text-[11px]",children:[c("option",{children:"All"}),Hd.map((o)=>c("option",{children:o},o))]}),v("select",{value:Xr,onChange:(o)=>Na(o.target.value),className:"h-9 px-2 rounded-[10px] bg-[var(--surface)] border border-[var(--border)] text-[11px]",children:[c("option",{children:"All"}),(xn!=="All"?Or[xn]:Object.values(Or).flat()).map((o)=>c("option",{children:o},o))]}),v("select",{value:zu,onChange:(o)=>mp(o.target.value),className:"h-9 px-2 rounded-[10px] bg-[var(--surface)] border border-[var(--border)] text-[11px]",children:[c("option",{children:"All Time"}),c("option",{children:"This Month"}),c("option",{children:"This Week"})]}),v("select",{value:Yr,onChange:(o)=>vp(o.target.value),className:"h-9 px-2 rounded-[10px] bg-[var(--surface)] border border-[var(--border)] text-[11px]",children:[c("option",{children:"All"}),It.map((o)=>c("option",{children:o},o))]}),v("select",{value:jn,onChange:(o)=>hp(o.target.value),className:"h-9 px-2 rounded-[10px] bg-[var(--surface)] border border-[var(--border)] text-[11px]",children:[c("option",{value:"coins",children:"Sort: Coins"}),c("option",{value:"avg",children:"Avg"}),c("option",{value:"quizzes",children:"Quizzes"}),c("option",{value:"total",children:"Total"})]}),c("input",{value:Zr,onChange:(o)=>yp(o.target.value),placeholder:"Search name/school...",className:"h-9 px-3 rounded-[10px] bg-[var(--surface)] border border-[var(--border)] text-[12px] w-[180px]"}),v("label",{className:"flex items-center gap-2 text-[11px]",children:[c("input",{type:"checkbox",checked:Qr,onChange:(o)=>gp(o.target.checked)})," District top 3"]})]}),c("div",{className:"grid grid-cols-3 gap-3",children:qr.slice(0,3).map((o,y)=>v("div",{className:`rounded-[16px] p-4 border text-center ${y===0?"bg-[var(--yellow)] text-black border-[var(--yellow)] order-2":y===1?"bg-[var(--surface)] border-[var(--border)] order-1":"bg-[var(--surface)] border-[var(--border)] order-3"}`,children:[c("div",{className:"text-[20px]",children:y===0?"\uD83D\uDC51":y===1?"\uD83E\uDD48":"\uD83E\uDD49"}),c("div",{className:"font-serif text-[16px] mt-1 leading-tight",children:o.profile.name}),c("div",{className:"text-[10px] uppercase tracking-[0.08em] mt-1 opacity-70",children:o.profile.school?.slice(0,22)}),v("div",{className:"mt-2 text-[12px] font-bold",children:[o.profile.coins||0," coins • ",o.count," quizzes"]}),v("div",{className:"text-[11px]",children:["Avg ",o.avg.toFixed(1),"% • Total ",o.totalScore]})]},o.profile.id))}),c("div",{className:"grid md:grid-cols-3 lg:grid-cols-5 gap-3",children:Op.map((o)=>v("div",{className:"bg-[var(--surface)] border border-[var(--border)] rounded-[14px] p-3",children:[c("div",{className:"text-[11px] uppercase tracking-[0.12em] text-[var(--muted)]",children:o.province}),v("div",{className:"font-bold text-[14px] mt-1",children:[o.total," learners"]}),v("div",{className:"text-[10px] text-[var(--muted)] mt-1 line-clamp-2",children:["Top: ",o.topSchool]})]},o.province))}),Qr&&c("div",{className:"grid md:grid-cols-2 gap-3",children:Fp.map((o)=>v("div",{className:"bg-[var(--surface)] border border-[var(--border)] rounded-[14px] p-3",children:[c("div",{className:"text-[11px] uppercase tracking-[0.12em] text-[var(--green)]",children:o.district}),c("div",{className:"mt-2 space-y-1",children:o.top.map((y,h)=>v("div",{className:"flex justify-between text-[12px]",children:[v("span",{children:[h+1,". ",y.profile.name]}),v("span",{children:[y.profile.coins,"c"]})]},y.profile.id))})]},o.district))}),c("div",{className:"overflow-auto rounded-[14px] border border-[var(--border)]",children:v("table",{className:"w-full text-[12px]",children:[c("thead",{className:"bg-[var(--surface)] text-[11px] uppercase tracking-[0.12em] text-[var(--muted)]",children:v("tr",{children:[c("th",{className:"text-left px-3 py-2",children:"Rank"}),c("th",{className:"text-left px-3 py-2",children:"Name"}),c("th",{className:"text-left px-3 py-2",children:"School (District)"}),c("th",{className:"text-left px-3 py-2",children:"Province"}),c("th",{className:"text-left px-3 py-2",children:"Coins"}),c("th",{className:"text-left px-3 py-2",children:"Streak"}),c("th",{className:"text-left px-3 py-2",children:"Quizzes"}),c("th",{className:"text-left px-3 py-2",children:"Avg"}),c("th",{className:"text-left px-3 py-2",children:"Total"})]})}),c("tbody",{children:qr.slice(0,100).map((o,y)=>v("tr",{className:`border-t border-[var(--border)] ${o.profile.id===r.id?"bg-[var(--surface-3)]":""}`,children:[c("td",{className:"px-3 py-2",children:y+1}),v("td",{className:"px-3 py-2 font-medium",children:[o.profile.name," ",o.profile.id===r.id&&c("span",{className:"ml-1 px-1.5 py-0.5 rounded-full bg-[var(--green)] text-black text-[9px]",children:"YOU"})]}),v("td",{className:"px-3 py-2",children:[o.profile.school," ",v("span",{className:"text-[var(--muted)]",children:["(",o.profile.district,")"]})]}),c("td",{className:"px-3 py-2",children:c("span",{className:"px-2 py-0.5 rounded-full bg-[var(--surface-2)] border border-[var(--border)] text-[10px]",children:o.profile.province})}),c("td",{className:"px-3 py-2 font-bold",children:o.profile.coins||0}),c("td",{className:"px-3 py-2",children:o.profile.streak||0}),c("td",{className:"px-3 py-2",children:o.count}),v("td",{className:"px-3 py-2",children:[o.avg.toFixed(1),"%"]}),c("td",{className:"px-3 py-2",children:o.totalScore})]},o.profile.id))})]})})]}),M==="admin"&&(admOk?v("div",{className:"space-y-6",children:[v("div",{className:"flex flex-wrap gap-2",children:[c("h2",{className:"font-serif text-[28px]",children:"Admin — Uploads"}),c("div",{className:"ml-auto flex gap-2 text-[11px] flex-wrap",children:Object.entries(lp).map(([o,y])=>v("span",{className:"px-2 py-1 rounded-full bg-[var(--surface)] border border-[var(--border)]",children:[o,": ",y]},o))})]}),v("div",{className:"grid grid-cols-1 lg:grid-cols-2 gap-4 md:gap-6 w-full max-w-full",children:[v("div",{className:"bg-[var(--surface)] border border-[var(--border)] rounded-[14px] p-5",children:[c("div",{className:"text-[11px] uppercase tracking-[0.12em] text-[var(--yellow)]",children:"Upload Past Paper — PDF 10MB max • Sanitize filename spaces→_, remove special chars"}),v("div",{className:"mt-3 grid grid-cols-2 gap-2",children:[c("select",{value:za,onChange:(o)=>wp(o.target.value),className:"h-9 px-2 rounded-[10px] bg-[var(--bg)] border border-[var(--border)] text-[11px]",children:It.map((o)=>c("option",{children:o},o))}),c("select",{value:Ra,onChange:(o)=>kp(o.target.value),className:"h-9 px-2 rounded-[10px] bg-[var(--bg)] border border-[var(--border)] text-[11px]",children:["10","11","12","Form 1","Form 2","Form 3","Form 4","Form 5"].map(o=>c("option",{children:o},o))}),v("select",{value:Pa,onChange:(o)=>Ep(o.target.value),className:"h-9 px-2 rounded-[10px] bg-[var(--bg)] border border-[var(--border)] text-[11px]",children:[c("option",{children:"2024"}),c("option",{children:"2023"}),c("option",{children:"2022"}),c("option",{children:"2021"}),c("option",{children:"2020"}),c("option",{children:"2019"})]}),v("select",{value:Ma,onChange:(o)=>_p(o.target.value),className:"h-9 px-2 rounded-[10px] bg-[var(--bg)] border border-[var(--border)] text-[11px]",children:[c("option",{children:"ECZ"}),c("option",{children:"Mock"}),c("option",{children:"Test"})]})]}),c("input",{value:Ru,onChange:(o)=>La(o.target.value),placeholder:"Title e.g. Mathematics Paper 1 2023",className:"mt-3 w-full h-10 px-3 rounded-[10px] bg-[var(--bg)] border border-[var(--border)] text-[12px]"}),c("textarea",{value:Ia,onChange:(o)=>Oa(o.target.value),placeholder:"Description",className:"mt-2 w-full h-20 px-3 py-2 rounded-[10px] bg-[var(--bg)] border border-[var(--border)] text-[12px]"}),c("input",{type:"file",accept:"application/pdf",onChange:(o)=>Fa(o.target.files?.[0]||null),className:"mt-3 w-full text-[11px] file:mr-3 file:h-7 file:rounded-[8px] file:border-0 file:bg-[var(--text)] file:text-[var(--bg)] file:text-[11px] file:font-semibold file:uppercase"}),c("button",{disabled:Da,onClick:Dp,className:"mt-3 w-full h-10 rounded-[10px] bg-[var(--green)] text-black font-bold uppercase tracking-[0.12em] text-[11px] disabled:opacity-60",children:Da?"Uploading live...":"Upload → storage past_papers + insert past_papers"}),c("div",{className:"mt-2 text-[10px] text-[var(--muted)]",children:'Uses client.storage.from("past_papers").upload(Date.now()+filename) then getPublicUrl then insert into past_papers. Mode cors, apikey header.'})]}),v("div",{className:"bg-[var(--surface)] border border-[var(--border)] rounded-[14px] p-5",children:[c("div",{className:"text-[11px] uppercase tracking-[0.12em] text-[var(--green)]",children:"Add Quiz Question"}),v("div",{className:"mt-3 grid grid-cols-2 gap-2",children:[c("select",{value:Wa,onChange:(o)=>Cp(o.target.value),className:"h-9 px-2 rounded-[10px] bg-[var(--bg)] border border-[var(--border)] text-[11px]",children:It.map((o)=>c("option",{children:o},o))}),c("select",{value:$a,onChange:(o)=>Sp(o.target.value),className:"h-9 px-2 rounded-[10px] bg-[var(--bg)] border border-[var(--border)] text-[11px]",children:["10","11","12","Form 1","Form 2","Form 3","Form 4","Form 5"].map(o=>c("option",{children:o},o))})]}),c("textarea",{value:Pu,onChange:(o)=>Va(o.target.value),placeholder:"Question text",className:"mt-3 w-full h-20 px-3 py-2 rounded-[10px] bg-[var(--bg)] border border-[var(--border)] text-[12px]"}),v("div",{className:"mt-2 grid grid-cols-2 gap-2",children:[c("input",{value:Mu,onChange:(o)=>Ha(o.target.value),placeholder:"Option A",className:"h-9 px-2 rounded-[10px] bg-[var(--bg)] border border-[var(--border)] text-[12px]"}),c("input",{value:Lu,onChange:(o)=>Ua(o.target.value),placeholder:"Option B",className:"h-9 px-2 rounded-[10px] bg-[var(--bg)] border border-[var(--border)] text-[12px]"}),c("input",{value:Iu,onChange:(o)=>Ba(o.target.value),placeholder:"Option C",className:"h-9 px-2 rounded-[10px] bg-[var(--bg)] border border-[var(--border)] text-[12px]"}),c("input",{value:Ou,onChange:(o)=>Aa(o.target.value),placeholder:"Option D",className:"h-9 px-2 rounded-[10px] bg-[var(--bg)] border border-[var(--border)] text-[12px]"})]}),v("div",{className:"mt-2 flex gap-2",children:[v("select",{value:Ka,onChange:(o)=>Np(o.target.value),className:"h-9 px-2 rounded-[10px] bg-[var(--bg)] border border-[var(--border)] text-[11px]",children:[c("option",{children:"A"}),c("option",{children:"B"}),c("option",{children:"C"}),c("option",{children:"D"})]}),c("input",{value:Xa,onChange:(o)=>Ya(o.target.value),placeholder:"Explanation",className:"flex-1 h-9 px-2 rounded-[10px] bg-[var(--bg)] border border-[var(--border)] text-[11px]"})]}),c("button",{onClick:Wp,className:"mt-3 w-full h-10 rounded-[10px] bg-[var(--text)] text-[var(--bg)] font-bold uppercase tracking-[0.12em] text-[11px]",children:"Add Quiz Question"})]}),v("div",{className:"bg-[var(--surface)] border border-[var(--border)] rounded-[14px] p-5 w-full max-w-full",children:[c("div",{className:"text-[11px] uppercase tracking-[0.12em] text-[var(--yellow)]",children:"Add Video — YouTube or Phone Upload"}),c("input",{value:Fu,onChange:(o)=>Za(o.target.value),placeholder:"Video title",className:"mt-3 w-full h-10 px-3 rounded-[10px] bg-[var(--bg)] border border-[var(--border)] text-[12px]"}),c("input",{id:"zed-topic-input",placeholder:"Topic e.g. Mole Concept - makes it searchable",className:"mt-2 w-full h-10 px-3 rounded-[10px] bg-[var(--bg)] border border-[var(--border)] text-[12px] outline-none focus:border-[var(--green)]",defaultValue:""}),c("input",{value:Jr,onChange:(o)=>Qa(o.target.value),placeholder:"YouTube URL (optional if uploading file)",className:"mt-2 w-full h-10 px-3 rounded-[10px] bg-[var(--bg)] border border-[var(--border)] text-[12px]"}),c("div",{className:"mt-2 p-2 rounded-[10px] bg-[var(--bg)] border border-dashed border-[var(--border)]",children:[c("div",{className:"text-[10px] uppercase tracking-[0.12em] text-[var(--muted)]",children:"Or upload video directly from phone"}),c("input",{type:"file",accept:"video/*",onChange:(o)=>setVidFile(o.target.files?.[0]||null),className:"mt-2 w-full text-[11px] file:mr-3 file:h-8 file:rounded-[8px] file:border-0 file:bg-[var(--text)] file:text-[var(--bg)] file:text-[11px] file:font-semibold file:uppercase"}),vidFile?c("div",{className:"mt-1 text-[11px] text-[var(--green)]",children:"Selected: "+vidFile.name+" ("+(vidFile.size/1024/1024).toFixed(1)+" MB)"}):null]}),v("div",{className:"mt-3 grid grid-cols-2 gap-2",children:[c("select",{value:Ja,onChange:(o)=>zp(o.target.value),className:"h-9 px-2 rounded-[10px] bg-[var(--bg)] border border-[var(--border)] text-[11px]",children:It.map((o)=>c("option",{children:o},o))}),c("select",{value:Ga,onChange:(o)=>Rp(o.target.value),className:"h-9 px-2 rounded-[10px] bg-[var(--bg)] border border-[var(--border)] text-[11px]",children:["10","11","12","Form 1","Form 2","Form 3","Form 4","Form 5"].map(o=>c("option",{children:o},o))})]}),c("button",{disabled:vidUp,onClick:$p,className:"mt-3 w-full h-10 rounded-[10px] bg-[var(--yellow)] text-black font-bold uppercase tracking-[0.12em] text-[11px] disabled:opacity-60",children:vidUp?"Uploading video...":"Insert Video Live"}),c("div",{className:"mt-2 text-[10px] text-[var(--muted)]",children:"Supports YouTube or direct MP4/WebM upload from phone to bucket videos (Public)."})]})]})]}):v("div",{className:"min-h-[60vh] flex flex-col items-center justify-center p-6",children:[v("div",{className:"w-full max-w-[400px] bg-[var(--surface)] border border-[var(--border)] rounded-[16px] p-6",children:[c("h2",{className:"font-serif text-[22px]",children:"Admin Access — Locked"}),c("p",{className:"text-[12px] text-[var(--muted)] mt-2",children:"Enter admin key to unlock admin panel"}),c("input",{type:"password",value:admKey,onChange:e=>setAdmKey(e.target.value),placeholder:"sb_publishable_...",className:"mt-4 w-full h-11 px-4 rounded-[12px] bg-[var(--bg)] border border-[var(--border)] outline-none text-[13px]"}),c("button",{onClick:()=>{if(admKey==="sb_publishable_74vo5_RlNXb0U0TrNLCdCQ_8zjDwFni"){setAdmOk(!0),F("Admin unlocked ✓")}else{F("Invalid admin key — access denied")}},className:"mt-3 w-full h-11 rounded-[12px] bg-[var(--green)] text-black font-bold text-[12px] uppercase tracking-[0.12em]",children:"Unlock Admin"})]})]})),M==="profile"&&v("div",{className:"grid grid-cols-1 lg:grid-cols-[320px_1fr] gap-4 md:gap-6 w-full",children:[v("div",{className:"bg-[var(--surface)] border border-[var(--border)] rounded-[14px] p-5 h-fit lg:sticky lg:top-[calc(56px+var(--safe-area-inset-top)+37px)]",children:[c("div",{className:"w-16 h-16 rounded-full bg-[var(--green)] flex items-center justify-center text-black font-extrabold text-[24px]",children:r.name[0]}),c("div",{className:"font-serif text-[22px] mt-3",children:r.name}),v("div",{className:"text-[12px] text-[var(--muted)]",children:[r.phone," • ",r.account_code]}),v("div",{className:"mt-3 flex flex-wrap gap-2",children:[v("span",{className:"px-2 py-1 rounded-full bg-[var(--yellow)] text-black text-[11px] font-bold",children:[r.coins||0," coins"]}),v("span",{className:"px-2 py-1 rounded-full bg-[var(--surface-2)] border border-[var(--border)] text-[11px]",children:["Streak ",r.streak||0]}),v("span",{className:"px-2 py-1 rounded-full bg-[var(--surface-2)] border border-[var(--border)] text-[11px]",children:["Grade ",r.grade]})]}),v("div",{className:"mt-4 text-[12px] space-y-1",children:[v("div",{children:[c("span",{className:"text-[var(--muted)]",children:"Province:"})," ",r.province]}),v("div",{children:[c("span",{className:"text-[var(--muted)]",children:"District:"})," ",r.district]}),v("div",{children:[c("span",{className:"text-[var(--muted)]",children:"School:"})," ",r.school]})]})]}),v("div",{className:"space-y-4",children:[c("h3",{className:"font-serif text-[20px]",children:"Quiz History"}),v("div",{className:"grid gap-2",children:[Ea.map((o)=>v("div",{className:"bg-[var(--surface)] border border-[var(--border)] rounded-[12px] p-3 flex items-center justify-between",children:[v("div",{children:[v("div",{className:"text-[12px] font-semibold",children:[o.subject," • ",o.year]}),v("div",{className:"text-[11px] text-[var(--muted)]",children:[new Date(o.created_at).toLocaleString()," • ",o.time_spent,"s"]})]}),v("div",{className:"text-right",children:[v("div",{className:"text-[14px] font-bold",children:[o.score,"/",o.total]}),v("div",{className:"text-[11px] text-[var(--green)]",children:[(o.score/o.total*100).toFixed(1),"%"]})]})]},o.id)),Ea.length===0&&c("div",{className:"text-[13px] text-[var(--muted)] py-8 text-center",children:"No attempts yet — take a quiz to earn +5 coins per correct answer."})]})]})]})]}),c("footer",{className:"border-t border-[var(--border)] px-6 py-4 text-[11px] text-[var(--muted)] text-center",children:"ZED SCHOLAR • GRADE 10-12 • FORM 1-5 • Zambia • Online"}),I&&c("div",{className:"fixed bottom-4 left-4 right-4 md:left-auto md:right-4 md:w-[380px] z-50 bg-[var(--text)] text-[var(--bg)] px-4 py-3 rounded-[12px] text-[13px] font-medium shadow-xl border-2 border-[var(--green)]",children:I}),qa&&c("div",{className:"fixed inset-0 z-50 bg-black/60 backdrop-blur-sm flex items-center justify-center p-4",children:v("div",{className:"bg-[var(--surface)] border border-[var(--border)] rounded-[16px] p-6 w-full max-w-[400px]",children:[c("h4",{className:"font-serif text-[18px]",children:"Delete paper?"}),c("p",{className:"text-[12px] text-[var(--muted)] mt-2",children:"This will delete this item permanently."}),v("div",{className:"mt-4 flex gap-2",children:[c("button",{onClick:()=>Du(null),className:"flex-1 h-10 rounded-[10px] bg-[var(--surface-2)] border border-[var(--border)] text-[12px]",children:"Cancel"}),c("button",{onClick:()=>Tp(qa),className:"flex-1 h-10 rounded-[10px] bg-[#ff9a9a] text-black font-bold text-[12px]",children:"Delete"})]})]})})]})}Xd.createRoot(document.getElementById("root")).render(c(Kd.default.StrictMode,{children:c(ca,{})}));
 </script>
   <script>(function(){function m(a){var h=a.getAttribute("href");if(!h)return;try{var u=new URL(h,document.baseURI);if(h.indexOf('youtube.com')!==-1||h.indexOf('youtu.be')!==-1||h.indexOf('youtube-nocookie')!==-1){a.removeAttribute('target');a.setAttribute('data-zed-blocked-youtube','1');return;}if(((u.protocol==="http:"||u.protocol==="https:")&&u.host!==location.host)||u.protocol==="mailto:"||u.protocol==="tel:"||u.protocol==="sms:"){a.target="_blank";a.rel="noopener noreferrer";}}catch(e){}}function s(){document.querySelectorAll("a[href]").forEach(m);}if(document.readyState!=="loading"){s();}else{document.addEventListener("DOMContentLoaded",s);}document.addEventListener("click",function(e){var a=e.target&&e.target.closest&&e.target.closest("a[href]");if(a){if((a.getAttribute('href')||'').indexOf('youtube')!==-1){e.preventDefault();e.stopPropagation();return false;}m(a);}},true);})();</script>
   <script type="application/json" data-clippy-inline-media-manifest="1">{"version":1,"slots":[]}</script>
@@ -5973,7 +6154,8 @@ console.log('[ZED] Welcome popup + fast login active');
           return t === 'LOGIN' || t === 'LOG IN' || t === 'SIGN UP' || t === 'CREATE ACCOUNT';
         });
         var hasPhone = !!document.querySelector('input[placeholder*="097"]');
-        if(hasLoginBtn && hasPhone) return true;
+        if(hasLoginBtn && (hasPhone || hasPhoneLabel)) return true;
+      if(hasPhoneLabel && hasAuthTitle) return true;
       }
     }catch(e){}
     return false;
@@ -7205,5 +7387,978 @@ console.log('[ZED] Welcome popup + fast login active');
   console.log('[ZED] Profile photo only - no orange gradient, real photo or initial');
 })();
 </script>
+
+<!-- ZED AI TUTOR - Gemini, key stored in app Admin, NOT in file -->
+<style>
+#zed-ai-btn{position:fixed;bottom:88px;left:12px;right:auto;z-index:9999;background:#8CFF8A;color:#000;border:none;border-radius:999px;padding:12px 16px;font-weight:900;font-size:14px;box-shadow:0 4px 16px rgba(0,0,0,.4);cursor:pointer}
+#zed-ai-panel{position:fixed;inset:0;z-index:10000;background:#0F0E0B;display:none;flex-direction:column}
+#zed-ai-panel.open{display:flex}
+#zed-ai-head{background:#1a1a1a;padding:12px 14px;display:flex;align-items:center;gap:10px;border-bottom:1px solid #333}
+#zed-ai-msgs{flex:1;overflow-y:auto;padding:12px;display:flex;flex-direction:column;gap:10px}
+.zed-ai-msg{max-width:85%;padding:10px 12px;border-radius:14px;font-size:14px;line-height:1.5;white-space:pre-wrap}
+.zed-ai-msg.user{background:#8CFF8A;color:#000;align-self:flex-end}
+.zed-ai-msg.ai{background:#1e1e1e;color:#fff;align-self:flex-start;border:1px solid #333}
+#zed-ai-inputrow{display:flex;gap:8px;padding:10px;background:#1a1a1a;border-top:1px solid #333}
+#zed-ai-input{flex:1;background:#222;color:#fff;border:1px solid #333;border-radius:12px;padding:11px;font-size:14px}
+#zed-ai-send{background:#8CFF8A;color:#000;border:none;border-radius:12px;padding:0 18px;font-weight:900;cursor:pointer}
+#zed-ai-keyrow{background:#1e2b1e;border:1px solid #8CFF8A;border-radius:12px;padding:10px;margin:0 12px 8px;font-size:13px;color:#fff}
+</style>
+<button id="zed-ai-btn" type="button">🤖 AI TUTOR</button>
+<div id="zed-ai-panel">
+  <div id="zed-ai-head">
+    <button id="zed-ai-close" type="button" style="background:none;border:none;color:#fff;font-size:22px;cursor:pointer">‹</button>
+    <div style="flex:1"><div style="font-weight:900;color:#fff;font-size:16px">🤖 ZED AI TUTOR</div><div style="color:#8CFF8A;font-size:11px">Form 1-5 &amp; Grade 10-12 • ECZ • Zambia</div></div>
+    <button id="zed-ai-clear" type="button" style="background:#222;color:#fff;border:1px solid #333;border-radius:999px;padding:6px 10px;font-size:11px;cursor:pointer">Clear</button>
+  </div>
+  <div style="display:flex;gap:8px;padding:10px 12px;background:#0F0E0B">
+    <select id="zed-ai-subject" style="flex:1;background:#1e1e1e;color:#fff;border:1px solid #333;border-radius:10px;padding:9px;font-size:13px"><option>Mathematics</option><option>English</option><option>Science</option><option>Biology</option><option>Chemistry</option><option>Physics</option><option>Geography</option><option>History</option><option>Commerce</option><option>Principles of Accounts</option><option>Computer Studies</option><option>General</option></select>
+    <select id="zed-ai-grade" style="flex:1;background:#1e1e1e;color:#fff;border:1px solid #333;border-radius:10px;padding:9px;font-size:13px"><option>Form 1</option><option>Form 2</option><option>Form 3</option><option>Form 4</option><option>Form 5</option><option>Grade 10</option><option>Grade 11</option><option selected>Grade 12</option></select>
+  </div>
+  <div id="zed-ai-keyrow" style="display:none">
+    <b>🔑 Add your Gemini key to enable tutor</b><br/><span style="color:#aaa">School key not set yet. Admin must set it once for all students (see Admin button below).</span><br/>
+    <input id="zed-ai-keyinput" type="password" placeholder="Paste Gemini key here (only if you are Admin)" style="width:100%;background:#111;color:#fff;border:1px solid #333;border-radius:10px;padding:10px;margin-top:8px;font-size:13px"/>
+    <button id="zed-ai-keysave" type="button" style="margin-top:8px;background:#8CFF8A;color:#000;border:none;border-radius:10px;padding:10px 14px;font-weight:900;cursor:pointer;width:100%">SAVE KEY ON THIS PHONE ONLY →</button>
+    <button id="zed-ai-admin-open" type="button" style="margin-top:8px;background:#1a1a1a;color:#fff;border:1px solid #8CFF8A;border-radius:10px;padding:10px 14px;font-weight:700;cursor:pointer;width:100%">👑 ADMIN: SET SCHOOL KEY FOR ALL STUDENTS</button>
+  </div>
+  <div id="zed-ai-adminrow" style="display:none;background:#1e2b1e;border:1px solid #8CFF8A;border-radius:12px;padding:10px;margin:0 12px 8px;font-size:13px;color:#fff">
+    <b>👑 Admin — School Key</b><br/><span style="color:#aaa">This key will work for ALL students. They won't need to paste anything.</span><br/>
+    <input id="zed-ai-admin-code" type="password" placeholder="Admin code (default: ZED2026)" style="width:100%;background:#111;color:#fff;border:1px solid #333;border-radius:10px;padding:10px;margin-top:8px;font-size:13px"/>
+    <input id="zed-ai-admin-key" type="password" placeholder="Paste NEW Gemini key here (starts with AIza...)" style="width:100%;background:#111;color:#fff;border:1px solid #333;border-radius:10px;padding:10px;margin-top:8px;font-size:13px"/>
+    <button id="zed-ai-admin-save" type="button" style="margin-top:8px;background:#8CFF8A;color:#000;border:none;border-radius:10px;padding:10px 14px;font-weight:900;cursor:pointer;width:100%">SAVE SCHOOL KEY →</button>
+    <div id="zed-ai-admin-status" style="margin-top:8px;color:#8CFF8A;font-size:12px"></div>
+    <button id="zed-ai-admin-close" type="button" style="margin-top:8px;background:none;border:none;color:#999;font-size:12px;cursor:pointer;width:100%">Close Admin</button>
+  </div>
+  <div id="zed-ai-msgs"></div>
+  <div id="zed-ai-inputrow">
+    <input id="zed-ai-input" placeholder="Ask anything, e.g. Explain quadratic equations..." />
+    <button id="zed-ai-send" type="button">SEND →</button>
+  </div>
+</div>
+<script>
+(function(){
+  var btn=document.getElementById('zed-ai-btn');
+  var panel=document.getElementById('zed-ai-panel');
+  var closeBtn=document.getElementById('zed-ai-close');
+  var msgs=document.getElementById('zed-ai-msgs');
+  var input=document.getElementById('zed-ai-input');
+  var sendBtn=document.getElementById('zed-ai-send');
+  var keyRow=document.getElementById('zed-ai-keyrow');
+  var keyInput=document.getElementById('zed-ai-keyinput');
+  var keySave=document.getElementById('zed-ai-keysave');
+  var clearBtn=document.getElementById('zed-ai-clear');
+  var schoolKeyCache='';
+  var schoolKeyLoaded=false;
+  async function fetchSchoolKey(){
+    try{
+      var SUPA_URL='https://biastmylavwhlsccvpyu.supabase.co';
+      var SUPA_KEY='sb_publishable_74vo5_RlNXb0U0TrNLCdCQ_8zjDwFni';
+      var res=await fetch(SUPA_URL+'/rest/v1/app_settings?select=gemini_key&id=eq.1', {headers:{apikey:SUPA_KEY, Authorization:'Bearer '+SUPA_KEY}});
+      var rows=await res.json();
+      if(rows && rows[0] && rows[0].gemini_key){ schoolKeyCache=rows[0].gemini_key; schoolKeyLoaded=true; return schoolKeyCache; }
+    }catch(e){}
+    schoolKeyLoaded=true;
+    return '';
+  }
+  function getKey(){ return schoolKeyCache || localStorage.getItem('zed_gemini_key')||''; }
+  function showWelcome(){
+    if(msgs.children.length===0){
+      var d=document.createElement('div'); d.className='zed-ai-msg ai';
+      d.textContent='Hi! I am ZED AI TUTOR 👋\nI help with Form 1-5 & Grade 10-12 ECZ — Maths, English, Science, Biology, Chemistry, Physics and more.\n\nAsk me to explain a topic, solve a past paper question step-by-step, or make a quick quiz. What do you want to learn today?';
+      msgs.appendChild(d);
+    }
+  }
+  async function checkKey(){
+    if(!schoolKeyLoaded) await fetchSchoolKey();
+    if(!getKey()){ keyRow.style.display='block'; } else { keyRow.style.display='none'; }
+    showWelcome();
+  }
+  // Admin handlers
+  var adminOpen=document.getElementById('zed-ai-admin-open');
+  var adminRow=document.getElementById('zed-ai-adminrow');
+  var adminClose=document.getElementById('zed-ai-admin-close');
+  var adminSave=document.getElementById('zed-ai-admin-save');
+  if(adminOpen) adminOpen.addEventListener('click', function(){ adminRow.style.display='block'; keyRow.style.display='none'; });
+  if(adminClose) adminClose.addEventListener('click', function(){ adminRow.style.display='none'; checkKey(); });
+  if(adminSave) adminSave.addEventListener('click', async function(){
+    var code=document.getElementById('zed-ai-admin-code').value.trim();
+    var k=document.getElementById('zed-ai-admin-key').value.trim();
+    var status=document.getElementById('zed-ai-admin-status');
+    if(code!=='ZED2026'){ status.textContent='Wrong admin code. Default is ZED2026.'; status.style.color='#FF6B6B'; return; }
+    if(k.length<10){ status.textContent='Paste a valid Gemini key (starts with AIza...).'; status.style.color='#FF6B6B'; return; }
+    status.textContent='Saving school key...'; status.style.color='#8CFF8A';
+    try{
+      var SUPA_URL='https://biastmylavwhlsccvpyu.supabase.co';
+      var SUPA_KEY='sb_publishable_74vo5_RlNXb0U0TrNLCdCQ_8zjDwFni';
+      var res=await fetch(SUPA_URL+'/rest/v1/app_settings?id=eq.1', {method:'PATCH', headers:{apikey:SUPA_KEY, Authorization:'Bearer '+SUPA_KEY, 'Content-Type':'application/json'}, body: JSON.stringify({gemini_key:k})});
+      if(!res.ok){
+        // If row 1 does not exist yet, try insert
+        await fetch(SUPA_URL+'/rest/v1/app_settings', {method:'POST', headers:{apikey:SUPA_KEY, Authorization:'Bearer '+SUPA_KEY, 'Content-Type':'application/json', Prefer:'resolution=merge-duplicates'}, body: JSON.stringify({id:1, gemini_key:k})});
+      }
+      schoolKeyCache=k; localStorage.setItem('zed_gemini_key', k);
+      status.textContent='✅ School key saved! All students can now use AI Tutor without pasting a key.';
+      setTimeout(function(){ adminRow.style.display='none'; checkKey(); }, 1200);
+    }catch(e){ status.textContent='Could not save. Did you run the SQL to create app_settings table? '+e.message; status.style.color='#FF6B6B'; }
+  });
+  btn.addEventListener('click', function(){ panel.classList.add('open'); checkKey(); });
+  closeBtn.addEventListener('click', function(){ panel.classList.remove('open'); });
+  clearBtn.addEventListener('click', function(){ msgs.innerHTML=''; showWelcome(); });
+  keySave.addEventListener('click', function(){
+    var k=keyInput.value.trim();
+    if(k.length<10){ alert('Paste a valid Gemini key'); return; }
+    localStorage.setItem('zed_gemini_key', k);
+    keyInput.value='';
+    keyRow.style.display='none';
+    alert('Key saved on this phone. Tutor is now live.');
+  });
+  async function send(){
+    var q=input.value.trim(); if(!q) return;
+    if(!schoolKeyLoaded) await fetchSchoolKey();
+    if(!getKey()){ keyRow.style.display='block'; alert('School key not set yet. Admin must set it once in AI Tutor → ADMIN: SET SCHOOL KEY.'); return; }
+    var subj=document.getElementById('zed-ai-subject').value;
+    var grade=document.getElementById('zed-ai-grade').value;
+    var um=document.createElement('div'); um.className='zed-ai-msg user'; um.textContent=q; msgs.appendChild(um);
+    input.value=''; msgs.scrollTop=msgs.scrollHeight;
+    var loading=document.createElement('div'); loading.className='zed-ai-msg ai'; loading.textContent='Thinking...'; msgs.appendChild(loading); msgs.scrollTop=msgs.scrollHeight;
+    var prompt='You are ZED AI TUTOR for Zambia ECZ '+grade+' '+subj+'. Answer in simple English, short, step-by-step bullets, Zambian example if needed. If past paper Q, solve step-by-step + final answer. End with 1 practice Q. Q: '+q;
+    // Try models in order - Google retires old ones, so fallback keeps tutor alive
+    var models=['gemini-2.5-flash-lite','gemini-3.8-flash','gemini-2.5-flash']; // lite is fastest
+    var ans=''; var lastErr='';
+    for(var mi=0; mi<models.length; mi++){
+      try{
+        var res=await fetch('https://generativelanguage.googleapis.com/v1beta/models/'+models[mi]+':generateContent?key='+encodeURIComponent(getKey()), {method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify({contents:[{parts:[{text:prompt}]}], generationConfig:{maxOutputTokens:600, temperature:0.7}})});
+        var data=await res.json();
+        try{ ans=data.candidates[0].content.parts[0].text; }catch(e){ ans=''; }
+        if(ans) break;
+        if(data.error && data.error.message){
+          lastErr=data.error.message;
+          // If key is wrong, don't try other models - stop
+          if(lastErr.toLowerCase().indexOf('api key')!==-1 || lastErr.toLowerCase().indexOf('api_key')!==-1 || lastErr.toLowerCase().indexOf('permission')!==-1){ break; }
+          // If model not found / no longer available, try next model
+          if(lastErr.toLowerCase().indexOf('not found')!==-1 || lastErr.toLowerCase().indexOf('no longer')!==-1 || lastErr.toLowerCase().indexOf('not available')!==-1){ continue; }
+          break;
+        }
+      }catch(e){ lastErr=e.message; }
+    }
+    if(!ans){
+      if(lastErr){
+        if(lastErr.toLowerCase().indexOf('api key')!==-1) ans='Error: API key not valid. Admin must check the school key in AI Tutor > ADMIN: SET SCHOOL KEY, or get a new one from Google AI Studio.';
+        else ans='Error: '+lastErr;
+      } else ans='Sorry, I could not get an answer. Check your data / key and try again.';
+    }
+    loading.textContent=ans;
+    msgs.scrollTop=msgs.scrollHeight;
+  }
+  sendBtn.addEventListener('click', send);
+  input.addEventListener('keydown', function(e){ if(e.key==='Enter'){ send(); } });
+})();
+</script>
+
+
+<script>
+// ZED - LIVE pill, no gradients
+(function(){
+  function fixLive(){
+    document.querySelectorAll('span,div,button').forEach(function(el){
+      var t=(el.textContent||'').trim();
+      // Only the pill itself (short text, no children with extra text)
+      if((t==='ONLINE' || t==='online' || t==='● LIVE') && el.children.length===0){
+        el.textContent='● LIVE';
+        el.style.background='#1a1a1a';
+        el.style.backgroundImage='none';
+        el.style.color='#fff';
+        el.style.border='1px solid #333';
+        el.style.boxShadow='none';
+        el.style.textShadow='none';
+      }
+      if(t==='OFFLINE' && el.children.length===0){
+        el.textContent='● OFFLINE';
+        el.style.background='#1a1a1a';
+        el.style.backgroundImage='none';
+        el.style.color='#fff';
+        el.style.border='1px solid #333';
+        el.style.boxShadow='none';
+      }
+      // Also handle "● ONLINE" variants
+      if((t==='● ONLINE' || t==='• ONLINE') && el.children.length===0){
+        el.textContent='● LIVE';
+        el.style.background='#1a1a1a';
+        el.style.backgroundImage='none';
+      }
+    });
+    // Kill any remaining gradient on header pill container
+    document.querySelectorAll('header div').forEach(function(d){
+      if((d.textContent||'').trim().startsWith('● LIVE') || (d.textContent||'').trim()==='LIVE'){
+        d.style.background='#1a1a1a'; d.style.backgroundImage='none'; d.style.boxShadow='none';
+      }
+    });
+  }
+  setInterval(fixLive, 500);
+  document.addEventListener('DOMContentLoaded', fixLive);
+  // Also fix on load
+  setTimeout(fixLive, 300);
+  setTimeout(fixLive, 1000);
+  setTimeout(fixLive, 2000);
+})();
+</script>
+
+
+<script>
+// ZED - LIVE = GREEN, OFFLINE = RED, solid, no gradient, no dark
+(function(){
+  function fixLiveColor(){
+    document.querySelectorAll('span,div').forEach(function(el){
+      var t=(el.textContent||'').trim();
+      if(el.children.length>0) return; // only the text node itself
+      if(t==='● LIVE' || t==='LIVE' || t==='online' || t==='ONLINE'){
+        el.textContent='● LIVE';
+        el.setAttribute('data-live','true');
+        el.style.background='#22C55E'; el.style.backgroundImage='none'; el.style.color='#000'; el.style.border='none'; el.style.boxShadow='none';
+        // Also colour the parent pill
+        var p=el.parentElement; if(p){ p.setAttribute('data-live','true'); p.style.background='#22C55E'; p.style.backgroundImage='none'; p.style.border='none'; p.style.boxShadow='none'; }
+      }
+      if(t==='● OFFLINE' || t==='OFFLINE' || t==='offline' || t==='OFFLINE'){
+        el.textContent='● OFFLINE';
+        el.setAttribute('data-live','false');
+        el.style.background='#FF3B30'; el.style.backgroundImage='none'; el.style.color='#fff'; el.style.border='none'; el.style.boxShadow='none';
+        var p2=el.parentElement; if(p2){ p2.setAttribute('data-live','false'); p2.style.background='#FF3B30'; p2.style.backgroundImage='none'; p2.style.border='none'; p2.style.boxShadow='none'; }
+      }
+    });
+    // Also fix header pill container directly - if it contains LIVE, make it green
+    document.querySelectorAll('header div').forEach(function(d){
+      var txt=(d.textContent||'').trim();
+      if(txt==='● LIVE' || txt==='LIVE'){
+        d.setAttribute('data-live','true'); d.style.background='#22C55E'; d.style.backgroundImage='none'; d.style.border='none'; d.style.boxShadow='none';
+      }
+      if(txt==='● OFFLINE' || txt==='OFFLINE'){
+        d.setAttribute('data-live','false'); d.style.background='#FF3B30'; d.style.backgroundImage='none'; d.style.border='none'; d.style.boxShadow='none';
+      }
+    });
+  }
+  setInterval(fixLiveColor, 400);
+  setTimeout(fixLiveColor, 200);
+  setTimeout(fixLiveColor, 1000);
+  document.addEventListener('DOMContentLoaded', fixLiveColor);
+})();
+</script>
+
+
+<div id="zed-fab-hint">✋ Drag to move • Release to drop</div>
+<script>
+// ZED - Floating buttons: same side, long-press to drag anywhere
+(function(){
+  function makeDraggable(){
+    var aiBtn = document.getElementById('zed-ai-btn');
+    var offBtn = document.getElementById('zed-offline-library-btn');
+    if(!aiBtn) return;
+    // Create stack if not exists
+    var stack = document.getElementById('zed-fab-stack');
+    if(!stack){
+      stack = document.createElement('div');
+      stack.id = 'zed-fab-stack';
+      document.body.appendChild(stack);
+      // Restore saved position
+      try{
+        var saved = JSON.parse(localStorage.getItem('zed_fab_pos')||'null');
+        if(saved && saved.left!=null && saved.top!=null){
+          stack.style.left = saved.left+'px'; stack.style.top = saved.top+'px'; stack.style.right='auto'; stack.style.bottom='auto';
+        }
+      }catch(e){}
+    }
+    // Move both buttons into same stack (same side)
+    if(aiBtn.parentElement !== stack) stack.appendChild(aiBtn);
+    if(offBtn && offBtn.parentElement !== stack) stack.appendChild(offBtn);
+    // Make stack draggable on long-press
+    if(stack.dataset.dragReady) return;
+    stack.dataset.dragReady = '1';
+    var longTimer=null, dragging=false, startX=0, startY=0, origLeft=0, origTop=0, moved=false;
+    var hint=document.getElementById('zed-fab-hint');
+    function startLongPress(e){
+      var t = e.touches ? e.touches[0] : e;
+      startX=t.clientX; startY=t.clientY;
+      var rect=stack.getBoundingClientRect();
+      origLeft=rect.left; origTop=rect.top;
+      moved=false;
+      longTimer=setTimeout(function(){
+        dragging=true; stack.classList.add('dragging');
+        if(hint) hint.classList.add('show');
+        if(navigator.vibrate) navigator.vibrate(50);
+      }, 350);
+    }
+    function onMove(e){
+      var t = e.touches ? e.touches[0] : e;
+      if(!dragging){
+        // If user scrolls before long-press, cancel
+        if(longTimer && Math.abs(t.clientX-startX)>10 || Math.abs(t.clientY-startY)>10){ clearTimeout(longTimer); longTimer=null; }
+        return;
+      }
+      if(e.cancelable) e.preventDefault();
+      var dx=t.clientX-startX, dy=t.clientY-startY;
+      if(Math.abs(dx)>3 || Math.abs(dy)>3) moved=true;
+      var nl=Math.max(4, Math.min(window.innerWidth-70, origLeft+dx));
+      var nt=Math.max(60, Math.min(window.innerHeight-80, origTop+dy));
+      stack.style.left=nl+'px'; stack.style.top=nt+'px'; stack.style.right='auto'; stack.style.bottom='auto';
+    }
+    function onEnd(e){
+      if(longTimer){ clearTimeout(longTimer); longTimer=null; }
+      if(dragging){
+        dragging=false; stack.classList.remove('dragging');
+        if(hint) hint.classList.remove('show');
+        // Save position
+        try{
+          var r=stack.getBoundingClientRect();
+          localStorage.setItem('zed_fab_pos', JSON.stringify({left:Math.round(r.left), top:Math.round(r.top)}));
+        }catch(err){}
+        // If we dragged, block the click that follows
+        if(moved){
+          var block=function(ev){ ev.stopPropagation(); ev.preventDefault(); stack.removeEventListener('click', block, true); };
+          stack.addEventListener('click', block, true);
+          setTimeout(function(){ stack.removeEventListener('click', block, true); }, 300);
+        }
+      }
+    }
+    stack.addEventListener('touchstart', startLongPress, {passive:true});
+    stack.addEventListener('touchmove', onMove, {passive:false});
+    stack.addEventListener('touchend', onEnd);
+    stack.addEventListener('touchcancel', onEnd);
+    // Mouse for desktop test
+    stack.addEventListener('mousedown', startLongPress);
+    window.addEventListener('mousemove', onMove);
+    window.addEventListener('mouseup', onEnd);
+  }
+  // Run now + keep checking because offline button is created late
+  makeDraggable();
+  setInterval(makeDraggable, 1000);
+  document.addEventListener('DOMContentLoaded', makeDraggable);
+})();
+</script>
+
+
+<!-- ZED CHATS - Friends + 1-to-1 Chat, auto-delete 1hr, read receipts in list -->
+<style>
+#zed-chat-btn{position:static !important;background:#fff;color:#000;border:none;border-radius:999px;padding:11px 14px;font-weight:900;font-size:13px;cursor:pointer;box-shadow:0 4px 12px rgba(0,0,0,.4)}
+#zed-chat-panel{position:fixed;inset:0;z-index:10001;background:#0F0E0B;display:none;flex-direction:column}
+#zed-chat-panel.open{display:flex}
+#zed-chat-head{background:#1a1a1a;padding:12px 14px;display:flex;align-items:center;gap:10px;border-bottom:1px solid #333}
+.zed-chat-friend{display:flex;align-items:center;gap:10px;padding:12px;border-bottom:1px solid #222;cursor:pointer}
+.zed-chat-friend:active{background:#1e1e1e}
+#zed-chat-msgs{flex:1;overflow-y:auto;padding:12px;display:flex;flex-direction:column;gap:8px}
+.zed-chat-msg{max-width:80%;padding:9px 12px;border-radius:14px;font-size:14px;line-height:1.5;white-space:pre-wrap}
+.zed-chat-msg.me{background:#8CFF8A;color:#000;align-self:flex-end}
+.zed-chat-msg.them{background:#1e1e1e;color:#fff;align-self:flex-start;border:1px solid #333}
+.zed-chat-tick{font-size:11px;opacity:0.7}
+.zed-chat-tick.read{color:#3B82F6;opacity:1}
+</style>
+<script>
+// ZED CHATS - will be added to FAB stack by JS below
+(function(){
+  // Create CHAT button in stack (same side as AI + Offline)
+  function addChatBtn(){
+    var stack=document.getElementById('zed-fab-stack');
+    if(!stack) return;
+    if(document.getElementById('zed-chat-btn')) return;
+    var b=document.createElement('button');
+    b.id='zed-chat-btn'; b.type='button'; b.innerHTML='💬 CHATS <span id="zed-chat-unread-badge">0</span>';
+    b.addEventListener('click', openChats);
+    stack.appendChild(b);
+  }
+  setInterval(addChatBtn, 1000);
+  // Chat panel HTML
+  var panel=document.createElement('div');
+  panel.id='zed-chat-panel';
+  panel.innerHTML = `
+    <div id="zed-chat-head">
+      <button id="zed-chat-back" type="button" style="background:none;border:none;color:#fff;font-size:22px;cursor:pointer">‹</button>
+      <div style="flex:1"><div style="font-weight:900;color:#fff;font-size:16px">💬 ZED CHATS</div><div style="color:#8CFF8A;font-size:11px">Chats delete after 1 hour • Form 1-5 & Grade 10-12</div></div>
+      <button id="zed-chat-add-open" type="button" style="background:#8CFF8A;color:#000;border:none;border-radius:999px;padding:7px 12px;font-weight:900;font-size:12px;cursor:pointer">+ ADD FRIEND</button>
+    </div>
+    <div id="zed-chat-tabs" style="display:flex;gap:6px;padding:10px 12px;background:#0F0E0B;border-bottom:1px solid #333">
+      <button id="zed-tab-chats" type="button" style="flex:1;background:#8CFF8A;color:#000;border:none;border-radius:999px;padding:10px;font-weight:900;font-size:13px;cursor:pointer">💬 CHATS</button>
+      <button id="zed-tab-friends" type="button" style="flex:1;background:#1e1e1e;color:#fff;border:1px solid #333;border-radius:999px;padding:10px;font-weight:900;font-size:13px;cursor:pointer">👥 FRIENDS <span id="zed-tab-friends-count"></span></button>
+      <button id="zed-tab-requests" type="button" style="flex:1;background:#1e1e1e;color:#fff;border:1px solid #333;border-radius:999px;padding:10px;font-weight:900;font-size:13px;cursor:pointer">✉️ REQUESTS <span id="zed-tab-requests-count" style="background:#FF3B30;color:#fff;border-radius:999px;padding:2px 7px;font-size:11px;display:none">0</span></button>
+    </div>
+    <div id="zed-chat-friends-list" style="display:none;flex:1;overflow-y:auto"></div>
+    <div id="zed-chat-requests-list" style="display:none;flex:1;overflow-y:auto"></div>
+    <div id="zed-chat-search-add" style="display:none;padding:10px 12px;background:#0F0E0B;border-bottom:1px solid #333">
+      <input id="zed-chat-search-input" placeholder="Search name or school, e.g. Chanda or Munali" style="width:100%;background:#1e1e1e;color:#fff;border:1px solid #333;border-radius:10px;padding:10px;font-size:13px"/>
+      <div id="zed-chat-search-results" style="margin-top:8px;display:flex;flex-direction:column;gap:6px"></div>
+    </div>
+    <div id="zed-chat-list" style="flex:1;overflow-y:auto"></div>
+    <div id="zed-chat-view" style="display:none;flex:1;flex-direction:column">
+      <div id="zed-chat-view-head" style="display:flex;align-items:center;gap:10px;padding:10px 12px;background:#1a1a1a;border-bottom:1px solid #333">
+        <button id="zed-chat-view-back" type="button" style="background:none;border:none;color:#fff;font-size:20px;cursor:pointer">‹</button>
+        <div id="zed-chat-view-name" style="flex:1;font-weight:800;color:#fff;font-size:15px"></div>
+        <div style="font-size:11px;color:#FF9A9A">⏳ Deletes in 1hr</div>
+      </div>
+      <div id="zed-chat-msgs"></div>
+      <div style="display:flex;gap:8px;padding:10px;background:#1a1a1a;border-top:1px solid #333">
+        <input id="zed-chat-input" placeholder="Type a message..." style="flex:1;background:#222;color:#fff;border:1px solid #333;border-radius:12px;padding:11px;font-size:14px"/>
+        <button id="zed-chat-send" type="button" style="background:#8CFF8A;color:#000;border:none;border-radius:12px;padding:0 18px;font-weight:900;cursor:pointer">SEND →</button>
+      </div>
+    </div>
+  `;
+  document.body.appendChild(panel);
+  var listEl=document.getElementById('zed-chat-list');
+  var viewEl=document.getElementById('zed-chat-view');
+  var msgsEl=document.getElementById('zed-chat-msgs');
+  var currentFriend=null;
+  var pollTimer=null;
+  var SUPA_URL='https://biastmylavwhlsccvpyu.supabase.co';
+  var SUPA_KEY='sb_publishable_74vo5_RlNXb0U0TrNLCdCQ_8zjDwFni';
+  function headers(){ return {apikey:SUPA_KEY, Authorization:'Bearer '+SUPA_KEY, 'Content-Type':'application/json'}; }
+  function getMe(){ try{ var u=JSON.parse(localStorage.getItem('zed_user')||'null'); return u; }catch(e){ return null; } }
+  // Local memory PER USER - so switching accounts on same phone doesn't mix requests
+  function getSentKey(){ var me=getMe(); return me ? 'zed_sent_requests_'+me.id : 'zed_sent_requests'; }
+  function getSentRequests(){ try{ return JSON.parse(localStorage.getItem(getSentKey())||'[]'); }catch(e){ return []; } }
+  function addSentRequest(id){ try{ var a=getSentRequests(); if(a.indexOf(id)===-1){ a.push(id); localStorage.setItem(getSentKey(), JSON.stringify(a)); } }catch(e){} }
+  function isSentLocal(id){ return getSentRequests().indexOf(id)!==-1; }
+  // Robust friendships fetch: 2 separate calls (no OR) - OR sometimes fails on some phones
+  async function fetchFriendships(me){
+    var all=[];
+    try{
+      var r1=await fetch(SUPA_URL+'/rest/v1/friendships?select=user_id,friend_id&user_id=eq.'+me.id, {headers:headers()});
+      var a1=await r1.json(); if(Array.isArray(a1)) all=all.concat(a1);
+    }catch(e){}
+    try{
+      var r2=await fetch(SUPA_URL+'/rest/v1/friendships?select=user_id,friend_id&friend_id=eq.'+me.id, {headers:headers()});
+      var a2=await r2.json(); if(Array.isArray(a2)) all=all.concat(a2);
+    }catch(e){}
+    return all;
+  }
+  function oneHourAgoISO(){ return new Date(Date.now()-1*60*60*1000).toISOString(); }
+  function openChats(){
+    var me=getMe();
+    if(!me){ alert('Log in first to chat with friends.'); return; }
+    panel.classList.add('open');
+    // Default to CHATS tab, but if there are pending requests, show REQUESTS first so you can't miss them
+    showList();
+    setTimeout(async function(){
+      try{
+        var rRows=await fetchFriendships(me);
+        if(Array.isArray(rRows)){
+          var outS2={}, inS2={}; rRows.forEach(function(r){ if(r.user_id===me.id) outS2[r.friend_id]=true; if(r.friend_id===me.id) inS2[r.user_id]=true; });
+          var pend=rRows.filter(function(r){ return r.friend_id===me.id && !outS2[r.user_id]; });
+          if(pend.length>0){ switchChatTab('requests'); }
+        }
+      }catch(e){}
+    }, 600);
+    loadFriends();
+    // Auto-delete old messages every 1 min (client-side cleanup)
+    setInterval(cleanupOld, 60000);
+    cleanupOld();
+  }
+  async function updateChatBadge(){
+    try{
+      var me=getMe(); if(!me) return;
+      var res=await fetch(SUPA_URL+'/rest/v1/chat_messages?select=id&receiver_id=eq.'+me.id+'&read_at=is.null&created_at=gt.'+encodeURIComponent(oneHourAgoISO()), {headers:headers()});
+      var rows=await res.json();
+      var total=(rows||[]).length;
+      // Also count friend requests - 1 row only (no reverse) = pending request
+      try{
+        var rRows=await fetchFriendships(me);
+        if(Array.isArray(rRows)){
+          var outS={}, inS={}; rRows.forEach(function(r){ if(r.user_id===me.id) outS[r.friend_id]=true; if(r.friend_id===me.id) inS[r.user_id]=true; });
+          var pendingIn=rRows.filter(function(r){ return r.friend_id===me.id && !outS[r.user_id]; });
+          total += pendingIn.length;
+          rRows = pendingIn; // for badge below
+        } else { rRows=[]; }
+        // Update Requests tab badge
+        var reqBadge=document.getElementById('zed-tab-requests-count');
+        if(reqBadge && Array.isArray(rRows)){
+          if(rRows.length>0){ reqBadge.textContent=rRows.length; reqBadge.style.display='inline-block'; }
+          else { reqBadge.style.display='none'; }
+        }
+      }catch(e){}
+      var badge=document.getElementById('zed-chat-unread-badge');
+      if(badge){
+        if(total>0){ badge.textContent = total>99 ? '99+' : String(total); badge.classList.add('show'); }
+        else { badge.classList.remove('show'); }
+      }
+    }catch(e){}
+  }
+  // Check for new messages every 5s, even when panel is closed
+  setInterval(updateChatBadge, 5000);
+  setTimeout(updateChatBadge, 1000);
+  function closeChats(){
+    panel.classList.remove('open');
+    if(pollTimer) clearInterval(pollTimer);
+  }
+  document.getElementById('zed-chat-back').addEventListener('click', function(){
+    if(viewEl.style.display==='flex'){ showList(); } else { closeChats(); }
+  });
+  document.getElementById('zed-chat-view-back').addEventListener('click', showList);
+  // Tabs: CHATS / FRIENDS / REQUESTS
+  var currentTab='chats';
+  function switchChatTab(tab){
+    currentTab=tab;
+    var chatsTab=document.getElementById('zed-tab-chats');
+    var friendsTab=document.getElementById('zed-tab-friends');
+    var reqTab=document.getElementById('zed-tab-requests');
+    var friendsList=document.getElementById('zed-chat-friends-list');
+    var reqList=document.getElementById('zed-chat-requests-list');
+    // Reset styles
+    [chatsTab, friendsTab, reqTab].forEach(function(b){ if(b){ b.style.background='#1e1e1e'; b.style.color='#fff'; b.style.border='1px solid #333'; }});
+    listEl.style.display='none'; if(friendsList) friendsList.style.display='none'; if(reqList) reqList.style.display='none';
+    viewEl.style.display='none';
+    if(tab==='chats'){ listEl.style.display='block'; if(chatsTab){ chatsTab.style.background='#8CFF8A'; chatsTab.style.color='#000'; chatsTab.style.border='none'; } loadFriends(); }
+    if(tab==='friends'){ if(friendsList) friendsList.style.display='block'; if(friendsTab){ friendsTab.style.background='#8CFF8A'; friendsTab.style.color='#000'; friendsTab.style.border='none'; } loadFriendsListTab(); }
+    if(tab==='requests'){ if(reqList) reqList.style.display='block'; if(reqTab){ reqTab.style.background='#FFD93D'; reqTab.style.color='#000'; reqTab.style.border='none'; } loadRequestsTab(); }
+  }
+  // Bind tabs after panel is in DOM
+  setTimeout(function(){
+    var c=document.getElementById('zed-tab-chats'); if(c) c.addEventListener('click', function(){ switchChatTab('chats'); });
+    var f=document.getElementById('zed-tab-friends'); if(f) f.addEventListener('click', function(){ switchChatTab('friends'); });
+    var r=document.getElementById('zed-tab-requests'); if(r) r.addEventListener('click', function(){ switchChatTab('requests'); });
+  }, 500);
+  // Load Friends tab: only accepted friends, with Chat button
+  async function loadFriendsListTab(){
+    var me=getMe(); if(!me) return;
+    var friendsList=document.getElementById('zed-chat-friends-list');
+    if(!friendsList) return;
+    friendsList.innerHTML='<div style="padding:16px;color:#999;text-align:center">Loading friends...</div>';
+    try{
+      var allRows=await fetchFriendships(me);
+      if(!Array.isArray(allRows)) allRows=[];
+      var outSet={}, inSet={};
+      allRows.forEach(function(r){ if(r.user_id===me.id) outSet[r.friend_id]=true; if(r.friend_id===me.id) inSet[r.user_id]=true; });
+      var friendIds=[];
+      Object.keys(outSet).forEach(function(id){ if(inSet[id] && friendIds.indexOf(id)===-1) friendIds.push(id); });
+      if(friendIds.length===0){ friendsList.innerHTML='<div style="padding:20px;color:#999;text-align:center">No friends yet.<br/>Tap + ADD FRIEND to find friends.</div>'; return; }
+      var res3=await fetch(SUPA_URL+'/rest/v1/profiles?select=id,name,school,grade&or=('+friendIds.map(function(id){ return 'id.eq.'+id; }).join(',')+')', {headers:headers()});
+      var friends=await res3.json();
+      friendsList.innerHTML='';
+      (friends||[]).forEach(function(f){
+        var row=document.createElement('div');
+        row.style.cssText='display:flex;justify-content:space-between;align-items:center;padding:12px;border-bottom:1px solid #222';
+        row.innerHTML='<div style="display:flex;gap:10px;align-items:center"><div style="width:44px;height:44px;border-radius:999px;background:#222;display:flex;align-items:center;justify-content:center;font-weight:900;color:#fff;font-size:18px">'+(f.name||'S')[0]+'</div><div><div style="font-weight:800;color:#fff">'+(f.name||'Student')+'</div><div style="font-size:12px;color:#999">'+(f.school||'')+' • '+(f.grade||'')+'</div></div></div><button style="background:#8CFF8A;color:#000;border:none;border-radius:999px;padding:8px 14px;font-weight:900;font-size:12px;cursor:pointer">CHAT →</button>';
+        row.querySelector('button').addEventListener('click', function(){ switchChatTab('chats'); setTimeout(function(){ showView(f); }, 100); });
+        friendsList.appendChild(row);
+      });
+    }catch(e){ friendsList.innerHTML='<div style="padding:20px;color:#999;text-align:center">No friends yet.<br/>Tap + ADD FRIEND to find friends.</div>'; }
+  }
+  // Load Requests tab: incoming + outgoing
+  async function loadRequestsTab(){
+    var me=getMe(); if(!me) return;
+    var reqList=document.getElementById('zed-chat-requests-list');
+    if(!reqList) return;
+    reqList.innerHTML='<div style="padding:16px;color:#999;text-align:center">Loading requests...</div>';
+    try{
+      var allRows=await fetchFriendships(me);
+      if(!Array.isArray(allRows)){ allRows=[]; }
+      var outSet2={}, inSet2={};
+      allRows.forEach(function(r){ if(r.user_id===me.id) outSet2[r.friend_id]=true; if(r.friend_id===me.id) inSet2[r.user_id]=true; });
+      var incoming=allRows.filter(function(r){ return r.friend_id===me.id && !outSet2[r.user_id]; });
+      var outgoing=allRows.filter(function(r){ return r.user_id===me.id && !inSet2[r.friend_id]; });
+      reqList.innerHTML='';
+      if(incoming.length===0 && outgoing.length===0){
+        reqList.innerHTML='<div style="padding:20px;color:#999;text-align:center">No friend requests yet.<br/>When someone sends you a request, it will show here.<br/><br/><button id="zed-req-refresh" style="background:#8CFF8A;color:#000;border:none;border-radius:999px;padding:9px 16px;font-weight:900;cursor:pointer">Refresh Requests</button></div>';
+        return;
+      }
+      if(incoming.length>0){
+        var h=document.createElement('div'); h.style.cssText='padding:12px;font-weight:900;color:#FFD93D'; h.textContent='👥 REQUESTS FOR YOU ('+incoming.length+') — Tap ACCEPT to chat';
+        reqList.appendChild(h);
+        for(var i=0;i<incoming.length;i++){
+          var sid=incoming[i].user_id;
+          var resP=await fetch(SUPA_URL+'/rest/v1/profiles?select=id,name,school,grade&id=eq.'+sid, {headers:headers()});
+          var pRows=await resP.json(); var p=pRows && pRows[0] ? pRows[0] : {name:'Student'};
+          var card=document.createElement('div');
+          card.style.cssText='display:flex;justify-content:space-between;align-items:center;background:#1e1e1e;border:1px solid #FFD93D;border-radius:12px;padding:12px;margin:0 12px 10px';
+          card.innerHTML='<div><div style="font-weight:800;color:#fff">'+(p.name||'Student')+'</div><div style="font-size:12px;color:#999">'+(p.school||'')+' • '+(p.grade||'')+'</div></div><div style="display:flex;gap:6px"><button data-act="accept" style="background:#8CFF8A;color:#000;border:none;border-radius:999px;padding:8px 12px;font-weight:900;font-size:12px">ACCEPT</button><button data-act="decline" style="background:#333;color:#fff;border:none;border-radius:999px;padding:8px 12px;font-weight:900;font-size:12px">DECLINE</button></div>';
+          (function(sid2, cardEl){
+            cardEl.querySelector('[data-act="accept"]').addEventListener('click', async function(){ await fetch(SUPA_URL+'/rest/v1/friendships', {method:'POST', headers:headers(), body: JSON.stringify({user_id:me.id, friend_id:sid2})}); loadRequestsTab(); loadFriends(); updateChatBadge(); });
+            cardEl.querySelector('[data-act="decline"]').addEventListener('click', async function(){ await fetch(SUPA_URL+'/rest/v1/friendships?user_id=eq.'+sid2+'&friend_id=eq.'+me.id, {method:'DELETE', headers:headers()}); loadRequestsTab(); loadFriends(); updateChatBadge(); });
+          })(sid, card);
+          reqList.appendChild(card);
+        }
+      }
+      if(outgoing.length>0){
+        var h2=document.createElement('div'); h2.style.cssText='padding:12px;font-weight:700;color:#999;font-size:13px'; h2.textContent='Requests you sent ('+outgoing.length+') — waiting for them to accept';
+        reqList.appendChild(h2);
+        for(var j=0;j<outgoing.length;j++){
+          var oid=outgoing[j].friend_id;
+          var resP2=await fetch(SUPA_URL+'/rest/v1/profiles?select=id,name,school,grade&id=eq.'+oid, {headers:headers()});
+          var pRows2=await resP2.json(); var p2=pRows2 && pRows2[0] ? pRows2[0] : {name:'Student'};
+          var card2=document.createElement('div');
+          card2.style.cssText='display:flex;justify-content:space-between;align-items:center;background:#1e1e1e;border:1px solid #333;border-radius:12px;padding:12px;margin:0 12px 10px';
+          card2.innerHTML='<div><div style="font-weight:800;color:#fff">'+(p2.name||'Student')+'</div><div style="font-size:12px;color:#999">'+(p2.school||'')+'</div></div><span style="background:#333;color:#999;border-radius:999px;padding:6px 10px;font-size:12px;font-weight:900">✓ REQUEST SENT</span>';
+          reqList.appendChild(card2);
+        }
+      }
+    }catch(e){ reqList.innerHTML='<div style="padding:20px;color:#999;text-align:center">No requests.</div>'; }
+  }
+  function showList(){
+    viewEl.style.display='none'; listEl.style.display='block';
+    updateChatBadge();
+    document.getElementById('zed-chat-search-add').style.display='none';
+    currentFriend=null;
+    if(pollTimer) clearInterval(pollTimer);
+    loadFriends();
+  }
+  function showView(friend){
+    currentFriend=friend;
+    listEl.style.display='none'; viewEl.style.display='flex';
+    document.getElementById('zed-chat-view-name').textContent=friend.name+' • '+(friend.school||'');
+    loadMessages();
+    markRead(friend);
+    setTimeout(updateChatBadge, 800);
+    if(pollTimer) clearInterval(pollTimer);
+    pollTimer=setInterval(function(){ if(currentFriend) { loadMessages(); markRead(currentFriend); } }, 3000);
+  }
+  // ADD FRIEND
+  document.getElementById('zed-chat-add-open').addEventListener('click', function(){
+    var s=document.getElementById('zed-chat-search-add');
+    s.style.display = s.style.display==='none' ? 'block' : 'none';
+  });
+  document.getElementById('zed-chat-search-input').addEventListener('input', async function(){
+    var q=this.value.trim(); var resEl=document.getElementById('zed-chat-search-results');
+    if(q.length<1){ resEl.innerHTML=''; return; }
+    var me=getMe();
+    resEl.innerHTML='<div style="color:#999;font-size:13px">Searching...</div>';
+    try{
+      // Fetch all profiles, filter on phone
+      var res=await fetch(SUPA_URL+'/rest/v1/profiles?select=id,name,school,grade,province&limit=500', {headers:headers()});
+      var allRows=await res.json();
+      var qLower=q.toLowerCase();
+      var rows=(allRows||[]).filter(function(r){
+        return (r.name||'').toLowerCase().indexOf(qLower)!==-1 || (r.school||'').toLowerCase().indexOf(qLower)!==-1 || (r.province||'').toLowerCase().indexOf(qLower)!==-1;
+      });
+      // Friend status: 1 row = request, 2 rows = friends. Uses robust fetch + local memory.
+      var statusMap={};
+      try{
+        var fRows=await fetchFriendships(me);
+        var outSet={}, inSet={};
+        (fRows||[]).forEach(function(fr){
+          if(fr.user_id===me.id) outSet[fr.friend_id]=true;
+          if(fr.friend_id===me.id) inSet[fr.user_id]=true;
+        });
+        var allOthers={}; (fRows||[]).forEach(function(fr){ var o=fr.user_id===me.id?fr.friend_id:fr.user_id; allOthers[o]=true; });
+        Object.keys(allOthers).forEach(function(o){
+          var out=!!outSet[o], inn=!!inSet[o];
+          if(out && inn) statusMap[o]={status:'accepted', dir:'both'};
+          else if(out && !inn) statusMap[o]={status:'pending', dir:'out'};
+          else if(!out && inn) statusMap[o]={status:'pending', dir:'in'};
+        });
+        // Local memory wins: if I sent on this phone, show REQUEST SENT even if server is slow
+        getSentRequests().forEach(function(id){
+          if(!statusMap[id]) statusMap[id]={status:'pending', dir:'out'};
+        });
+      }catch(e){}
+      resEl.innerHTML='';
+      (rows||[]).filter(function(r){ return r.id!==me.id; }).slice(0,10).forEach(function(r){
+        var d=document.createElement('div');
+        d.style.cssText='display:flex;justify-content:space-between;align-items:center;background:#1e1e1e;border:1px solid #333;border-radius:10px;padding:10px';
+        var st=statusMap[r.id];
+        var btnHtml='';
+        if(!st){
+          btnHtml='<button style="background:#8CFF8A;color:#000;border:none;border-radius:999px;padding:7px 12px;font-weight:900;font-size:12px;cursor:pointer">ADD +</button>';
+        } else if(st.status==='pending' && st.dir==='out'){
+          btnHtml='<button disabled style="background:#333;color:#999;border:none;border-radius:999px;padding:7px 12px;font-weight:900;font-size:12px">✓ REQUEST SENT</button>';
+        } else if(st.status==='pending' && st.dir==='in'){
+          btnHtml='<button style="background:#FFD93D;color:#000;border:none;border-radius:999px;padding:7px 12px;font-weight:900;font-size:12px;cursor:pointer">ACCEPT</button>';
+        } else {
+          btnHtml='<button disabled style="background:#222;color:#8CFF8A;border:1px solid #8CFF8A;border-radius:999px;padding:7px 12px;font-weight:900;font-size:12px">✓ FRIENDS</button>';
+        }
+        d.innerHTML='<div><div style="font-weight:800;color:#fff">'+(r.name||'Student')+'</div><div style="font-size:12px;color:#999">'+(r.school||'')+' • '+(r.grade||'')+'</div></div>'+btnHtml;
+        var btn=d.querySelector('button');
+        if(!st){
+          btn.addEventListener('click', async function(){
+            var origText=btn.textContent;
+            btn.textContent='Sending...'; btn.disabled=true;
+            try{
+              var resp=await fetch(SUPA_URL+'/rest/v1/friendships', {method:'POST', headers:headers(), body: JSON.stringify({user_id:me.id, friend_id:r.id})});
+              if(resp.status===201 || resp.status===200 || resp.status===204){
+                addSentRequest(r.id);
+                btn.textContent='✓ REQUEST SENT'; btn.disabled=true; btn.style.background='#333'; btn.style.color='#999';
+                loadFriends();
+              } else if(resp.status===409){
+                addSentRequest(r.id);
+                btn.textContent='✓ REQUEST SENT'; btn.disabled=true; btn.style.background='#333'; btn.style.color='#999';
+                loadFriends();
+              } else {
+                // REAL FAILURE - don't fake it, show it so you can fix it
+                var errObj=null; try{ errObj=await resp.json(); }catch(e){}
+                var errMsg=(errObj && errObj.message) ? errObj.message : ('Error '+resp.status);
+                btn.textContent='⚠️ FAILED - Tap to retry'; btn.disabled=false; btn.style.background='#FF3B30'; btn.style.color='#fff';
+                alert('Request did NOT send. Supabase says: '+errMsg+'\n\nRun the FIX SQL in Supabase, then try again. Do NOT use the old file from Downloads - use Vercel link.');
+              }
+            }catch(e){
+              btn.textContent='⚠️ FAILED - No internet? Tap to retry'; btn.disabled=false; btn.style.background='#FF3B30'; btn.style.color='#fff';
+            }
+          });
+        } else if(st.status==='pending' && st.dir==='in'){
+          btn.addEventListener('click', async function(){
+            // Accept = add reverse row, now both rows exist = friends
+            await fetch(SUPA_URL+'/rest/v1/friendships', {method:'POST', headers:headers(), body: JSON.stringify({user_id:me.id, friend_id:r.id})});
+            btn.textContent='✓ FRIENDS'; btn.disabled=true; btn.style.background='#222'; btn.style.color='#8CFF8A';
+            loadFriends();
+          });
+        }
+        resEl.appendChild(d);
+      });
+      if(resEl.innerHTML==='') resEl.innerHTML='<div style="color:#999;font-size:13px">No student found for "'+q+'"</div>';
+    }catch(e){ resEl.innerHTML='<div style="color:#999;font-size:13px">No student found for "'+q+'". Try full name or school.</div>'; }
+  });
+  // If search box becomes empty, clear stale results (phone clear button sometimes doesn't fire input)
+  setInterval(function(){
+    var inp=document.getElementById('zed-chat-search-input');
+    var resEl=document.getElementById('zed-chat-search-results');
+    if(inp && resEl && inp.value.trim().length===0 && resEl.innerHTML.trim()!==''){ resEl.innerHTML=''; }
+  }, 800);
+  // LOAD FRIENDS + LAST MESSAGE + READ RECEIPT (before entering chat)
+  async function loadFriends(){
+    var me=getMe(); if(!me) return;
+    try{
+      // Fetch ALL friendships - robust 2-call version
+      var allRows=await fetchFriendships(me);
+      if(!Array.isArray(allRows)) allRows=[];
+      var outSet={}, inSet={};
+      allRows.forEach(function(r){ if(r.user_id===me.id) outSet[r.friend_id]=true; if(r.friend_id===me.id) inSet[r.user_id]=true; });
+      // Incoming: they sent to me, I haven't accepted (no reverse row)
+      var incoming=allRows.filter(function(r){ return r.friend_id===me.id && !outSet[r.user_id]; });
+      // Outgoing: I sent, they haven't accepted
+      var outgoing=allRows.filter(function(r){ return r.user_id===me.id && !inSet[r.friend_id]; });
+      // Friends: both rows exist
+      var friendIds=[];
+      Object.keys(outSet).forEach(function(id){ if(inSet[id] && friendIds.indexOf(id)===-1) friendIds.push(id); });
+      // Render Friend Requests section FIRST, then friends
+      listEl.innerHTML='';
+      if(incoming.length>0){
+        var reqHeader=document.createElement('div');
+        reqHeader.style.cssText='padding:12px 12px 6px;font-weight:900;color:#FFD93D;font-size:13px';
+        reqHeader.textContent='👥 FRIEND REQUESTS ('+incoming.length+')';
+        listEl.appendChild(reqHeader);
+        // Get profiles for incoming
+        for(var ri=0; ri<incoming.length; ri++){
+          var senderId=incoming[ri].user_id;
+          try{
+            var resP=await fetch(SUPA_URL+'/rest/v1/profiles?select=id,name,school,grade&id=eq.'+senderId, {headers:headers()});
+            var pRows=await resP.json();
+            var p=pRows && pRows[0] ? pRows[0] : {name:'Student'};
+            var card=document.createElement('div');
+            card.style.cssText='display:flex;justify-content:space-between;align-items:center;background:#1e1e1e;border:1px solid #FFD93D;border-radius:12px;padding:12px;margin:0 12px 8px';
+            card.innerHTML='<div><div style="font-weight:800;color:#fff">'+(p.name||'Student')+'</div><div style="font-size:12px;color:#999">'+(p.school||'')+' • '+(p.grade||'')+'</div></div><div style="display:flex;gap:6px"><button data-act="accept" style="background:#8CFF8A;color:#000;border:none;border-radius:999px;padding:7px 12px;font-weight:900;font-size:12px;cursor:pointer">ACCEPT</button><button data-act="decline" style="background:#333;color:#fff;border:none;border-radius:999px;padding:7px 12px;font-weight:900;font-size:12px;cursor:pointer">DECLINE</button></div>';
+            (function(sid, cardEl){
+              cardEl.querySelector('[data-act="accept"]').addEventListener('click', async function(){
+                // Accept = add reverse row
+                await fetch(SUPA_URL+'/rest/v1/friendships', {method:'POST', headers:headers(), body: JSON.stringify({user_id:me.id, friend_id:sid})});
+                loadFriends();
+              });
+              cardEl.querySelector('[data-act="decline"]').addEventListener('click', async function(){
+                await fetch(SUPA_URL+'/rest/v1/friendships?user_id=eq.'+sid+'&friend_id=eq.'+me.id, {method:'DELETE', headers:headers()});
+                loadFriends();
+              });
+            })(senderId, card);
+            listEl.appendChild(card);
+          }catch(e){}
+        }
+      }
+      if(outgoing.length>0){
+        var outHeader=document.createElement('div');
+        outHeader.style.cssText='padding:6px 12px;font-weight:700;color:#999;font-size:12px';
+        outHeader.textContent='Requests you sent ('+outgoing.length+') — waiting for them to accept';
+        listEl.appendChild(outHeader);
+      }
+      if(friendIds.length===0 && incoming.length===0){
+        var empty=document.createElement('div');
+        empty.style.cssText='padding:20px;color:#999;font-size:14px;text-align:center';
+        empty.innerHTML='No friends yet.<br/>Tap <b>+ ADD FRIEND</b> above to find friends by name or school.';
+        listEl.appendChild(empty);
+        return;
+      }
+      if(friendIds.length===0) return;
+      if(friendIds.length===0){ listEl.innerHTML='<div style="padding:20px;color:#999;font-size:14px;text-align:center">No friends yet.<br/>Tap <b>+ ADD FRIEND</b> above to find friends by name or school.</div>'; return; }
+      // Get friend profiles for accepted friends
+      var res3=await fetch(SUPA_URL+'/rest/v1/profiles?select=id,name,school,grade&or=('+friendIds.map(function(id){ return 'id.eq.'+id; }).join(',')+')', {headers:headers()});
+      var friends=await res3.json();
+      // For each friend, get last message in last 1hr (do NOT clear listEl - requests are already there)
+      var friendsHeader=document.createElement('div');
+      friendsHeader.style.cssText='padding:10px 12px 6px;font-weight:900;color:#fff;font-size:13px';
+      friendsHeader.textContent='💬 YOUR FRIENDS ('+friends.length+')';
+      listEl.appendChild(friendsHeader);
+      for(var i=0;i<(friends||[]).length;i++){
+        var f=friends[i];
+        var lastMsg=null;
+        try{
+          var resM=await fetch(SUPA_URL+'/rest/v1/chat_messages?select=*&created_at=gt.'+encodeURIComponent(oneHourAgoISO())+'&or=(and(sender_id.eq.'+me.id+',receiver_id.eq.'+f.id+'),and(sender_id.eq.'+f.id+',receiver_id.eq.'+me.id+'))&order=created_at.desc&limit=1', {headers:headers()});
+          var msgs=await resM.json();
+          if(msgs && msgs[0]) lastMsg=msgs[0];
+        }catch(e){}
+        var row=document.createElement('div');
+        row.className='zed-chat-friend';
+        var isMeLast = lastMsg && lastMsg.sender_id===me.id;
+        var tick='';
+        var tickClass='';
+        if(lastMsg && isMeLast){
+          // Read receipt BEFORE entering chat: ✓ = sent, ✓✓ blue = read
+          if(lastMsg.read_at){ tick='<span class="zed-chat-tick read">✓✓ Read</span>'; }
+          else { tick='<span class="zed-chat-tick">✓ Sent</span>'; }
+        } else if(lastMsg && !isMeLast){
+          // Numbering: count unread from this friend
+          var unreadCount = 0;
+          try{
+            var resU = await fetch(SUPA_URL+'/rest/v1/chat_messages?select=id&sender_id=eq.'+f.id+'&receiver_id=eq.'+me.id+'&read_at=is.null&created_at=gt.'+encodeURIComponent(oneHourAgoISO()), {headers:headers()});
+            var unreadRows = await resU.json();
+            unreadCount = (unreadRows||[]).length;
+          }catch(e){}
+          if(unreadCount>0){ tick='<span class="zed-chat-count-badge">'+unreadCount+'</span>'; }
+          else { tick = lastMsg.read_at ? '' : '<span style="background:#8CFF8A;color:#000;font-size:11px;font-weight:900;padding:2px 7px;border-radius:999px">NEW</span>'; }
+        }
+        var timeStr='';
+        if(lastMsg){ var d=new Date(lastMsg.created_at); timeStr=d.getHours()+':'+String(d.getMinutes()).padStart(2,'0'); }
+        row.innerHTML='<div style="width:44px;height:44px;border-radius:999px;background:#222;display:flex;align-items:center;justify-content:center;font-weight:900;color:#fff;font-size:18px">'+(f.name||'S')[0]+'</div><div style="flex:1;min-width:0"><div style="font-weight:800;color:#fff;font-size:15px;display:flex;justify-content:space-between;gap:8px"><span style="white-space:nowrap;overflow:hidden;text-overflow:ellipsis">'+(f.name||'Student')+'</span><span style="font-size:11px;color:#999;font-weight:400">'+timeStr+'</span></div><div style="font-size:13px;color:#999;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">'+(lastMsg ? (isMeLast ? 'You: ' : '') + lastMsg.text : (f.school||'')+' • '+(f.grade||''))+'</div></div><div style="display:flex;flex-direction:column;align-items:flex-end;gap:4px">'+tick+'</div>';
+        (function(friend){ row.addEventListener('click', function(){ showView(friend); }); })(f);
+        listEl.appendChild(row);
+      }
+    }catch(e){ listEl.innerHTML='<div style="padding:20px;color:#FF6B6B">No friends yet. Tap + ADD FRIEND above to find friends by name or school.</div>'; }
+  }
+  async function loadMessages(){
+    if(!currentFriend) return;
+    var me=getMe();
+    try{
+      var res=await fetch(SUPA_URL+'/rest/v1/chat_messages?select=*&created_at=gt.'+encodeURIComponent(oneHourAgoISO())+'&or=(and(sender_id.eq.'+me.id+',receiver_id.eq.'+currentFriend.id+'),and(sender_id.eq.'+currentFriend.id+',receiver_id.eq.'+me.id+'))&order=created_at.asc', {headers:headers()});
+      var msgs=await res.json();
+      msgsEl.innerHTML='';
+      (msgs||[]).forEach(function(m){
+        var d=document.createElement('div');
+        var isMe=m.sender_id===me.id;
+        d.className='zed-chat-msg '+(isMe?'me':'them');
+        var tick='';
+        if(isMe){ tick = m.read_at ? '<div class="zed-chat-tick read" style="text-align:right">✓✓ Read</div>' : '<div class="zed-chat-tick" style="text-align:right">✓ Sent</div>'; }
+        d.innerHTML='<div>'+m.text+'</div>'+tick;
+        msgsEl.appendChild(d);
+      });
+      if((msgs||[]).length===0){
+        var empty=document.createElement('div');
+        empty.style.cssText='text-align:center;color:#999;font-size:13px;padding:20px';
+        empty.textContent='No messages yet in last 1 hour. Say hi! Chats delete after 1 hour.';
+        msgsEl.appendChild(empty);
+      }
+      msgsEl.scrollTop=msgsEl.scrollHeight;
+    }catch(e){}
+  }
+  async function sendMessage(){
+    var input=document.getElementById('zed-chat-input');
+    var q=input.value.trim(); if(!q || !currentFriend) return;
+    var me=getMe();
+    input.value='';
+    try{
+      await fetch(SUPA_URL+'/rest/v1/chat_messages', {method:'POST', headers:headers(), body: JSON.stringify({sender_id:me.id, receiver_id:currentFriend.id, text:q})});
+      loadMessages();
+    }catch(e){ alert('Could not send. Check your data and try again.'); }
+  }
+  document.getElementById('zed-chat-send').addEventListener('click', sendMessage);
+  document.getElementById('zed-chat-input').addEventListener('keydown', function(e){ if(e.key==='Enter') sendMessage(); });
+  async function markRead(friend){
+    var me=getMe();
+    try{
+      await fetch(SUPA_URL+'/rest/v1/chat_messages?sender_id=eq.'+friend.id+'&receiver_id=eq.'+me.id+'&read_at=is.null', {method:'PATCH', headers:headers(), body: JSON.stringify({read_at:new Date().toISOString()})});
+    }catch(e){}
+  }
+  async function cleanupOld(){
+    try{
+      await fetch(SUPA_URL+'/rest/v1/chat_messages?created_at=lt.'+encodeURIComponent(oneHourAgoISO()), {method:'DELETE', headers:headers()});
+    }catch(e){}
+  }
+})();
+</script>
+
+
+<script>
+// ZED - NEVER show AI Tutor / Chats / Offline on Login or Signup
+(function(){
+  function isOnAuthPage(){
+    try{
+      var bodyText = (document.body ? (document.body.innerText||'') : '').toLowerCase();
+      var hasLoginBtn = Array.from(document.querySelectorAll('button')).some(function(b){
+        var t=(b.textContent||'').trim().toLowerCase();
+        return t==='log in' || t==='login' || t==='sign up' || t==='signup' || t==='create account' || t==='create your account';
+      });
+      var hasPhone = !!document.querySelector('input[placeholder*="09"], input[inputmode="tel"], input[placeholder*="Phone"], input[placeholder*="097"]');
+      // Also check for PHONE label text which is always on Login
+      var hasPhoneLabel = bodyText.indexOf('phone - 10 digits')!==-1 || bodyText.indexOf('phone — 10 digits')!==-1;
+      var hasAuthTitle = bodyText.indexOf('welcome back')!==-1 || bodyText.indexOf('create your account')!==-1 || bodyText.indexOf('log in to zed')!==-1 || bodyText.indexOf('sign up')!==-1 || bodyText.indexOf('no account?')!==-1 || bodyText.indexOf('forgot password')!==-1;
+      // Header only exists inside the app, not on Login/Signup
+      var header = document.querySelector('header');
+      var hasAppHeader = header && header.offsetParent!==null && (header.textContent||'').indexOf('ZED SCHOLAR')!==-1;
+      // If we see login form + phone, it's auth
+      if(hasLoginBtn && (hasPhone || hasPhoneLabel)) return true;
+      if(hasPhoneLabel && hasAuthTitle) return true;
+      if(hasAuthTitle && hasLoginBtn) return true;
+      // If no app header and login button visible, it's auth
+      if(!hasAppHeader && hasLoginBtn) return true;
+      // If no user logged in and we're on a page with no header, treat as auth
+      var me=null; try{ me=JSON.parse(localStorage.getItem('zed_user')||'null'); }catch(e){}
+      if(!me && !hasAppHeader) return true;
+      return false;
+    }catch(e){ return false; }
+  }
+  function updateFabVisibility(){
+    var stack=document.getElementById('zed-fab-stack');
+    var aiBtn=document.getElementById('zed-ai-btn');
+    var chatBtn=document.getElementById('zed-chat-btn');
+    var offBtn=document.getElementById('zed-offline-library-btn');
+    var aiPanel=document.getElementById('zed-ai-panel');
+    var chatPanel=document.getElementById('zed-chat-panel');
+    var onAuth=isOnAuthPage();
+    if(onAuth){
+      document.body.classList.add('zed-on-auth');
+      if(stack) stack.style.setProperty('display','none','important');
+      if(aiBtn) aiBtn.style.setProperty('display','none','important');
+      if(chatBtn) chatBtn.style.setProperty('display','none','important');
+      if(offBtn) offBtn.style.setProperty('display','none','important');
+      // Close panels if they were open
+      if(aiPanel) aiPanel.classList.remove('open');
+      if(chatPanel) chatPanel.classList.remove('open');
+    } else {
+      document.body.classList.remove('zed-on-auth');
+      if(stack) stack.style.setProperty('display','flex','important');
+      if(aiBtn) aiBtn.style.setProperty('display','','important');
+      if(chatBtn) chatBtn.style.setProperty('display','','important');
+      if(offBtn) offBtn.style.setProperty('display','','important');
+    }
+  }
+  // Check every 600ms - Login/Signup pages render late in React
+  setInterval(updateFabVisibility, 600);
+  document.addEventListener('DOMContentLoaded', function(){ setTimeout(updateFabVisibility, 300); setTimeout(updateFabVisibility, 1000); });
+  setTimeout(updateFabVisibility, 500);
+})();
+</script>
+
+
+<script>
+// ZED POLISH - Small circles: AI, Offline, Chats - icon only, order tidy
+(function(){
+  function tidyFabs(){
+    var stack=document.getElementById('zed-fab-stack');
+    if(!stack) return;
+    var ai=document.getElementById('zed-ai-btn');
+    var off=document.getElementById('zed-offline-library-btn');
+    var chat=document.getElementById('zed-chat-btn');
+    if(ai && stack.firstChild!==ai) stack.insertBefore(ai, stack.firstChild);
+    if(off && chat && stack.contains(off) && stack.contains(chat) && off.nextSibling!==chat) stack.insertBefore(off, chat);
+    // Icon-only circles - keep badge on Chats
+    if(ai){ ai.textContent='🤖'; ai.setAttribute('data-label','AI'); ai.title='AI Tutor'; ai.setAttribute('aria-label','AI Tutor'); }
+    if(off){ off.textContent='📚'; off.setAttribute('data-label','PAPERS'); off.title='Offline Papers'; off.setAttribute('aria-label','Offline Papers'); }
+    if(chat){
+      // Preserve badge element if it exists
+      var badge=document.getElementById('zed-chat-unread-badge');
+      chat.setAttribute('data-label','CHATS'); chat.title='Chats'; chat.setAttribute('aria-label','Chats');
+      // Only set icon if chat is empty or has text CHATS
+      if(chat.textContent.indexOf('💬')===-1){
+        chat.innerHTML='💬';
+        if(badge) chat.appendChild(badge);
+        else{
+          var b=document.createElement('span'); b.id='zed-chat-unread-badge'; chat.appendChild(b);
+        }
+      } else {
+        // Ensure badge is still inside
+        if(badge && badge.parentNode!==chat) chat.appendChild(badge);
+      }
+    }
+  }
+  setInterval(tidyFabs, 1200);
+  tidyFabs();
+})();
+</script>
+
 </body>
 </html>
