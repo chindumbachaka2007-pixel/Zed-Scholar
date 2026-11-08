@@ -1,7 +1,7 @@
 // ZED SCHOLAR - Auto-Update Service Worker V25
 // Bump this version every time you push a new build - this FORCES update check
-const CACHE_NAME = 'zed-scholar-v4-seo'; // ← NUMBER 1: change v4 to v5 on next push
-const CACHE_VERSION = 'v4'; // ← NUMBER 2: change v4 to v5 on next push
+const CACHE_NAME = 'zed-scholar-v4.1-seo'; // ← NUMBER 1: change v4.1 to v4.2 on next push
+const CACHE_VERSION = 'v4.1'; // ← NUMBER 2: change v4.1 to v4.2 on next push
 
 const ASSETS_TO_CACHE = [
   './',
