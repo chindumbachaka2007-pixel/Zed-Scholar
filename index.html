@@ -9411,5 +9411,104 @@ header div[class*="bg-"][class*="border"][class*="rounded"] span:first-child{
 })();
 </script>
 
+
+<!-- ===== ZED ADS v14 - Native Banner + Social Bar (bauval) - ONLY AFTER LOGIN ===== -->
+<style>
+/* Bottom banner slot - holds Native Banner. Fixed at bottom, above Social Bar */
+#zed-ad-slot{
+  position: fixed !important;
+  left: 0 !important; right: 0 !important; bottom: 0 !important;
+  z-index: 9990 !important;
+  background: #111 !important;
+  border-top: 1px solid #333 !important;
+  padding: 6px 8px 10px !important;
+  display: none !important;
+}
+body:not(.zed-on-auth) #zed-ad-slot.zed-ad-show{ display: block !important; }
+body.zed-on-auth #zed-ad-slot{ display: none !important; }
+#zed-ad-slot .zed-ad-top{
+  display: flex !important; align-items: center !important; justify-content: space-between !important;
+  margin-bottom: 4px !important;
+}
+#zed-ad-slot .zed-ad-label{
+  font-size: 9px !important; letter-spacing: .15em !important; color: #888 !important; text-transform: uppercase !important;
+}
+#zed-ad-slot .zed-ad-close{
+  background: none !important; border: none !important; color: #888 !important;
+  font-size: 16px !important; cursor: pointer !important; padding: 0 4px !important; line-height: 1 !important;
+}
+#zed-ad-slot #container-a3162b010ef64e009748202dfb70a9fc{
+  min-height: 50px !important; max-height: 120px !important; overflow: hidden !important;
+  background: #0a0a0a !important; border-radius: 8px !important;
+}
+/* Move FABs up so they sit ABOVE the ad banner + Social Bar, not under them */
+body:not(.zed-on-auth) #zed-fab-stack{ bottom: 175px !important; }
+body:not(.zed-on-auth) #zed-offline-fab, body:not(.zed-on-auth) .zed-offline-fab{ bottom: 175px !important; }
+/* Give main content room so last paper isn't hidden behind the banner */
+body:not(.zed-on-auth) main, body:not(.zed-on-auth) #root{ padding-bottom: 110px !important; }
+/* If Social Bar injects its own fixed bar, keep it at very bottom (below our banner is OK - it floats) */
+</style>
+<div id="zed-ad-slot" aria-label="Advertisement">
+  <div class="zed-ad-top"><span class="zed-ad-label">Ad &bull; Supports Zed Scholar</span><button class="zed-ad-close" id="zed-ad-close" type="button" title="Hide ad for now">&times;</button></div>
+  <div id="container-a3162b010ef64e009748202dfb70a9fc"></div>
+</div>
+<script>
+// ===== ZED ADS v14 - Load bauval ONLY after login, lazily, once =====
+(function(){
+  var loaded = false;
+  function isAuth(){
+    try{
+      if(document.body.classList.contains('zed-on-auth')) return true;
+      if(!localStorage.getItem('zed_user')) return true;
+      var txt = (document.body.innerText||'');
+      if(txt.indexOf('Welcome back')!==-1) return true;
+    }catch(e){}
+    return false;
+  }
+  function loadAds(){
+    if(loaded) return;
+    if(isAuth()) return;
+    loaded = true;
+    var slot = document.getElementById('zed-ad-slot');
+    if(slot) slot.classList.add('zed-ad-show');
+    // 1) Social Bar - SocialBar_1 - floating bar, auto-injects itself
+    var s1 = document.createElement('script');
+    s1.setAttribute('data-cfasync','false');
+    s1.src = 'https://bauval.org/14/20a563cca28e32a695ce71b6e82876da';
+    document.body.appendChild(s1);
+    // 2) Native Banner - NativeBanner_1 - fills #container-a3162b...
+    var s2 = document.createElement('script');
+    s2.async = true; s2.setAttribute('async','async');
+    s2.setAttribute('data-cfasync','false');
+    s2.src = 'https://bauval.org/21/a3162b010ef64e009748202dfb70a9fc';
+    document.body.appendChild(s2);
+    // If ad-blocker blocks bauval, hide the empty slot after 6s so it doesn't leave a black box
+    setTimeout(function(){
+      try{
+        var c = document.getElementById('container-a3162b010ef64e009748202dfb70a9fc');
+        if(c && c.innerHTML.trim()==='' && slot){
+          slot.style.display = 'none';
+          // FABs back down if no banner
+          var fabs = document.getElementById('zed-fab-stack');
+          if(fabs) fabs.style.bottom = '110px';
+        }
+      }catch(e){}
+    }, 6000);
+    console.log('[ZED] Ads v14 loaded - Native Banner + Social Bar');
+  }
+  // Close button: hides Native Banner for this session (Social Bar still shows - it's separate)
+  document.addEventListener('click', function(e){
+    if(e.target && e.target.id==='zed-ad-close'){
+      var s=document.getElementById('zed-ad-slot');
+      if(s) s.style.display='none';
+    }
+  });
+  // Try after login: check every 2s, load once user is logged in
+  setInterval(function(){ if(!loaded) loadAds(); }, 2000);
+  // Also try shortly after page load
+  setTimeout(loadAds, 3000);
+})();
+</script>
+
 </body>
 </html>
