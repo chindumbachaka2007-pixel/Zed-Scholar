@@ -7517,9 +7517,10 @@ console.log('[ZED] Welcome popup + fast login active');
     return;
   });
   // ---- FAST SEND: streaming + timeout + 1 fallback only, not 3 slow tries ----
-  async function callGeminiStream(prompt, key, onChunk){
+  async function callGeminiStream(prompt, key, onChunk, model){
+    model=model||'gemini-3.5-flash-lite'; // FIX: 2.5-flash-lite retired by Google - now 3.5-flash-lite
     // Use stream endpoint so first words appear in ~1s instead of waiting for full answer
-    var url='https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash-lite:streamGenerateContent?alt=sse&key='+encodeURIComponent(key);
+    var url='https://generativelanguage.googleapis.com/v1beta/models/'+model+':streamGenerateContent?alt=sse&key='+encodeURIComponent(key);
     var ctrl=new AbortController(); var timer=setTimeout(function(){ try{ctrl.abort();}catch(e){} }, 25000);
     try{
       var res=await fetch(url, {method:'POST', headers:{'Content-Type':'application/json'}, signal:ctrl.signal, body: JSON.stringify({contents:[{parts:[{text:prompt}]}], generationConfig:{maxOutputTokens:450, temperature:0.4}})});
@@ -7550,10 +7551,11 @@ console.log('[ZED] Welcome popup + fast login active');
       return full;
     } finally { clearTimeout(timer); }
   }
-  async function callGeminiOnce(prompt, key){
+  async function callGeminiOnce(prompt, key, model){
+    model=model||'gemini-3.5-flash-lite'; // FIX: 2.5-flash-lite retired - now 3.5-flash-lite
     var ctrl=new AbortController(); var timer=setTimeout(function(){ try{ctrl.abort();}catch(e){} }, 25000);
     try{
-      var res=await fetch('https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash-lite:generateContent?key='+encodeURIComponent(key), {method:'POST', headers:{'Content-Type':'application/json'}, signal:ctrl.signal, body: JSON.stringify({contents:[{parts:[{text:prompt}]}], generationConfig:{maxOutputTokens:450, temperature:0.4}})});
+      var res=await fetch('https://generativelanguage.googleapis.com/v1beta/models/'+model+':generateContent?key='+encodeURIComponent(key), {method:'POST', headers:{'Content-Type':'application/json'}, signal:ctrl.signal, body: JSON.stringify({contents:[{parts:[{text:prompt}]}], generationConfig:{maxOutputTokens:450, temperature:0.4}})});
       var data=await res.json().catch(function(){ return {}; });
       if(!res.ok){ var e=new Error((data.error&&data.error.message)||('HTTP '+res.status)); e.status=res.status; throw e; }
       // Safety filter / blocked = no candidates. Old code treated this as empty and hung.
@@ -7591,34 +7593,39 @@ console.log('[ZED] Welcome popup + fast login active');
     var prompt='Zambia ECZ '+grade+' '+subj+' tutor. Simple English, short step-by-step bullets, 1 Zambian example. If past paper Q, solve step-by-step + final answer. End with 1 practice Q. Q: '+q;
     var ans=''; var lastErr=''; var lastStatus=0; var wasBlocked=false;
     var keys=getAllKeys();
-    // Try keys in order, but only ONE model. Old code tried 3 models one-by-one = 3x slow.
+    // FIX: Google retired gemini-2.5-flash-lite (see screenshot). Try models in order - 3.5 first, then fallbacks.
+    // If 3.5 fails with NOT FOUND, we try the next model, not the same dead model again (old bug: prompt.replace did nothing).
+    var MODELS=['gemini-3.5-flash-lite','gemini-3-flash','gemini-2.5-flash'];
     for(var ki=0; ki<keys.length && !ans; ki++){
-      try{
-        // Streaming first - feels instant. If streaming fails, fall back to normal once.
-        ans=await callGeminiStream(prompt, keys[ki], function(chunk){
-          if(loading.textContent.indexOf('Thinking')===0) loading.textContent='';
-          loading.textContent+=chunk; msgs.scrollTop=msgs.scrollHeight;
-        });
-        if(ans) break;
-        ans=await callGeminiOnce(prompt, keys[ki]);
-        if(ans){ loading.textContent=ans; break; }
-      }catch(e){
-        lastErr=(e && e.msg) || (e && e.message) || String(e);
-        lastStatus=e.status||0;
-        if(e.blocked || (lastErr||'').indexOf('BLOCKED')!==-1){ wasBlocked=true; break; }
-        if((lastErr||'').toLowerCase().indexOf('api key')!==-1 || (lastErr||'').toLowerCase().indexOf('api_key')!==-1) break; // wrong key - don't waste time trying other keys/models
-        if(lastStatus===429){
-          // Quota: try next key if Admin pasted 2-3 keys, else stop and tell students to wait
-          continue;
+      for(var mi=0; mi<MODELS.length && !ans; mi++){
+        try{
+          // Streaming first - feels instant. If streaming fails, fall back to normal once.
+          ans=await callGeminiStream(prompt, keys[ki], function(chunk){
+            if(loading.textContent.indexOf('Thinking')===0) loading.textContent='';
+            loading.textContent+=chunk; msgs.scrollTop=msgs.scrollHeight;
+          }, MODELS[mi]);
+          if(ans) break;
+          ans=await callGeminiOnce(prompt, keys[ki], MODELS[mi]);
+          if(ans){ loading.textContent=ans; break; }
+        }catch(e){
+          lastErr=(e && e.msg) || (e && e.message) || String(e);
+          lastStatus=e.status||0;
+          if(e.blocked || (lastErr||'').indexOf('BLOCKED')!==-1){ wasBlocked=true; break; }
+          if((lastErr||'').toLowerCase().indexOf('api key')!==-1 || (lastErr||'').toLowerCase().indexOf('api_key')!==-1) break; // wrong key - don't waste time
+          if(lastStatus===429){
+            // Quota: try next key if Admin pasted 2-3 keys
+            break;
+          }
+          if((lastErr||'').toLowerCase().indexOf('not found')!==-1 || (lastErr||'').toLowerCase().indexOf('no longer available')!==-1 || (lastErr||'').toLowerCase().indexOf('not available')!==-1){
+            // Model retired / not available - try NEXT model in MODELS list. Clear loading so next try starts clean.
+            loading.textContent='Thinking...';
+            continue;
+          }
+          if(e && e.name==='AbortError'){ lastErr='TIMEOUT'; break; }
+          break; // other errors - don't retry, show real error
         }
-        if((lastErr||'').toLowerCase().indexOf('not found')!==-1){
-          // Model retired - try the stable fallback ONCE
-          try{ ans=await callGeminiOnce(prompt.replace('gemini-2.5-flash-lite','gemini-2.5-flash'), keys[ki]); if(ans){ loading.textContent=ans; break; } }catch(e2){ lastErr=e2.message||lastErr; }
-          break;
-        }
-        if(e && e.name==='AbortError'){ lastErr='TIMEOUT'; break; }
-        break; // other errors - don't retry 3 times, show real error
       }
+      if(wasBlocked) break;
     }
     clearInterval(dotTimer);
     if(!ans){
