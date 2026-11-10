@@ -1,7 +1,7 @@
 // ZED SCHOLAR - Auto-Update Service Worker V25
 // Bump this version every time you push a new build - this FORCES update check
-const CACHE_NAME = 'zed-scholar-v3-fix-motel'; // ← NUMBER 1: change v3 to v4 on next push
-const CACHE_VERSION = 'v3'; // ← NUMBER 2: change v3 to 4 on next push
+const CACHE_NAME = 'zed-scholar-v3-'; // ← NUMBER 1: change v3 to v4 on next push
+const CACHE_VERSION = 'v4'; // ← NUMBER 2: change v3 to 4 on next push
 
 const ASSETS_TO_CACHE = [
   './',
