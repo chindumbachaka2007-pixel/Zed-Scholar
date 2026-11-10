@@ -2795,7 +2795,7 @@ alter table profiles add column if not exists account_code text;
 -- Note: password column is now required - signup sends password
 -- If you already ran the old helper, run the password line above once
 -- To refresh schema cache after alter: NOTIFY pgrst, 'reload schema';
-`;function wv(e){return e.replace(/\s+/g,"_").replace(/[^a-zA-Z0-9._-]/g,"")}function oa(e){return/^(09|07)\d{8}$/.test(e)}function aa(e){return"+26"+e.slice(1)}function Ad(e){let n=e.match(/(?:youtube\.com\/watch\?v=|youtu\.be\/|youtube\.com\/embed\/)([^&\s]+)/);return n?n[1]:null}function ca(){let e=S.useMemo(()=>hv(ia,Ir),[]),[n,t]=S.useState({ok:null,count:0,msg:"Connecting..."}),[r,l]=S.useState(()=>{try{let o=localStorage.getItem("zed_user");return o?JSON.parse(o):null}catch{return null}}),[u,i]=S.useState("password"),[a,f]=S.useState(""),[m,g]=S.useState(""),[k,w]=S.useState(!1),[_,z]=S.useState(""),[N,D]=S.useState(!1),[d,s]=S.useState(""),[p,E]=S.useState(!1),R=S.useRef({}),[I,O]=S.useState(null),[M,x]=S.useState("papers"),[$,Ce]=S.useState(!1),[xe,Yd]=S.useState(""),[sn,Zd]=S.useState(""),[je,Qd]=S.useState("Lusaka"),[Fr,fa]=S.useState(Or.Lusaka[0]),[ku,Jd]=S.useState(""),[Ot,Gd]=S.useState(""),[Fn,sa]=S.useState(!1),[Ft,qd]=S.useState(""),[Dr,xd]=S.useState("12"),[Eu,jd]=S.useState(""),[da,bd]=S.useState(""),[pa,be]=S.useState(!1),[ma,Tr]=S.useState([]),[ep,va]=S.useState(!1),[ya,_u]=S.useState([]),[Cu,np]=S.useState([]),[ha,ga]=S.useState([]),[Wr,tp]=S.useState([]),[wa,ka]=S.useState([]),[Ea,rp]=S.useState([]),[lp,up]=S.useState({}),[$r,ip]=S.useState(""),[Vr,op]=S.useState("All"),[Hr,ap]=S.useState("All"),[Ur,cp]=S.useState("All"),[Br,fp]=S.useState("All"),[Ar,sp]=S.useState("All"),[Kr,dp]=S.useState("All"),[Te,Su]=S.useState(null),[_a,Ca]=S.useState({}),[Nu,Sa]=S.useState(0),[xn,pp]=S.useState("All"),[Xr,Na]=S.useState("All"),[zu,mp]=S.useState("All Time"),[Yr,vp]=S.useState("All"),[Zr,yp]=S.useState(""),[jn,hp]=S.useState("coins"),[Qr,gp]=S.useState(!1),[za,wp]=S.useState("Mathematics"),[Ra,kp]=S.useState("12"),[Pa,Ep]=S.useState("2023"),[Ma,_p]=S.useState("ECZ"),[Ru,La]=S.useState(""),[Ia,Oa]=S.useState(""),[bn,Fa]=S.useState(null),[Da,Ta]=S.useState(!1),[Wa,Cp]=S.useState("Mathematics"),[$a,Sp]=S.useState("12"),[Pu,Va]=S.useState(""),[Mu,Ha]=S.useState(""),[Lu,Ua]=S.useState(""),[Iu,Ba]=S.useState(""),[Ou,Aa]=S.useState(""),[Ka,Np]=S.useState("A"),[Xa,Ya]=S.useState(""),[Fu,Za]=S.useState(""),[Jr,Qa]=S.useState(""),[Ja,zp]=S.useState("Mathematics"),[Ga,Rp]=S.useState("12"),[qa,Du]=S.useState(null),[admKey,setAdmKey]=S.useState(""),[admOk,setAdmOk]=S.useState(!1),[vidFile,setVidFile]=S.useState(null),[vidUp,setVidUp]=S.useState(!1),F=(o)=>{console.log("[ZED TOAST]",o),O(o),setTimeout(()=>O(null),4500)};S.useEffect(()=>{(async()=>{try{let{count:o,error:y,data:h}=await e.from("profiles").select("*",{count:"exact",head:!0})._execute();if(y)t({ok:!1,count:0,msg:y.message.slice(0,140)});else t({ok:!0,count:o||(Array.isArray(h)?h.length:0),msg:`online`})}catch(o){t({ok:!1,count:0,msg:o.message})}})()},[e]),S.useEffect(()=>{if(!r)return;(async()=>{if(M==="papers"||M==="admin"){va(!0);let{data:y}=await e.from("past_papers").select("*").order("created_at",{ascending:!1}).limit(200);Tr(y||[]),va(!1)}if(M==="quizzes"){let{data:y}=await e.from("quiz_questions").select("*").order("created_at",{ascending:!1}).limit(500);_u(y||[])}if(M==="documents"){let{data:y}=await e.from("documents").select("*").order("created_at",{ascending:!1}).limit(200);np(y||[])}if(M==="videos"){let{data:y}=await e.from("videos").select("*").order("created_at",{ascending:!1}).limit(5000);ga(y||[])}if(M==="leaderboard"){let[{data:y},{data:h}]=await Promise.all([e.from("profiles").select("id,name,province,district,school,coins,streak,grade").limit(500),e.from("quiz_attempts").select("user_id,score,total,subject,created_at").order("created_at",{ascending:!1}).limit(500)]);tp(y||[]),ka(h||[])}if(M==="profile"){let{data:y}=await e.from("quiz_attempts").select("*").order("created_at",{ascending:!1}).limit(200),h=(y||[]).filter((P)=>P.user_id===r.id);rp(h)}if(M==="admin"){let y=["profiles","past_papers","quiz_questions","documents","videos","quiz_attempts"],h={};for(let W of y){let{count:V}=await e.from(W).select("*",{count:"exact",head:!0})._execute();h[W]=V||0}up(h);let{data:P}=await e.from("quiz_questions").select("*").order("created_at",{ascending:!1}).limit(20);_u(P||[])}})()},[M,r,e]),S.useEffect(()=>{if(!r)return;(async()=>{let{data:o}=await e.from("past_papers").select("*").order("created_at",{ascending:!1}).limit(20);if(o)Tr((y)=>y.length?y:o)})()},[r,e]),S.useEffect(()=>{let o=Or[je];if(o&&!o.includes(Fr))fa(o[0])},[je]),S.useEffect(()=>{if(!Te)return;let o=setInterval(()=>Sa((y)=>y+1),1000);return()=>clearInterval(o)},[Te]),S.useEffect(()=>{if(r)return;let o=()=>{let P=document.getElementById("zed-signup-open");if(P&&!P._zedNativeHandler){let V=(j)=>{try{console.log("[ZED] Native signup click handler clean"),P.textContent="Opening signup... ✓",P.setAttribute("data-opened","1"),P.setAttribute("data-native-clicked","1");let ne="zed-native-feedback";if(!document.getElementById(ne)){let b=document.createElement("div");b.id=ne,b.textContent="Opening signup...",b.style.position="fixed",b.style.bottom="110px",b.style.left="12px",b.style.right="12px",b.style.background="#8CFF8A",b.style.color="#000",b.style.padding="12px",b.style.borderRadius="10px",b.style.zIndex="99999",b.style.fontSize="13px",b.style.fontWeight="700",document.body.appendChild(b),setTimeout(()=>{try{b.remove()}catch{}},3000)}let T=document.getElementById("signup");if(T)T.style.display="block";try{location.hash="#signup"}catch{}}catch(ne){console.log("native handler error",ne)}};P.addEventListener("click",V),P.addEventListener("pointerdown",V),P._zedNativeHandler=V}let W=document.getElementById("zed-login-btn");if(W&&!W._zedNativeHandler){let V=(j)=>{try{if(console.log("[ZED] Native login click handler clean"),W.textContent="Logging in... ✓",W.setAttribute("data-clicked","1"),W.setAttribute("data-native-clicked","1"),!document.getElementById("login-click-feedback")){let T=document.createElement("div");T.id="login-click-feedback",T.textContent="Checking credentials...",T.style.position="fixed",T.style.bottom="80px",T.style.left="12px",T.style.right="12px",T.style.background="#8CFF8A",T.style.color="#000",T.style.padding="12px",T.style.borderRadius="10px",T.style.zIndex="99999",T.style.fontSize="13px",T.style.fontWeight="700",document.body.appendChild(T),setTimeout(()=>{try{T.remove()}catch{}},3000)}}catch(ne){console.log("login native error",ne)}};W.addEventListener("click",V),W.addEventListener("pointerdown",V),W._zedNativeHandler=V}},y=setTimeout(o,100),h=setInterval(o,500);return()=>{clearTimeout(y),clearInterval(h);let P=document.getElementById("zed-signup-open");if(P&&P._zedNativeHandler)P.removeEventListener("click",P._zedNativeHandler),P.removeEventListener("pointerdown",P._zedNativeHandler);let W=document.getElementById("zed-login-btn");if(W&&W._zedNativeHandler)W.removeEventListener("click",W._zedNativeHandler),W.removeEventListener("pointerdown",W._zedNativeHandler)}},[r,$,u]);let Pp=async()=>{if(console.log("[ZED] Login attempt v31 hotfix",a),w(!0),F("Checking credentials..."),!oa(a)){F("Phone must be 10 digits starting 09 or 07"),w(!1);return}if(!m)F("Enter password (if your profile has password) or use OTP");try{let{data:o,error:y}=await e.from("profiles").select("id,phone,name,school,grade,province,district,coins,streak,password,avatar,avatar_url").eq("phone",a).maybeSingle();if(y||!o){F("Profile not found. Please sign up."),w(!1);return}if(typeof o.password<"u"&&o.password!==null&&o.password!==""){if(!m){F("Enter correct password for this account"),w(!1);return}if(o.password!==m){F("Incorrect password — try again or use OTP"),w(!1);return}}else{if(m){F("No password set for this account. Please use OTP login or reset password."),w(!1);return}}localStorage.setItem("zed_user",JSON.stringify(o));try{if(o.avatar||o.avatar_url) localStorage.setItem("zed_avatar",o.avatar||o.avatar_url);}catch(e){} l(o),F(`Welcome back ${o.name}!`),window.zedShowWelcomePopup&&window.zedShowWelcomePopup(o.name,true)}catch(o){F(o.message)}finally{w(!1)}},Mp=async()=>{if(console.log("[ZED] Send OTP",_),!oa(_)){F("Phone must be 10 digits starting 09 or 07");return}E(!0),F("Sending OTP live... checking Twilio config");try{let o=await fetch(`${ia}/auth/v1/otp`,{method:"POST",headers:{apikey:Ir,"Content-Type":"application/json",Authorization:`Bearer ${Ir}`},body:JSON.stringify({phone:aa(_)}),mode:"cors"}),y=await o.json().catch(()=>({}));if(!o.ok)throw Error(y.error_description||y.msg||JSON.stringify(y));F(`OTP sent to ${aa(_)}`);let h=Math.floor(1e5+Math.random()*900000).toString();R.current[_]=h,F(`Live SMS sent. Test code fallback: ${h} if SMS not configured`),D(!0)}catch(o){let y=Math.floor(1e5+Math.random()*900000).toString();R.current[_]=y,D(!0),F(`SMS provider not enabled. Simulated OTP: ${y}. Please try again.`)}finally{E(!1)}},Lp=async()=>{if(!d||d.length!==6){F("Enter 6-digit code");return}E(!0);try{let o=!1;try{let h=await fetch(`${ia}/auth/v1/verify`,{method:"POST",headers:{apikey:Ir,"Content-Type":"application/json",Authorization:`Bearer ${Ir}`},body:JSON.stringify({phone:aa(_),token:d,type:"sms"}),mode:"cors"}),P=await h.json().catch(()=>({}));if(h.ok)o=!0;else if(R.current[_]===d)o=!0;else throw Error(P.error_description||"Invalid code")}catch(h){if(R.current[_]===d)o=!0;else throw h}if(!o)throw Error("Verification failed");let{data:y}=await e.from("profiles").select("*").eq("phone",_).maybeSingle();if(y)localStorage.setItem("zed_user",JSON.stringify(y)),l(y),F(`Welcome ${y.name}! v31`);else{let h={phone:_,name:`Learner ${_.slice(-4)}`,province:"Lusaka",district:"Lusaka",school:"Munali Boys Secondary",grade:"12",account_code:`ZED-${Date.now()}`,coins:0,streak:0},P={phone:_,name:`Learner ${_.slice(-4)}`,school:"Munali Boys Secondary",grade:"12"},W=null,V=null;try{let j=await e.from("profiles").insert(h).select().single();if(j.error)throw Error(j.error.message);W=j.data}catch(j){V=j;let ne=(j.message||"").toLowerCase();if(ne.includes("province")||ne.includes("district")||ne.includes("account_code")||ne.includes("coins")||ne.includes("streak")||ne.includes("pgrst204"))try{let T=await e.from("profiles").insert(P).select().single();if(T.error)throw Error(T.error.message);W=T.data,V=null}catch(T){V=T}}if(V)throw V;localStorage.setItem("zed_user",JSON.stringify(W)),l(W),F(`Welcome ${W.name}!`),window.zedShowWelcomePopup&&window.zedShowWelcomePopup(W.name,false)}}catch(o){F(o.message)}finally{E(!1)}},Ip=async()=>{if(console.log("[ZED] handleSignup v31 hotfix",{suName:xe,suPhone:sn,suProvince:je,suDistrict:Fr,suSchool:Ot,suCustomSchool:Fn,customText:Ft}),be(!0),F("Signing up..."),!xe.trim()||xe.trim().length<2){F("Enter full name"),be(!1);return}if(!oa(sn)){F("Phone must be 10 digits starting 09 or 07"),be(!1);return}if(Eu.length<3){F("Password min 3 chars"),be(!1);return}if(Eu!==da){F("Passwords mismatch"),be(!1);return}let o=Fn?Ft.trim():Ot;if(!o){F("Select school — search or add a custom school"),be(!1);return}if(Fn&&o.length<3){F("Enter custom school name e.g. Your school name"),be(!1);return}try{console.log("[ZED] v31 Checking phone unique",sn);let{data:y}=await e.from("profiles").select("id").eq("phone",sn).maybeSingle();if(y){F("Phone already registered — try login"),be(!1);return}let h={phone:sn,name:xe.trim(),school:o,grade:Dr,account_code:`ZED-${Date.now()}`,coins:0,streak:0,province:je,district:Fr,password:Eu},P={phone:sn,name:xe.trim(),school:o,grade:Dr,account_code:`ZED-${Date.now()}`,coins:0,streak:0,password:Eu},W={phone:sn,name:xe.trim(),school:o,grade:Dr,password:Eu};console.log("[ZED] v31 Inserting profile full",h);let V=null,j=null;try{let{data:ne,error:T}=await e.from("profiles").insert(h).select().single();if(T)throw Error(T.message);V=ne}catch(ne){j=ne;let T=(ne.message||"").toLowerCase();if(console.log("[ZED] v31 first insert failed",T),T.includes("password")||T.includes("province")||T.includes("district")||T.includes("account_code")||T.includes("coins")||T.includes("streak")||T.includes("pgrst204")||T.includes("schema cache"))try{console.log("[ZED] v31 retry without province/district");let{data:b,error:Xe}=await e.from("profiles").insert(P).select().single();if(Xe)throw Error(Xe.message);V=b,j=null}catch(b){j=b;let Xe=(b.message||"").toLowerCase();if(console.log("[ZED] v31 second insert failed",Xe),Xe.includes("account_code")||Xe.includes("coins")||Xe.includes("streak")||Xe.includes("province")||Xe.includes("district")||Xe.includes("pgrst204"))try{console.log("[ZED] v31 retry minimal payload");let{data:Wu,error:ja}=await e.from("profiles").insert(W).select().single();if(ja)throw Error(ja.message);V=Wu,j=null}catch(Wu){j=Wu}}}if(j)throw j;if(!V)throw Error("Insert returned empty - check RLS policies");console.log("[ZED] Signup success v31",V),localStorage.setItem("zed_user",JSON.stringify(V)),l(V),F(`Account created! Welcome ${V.name} — ${V.school} (${V.province||je}) v31 hotfix`),Ce(!1)}catch(y){console.error("[ZED] Signup error v31",y),F(`Signup failed v31: ${y.message} — Try Admin SQL Fix PGRST204 helper below`)}finally{be(!1)}},Tu=S.useMemo(()=>{return ma.filter((o)=>{if($r&&!`${o.title} ${o.subject} ${o.year} ${o.school||""}`.toLowerCase().includes($r.toLowerCase()))return!1;if(Vr!=="All"&&o.subject!==Vr)return!1;if(Hr!=="All"){let _g=(o.grade||"").toString().trim().toLowerCase(),_k=Hr.toString().trim().toLowerCase(),_map={"form 1":"8","form 2":"9","form 3":"10","form 4":"11","form 5":"12","8":"form 1","9":"form 2","10":"form 3","11":"form 4","12":"form 5"};if(_g!==_k&&_map[_g]!==_k&&_map[_k]!==_g)return!1};if(Ur!=="All"&&o.paper_type!==Ur)return!1;if(Br!=="All"&&o.year!==Br)return!1;return!0})},[ma,$r,Vr,Hr,Ur,Br]),Gr=S.useMemo(()=>{return ya.filter((o)=>{if(Ar!=="All"&&(o.subject||"").trim().toLowerCase()!==Ar.trim().toLowerCase())return!1;if(Kr!=="All"){let _g=(o.grade||"").toString().trim().toLowerCase(),_k=Kr.toString().trim().toLowerCase(),_map={"form 1":"8","form 2":"9","form 3":"10","form 4":"11","form 5":"12","8":"form 1","9":"form 2","10":"form 3","11":"form 4","12":"form 5"};if(_g!==_k&&_map[_g]!==_k&&_map[_k]!==_g)return!1};return!0})},[ya,Ar,Kr]),qr=S.useMemo(()=>{let o={};Wr.forEach((h)=>{o[h.id]={profile:h,totalScore:0,totalPossible:0,count:0,avg:0,subjects:new Set}}),wa.forEach((h)=>{if(!o[h.user_id])o[h.user_id]={profile:{id:h.user_id,name:"Learner",province:"Lusaka",district:"Lusaka",school:"Unknown",coins:0,streak:0,grade:"12"},totalScore:0,totalPossible:0,count:0,avg:0,subjects:new Set};let P=o[h.user_id];if(P.totalScore+=h.score||0,P.totalPossible+=h.total||1,P.count+=1,h.subject)P.subjects.add(h.subject)});let y=Object.values(o).map((h)=>{let P=h.count?h.totalScore/(h.totalPossible||h.count)*100:0;return{...h,avg:P,subjectCount:h.subjects.size}});return y=y.filter((h)=>{if(xn!=="All"&&h.profile.province!==xn)return!1;if(Xr!=="All"&&h.profile.district!==Xr)return!1;if(Yr!=="All"&&h.count>0&&!h.subjects.has(Yr))return!1;if(Zr&&!`${h.profile.name} ${h.profile.school} ${h.profile.district}`.toLowerCase().includes(Zr.toLowerCase()))return!1;return!0}),y.sort((h,P)=>{if(jn==="coins")return(P.profile.coins||0)-(h.profile.coins||0);if(jn==="avg")return P.avg-h.avg;if(jn==="quizzes")return P.count-h.count;if(jn==="total")return P.totalScore-h.totalScore;return 0}),y},[Wr,wa,xn,Xr,Yr,Zr,jn,zu]),Op=S.useMemo(()=>{let o={};return Wr.forEach((y)=>{if(!o[y.province])o[y.province]={count:0,schools:{}};o[y.province].count++,o[y.province].schools[y.school]=(o[y.province].schools[y.school]||0)+1}),Object.entries(o).map(([y,h])=>{let P=Object.entries(h.schools).sort((W,V)=>V[1]-W[1])[0];return{province:y,total:h.count,topSchool:P?`${P[0]} (${P[1]})`:"—"}})},[Wr]),Fp=S.useMemo(()=>{if(!Qr)return[];let o={};return qr.forEach((y)=>{let h=`${y.profile.province} / ${y.profile.district}`;if(!o[h])o[h]=[];o[h].push(y)}),Object.entries(o).map(([y,h])=>({district:y,top:h.slice(0,3)}))},[qr,Qr]),Dp=async()=>{if(!Ru.trim()){F("Enter title");return}if(!bn){F("Select PDF file");return}if(bn.size>10485760){F("File must be <10MB");return}if(bn.type!=="application/pdf"&&!bn.name.toLowerCase().endsWith(".pdf")){F("Only PDF allowed");return}Ta(!0);try{let o=wv(bn.name),y=`${Date.now()}_${o}`,{error:h}=await e.storage.from("past_papers").upload(y,bn);if(h)throw Error(h.message);let{data:P}=e.storage.from("past_papers").getPublicUrl(y),W={subject:za,grade:Ra,year:Pa,paper_type:Ma,title:Ru,description:Ia,file_url:P.publicUrl,file_name:o,province:r.province,district:r.district,school:r.school,uploaded_by:r.id},{error:V}=await e.from("past_papers").insert(W);if(V)throw Error(V.message);F("Paper uploaded live!"),La(""),Oa(""),Fa(null);let{data:j}=await e.from("past_papers").select("*").order("created_at",{ascending:!1}).limit(200);Tr(j||[])}catch(o){F(o.message)}finally{Ta(!1)}},Tp=async(o)=>{try{let h=(o.file_url||"").split("/past_papers/"),P=h[1]?h[1]:o.file_name;if(P)await e.storage.from("past_papers").remove([P]);let{error:W}=await e.from("past_papers").delete().eq("id",o.id);if(W)throw Error(W.message);Tr((V)=>V.filter((j)=>j.id!==o.id)),F("Deleted")}catch(y){F(y.message)}finally{Du(null)}},Wp=async()=>{if(!Pu.trim()){F("Enter question");return}if(!Mu||!Lu||!Iu||!Ou){F("Fill all options");return}try{let o={subject:Wa,grade:$a,topic:"General",year:"2024",question_text:Pu,option_a:Mu,option_b:Lu,option_c:Iu,option_d:Ou,correct_answer:Ka,explanation:Xa,marks:1,difficulty:"Medium",created_by:r.id},{error:y}=await e.from("quiz_questions").insert(o);if(y)throw Error(y.message);F("Quiz question added!"),Va(""),Ha(""),Ua(""),Ba(""),Aa(""),Ya("");let{data:h}=await e.from("quiz_questions").select("*").order("created_at",{ascending:!1}).limit(500);_u(h||[])}catch(o){F(o.message)}},$p=async()=>{if(!Fu.trim()){F("Enter video title");return}if(!Jr.trim()&&!vidFile){F("Provide YouTube URL or select video from phone");return}setVidUp(!0);try{let finalUrl=Jr.trim(),vType="mp4",thumb="";if(vidFile){let sName=vidFile.name.replace(/\s+/g,"_").replace(/[^a-zA-Z0-9._-]/g,""),fName=Date.now()+"_"+sName,{error:upErr}=await e.storage.from("videos").upload(fName,vidFile,{contentType:vidFile.type||"video/mp4",upsert:true});if(upErr){if(upErr.message.includes("row-level security")||upErr.message.includes("AccessDenied")||upErr.message.includes("403")){throw Error("Upload blocked: Please try again.")}throw Error(upErr.message)}let{data:urlData}=e.storage.from("videos").getPublicUrl(fName);finalUrl=urlData.publicUrl;vType="mp4"}else{let yt=Ad(Jr);vType=yt?"youtube":"mp4";thumb=yt?"https://img.youtube.com/vi/"+yt+"/hqdefault.jpg":""}
+`;function wv(e){return e.replace(/\s+/g,"_").replace(/[^a-zA-Z0-9._-]/g,"")}function oa(e){return/^(09|07)\d{8}$/.test(e)}function aa(e){return"+26"+e.slice(1)}function Ad(e){let n=e.match(/(?:youtube\.com\/watch\?v=|youtu\.be\/|youtube\.com\/embed\/)([^&\s]+)/);return n?n[1]:null}function ca(){let e=S.useMemo(()=>hv(ia,Ir),[]),[n,t]=S.useState({ok:null,count:0,msg:"Connecting..."}),[r,l]=S.useState(()=>{try{let o=localStorage.getItem("zed_user");return o?JSON.parse(o):null}catch{return null}}),[u,i]=S.useState("password"),[a,f]=S.useState(""),[m,g]=S.useState(""),[k,w]=S.useState(!1),[_,z]=S.useState(""),[N,D]=S.useState(!1),[d,s]=S.useState(""),[p,E]=S.useState(!1),R=S.useRef({}),[I,O]=S.useState(null),[M,x]=S.useState("papers"),[$,Ce]=S.useState(!1),[xe,Yd]=S.useState(""),[sn,Zd]=S.useState(""),[je,Qd]=S.useState("Lusaka"),[Fr,fa]=S.useState(Or.Lusaka[0]),[ku,Jd]=S.useState(""),[Ot,Gd]=S.useState(""),[Fn,sa]=S.useState(!1),[Ft,qd]=S.useState(""),[Dr,xd]=S.useState("12"),[Eu,jd]=S.useState(""),[da,bd]=S.useState(""),[pa,be]=S.useState(!1),[ma,Tr]=S.useState([]),[ep,va]=S.useState(!1),[ya,_u]=S.useState([]),[Cu,np]=S.useState([]),[ha,ga]=S.useState([]),[Wr,tp]=S.useState([]),[wa,ka]=S.useState([]),[Ea,rp]=S.useState([]),[lp,up]=S.useState({}),[$r,ip]=S.useState(""),[Vr,op]=S.useState("All"),[Hr,ap]=S.useState("All"),[Ur,cp]=S.useState("All"),[Br,fp]=S.useState("All"),[Ar,sp]=S.useState("All"),[Kr,dp]=S.useState("All"),[Te,Su]=S.useState(null),[_a,Ca]=S.useState({}),[Nu,Sa]=S.useState(0),[xn,pp]=S.useState("All"),[Xr,Na]=S.useState("All"),[zu,mp]=S.useState("All Time"),[Yr,vp]=S.useState("All"),[Zr,yp]=S.useState(""),[jn,hp]=S.useState("coins"),[Qr,gp]=S.useState(!1),[za,wp]=S.useState("Mathematics"),[Ra,kp]=S.useState("12"),[Pa,Ep]=S.useState("2023"),[Ma,_p]=S.useState("ECZ"),[Ru,La]=S.useState(""),[Ia,Oa]=S.useState(""),[bn,Fa]=S.useState(null),[Da,Ta]=S.useState(!1),[Wa,Cp]=S.useState("Mathematics"),[$a,Sp]=S.useState("12"),[Pu,Va]=S.useState(""),[Mu,Ha]=S.useState(""),[Lu,Ua]=S.useState(""),[Iu,Ba]=S.useState(""),[Ou,Aa]=S.useState(""),[Ka,Np]=S.useState("A"),[Xa,Ya]=S.useState(""),[Fu,Za]=S.useState(""),[Jr,Qa]=S.useState(""),[Ja,zp]=S.useState("Mathematics"),[Ga,Rp]=S.useState("12"),[qa,Du]=S.useState(null),[admKey,setAdmKey]=S.useState(""),[admOk,setAdmOk]=S.useState(!1),[vidFile,setVidFile]=S.useState(null),[vidUp,setVidUp]=S.useState(!1),F=(o)=>{console.log("[ZED TOAST]",o),O(o),setTimeout(()=>O(null),4500)};S.useEffect(()=>{(async()=>{try{let{count:o,error:y,data:h}=await e.from("profiles").select("*",{count:"exact",head:!0})._execute();if(y)t({ok:!1,count:0,msg:y.message.slice(0,140)});else t({ok:!0,count:o||(Array.isArray(h)?h.length:0),msg:`online`})}catch(o){t({ok:!1,count:0,msg:o.message})}})()},[e]),S.useEffect(()=>{if(!r)return;(async()=>{if(M==="papers"||M==="admin"){va(!0);let{data:y}=await e.from("past_papers").select("*").order("created_at",{ascending:!1}).limit(200);Tr(y||[]),va(!1)}if(M==="quizzes"){let{data:y}=await e.from("quiz_questions").select("*").order("created_at",{ascending:!1}).limit(500);_u(y||[])}if(M==="documents"){let{data:y}=await e.from("documents").select("*").order("created_at",{ascending:!1}).limit(200);np(y||[])}if(M==="videos"){let{data:y}=await e.from("videos").select("*").order("created_at",{ascending:!1}).limit(5000);ga(y||[])}if(M==="leaderboard"){let[{data:y},{data:h}]=await Promise.all([e.from("profiles").select("id,name,province,district,school,coins,streak,grade,avatar,avatar_url").limit(500),e.from("quiz_attempts").select("user_id,score,total,subject,created_at").order("created_at",{ascending:!1}).limit(500)]);tp(y||[]),ka(h||[])}if(M==="profile"){let{data:y}=await e.from("quiz_attempts").select("*").order("created_at",{ascending:!1}).limit(200),h=(y||[]).filter((P)=>P.user_id===r.id);rp(h)}if(M==="admin"){let y=["profiles","past_papers","quiz_questions","documents","videos","quiz_attempts"],h={};for(let W of y){let{count:V}=await e.from(W).select("*",{count:"exact",head:!0})._execute();h[W]=V||0}up(h);let{data:P}=await e.from("quiz_questions").select("*").order("created_at",{ascending:!1}).limit(20);_u(P||[])}})()},[M,r,e]),S.useEffect(()=>{if(!r)return;(async()=>{let{data:o}=await e.from("past_papers").select("*").order("created_at",{ascending:!1}).limit(20);if(o)Tr((y)=>y.length?y:o)})()},[r,e]),S.useEffect(()=>{let o=Or[je];if(o&&!o.includes(Fr))fa(o[0])},[je]),S.useEffect(()=>{if(!Te)return;let o=setInterval(()=>Sa((y)=>y+1),1000);return()=>clearInterval(o)},[Te]),S.useEffect(()=>{if(r)return;let o=()=>{let P=document.getElementById("zed-signup-open");if(P&&!P._zedNativeHandler){let V=(j)=>{try{console.log("[ZED] Native signup click handler clean"),P.textContent="Opening signup... ✓",P.setAttribute("data-opened","1"),P.setAttribute("data-native-clicked","1");let ne="zed-native-feedback";if(!document.getElementById(ne)){let b=document.createElement("div");b.id=ne,b.textContent="Opening signup...",b.style.position="fixed",b.style.bottom="110px",b.style.left="12px",b.style.right="12px",b.style.background="#8CFF8A",b.style.color="#000",b.style.padding="12px",b.style.borderRadius="10px",b.style.zIndex="99999",b.style.fontSize="13px",b.style.fontWeight="700",document.body.appendChild(b),setTimeout(()=>{try{b.remove()}catch{}},3000)}let T=document.getElementById("signup");if(T)T.style.display="block";try{location.hash="#signup"}catch{}}catch(ne){console.log("native handler error",ne)}};P.addEventListener("click",V),P.addEventListener("pointerdown",V),P._zedNativeHandler=V}let W=document.getElementById("zed-login-btn");if(W&&!W._zedNativeHandler){let V=(j)=>{try{if(console.log("[ZED] Native login click handler clean"),W.textContent="Logging in... ✓",W.setAttribute("data-clicked","1"),W.setAttribute("data-native-clicked","1"),!document.getElementById("login-click-feedback")){let T=document.createElement("div");T.id="login-click-feedback",T.textContent="Checking credentials...",T.style.position="fixed",T.style.bottom="80px",T.style.left="12px",T.style.right="12px",T.style.background="#8CFF8A",T.style.color="#000",T.style.padding="12px",T.style.borderRadius="10px",T.style.zIndex="99999",T.style.fontSize="13px",T.style.fontWeight="700",document.body.appendChild(T),setTimeout(()=>{try{T.remove()}catch{}},3000)}}catch(ne){console.log("login native error",ne)}};W.addEventListener("click",V),W.addEventListener("pointerdown",V),W._zedNativeHandler=V}},y=setTimeout(o,100),h=setInterval(o,500);return()=>{clearTimeout(y),clearInterval(h);let P=document.getElementById("zed-signup-open");if(P&&P._zedNativeHandler)P.removeEventListener("click",P._zedNativeHandler),P.removeEventListener("pointerdown",P._zedNativeHandler);let W=document.getElementById("zed-login-btn");if(W&&W._zedNativeHandler)W.removeEventListener("click",W._zedNativeHandler),W.removeEventListener("pointerdown",W._zedNativeHandler)}},[r,$,u]);let Pp=async()=>{if(console.log("[ZED] Login attempt v31 hotfix",a),w(!0),F("Checking credentials..."),!oa(a)){F("Phone must be 10 digits starting 09 or 07"),w(!1);return}if(!m)F("Enter password (if your profile has password) or use OTP");try{let{data:o,error:y}=await e.from("profiles").select("id,phone,name,school,grade,province,district,coins,streak,password,avatar,avatar_url").eq("phone",a).maybeSingle();if(y||!o){F("Profile not found. Please sign up."),w(!1);return}if(typeof o.password<"u"&&o.password!==null&&o.password!==""){if(!m){F("Enter correct password for this account"),w(!1);return}if(o.password!==m){F("Incorrect password — try again or use OTP"),w(!1);return}}else{if(m){F("No password set for this account. Please use OTP login or reset password."),w(!1);return}}localStorage.setItem("zed_user",JSON.stringify(o));try{if(o.avatar||o.avatar_url) localStorage.setItem("zed_avatar",o.avatar||o.avatar_url);}catch(e){} l(o),F(`Welcome back ${o.name}!`),window.zedShowWelcomePopup&&window.zedShowWelcomePopup(o.name,true)}catch(o){F(o.message)}finally{w(!1)}},Mp=async()=>{if(console.log("[ZED] Send OTP",_),!oa(_)){F("Phone must be 10 digits starting 09 or 07");return}E(!0),F("Sending OTP live... checking Twilio config");try{let o=await fetch(`${ia}/auth/v1/otp`,{method:"POST",headers:{apikey:Ir,"Content-Type":"application/json",Authorization:`Bearer ${Ir}`},body:JSON.stringify({phone:aa(_)}),mode:"cors"}),y=await o.json().catch(()=>({}));if(!o.ok)throw Error(y.error_description||y.msg||JSON.stringify(y));F(`OTP sent to ${aa(_)}`);let h=Math.floor(1e5+Math.random()*900000).toString();R.current[_]=h,F(`Live SMS sent. Test code fallback: ${h} if SMS not configured`),D(!0)}catch(o){let y=Math.floor(1e5+Math.random()*900000).toString();R.current[_]=y,D(!0),F(`SMS provider not enabled. Simulated OTP: ${y}. Please try again.`)}finally{E(!1)}},Lp=async()=>{if(!d||d.length!==6){F("Enter 6-digit code");return}E(!0);try{let o=!1;try{let h=await fetch(`${ia}/auth/v1/verify`,{method:"POST",headers:{apikey:Ir,"Content-Type":"application/json",Authorization:`Bearer ${Ir}`},body:JSON.stringify({phone:aa(_),token:d,type:"sms"}),mode:"cors"}),P=await h.json().catch(()=>({}));if(h.ok)o=!0;else if(R.current[_]===d)o=!0;else throw Error(P.error_description||"Invalid code")}catch(h){if(R.current[_]===d)o=!0;else throw h}if(!o)throw Error("Verification failed");let{data:y}=await e.from("profiles").select("*").eq("phone",_).maybeSingle();if(y)localStorage.setItem("zed_user",JSON.stringify(y)),l(y),F(`Welcome ${y.name}! v31`);else{let h={phone:_,name:`Learner ${_.slice(-4)}`,province:"Lusaka",district:"Lusaka",school:"Munali Boys Secondary",grade:"12",account_code:`ZED-${Date.now()}`,coins:0,streak:0},P={phone:_,name:`Learner ${_.slice(-4)}`,school:"Munali Boys Secondary",grade:"12"},W=null,V=null;try{let j=await e.from("profiles").insert(h).select().single();if(j.error)throw Error(j.error.message);W=j.data}catch(j){V=j;let ne=(j.message||"").toLowerCase();if(ne.includes("province")||ne.includes("district")||ne.includes("account_code")||ne.includes("coins")||ne.includes("streak")||ne.includes("pgrst204"))try{let T=await e.from("profiles").insert(P).select().single();if(T.error)throw Error(T.error.message);W=T.data,V=null}catch(T){V=T}}if(V)throw V;localStorage.setItem("zed_user",JSON.stringify(W)),l(W),F(`Welcome ${W.name}!`),window.zedShowWelcomePopup&&window.zedShowWelcomePopup(W.name,false)}}catch(o){F(o.message)}finally{E(!1)}},Ip=async()=>{if(console.log("[ZED] handleSignup v31 hotfix",{suName:xe,suPhone:sn,suProvince:je,suDistrict:Fr,suSchool:Ot,suCustomSchool:Fn,customText:Ft}),be(!0),F("Signing up..."),!xe.trim()||xe.trim().length<2){F("Enter full name"),be(!1);return}if(!oa(sn)){F("Phone must be 10 digits starting 09 or 07"),be(!1);return}if(Eu.length<3){F("Password min 3 chars"),be(!1);return}if(Eu!==da){F("Passwords mismatch"),be(!1);return}let o=Fn?Ft.trim():Ot;if(!o){F("Select school — search or add a custom school"),be(!1);return}if(Fn&&o.length<3){F("Enter custom school name e.g. Your school name"),be(!1);return}try{console.log("[ZED] v31 Checking phone unique",sn);let{data:y}=await e.from("profiles").select("id").eq("phone",sn).maybeSingle();if(y){F("Phone already registered — try login"),be(!1);return}let h={phone:sn,name:xe.trim(),school:o,grade:Dr,account_code:`ZED-${Date.now()}`,coins:0,streak:0,province:je,district:Fr,password:Eu},P={phone:sn,name:xe.trim(),school:o,grade:Dr,account_code:`ZED-${Date.now()}`,coins:0,streak:0,password:Eu},W={phone:sn,name:xe.trim(),school:o,grade:Dr,password:Eu};console.log("[ZED] v31 Inserting profile full",h);let V=null,j=null;try{let{data:ne,error:T}=await e.from("profiles").insert(h).select().single();if(T)throw Error(T.message);V=ne}catch(ne){j=ne;let T=(ne.message||"").toLowerCase();if(console.log("[ZED] v31 first insert failed",T),T.includes("password")||T.includes("province")||T.includes("district")||T.includes("account_code")||T.includes("coins")||T.includes("streak")||T.includes("pgrst204")||T.includes("schema cache"))try{console.log("[ZED] v31 retry without province/district");let{data:b,error:Xe}=await e.from("profiles").insert(P).select().single();if(Xe)throw Error(Xe.message);V=b,j=null}catch(b){j=b;let Xe=(b.message||"").toLowerCase();if(console.log("[ZED] v31 second insert failed",Xe),Xe.includes("account_code")||Xe.includes("coins")||Xe.includes("streak")||Xe.includes("province")||Xe.includes("district")||Xe.includes("pgrst204"))try{console.log("[ZED] v31 retry minimal payload");let{data:Wu,error:ja}=await e.from("profiles").insert(W).select().single();if(ja)throw Error(ja.message);V=Wu,j=null}catch(Wu){j=Wu}}}if(j)throw j;if(!V)throw Error("Insert returned empty - check RLS policies");console.log("[ZED] Signup success v31",V),localStorage.setItem("zed_user",JSON.stringify(V)),l(V),F(`Account created! Welcome ${V.name} — ${V.school} (${V.province||je}) v31 hotfix`),Ce(!1)}catch(y){console.error("[ZED] Signup error v31",y),F(`Signup failed v31: ${y.message} — Try Admin SQL Fix PGRST204 helper below`)}finally{be(!1)}},Tu=S.useMemo(()=>{return ma.filter((o)=>{if($r&&!`${o.title} ${o.subject} ${o.year} ${o.school||""}`.toLowerCase().includes($r.toLowerCase()))return!1;if(Vr!=="All"&&o.subject!==Vr)return!1;if(Hr!=="All"){let _g=(o.grade||"").toString().trim().toLowerCase(),_k=Hr.toString().trim().toLowerCase(),_map={"form 1":"8","form 2":"9","form 3":"10","form 4":"11","form 5":"12","8":"form 1","9":"form 2","10":"form 3","11":"form 4","12":"form 5"};if(_g!==_k&&_map[_g]!==_k&&_map[_k]!==_g)return!1};if(Ur!=="All"&&o.paper_type!==Ur)return!1;if(Br!=="All"&&o.year!==Br)return!1;return!0})},[ma,$r,Vr,Hr,Ur,Br]),Gr=S.useMemo(()=>{return ya.filter((o)=>{if(Ar!=="All"&&(o.subject||"").trim().toLowerCase()!==Ar.trim().toLowerCase())return!1;if(Kr!=="All"){let _g=(o.grade||"").toString().trim().toLowerCase(),_k=Kr.toString().trim().toLowerCase(),_map={"form 1":"8","form 2":"9","form 3":"10","form 4":"11","form 5":"12","8":"form 1","9":"form 2","10":"form 3","11":"form 4","12":"form 5"};if(_g!==_k&&_map[_g]!==_k&&_map[_k]!==_g)return!1};return!0})},[ya,Ar,Kr]),qr=S.useMemo(()=>{let o={};Wr.forEach((h)=>{o[h.id]={profile:h,totalScore:0,totalPossible:0,count:0,avg:0,subjects:new Set}}),wa.forEach((h)=>{if(!o[h.user_id])o[h.user_id]={profile:{id:h.user_id,name:"Learner",province:"Lusaka",district:"Lusaka",school:"Unknown",coins:0,streak:0,grade:"12"},totalScore:0,totalPossible:0,count:0,avg:0,subjects:new Set};let P=o[h.user_id];if(P.totalScore+=h.score||0,P.totalPossible+=h.total||1,P.count+=1,h.subject)P.subjects.add(h.subject)});let y=Object.values(o).map((h)=>{let P=h.count?h.totalScore/(h.totalPossible||h.count)*100:0;return{...h,avg:P,subjectCount:h.subjects.size}});return y=y.filter((h)=>{if(xn!=="All"&&h.profile.province!==xn)return!1;if(Xr!=="All"&&h.profile.district!==Xr)return!1;if(Yr!=="All"&&h.count>0&&!h.subjects.has(Yr))return!1;if(Zr&&!`${h.profile.name} ${h.profile.school} ${h.profile.district}`.toLowerCase().includes(Zr.toLowerCase()))return!1;return!0}),y.sort((h,P)=>{if(jn==="coins")return(P.profile.coins||0)-(h.profile.coins||0);if(jn==="avg")return P.avg-h.avg;if(jn==="quizzes")return P.count-h.count;if(jn==="total")return P.totalScore-h.totalScore;return 0}),y},[Wr,wa,xn,Xr,Yr,Zr,jn,zu]),Op=S.useMemo(()=>{let o={};return Wr.forEach((y)=>{if(!o[y.province])o[y.province]={count:0,schools:{}};o[y.province].count++,o[y.province].schools[y.school]=(o[y.province].schools[y.school]||0)+1}),Object.entries(o).map(([y,h])=>{let P=Object.entries(h.schools).sort((W,V)=>V[1]-W[1])[0];return{province:y,total:h.count,topSchool:P?`${P[0]} (${P[1]})`:"—"}})},[Wr]),Fp=S.useMemo(()=>{if(!Qr)return[];let o={};return qr.forEach((y)=>{let h=`${y.profile.province} / ${y.profile.district}`;if(!o[h])o[h]=[];o[h].push(y)}),Object.entries(o).map(([y,h])=>({district:y,top:h.slice(0,3)}))},[qr,Qr]),Dp=async()=>{if(!Ru.trim()){F("Enter title");return}if(!bn){F("Select PDF file");return}if(bn.size>10485760){F("File must be <10MB");return}if(bn.type!=="application/pdf"&&!bn.name.toLowerCase().endsWith(".pdf")){F("Only PDF allowed");return}Ta(!0);try{let o=wv(bn.name),y=`${Date.now()}_${o}`,{error:h}=await e.storage.from("past_papers").upload(y,bn);if(h)throw Error(h.message);let{data:P}=e.storage.from("past_papers").getPublicUrl(y),W={subject:za,grade:Ra,year:Pa,paper_type:Ma,title:Ru,description:Ia,file_url:P.publicUrl,file_name:o,province:r.province,district:r.district,school:r.school,uploaded_by:r.id},{error:V}=await e.from("past_papers").insert(W);if(V)throw Error(V.message);F("Paper uploaded live!"),La(""),Oa(""),Fa(null);let{data:j}=await e.from("past_papers").select("*").order("created_at",{ascending:!1}).limit(200);Tr(j||[])}catch(o){F(o.message)}finally{Ta(!1)}},Tp=async(o)=>{try{let h=(o.file_url||"").split("/past_papers/"),P=h[1]?h[1]:o.file_name;if(P)await e.storage.from("past_papers").remove([P]);let{error:W}=await e.from("past_papers").delete().eq("id",o.id);if(W)throw Error(W.message);Tr((V)=>V.filter((j)=>j.id!==o.id)),F("Deleted")}catch(y){F(y.message)}finally{Du(null)}},Wp=async()=>{if(!Pu.trim()){F("Enter question");return}if(!Mu||!Lu||!Iu||!Ou){F("Fill all options");return}try{let o={subject:Wa,grade:$a,topic:"General",year:"2024",question_text:Pu,option_a:Mu,option_b:Lu,option_c:Iu,option_d:Ou,correct_answer:Ka,explanation:Xa,marks:1,difficulty:"Medium",created_by:r.id},{error:y}=await e.from("quiz_questions").insert(o);if(y)throw Error(y.message);F("Quiz question added!"),Va(""),Ha(""),Ua(""),Ba(""),Aa(""),Ya("");let{data:h}=await e.from("quiz_questions").select("*").order("created_at",{ascending:!1}).limit(500);_u(h||[])}catch(o){F(o.message)}},$p=async()=>{if(!Fu.trim()){F("Enter video title");return}if(!Jr.trim()&&!vidFile){F("Provide YouTube URL or select video from phone");return}setVidUp(!0);try{let finalUrl=Jr.trim(),vType="mp4",thumb="";if(vidFile){let sName=vidFile.name.replace(/\s+/g,"_").replace(/[^a-zA-Z0-9._-]/g,""),fName=Date.now()+"_"+sName,{error:upErr}=await e.storage.from("videos").upload(fName,vidFile,{contentType:vidFile.type||"video/mp4",upsert:true});if(upErr){if(upErr.message.includes("row-level security")||upErr.message.includes("AccessDenied")||upErr.message.includes("403")){throw Error("Upload blocked: Please try again.")}throw Error(upErr.message)}let{data:urlData}=e.storage.from("videos").getPublicUrl(fName);finalUrl=urlData.publicUrl;vType="mp4"}else{let yt=Ad(Jr);vType=yt?"youtube":"mp4";thumb=yt?"https://img.youtube.com/vi/"+yt+"/hqdefault.jpg":""}
 let _zedTopicEl=document.getElementById("zed-topic-input");
 let _zedTopicVal=_zedTopicEl?_zedTopicEl.value.trim():"";
 let y={subject:Ja,grade:Ga,topic:_zedTopicVal||"General",title:Fu,description:"",video_url:finalUrl,video_type:vType,thumbnail_url:thumb,uploaded_by:r.id},{error:h}=await e.from("videos").insert(y);
@@ -7982,7 +7982,7 @@ console.log('[ZED] Welcome popup + fast login active');
     <div id="zed-chat-head">
       <button id="zed-chat-back" type="button" style="background:none;border:none;color:#fff;font-size:22px;cursor:pointer">‹</button>
       <div style="flex:1"><div style="font-weight:900;color:#fff;font-size:16px">💬 ZED CHATS</div><div style="color:#8CFF8A;font-size:11px">Chats delete after 1 hour • Form 1-5 & Grade 10-12</div></div>
-      <button id="zed-chat-add-open" type="button" style="background:#8CFF8A;color:#000;border:none;border-radius:999px;padding:7px 12px;font-weight:900;font-size:12px;cursor:pointer">+ ADD FRIEND</button>
+      <button id="zed-chat-add-open" type="button" style="background:#8CFF8A;color:#000;border:none;border-radius:999px;padding:7px 10px;font-weight:900;font-size:11px;cursor:pointer;white-space:nowrap">🔍 Search for friends</button>
     </div>
     <div id="zed-chat-tabs" style="display:flex;gap:6px;padding:10px 12px;background:#0F0E0B;border-bottom:1px solid #333">
       <button id="zed-tab-chats" type="button" style="flex:1;background:#8CFF8A;color:#000;border:none;border-radius:999px;padding:10px;font-weight:900;font-size:13px;cursor:pointer">💬 CHATS</button>
@@ -7992,14 +7992,14 @@ console.log('[ZED] Welcome popup + fast login active');
     <div id="zed-chat-friends-list" style="display:none;flex:1;overflow-y:auto"></div>
     <div id="zed-chat-requests-list" style="display:none;flex:1;overflow-y:auto"></div>
     <div id="zed-chat-search-add" style="display:none;padding:10px 12px;background:#0F0E0B;border-bottom:1px solid #333">
-      <input id="zed-chat-search-input" placeholder="Search name or school, e.g. Chanda or Munali" style="width:100%;background:#1e1e1e;color:#fff;border:1px solid #333;border-radius:10px;padding:10px;font-size:13px"/>
+      <input id="zed-chat-search-input" placeholder="Search for friends - name or school, e.g. Chanda or Munali" style="width:100%;background:#1e1e1e;color:#fff;border:1px solid #333;border-radius:10px;padding:10px;font-size:13px"/>
       <div id="zed-chat-search-results" style="margin-top:8px;display:flex;flex-direction:column;gap:6px"></div>
     </div>
     <div id="zed-chat-list" style="flex:1;overflow-y:auto"></div>
     <div id="zed-chat-view" style="display:none;flex:1;flex-direction:column">
       <div id="zed-chat-view-head" style="display:flex;align-items:center;gap:10px;padding:10px 12px;background:#1a1a1a;border-bottom:1px solid #333">
         <button id="zed-chat-view-back" type="button" style="background:none;border:none;color:#fff;font-size:20px;cursor:pointer">‹</button>
-        <div id="zed-chat-view-name" style="flex:1;font-weight:800;color:#fff;font-size:15px"></div>
+        <div id="zed-chat-view-avatar" title="Tap to view profile" style="width:40px;height:40px;min-width:40px;border-radius:999px;overflow:hidden;background:#222;display:flex;align-items:center;justify-content:center;font-weight:900;color:#fff;font-size:16px;border:2px solid #8CFF8A;cursor:pointer;display:none"></div><div id="zed-chat-view-name" style="flex:1;font-weight:800;color:#fff;font-size:15px;cursor:pointer" title="Tap to view profile"></div>
         <div style="font-size:11px;color:#FF9A9A">⏳ Deletes in 1hr</div>
       </div>
       <div id="zed-chat-msgs"></div>
@@ -8129,7 +8129,25 @@ console.log('[ZED] Welcome popup + fast login active');
     var me=getMe(); if(!me) return;
     var friendsList=document.getElementById('zed-chat-friends-list');
     if(!friendsList) return;
-    friendsList.innerHTML='<div style="padding:16px;color:#999;text-align:center">Loading friends...</div>';
+    // OFFLINE: show saved friends instantly, like CHATS tab
+    try{
+      var _fc=zedCacheGet('zed_friends_cache_v1');
+      if(_fc && _fc.friends && _fc.friends.length){
+        var _tmp=document.createElement('div');
+        // No banner - offline works silently
+        _fc.friends.forEach(function(f){
+          var _row=document.createElement('div'); _row.style.cssText='display:flex;justify-content:space-between;align-items:center;padding:12px;border-bottom:1px solid #222';
+          var _av=(f.avatar||f.avatar_url||'');
+          _row.innerHTML='<div style="display:flex;gap:10px;align-items:center;flex:1;min-width:0;cursor:pointer" class="zed-friends-person"><div class="zed-friends-avatar" data-profile-id="'+(f.id||'')+'" title="Tap to view profile pic" style="position:relative;width:48px;height:48px;min-width:48px;border-radius:999px;overflow:hidden;background:#222;display:flex;align-items:center;justify-content:center;font-weight:900;color:#fff;font-size:18px;border:2px solid #8CFF8A;cursor:pointer">'+(_av?'<img src="'+_av+'" style="width:100%;height:100%;object-fit:cover" />':(f.name||'S')[0])+'</div><div style="min-width:0"><div style="font-weight:800;color:#fff;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">'+(f.name||'Student')+'</div><div style="font-size:12px;color:#999;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">'+(f.school||'')+' • '+(f.grade||'')+'</div></div></div><button style="background:#8CFF8A;color:#000;border:none;border-radius:999px;padding:8px 14px;font-weight:900;font-size:12px;cursor:pointer;min-width:72px">CHAT →</button>';
+          (function(_f,_r){ _r.querySelector('button').addEventListener('click', function(ev){ ev.stopPropagation(); switchChatTab('chats'); setTimeout(function(){ showView(_f); }, 100); }); var _pers=_r.querySelector('.zed-friends-person'); if(_pers) _pers.addEventListener('click', function(ev){ if(ev.target.closest && ev.target.closest('button')) return; var _avEl=ev.target.closest && ev.target.closest('.zed-friends-avatar'); if(_avEl){ ev.stopPropagation(); if(window.zedOpenProfilePic) window.zedOpenProfilePic(_f); return; } if(window.zedOpenUserProfile) window.zedOpenUserProfile(_f,{friendStatus:{status:'accepted',dir:'both'}}); }); })(f,_row);
+          _tmp.appendChild(_row);
+        });
+        friendsList.innerHTML=''; while(_tmp.firstChild) friendsList.appendChild(_tmp.firstChild);
+        if(window.zedRefreshPresence) window.zedRefreshPresence();
+      } else {
+        friendsList.innerHTML='<div style="padding:16px;color:#999;text-align:center">Loading friends...</div>';
+      }
+    }catch(e){ friendsList.innerHTML='<div style="padding:16px;color:#999;text-align:center">Loading friends...</div>'; }
     try{
       var allRows=await fetchFriendships(me);
       if(!Array.isArray(allRows)) allRows=[];
@@ -8137,18 +8155,25 @@ console.log('[ZED] Welcome popup + fast login active');
       allRows.forEach(function(r){ if(r.user_id===me.id) outSet[r.friend_id]=true; if(r.friend_id===me.id) inSet[r.user_id]=true; });
       var friendIds=[];
       Object.keys(outSet).forEach(function(id){ if(inSet[id] && friendIds.indexOf(id)===-1) friendIds.push(id); });
-      if(friendIds.length===0){ friendsList.innerHTML='<div style="padding:20px;color:#999;text-align:center">No friends yet.<br/>Tap + ADD FRIEND to find friends.</div>'; return; }
-      var res3=await fetch(SUPA_URL+'/rest/v1/profiles?select=id,name,school,grade&or=('+friendIds.map(function(id){ return 'id.eq.'+id; }).join(',')+')', {headers:headers()});
+      if(friendIds.length===0){
+        var _fcEmpty=zedCacheGet('zed_friends_cache_v1');
+        if(_fcEmpty && _fcEmpty.friends && _fcEmpty.friends.length){ return; } // already showing saved friends at top - don't wipe
+        // No offline banner - just show normal empty state
+        friendsList.innerHTML='<div style="padding:20px;color:#999;text-align:center">No friends yet.<br/>Tap Search for friends to find friends.</div>'; return; }
+      var res3=await fetch(SUPA_URL+'/rest/v1/profiles?select=id,name,school,grade,province,district,avatar,avatar_url,coins,streak,created_at&or=('+friendIds.map(function(id){ return 'id.eq.'+id; }).join(',')+')', {headers:headers()});
       var friends=await res3.json();
       friendsList.innerHTML='';
       (friends||[]).forEach(function(f){
         var row=document.createElement('div');
         row.style.cssText='display:flex;justify-content:space-between;align-items:center;padding:12px;border-bottom:1px solid #222';
-        row.innerHTML='<div style="display:flex;gap:10px;align-items:center"><div style="width:44px;height:44px;border-radius:999px;background:#222;display:flex;align-items:center;justify-content:center;font-weight:900;color:#fff;font-size:18px">'+(f.name||'S')[0]+'</div><div><div style="font-weight:800;color:#fff">'+(f.name||'Student')+'</div><div style="font-size:12px;color:#999">'+(f.school||'')+' • '+(f.grade||'')+'</div></div></div><button style="background:#8CFF8A;color:#000;border:none;border-radius:999px;padding:8px 14px;font-weight:900;font-size:12px;cursor:pointer">CHAT →</button>';
+        row.innerHTML='<div class="zed-friends-person" style="display:flex;gap:10px;align-items:center;flex:1;min-width:0;cursor:pointer"><div class="zed-friends-avatar" data-profile-id="'+(f.id||'')+'" title="Tap to view profile pic" style="position:relative;width:48px;height:48px;min-width:48px;border-radius:999px;overflow:hidden;background:#222;display:flex;align-items:center;justify-content:center;font-weight:900;color:#fff;font-size:18px;border:2px solid #8CFF8A;cursor:pointer">'+((f.avatar||f.avatar_url)?'<img src="'+(f.avatar||f.avatar_url)+'" style="width:100%;height:100%;object-fit:cover" />':(f.name||'S')[0])+'</div><div style="min-width:0"><div style="font-weight:800;color:#fff;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">'+(f.name||'Student')+'</div><div style="font-size:12px;color:#999;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">'+(f.school||'')+' • '+(f.grade||'')+'</div></div></div><button style="background:#8CFF8A;color:#000;border:none;border-radius:999px;padding:8px 14px;font-weight:900;font-size:12px;cursor:pointer;min-width:72px">CHAT →</button>';
+        (function(_f,_r){ var _pers=_r.querySelector('.zed-friends-person'); if(_pers) _pers.addEventListener('click', function(ev){ var _avEl=ev.target.closest && ev.target.closest('.zed-friends-avatar'); if(_avEl){ ev.stopPropagation(); if(window.zedOpenProfilePic) window.zedOpenProfilePic(_f); return; } if(window.zedOpenUserProfile) window.zedOpenUserProfile(_f,{friendStatus:{status:'accepted',dir:'both'}}); }); })(f,row);
         row.querySelector('button').addEventListener('click', function(){ switchChatTab('chats'); setTimeout(function(){ showView(f); }, 100); });
         friendsList.appendChild(row);
       });
-    }catch(e){ friendsList.innerHTML='<div style="padding:20px;color:#999;text-align:center">No friends yet.<br/>Tap + ADD FRIEND to find friends.</div>'; }
+    }catch(e){
+      try{ var _fc2=zedCacheGet('zed_friends_cache_v1'); if(_fc2 && _fc2.friends && _fc2.friends.length){ loadFriendsListTab(); return; } }catch(_e){}
+      friendsList.innerHTML='<div style="padding:20px;color:#999;text-align:center">No friends yet.<br/>Tap Search for friends to find friends.</div>'; }
   }
   // Load Requests tab: incoming + outgoing
   async function loadRequestsTab(){
@@ -8173,11 +8198,11 @@ console.log('[ZED] Welcome popup + fast login active');
         reqList.appendChild(h);
         for(var i=0;i<incoming.length;i++){
           var sid=incoming[i].user_id;
-          var resP=await fetch(SUPA_URL+'/rest/v1/profiles?select=id,name,school,grade&id=eq.'+sid, {headers:headers()});
+          var resP=await fetch(SUPA_URL+'/rest/v1/profiles?select=id,name,school,grade,province,district,avatar,avatar_url,coins,streak,created_at&id=eq.'+sid, {headers:headers()});
           var pRows=await resP.json(); var p=pRows && pRows[0] ? pRows[0] : {name:'Student'};
           var card=document.createElement('div');
           card.style.cssText='display:flex;justify-content:space-between;align-items:center;background:#1e1e1e;border:1px solid #FFD93D;border-radius:12px;padding:12px;margin:0 12px 10px';
-          card.innerHTML='<div><div style="font-weight:800;color:#fff">'+(p.name||'Student')+'</div><div style="font-size:12px;color:#999">'+(p.school||'')+' • '+(p.grade||'')+'</div></div><div style="display:flex;gap:6px"><button data-act="accept" style="background:#8CFF8A;color:#000;border:none;border-radius:999px;padding:8px 12px;font-weight:900;font-size:12px">ACCEPT</button><button data-act="decline" style="background:#333;color:#fff;border:none;border-radius:999px;padding:8px 12px;font-weight:900;font-size:12px">DECLINE</button></div>';
+          card.innerHTML='<div class="zed-req-person" data-zed-profile-id="'+(p.id||'')+'" title="Tap to view profile" style="display:flex;align-items:center;gap:10px;flex:1;min-width:0;cursor:pointer"><div style="width:44px;height:44px;min-width:44px;border-radius:999px;overflow:hidden;background:#222;display:flex;align-items:center;justify-content:center;font-weight:900;color:#fff;font-size:16px;border:2px solid #8CFF8A">'+((p.avatar||p.avatar_url)?'<img src="'+(p.avatar||p.avatar_url)+'" style="width:100%;height:100%;object-fit:cover" />':(p.name||'S')[0])+'</div><div style="min-width:0"><div style="font-weight:800;color:#fff;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">'+(p.name||'Student')+'</div><div style="font-size:12px;color:#999">'+(p.school||'')+' \u2022 '+(p.grade||'')+'</div><div style="font-size:11px;color:#8CFF8A">Tap to view profile</div></div></div><div style="display:flex;gap:6px"><button data-act="accept" style="background:#8CFF8A;color:#000;border:none;border-radius:999px;padding:8px 12px;font-weight:900;font-size:12px">ACCEPT</button><button data-act="decline" style="background:#333;color:#fff;border:none;border-radius:999px;padding:8px 12px;font-weight:900;font-size:12px">DECLINE</button></div>';
           (function(sid2, cardEl){
             cardEl.querySelector('[data-act="accept"]').addEventListener('click', async function(){ await fetch(SUPA_URL+'/rest/v1/friendships', {method:'POST', headers:headers(), body: JSON.stringify({user_id:me.id, friend_id:sid2})}); loadRequestsTab(); loadFriends(); updateChatBadge(); });
             cardEl.querySelector('[data-act="decline"]').addEventListener('click', async function(){ await fetch(SUPA_URL+'/rest/v1/friendships?user_id=eq.'+sid2+'&friend_id=eq.'+me.id, {method:'DELETE', headers:headers()}); loadRequestsTab(); loadFriends(); updateChatBadge(); });
@@ -8190,44 +8215,68 @@ console.log('[ZED] Welcome popup + fast login active');
         reqList.appendChild(h2);
         for(var j=0;j<outgoing.length;j++){
           var oid=outgoing[j].friend_id;
-          var resP2=await fetch(SUPA_URL+'/rest/v1/profiles?select=id,name,school,grade&id=eq.'+oid, {headers:headers()});
+          var resP2=await fetch(SUPA_URL+'/rest/v1/profiles?select=id,name,school,grade,province,district,avatar,avatar_url,coins,streak,created_at&id=eq.'+oid, {headers:headers()});
           var pRows2=await resP2.json(); var p2=pRows2 && pRows2[0] ? pRows2[0] : {name:'Student'};
           var card2=document.createElement('div');
           card2.style.cssText='display:flex;justify-content:space-between;align-items:center;background:#1e1e1e;border:1px solid #333;border-radius:12px;padding:12px;margin:0 12px 10px';
-          card2.innerHTML='<div><div style="font-weight:800;color:#fff">'+(p2.name||'Student')+'</div><div style="font-size:12px;color:#999">'+(p2.school||'')+'</div></div><span style="background:#333;color:#999;border-radius:999px;padding:6px 10px;font-size:12px;font-weight:900">✓ REQUEST SENT</span>';
+          card2.innerHTML='<div class="zed-req-person" data-zed-profile-id="'+(p2.id||'')+'" title="Tap to view profile" style="display:flex;align-items:center;gap:10px;flex:1;min-width:0;cursor:pointer"><div style="width:44px;height:44px;min-width:44px;border-radius:999px;overflow:hidden;background:#222;display:flex;align-items:center;justify-content:center;font-weight:900;color:#fff;font-size:16px;border:2px solid #8CFF8A">'+((p2.avatar||p2.avatar_url)?'<img src="'+(p2.avatar||p2.avatar_url)+'" style="width:100%;height:100%;object-fit:cover" />':(p2.name||'S')[0])+'</div><div style="min-width:0"><div style="font-weight:800;color:#fff">'+(p2.name||'Student')+'</div><div style="font-size:12px;color:#999">'+(p2.school||'')+'</div><div style="font-size:11px;color:#8CFF8A">Tap to view profile</div></div></div><span style="background:#333;color:#999;border-radius:999px;padding:6px 10px;font-size:12px;font-weight:900">✓ REQUEST SENT</span>';
           reqList.appendChild(card2);
         }
       }
     }catch(e){ reqList.innerHTML='<div style="padding:20px;color:#999;text-align:center">No requests.</div>'; }
   }
   function showList(){
-    viewEl.style.display='none'; listEl.style.display='block';
+    viewEl.style.display='none';
+    // FIX: respect current tab - pressing Back from a chat opened via FRIENDS used to force CHATS list visible while FRIENDS stayed visible = double list
+    var _fl=document.getElementById('zed-chat-friends-list'); var _rl=document.getElementById('zed-chat-requests-list');
+    if(currentTab==='friends'){
+      listEl.style.display='none'; if(_rl) _rl.style.display='none'; if(_fl) _fl.style.display='block'; loadFriendsListTab();
+    } else if(currentTab==='requests'){
+      listEl.style.display='none'; if(_fl) _fl.style.display='none'; if(_rl) _rl.style.display='block'; loadRequestsTab();
+    } else {
+      listEl.style.display='block'; if(_fl) _fl.style.display='none'; if(_rl) _rl.style.display='none'; loadFriends();
+    }
     updateChatBadge();
     document.getElementById('zed-chat-search-add').style.display='none';
     currentFriend=null;
     if(pollTimer) clearInterval(pollTimer);
-    loadFriends();
-    // FIX v5: refresh list every 8s (was 4s + dedupe every 1.5s = constant flicker). loadFriends now swaps atomically + skips if unchanged, so no flicker.
+    // FIX: poll only the active tab, not always CHATS
     pollTimer=setInterval(function(){
       if(!currentFriend && panel.classList.contains('open')){
-        loadFriends(); updateChatBadge();
+        if(currentTab==='friends') loadFriendsListTab();
+        else if(currentTab==='requests') loadRequestsTab();
+        else loadFriends();
+        updateChatBadge();
       }
     }, 8000);
   }
   function showView(friend){
     currentFriend=friend;
     listEl.style.display='none'; viewEl.style.display='flex';
-    document.getElementById('zed-chat-view-name').textContent=friend.name+' • '+(friend.school||'');
+    (function(){ var _n=document.getElementById('zed-chat-view-name'); if(_n){ _n.textContent=friend.name+' \u2022 '+(friend.school||''); _n.onclick=function(){ if(window.zedOpenUserProfile) window.zedOpenUserProfile(friend, {friendStatus:{status:'accepted',dir:'both'}}); }; } var _a=document.getElementById('zed-chat-view-avatar'); if(_a){ _a.setAttribute('data-profile-id', friend.id||''); _a.style.display='flex'; _a.innerHTML=((friend.avatar||friend.avatar_url)?'<img src="'+(friend.avatar||friend.avatar_url)+'" style="width:100%;height:100%;object-fit:cover" />':(friend.name||'S')[0]); _a.onclick=function(){ if(window.zedOpenProfilePic) window.zedOpenProfilePic(friend); else if(window.zedOpenUserProfile) window.zedOpenUserProfile(friend, {friendStatus:{status:'accepted',dir:'both'}}); }; } })();
     loadMessages();
     markRead(friend);
     setTimeout(updateChatBadge, 800);
     if(pollTimer) clearInterval(pollTimer);
     pollTimer=setInterval(function(){ if(currentFriend) { loadMessages(); markRead(currentFriend); } }, 3000);
   }
-  // ADD FRIEND
+  // SEARCH FOR FRIENDS - always opens search
   document.getElementById('zed-chat-add-open').addEventListener('click', function(){
-    var s=document.getElementById('zed-chat-search-add');
-    s.style.display = s.style.display==='none' ? 'block' : 'none';
+    try{
+      /* If inside a chat, go back to list first so search is visible */
+      var viewEl2=document.getElementById('zed-chat-view');
+      var listEl2=document.getElementById('zed-chat-list');
+      if(viewEl2 && viewEl2.style.display!=='none' && listEl2){
+        viewEl2.style.display='none';
+        listEl2.style.display='block';
+        try{ if(typeof showList==='function'){ /* keep current tab list, just show search below */ } }catch(e){}
+        try{ if(window._zedClearPoll) {} }catch(e){}
+      }
+      var s=document.getElementById('zed-chat-search-add');
+      if(s){ s.style.display='block'; }
+      var inp=document.getElementById('zed-chat-search-input');
+      if(inp){ setTimeout(function(){ try{ inp.focus(); }catch(e){} }, 100); }
+    }catch(e){}
   });
   document.getElementById('zed-chat-search-input').addEventListener('input', async function(){
     var q=this.value.trim(); var resEl=document.getElementById('zed-chat-search-results');
@@ -8236,8 +8285,9 @@ console.log('[ZED] Welcome popup + fast login active');
     resEl.innerHTML='<div style="color:#999;font-size:13px">Searching...</div>';
     try{
       // Fetch all profiles, filter on phone
-      var res=await fetch(SUPA_URL+'/rest/v1/profiles?select=id,name,school,grade,province&limit=500', {headers:headers()});
+      var res=await fetch(SUPA_URL+'/rest/v1/profiles?select=id,name,school,grade,province,district,avatar,avatar_url,coins,streak,created_at&limit=500', {headers:headers()});
       var allRows=await res.json();
+      try{ zedCacheSet('zed_profiles_cache_v1', {savedAt: Date.now(), profiles: (allRows||[]).slice(0,500)}); }catch(e){}
       var qLower=q.toLowerCase();
       var rows=(allRows||[]).filter(function(r){
         return (r.name||'').toLowerCase().indexOf(qLower)!==-1 || (r.school||'').toLowerCase().indexOf(qLower)!==-1 || (r.province||'').toLowerCase().indexOf(qLower)!==-1;
@@ -8278,7 +8328,8 @@ console.log('[ZED] Welcome popup + fast login active');
         } else {
           btnHtml='<button disabled style="background:#222;color:#8CFF8A;border:1px solid #8CFF8A;border-radius:999px;padding:7px 12px;font-weight:900;font-size:12px">✓ FRIENDS</button>';
         }
-        d.innerHTML='<div><div style="font-weight:800;color:#fff">'+(r.name||'Student')+'</div><div style="font-size:12px;color:#999">'+(r.school||'')+' • '+(r.grade||'')+'</div></div>'+btnHtml;
+        d.innerHTML='<div class="zed-search-person" style="display:flex;align-items:center;gap:10px;flex:1;min-width:0;cursor:pointer"><div class="zed-search-avatar" data-profile-id="'+r.id+'" style="width:48px;height:48px;min-width:48px;border-radius:999px;overflow:hidden;background:#222;display:flex;align-items:center;justify-content:center;font-weight:900;color:#fff;font-size:18px;border:2px solid #8CFF8A">'+((r.avatar||r.avatar_url)?'<img src="'+(r.avatar||r.avatar_url)+'" style="width:100%;height:100%;object-fit:cover" />':(r.name||'S')[0])+'</div><div style="min-width:0"><div style="font-weight:800;color:#fff;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">'+(r.name||'Student')+'</div><div style="font-size:12px;color:#999;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">'+(r.school||'')+' \u2022 Grade '+(r.grade||'')+'</div></div></div>'+btnHtml;
+        var _person=d.querySelector('.zed-search-person'); if(_person){ (function(_r,_st){ _person.addEventListener('click', function(e){ e.stopPropagation(); if(window.zedOpenUserProfile) window.zedOpenUserProfile(_r, {friendStatus:_st}); }); })(r, st); }
         var btn=d.querySelector('button');
         if(!st){
           btn.addEventListener('click', async function(){
@@ -8287,6 +8338,7 @@ console.log('[ZED] Welcome popup + fast login active');
             try{
               var resp=await fetch(SUPA_URL+'/rest/v1/friendships', {method:'POST', headers:headers(), body: JSON.stringify({user_id:me.id, friend_id:r.id})});
               if(resp.status===201 || resp.status===200 || resp.status===204){
+                try{ var _fc=zedCacheGet('zed_friends_cache_v1')||{friends:[]}; if(!_fc.friends.some(function(x){ return x.id===r.id; })) _fc.friends.push(r); _fc.savedAt=Date.now(); zedCacheSet('zed_friends_cache_v1', _fc); }catch(e){}
                 addSentRequest(r.id);
                 btn.textContent='✓ REQUEST SENT'; btn.disabled=true; btn.style.background='#333'; btn.style.color='#999';
                 loadFriends();
@@ -8316,7 +8368,14 @@ console.log('[ZED] Welcome popup + fast login active');
         resEl.appendChild(d);
       });
       if(resEl.innerHTML==='') resEl.innerHTML='<div style="color:#999;font-size:13px">No student found for "'+q+'"</div>';
-    }catch(e){ resEl.innerHTML='<div style="color:#999;font-size:13px">No student found for "'+q+'". Try full name or school.</div>'; }
+    }catch(e){
+      // OFFLINE SEARCH: use saved profiles
+      try{
+        var _pc=zedCacheGet('zed_profiles_cache_v1')||{profiles:[]}; var _q=q.toLowerCase();
+        var _rows=(_pc.profiles||[]).filter(function(r){ return (r.name||'').toLowerCase().indexOf(_q)!==-1 || (r.school||'').toLowerCase().indexOf(_q)!==-1; });
+        if(_rows.length){ resEl.innerHTML=''; /* No banner */ _rows.slice(0,10).forEach(function(r){ var _d=document.createElement('div'); _d.style.cssText='display:flex;justify-content:space-between;align-items:center;background:#1e1e1e;border:1px solid #333;border-radius:10px;padding:10px;gap:10px'; var _av=(r.avatar||r.avatar_url||''); _d.innerHTML='<div class="zed-search-person" style="display:flex;align-items:center;gap:10px;flex:1;min-width:0;cursor:pointer"><div class="zed-search-avatar" data-profile-id="'+(r.id||'')+'" style="width:48px;height:48px;min-width:48px;border-radius:999px;overflow:hidden;background:#222;display:flex;align-items:center;justify-content:center;font-weight:900;color:#fff;font-size:18px;border:2px solid #8CFF8A">'+(_av?'<img src="'+_av+'" style="width:100%;height:100%;object-fit:cover" />':(r.name||'S')[0])+'</div><div style="min-width:0"><div style="font-weight:800;color:#fff">'+(r.name||'Student')+'</div><div style="font-size:12px;color:#999">'+(r.school||'')+' • Grade '+(r.grade||'')+'</div></div></div>'; (function(_r){ var _pp=_d.querySelector('.zed-search-person'); if(_pp) _pp.addEventListener('click', function(ev){ ev.stopPropagation(); if(window.zedOpenProfilePic) window.zedOpenProfilePic(_r); }); })(r); resEl.appendChild(_d); }); return; }
+      }catch(_e){}
+      resEl.innerHTML='<div style="color:#999;font-size:13px">No student found for "'+q+'". Try full name or school.</div>'; }
   });
   // If search box becomes empty, clear stale results (phone clear button sometimes doesn't fire input)
   setInterval(function(){
@@ -8325,11 +8384,53 @@ console.log('[ZED] Welcome popup + fast login active');
     if(inp && resEl && inp.value.trim().length===0 && resEl.innerHTML.trim()!==''){ resEl.innerHTML=''; }
   }, 800);
   // LOAD FRIENDS + LAST MESSAGE + READ RECEIPT (before entering chat)
+  // === ZED OFFLINE CACHE: friends + last text survive offline ===
+  function zedCacheGet(k){ try{ return JSON.parse(localStorage.getItem(k)||'null'); }catch(e){ return null; } }
+  function zedCacheSet(k, v){ try{ localStorage.setItem(k, JSON.stringify(v)); }catch(e){} }
+  function zedSaveFriendsCache(friends, lastMsgs){
+    try{
+      var toSave = (friends||[]).map(function(f){
+        var lm = (lastMsgs||{})[f.id] || null;
+        return {id:f.id, name:f.name, school:f.school, grade:f.grade, province:f.province, district:f.district, avatar:f.avatar||f.avatar_url||'', avatar_url:f.avatar_url||f.avatar||'', coins:f.coins||0, streak:f.streak||0, created_at:f.created_at||'', last_seen:f.last_seen||'', lastMsg: lm ? {text:lm.text, sender_id:lm.sender_id, created_at:lm.created_at, read_at:lm.read_at||null} : null};
+      });
+      zedCacheSet('zed_friends_cache_v1', {savedAt: Date.now(), friends: toSave});
+      // also keep a profiles cache for offline search
+      var pc = zedCacheGet('zed_profiles_cache_v1') || {savedAt:0, profiles:[]};
+      var map={}; (pc.profiles||[]).forEach(function(p){ if(p && p.id) map[p.id]=p; });
+      toSave.forEach(function(p){ map[p.id]=p; });
+      var arr=Object.keys(map).map(function(k){ return map[k]; });
+      zedCacheSet('zed_profiles_cache_v1', {savedAt: Date.now(), profiles: arr.slice(-500)});
+    }catch(e){}
+  }
+  function zedRenderCachedFriends(){
+    try{
+      var c = zedCacheGet('zed_friends_cache_v1'); if(!c || !c.friends || !c.friends.length) return false;
+      var me2=getMe(); if(!me2) return false;
+      var renderEl=document.createElement('div');
+      // No banner - offline works silently
+      var h=document.createElement('div'); h.style.cssText='padding:10px 12px 6px;font-weight:900;color:#fff;font-size:13px'; h.textContent='💬 YOUR FRIENDS ('+c.friends.length+')';
+      renderEl.appendChild(h);
+      c.friends.forEach(function(f){
+        var lastMsg=f.lastMsg||null; var isMeLast=lastMsg && lastMsg.sender_id===me2.id;
+        var timeStr=''; if(lastMsg && lastMsg.created_at){ var dd=new Date(lastMsg.created_at); timeStr=dd.getHours()+':'+String(dd.getMinutes()).padStart(2,'0'); }
+        var row=document.createElement('div'); row.className='zed-chat-friend';
+        var av=(f.avatar||f.avatar_url||'');
+        row.innerHTML='<div class="zed-chat-avatar" data-profile-id="'+(f.id||'')+'" title="Tap to view profile pic" style="position:relative;width:44px;height:44px;min-width:44px;border-radius:999px;overflow:visible;background:#222;display:flex;align-items:center;justify-content:center;font-weight:900;color:#fff;font-size:18px;border:2px solid #8CFF8A;cursor:pointer"><span style="display:flex;width:100%;height:100%;border-radius:999px;overflow:hidden;align-items:center;justify-content:center">'+(av?'<img src="'+av+'" style="width:100%;height:100%;object-fit:cover" />':(f.name||'S')[0])+'</span></div><div style="flex:1;min-width:0"><div style="font-weight:800;color:#fff;font-size:15px;display:flex;justify-content:space-between;gap:8px"><span style="white-space:nowrap;overflow:hidden;text-overflow:ellipsis">'+(f.name||'Student')+'</span><span style="font-size:11px;color:#999;font-weight:400">'+timeStr+'</span></div><div style="font-size:13px;color:#999;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">'+(lastMsg ? (isMeLast?'You: ':'')+lastMsg.text : (f.school||'')+' • '+(f.grade||''))+'</div></div>';
+        (function(friend){ row.addEventListener('click', function(e){ var _av=e.target.closest && e.target.closest('.zed-chat-avatar'); if(_av){ e.stopPropagation(); if(window.zedOpenProfilePic) window.zedOpenProfilePic(friend); else if(window.zedOpenUserProfile) window.zedOpenUserProfile(friend,{friendStatus:{status:'accepted',dir:'both'}}); return; } showView(friend); }); })(f);
+        renderEl.appendChild(row);
+      });
+      listEl.innerHTML=''; while(renderEl.firstChild) listEl.appendChild(renderEl.firstChild);
+      if(window.zedRefreshPresence) window.zedRefreshPresence();
+      return true;
+    }catch(e){ return false; }
+  }
   async function loadFriends(){
+
     var me=getMe(); if(!me) return;
     if(_loadFriendsBusy) return; // FIX v5: a load is already running - don't start a second one that will flicker
     _loadFriendsBusy=true;
     var mySeq=++_loadFriendsSeq; // only newest load may render
+    try{ zedRenderCachedFriends(); }catch(e){} // OFFLINE: show saved friends instantly, don't wait for Supabase
     try{
       // Fetch ALL friendships - robust 2-call version
       var allRows=await fetchFriendships(me);
@@ -8355,12 +8456,12 @@ console.log('[ZED] Welcome popup + fast login active');
         for(var ri=0; ri<incoming.length; ri++){
           var senderId=incoming[ri].user_id;
           try{
-            var resP=await fetch(SUPA_URL+'/rest/v1/profiles?select=id,name,school,grade&id=eq.'+senderId, {headers:headers()});
+            var resP=await fetch(SUPA_URL+'/rest/v1/profiles?select=id,name,school,grade,province,district,avatar,avatar_url,coins,streak,created_at&id=eq.'+senderId, {headers:headers()});
             var pRows=await resP.json();
             var p=pRows && pRows[0] ? pRows[0] : {name:'Student'};
             var card=document.createElement('div');
             card.style.cssText='display:flex;justify-content:space-between;align-items:center;background:#1e1e1e;border:1px solid #FFD93D;border-radius:12px;padding:12px;margin:0 12px 8px';
-            card.innerHTML='<div><div style="font-weight:800;color:#fff">'+(p.name||'Student')+'</div><div style="font-size:12px;color:#999">'+(p.school||'')+' • '+(p.grade||'')+'</div></div><div style="display:flex;gap:6px"><button data-act="accept" style="background:#8CFF8A;color:#000;border:none;border-radius:999px;padding:7px 12px;font-weight:900;font-size:12px;cursor:pointer">ACCEPT</button><button data-act="decline" style="background:#333;color:#fff;border:none;border-radius:999px;padding:7px 12px;font-weight:900;font-size:12px;cursor:pointer">DECLINE</button></div>';
+            card.innerHTML='<div class="zed-req-person" data-zed-profile-id="'+(p.id||'')+'" title="Tap to view profile" style="display:flex;align-items:center;gap:10px;flex:1;min-width:0;cursor:pointer"><div style="width:44px;height:44px;min-width:44px;border-radius:999px;overflow:hidden;background:#222;display:flex;align-items:center;justify-content:center;font-weight:900;color:#fff;font-size:16px;border:2px solid #8CFF8A">'+((p.avatar||p.avatar_url)?'<img src="'+(p.avatar||p.avatar_url)+'" style="width:100%;height:100%;object-fit:cover" />':(p.name||'S')[0])+'</div><div style="min-width:0"><div style="font-weight:800;color:#fff;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">'+(p.name||'Student')+'</div><div style="font-size:12px;color:#999">'+(p.school||'')+' \u2022 '+(p.grade||'')+'</div><div style="font-size:11px;color:#8CFF8A">Tap to view profile</div></div></div><div style="display:flex;gap:6px"><button data-act="accept" style="background:#8CFF8A;color:#000;border:none;border-radius:999px;padding:7px 12px;font-weight:900;font-size:12px;cursor:pointer">ACCEPT</button><button data-act="decline" style="background:#333;color:#fff;border:none;border-radius:999px;padding:7px 12px;font-weight:900;font-size:12px;cursor:pointer">DECLINE</button></div>';
             (function(sid, cardEl){
               cardEl.querySelector('[data-act="accept"]').addEventListener('click', async function(){
                 // Accept = add reverse row
@@ -8383,17 +8484,36 @@ console.log('[ZED] Welcome popup + fast login active');
         renderEl.appendChild(outHeader);
       }
       if(friendIds.length===0 && incoming.length===0){
+        // OFFLINE FIX: fetchFriendships returns [] when offline - that does NOT mean no friends.
+        // If we have saved friends, keep them. Never wipe cache with "No friends yet".
+        var _cachedEmpty=zedCacheGet('zed_friends_cache_v1');
+        if(_cachedEmpty && _cachedEmpty.friends && _cachedEmpty.friends.length){
+          try{ zedRenderCachedFriends(); }catch(e){}
+          _loadFriendsBusy=false; return;
+        }
+        if(!navigator.onLine){
+          var _offEmpty=document.createElement('div');
+          _offEmpty.style.cssText='padding:20px;color:#999;font-size:14px;text-align:center';
+          _offEmpty.innerHTML='No friends yet.<br/>Tap <b>Search for friends</b> above to find friends by name or school.';
+          renderEl.appendChild(_offEmpty);
+          if(mySeq===_loadFriendsSeq){ listEl.innerHTML=''; while(renderEl.firstChild) listEl.appendChild(renderEl.firstChild); }
+          _loadFriendsBusy=false; return;
+        }
         var empty=document.createElement('div');
         empty.style.cssText='padding:20px;color:#999;font-size:14px;text-align:center';
-        empty.innerHTML='No friends yet.<br/>Tap <b>+ ADD FRIEND</b> above to find friends by name or school.';
+        empty.innerHTML='No friends yet.<br/>Tap <b>Search for friends</b> above to find friends by name or school.';
         renderEl.appendChild(empty);
         if(mySeq===_loadFriendsSeq){ listEl.innerHTML=''; while(renderEl.firstChild) listEl.appendChild(renderEl.firstChild); }
         _loadFriendsBusy=false; return;
       }
-      if(friendIds.length===0){ if(mySeq===_loadFriendsSeq){ listEl.innerHTML=''; while(renderEl.firstChild) listEl.appendChild(renderEl.firstChild); } _loadFriendsBusy=false; return; }
+      if(friendIds.length===0){
+        // Incoming only, no accepted friends yet - but if offline + saved friends exist, keep saved
+        var _cached2=zedCacheGet('zed_friends_cache_v1');
+        if(!navigator.onLine && _cached2 && _cached2.friends && _cached2.friends.length){ try{ zedRenderCachedFriends(); }catch(e){} _loadFriendsBusy=false; return; }
+        if(mySeq===_loadFriendsSeq){ listEl.innerHTML=''; while(renderEl.firstChild) listEl.appendChild(renderEl.firstChild); } _loadFriendsBusy=false; return; }
       // (duplicate check removed in V5 - already handled above)
       // Get friend profiles for accepted friends
-      var res3=await fetch(SUPA_URL+'/rest/v1/profiles?select=id,name,school,grade&or=('+friendIds.map(function(id){ return 'id.eq.'+id; }).join(',')+')', {headers:headers()});
+      var res3=await fetch(SUPA_URL+'/rest/v1/profiles?select=id,name,school,grade,province,district,avatar,avatar_url,coins,streak,created_at&or=('+friendIds.map(function(id){ return 'id.eq.'+id; }).join(',')+')', {headers:headers()});
       var friends=await res3.json();
       if(mySeq!==_loadFriendsSeq) return; // stale
       var _seen={}; friends=(friends||[]).filter(function(f){ if(!f||!f.id||_seen[f.id]) return false; _seen[f.id]=true; return true; });
@@ -8409,7 +8529,7 @@ console.log('[ZED] Welcome popup + fast login active');
         try{
           var resM=await fetch(SUPA_URL+'/rest/v1/chat_messages?select=*&created_at=gt.'+encodeURIComponent(oneHourAgoISO())+'&or=(and(sender_id.eq.'+me.id+',receiver_id.eq.'+f.id+'),and(sender_id.eq.'+f.id+',receiver_id.eq.'+me.id+'))&order=created_at.desc&limit=1', {headers:headers()});
           var msgs=await resM.json();
-          if(msgs && msgs[0]) lastMsg=msgs[0];
+          if(msgs && msgs[0]){ lastMsg=msgs[0]; try{ if(!window._zedLastMsgs) window._zedLastMsgs={}; window._zedLastMsgs[f.id]=lastMsg; }catch(e){} }
         }catch(e){}
         var row=document.createElement('div');
         row.className='zed-chat-friend';
@@ -8433,10 +8553,11 @@ console.log('[ZED] Welcome popup + fast login active');
         }
         var timeStr='';
         if(lastMsg){ var d=new Date(lastMsg.created_at); timeStr=d.getHours()+':'+String(d.getMinutes()).padStart(2,'0'); }
-        row.innerHTML='<div style="width:44px;height:44px;border-radius:999px;background:#222;display:flex;align-items:center;justify-content:center;font-weight:900;color:#fff;font-size:18px">'+(f.name||'S')[0]+'</div><div style="flex:1;min-width:0"><div style="font-weight:800;color:#fff;font-size:15px;display:flex;justify-content:space-between;gap:8px"><span style="white-space:nowrap;overflow:hidden;text-overflow:ellipsis">'+(f.name||'Student')+'</span><span style="font-size:11px;color:#999;font-weight:400">'+timeStr+'</span></div><div style="font-size:13px;color:#999;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">'+(lastMsg ? (isMeLast ? 'You: ' : '') + lastMsg.text : (f.school||'')+' • '+(f.grade||''))+'</div></div><div style="display:flex;flex-direction:column;align-items:flex-end;gap:4px">'+tick+'</div>';
-        (function(friend){ row.addEventListener('click', function(){ showView(friend); }); })(f);
+        row.innerHTML='<div class="zed-chat-avatar" data-profile-id="'+f.id+'" title="Tap to view profile pic" style="width:44px;height:44px;min-width:44px;border-radius:999px;overflow:hidden;background:#222;display:flex;align-items:center;justify-content:center;font-weight:900;color:#fff;font-size:18px;border:2px solid #8CFF8A;cursor:pointer">'+((f.avatar||f.avatar_url)?'<img src="'+(f.avatar||f.avatar_url)+'" style="width:100%;height:100%;object-fit:cover" />':(f.name||'S')[0])+'</div><div style="flex:1;min-width:0"><div style="font-weight:800;color:#fff;font-size:15px;display:flex;justify-content:space-between;gap:8px"><span style="white-space:nowrap;overflow:hidden;text-overflow:ellipsis">'+(f.name||'Student')+'</span><span style="font-size:11px;color:#999;font-weight:400">'+timeStr+'</span></div><div style="font-size:13px;color:#999;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">'+(lastMsg ? (isMeLast ? 'You: ' : '') + lastMsg.text : (f.school||'')+' • '+(f.grade||''))+'</div></div><div style="display:flex;flex-direction:column;align-items:flex-end;gap:4px">'+tick+'</div>';
+        (function(friend){ row.addEventListener('click', function(e){ var _av=e.target.closest && e.target.closest('.zed-chat-avatar'); if(_av){ e.stopPropagation(); if(window.zedOpenProfilePic) window.zedOpenProfilePic(friend); else if(window.zedOpenUserProfile) window.zedOpenUserProfile(friend, {friendStatus:{status:'accepted',dir:'both'}}); return; } showView(friend); }); })(f);
         renderEl.appendChild(row);
       }
+      try{ zedSaveFriendsCache(friends, window._zedLastMsgs||{}); }catch(e){}
       _loadFriendsBusy=false;
       // FIX v5: single atomic swap - no flicker. If data is identical, skip swap entirely.
       if(mySeq===_loadFriendsSeq){
@@ -8448,14 +8569,24 @@ console.log('[ZED] Welcome popup + fast login active');
           while(renderEl.firstChild) listEl.appendChild(renderEl.firstChild);
         }
       }
-    }catch(e){ _loadFriendsBusy=false; listEl.innerHTML='<div style="padding:20px;color:#FF6B6B">No friends yet. Tap + ADD FRIEND above to find friends by name or school.</div>'; }
+    }catch(e){ _loadFriendsBusy=false; if(!zedRenderCachedFriends()){ listEl.innerHTML='<div style="padding:20px;color:#999;text-align:center">No friends yet.<br/>Tap Search for friends above to find friends by name or school.</div>'; } }
   }
   async function loadMessages(){
     if(!currentFriend) return;
     var me=getMe();
+    // OFFLINE: show saved messages instantly
+    try{
+      var _mc=zedCacheGet('zed_msgs_cache_v1')||{}; var _cachedMsgs=_mc[currentFriend.id]||[];
+      if(_cachedMsgs.length){
+        msgsEl.innerHTML='';
+        _cachedMsgs.forEach(function(m){ var _d=document.createElement('div'); var _isMe=m.sender_id===me.id; _d.className='zed-chat-msg '+(_isMe?'me':'them'); _d.innerHTML='<div>'+(m.text||'').replace(/</g,'&lt;')+'</div>'; msgsEl.appendChild(_d); });
+        msgsEl.scrollTop=msgsEl.scrollHeight;
+      }
+    }catch(e){}
     try{
       var res=await fetch(SUPA_URL+'/rest/v1/chat_messages?select=*&created_at=gt.'+encodeURIComponent(oneHourAgoISO())+'&or=(and(sender_id.eq.'+me.id+',receiver_id.eq.'+currentFriend.id+'),and(sender_id.eq.'+currentFriend.id+',receiver_id.eq.'+me.id+'))&order=created_at.asc', {headers:headers()});
       var msgs=await res.json();
+      try{ var _allMc=zedCacheGet('zed_msgs_cache_v1')||{}; _allMc[currentFriend.id]=(msgs||[]).slice(-100); zedCacheSet('zed_msgs_cache_v1', _allMc); }catch(e){}
       msgsEl.innerHTML='';
       (msgs||[]).forEach(function(m){
         var d=document.createElement('div');
@@ -8483,7 +8614,13 @@ console.log('[ZED] Welcome popup + fast login active');
     try{
       await fetch(SUPA_URL+'/rest/v1/chat_messages', {method:'POST', headers:headers(), body: JSON.stringify({sender_id:me.id, receiver_id:currentFriend.id, text:q})});
       loadMessages();
-    }catch(e){ alert('Could not send. Check your data and try again.'); }
+    }catch(e){
+      // OFFLINE: queue message, show it locally, send when back online
+      try{
+        var _ob=JSON.parse(localStorage.getItem('zed_outbox_v1')||'[]'); _ob.push({sender_id:me.id, receiver_id:currentFriend.id, text:q, created_at:new Date().toISOString()}); localStorage.setItem('zed_outbox_v1', JSON.stringify(_ob.slice(-100)));
+        var _d=document.createElement('div'); _d.className='zed-chat-msg me'; _d.innerHTML='<div>'+q.replace(/</g,'&lt;')+'</div>'; msgsEl.appendChild(_d); msgsEl.scrollTop=msgsEl.scrollHeight;
+      }catch(_e){ alert('Could not send. Check your data and try again.'); }
+    }
   }
   document.getElementById('zed-chat-send').addEventListener('click', sendMessage);
   document.getElementById('zed-chat-input').addEventListener('keydown', function(e){ if(e.key==='Enter') sendMessage(); });
@@ -9413,5 +9550,635 @@ header div[class*="bg-"][class*="border"][class*="rounded"] span:first-child{
 })();
 </script>
 
+
+<style>
+/* ZED - Facebook-style profile viewer */
+#zed-profile-viewer{position:fixed !important;inset:0 !important;z-index:999999 !important;background:rgba(0,0,0,0.88) !important;display:flex !important;align-items:flex-start !important;justify-content:center !important;padding:16px !important;overflow-y:auto !important}
+.zed-profile-card{background:#111 !important;border:1px solid #333 !important;border-radius:22px !important;width:100% !important;max-width:380px !important;overflow:hidden !important;margin:20px auto !important}
+.zed-profile-cover{height:110px;background:linear-gradient(135deg,#1a3a1a,#0F0E0B) !important;position:relative}
+.zed-profile-pic{width:140px;height:140px;border-radius:999px;overflow:hidden;background:#222;display:flex;align-items:center;justify-content:center;font-size:56px;font-weight:900;color:#fff;border:4px solid #8CFF8A;margin:-70px auto 0;position:relative;z-index:2;cursor:pointer}
+.zed-profile-pic img{width:100%;height:100%;object-fit:cover}
+.zed-profile-btn{flex:1;border:none;border-radius:999px;padding:11px;font-weight:900;font-size:13px;cursor:pointer}
+#zed-photo-fullscreen{position:fixed !important;inset:0 !important;z-index:1000000 !important;background:#000 !important;display:flex !important;align-items:center !important;justify-content:center !important;padding:16px}
+#zed-photo-fullscreen img{max-width:100%;max-height:88vh;border-radius:16px;object-fit:contain}
+</style>
+<script>
+// === ZED - Facebook-style View Profile: Search + Chats ===
+(function(){
+  var SUPA_URL='https://biastmylavwhlsccvpyu.supabase.co';
+  var SUPA_KEY='sb_publishable_74vo5_RlNXb0U0TrNLCdCQ_8zjDwFni';
+  function esc(s){ return String(s==null?'':s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;').replace(/'/g,'&#39;'); }
+  function getMe(){ try{ return JSON.parse(localStorage.getItem('zed_user')||'null'); }catch(e){ return null; } }
+  function avatarOf(u){ return (u && (u.avatar || u.avatar_url)) || ''; }
+  function joinedDate(u){
+    if(!u || !u.created_at) return '';
+    try{ var d=new Date(u.created_at); return d.toLocaleDateString('en-GB',{day:'numeric',month:'long',year:'numeric'}); }catch(e){ return ''; }
+  }
+  function headers(){ return {apikey:SUPA_KEY, Authorization:'Bearer '+SUPA_KEY, 'Content-Type':'application/json'}; }
+
+  function openPhotoFullscreen(url, name){
+    if(!url) return;
+    var old=document.getElementById('zed-photo-fullscreen'); if(old) old.remove();
+    var fs=document.createElement('div'); fs.id='zed-photo-fullscreen';
+    fs.innerHTML='<button type="button" style="position:absolute;top:14px;right:16px;background:rgba(255,255,255,0.15);border:none;color:#fff;font-size:22px;width:40px;height:40px;border-radius:999px;cursor:pointer">\u2715</button><img src="'+esc(url)+'" /><div style="position:absolute;bottom:20px;left:0;right:0;text-align:center;color:#fff;font-weight:800">'+esc(name||'')+'</div>';
+    fs.addEventListener('click', function(){ fs.remove(); });
+    document.body.appendChild(fs);
+  }
+  window.zedOpenPhotoFullscreen = openPhotoFullscreen;
+
+  function openProfile(u, opts){
+    opts = opts || {};
+    if(!u) return;
+    var me = getMe();
+    var isMe = me && u.id && String(me.id)===String(u.id);
+    var st = opts.friendStatus || null;
+    var status = st ? st.status : 'none';
+    var dir = st ? st.dir : '';
+    var old=document.getElementById('zed-profile-viewer'); if(old) old.remove();
+    var av = avatarOf(u);
+    var initial = (u.name||'S').charAt(0).toUpperCase();
+    var joined = joinedDate(u);
+    var overlay=document.createElement('div'); overlay.id='zed-profile-viewer';
+    var btnHtml='';
+    if(isMe){
+      btnHtml='<button class="zed-profile-btn" disabled style="background:#222;color:#8CFF8A">This is you</button>';
+    } else if(status==='accepted'){
+      btnHtml='<button class="zed-profile-btn" id="zed-prof-msg" style="background:#8CFF8A;color:#000">\uD83D\uDCAC Message</button><button class="zed-profile-btn" disabled style="background:#222;color:#8CFF8A;border:1px solid #8CFF8A">\u2713 Friends</button>';
+    } else if(status==='pending' && dir==='out'){
+      btnHtml='<button class="zed-profile-btn" disabled style="background:#333;color:#999">\u2713 Request Sent</button>';
+    } else if(status==='pending' && dir==='in'){
+      btnHtml='<button class="zed-profile-btn" id="zed-prof-accept" style="background:#FFD93D;color:#000">Accept Request</button>';
+    } else {
+      btnHtml='<button class="zed-profile-btn" id="zed-prof-add" style="background:#8CFF8A;color:#000">+ Add Friend</button><button class="zed-profile-btn" id="zed-prof-msg" style="background:#1e1e1e;color:#fff;border:1px solid #333">\uD83D\uDCAC Message</button>';
+    }
+    overlay.innerHTML =
+      '<div class="zed-profile-card">'
+      + '<div class="zed-profile-cover"></div>'
+      + '<div style="text-align:right;padding:0 12px;margin-top:-100px;position:relative;z-index:3"><button type="button" id="zed-prof-close" style="background:rgba(0,0,0,0.5);border:none;color:#fff;font-size:20px;width:36px;height:36px;border-radius:999px;cursor:pointer">\u2715</button></div>'
+      + '<div class="zed-profile-pic" id="zed-prof-pic" title="Tap to view photo">'+(av?'<img src="'+esc(av)+'" />':esc(initial))+'</div>'
+      + '<div style="text-align:center;padding:12px 16px 4px"><div style="font-size:22px;font-weight:900;color:#fff">'+esc(u.name||'Student')+'</div>'
+      + (u.school?'<div style="color:#8CFF8A;font-size:14px;margin-top:4px">'+esc(u.school)+'</div>':'')
+      + '<div style="color:#999;font-size:13px;margin-top:6px;line-height:1.5">'+(u.grade?('Grade '+esc(u.grade)+' \u2022 '):'')+esc(u.province||'')+(u.district?(' \u2022 '+esc(u.district)):'')+'</div>'
+      + (joined?'<div style="color:#999;font-size:12px;margin-top:4px">Joined '+esc(joined)+'</div>':'')
+      + '<div style="display:flex;gap:8px;justify-content:center;margin-top:12px"><span style="background:#FFD93D;color:#000;padding:6px 12px;border-radius:999px;font-size:12px;font-weight:800">'+(u.coins||0)+' coins</span><span style="background:#1e1e1e;color:#fff;padding:6px 12px;border-radius:999px;font-size:12px">\uD83D\uDD25 '+(u.streak||0)+' streak</span></div>'
+      + '</div>'
+      + '<div style="padding:14px 16px 8px"><div style="font-size:12px;color:#999;font-weight:800;letter-spacing:0.5px">ABOUT</div><div style="color:#ddd;font-size:14px;line-height:1.6;margin-top:6px">Student at '+esc(u.school||'ZED SCHOLAR')+'. '+(u.grade?('Grade '+esc(u.grade)+'. ':'')+'Learning on ZED SCHOLAR.</div></div>'
+      + '<div style="display:flex;gap:8px;padding:6px 16px 8px">'+btnHtml+'</div>'
+      + '<div style="padding:0 16px 16px"><button class="zed-profile-btn" id="zed-prof-photo" style="width:100%;background:#1e1e1e;color:#fff;border:1px solid #333">\uD83D\uDDBC\uFE0F View Profile Photo</button><div style="text-align:center;color:#666;font-size:11px;margin-top:10px">Phone number is private \u2022 Only public profile info is shown</div></div>'
+      + '</div>';
+    document.body.appendChild(overlay);
+    overlay.addEventListener('click', function(e){ if(e.target===overlay) overlay.remove(); });
+    overlay.querySelector('#zed-prof-close').addEventListener('click', function(){ overlay.remove(); });
+    var picEl=overlay.querySelector('#zed-prof-pic');
+    if(picEl && av){ picEl.addEventListener('click', function(){ openPhotoFullscreen(av, u.name); }); }
+    var photoBtn=overlay.querySelector('#zed-prof-photo');
+    if(photoBtn){ photoBtn.addEventListener('click', function(){ if(av) openPhotoFullscreen(av, u.name); else alert('No profile photo yet'); }); }
+    var addBtn=overlay.querySelector('#zed-prof-add');
+    if(addBtn){ addBtn.addEventListener('click', async function(){
+      if(!me){ alert('Please log in first'); return; }
+      addBtn.textContent='Sending...'; addBtn.disabled=true;
+      try{
+        var resp=await fetch(SUPA_URL+'/rest/v1/friendships',{method:'POST',headers:headers(),body:JSON.stringify({user_id:me.id,friend_id:u.id})});
+        if(resp.status===201||resp.status===200||resp.status===204||resp.status===409){ addBtn.textContent='\u2713 Request Sent'; addBtn.style.background='#333'; addBtn.style.color='#999'; }
+        else { addBtn.textContent='Tap to retry'; addBtn.disabled=false; }
+      }catch(e){ addBtn.textContent='Tap to retry'; addBtn.disabled=false; }
+    }); }
+    var accBtn=overlay.querySelector('#zed-prof-accept');
+    if(accBtn){ accBtn.addEventListener('click', async function(){
+      if(!me) return; accBtn.textContent='Accepting...'; accBtn.disabled=true;
+      try{ await fetch(SUPA_URL+'/rest/v1/friendships',{method:'POST',headers:headers(),body:JSON.stringify({user_id:me.id,friend_id:u.id})}); accBtn.textContent='\u2713 Friends'; accBtn.style.background='#222'; accBtn.style.color='#8CFF8A'; }catch(e){ accBtn.textContent='Tap to retry'; accBtn.disabled=false; }
+    }); }
+    var msgBtn=overlay.querySelector('#zed-prof-msg');
+    if(msgBtn){ msgBtn.addEventListener('click', function(){
+      overlay.remove();
+      // Try to open the existing chat row for this person, like Facebook Messenger
+      var rows=document.querySelectorAll('.zed-chat-friend');
+      for(var i=0;i<rows.length;i++){ if((rows[i].textContent||'').indexOf(u.name)!==-1){ rows[i].click(); return; } }
+      // No chat row yet - open Chats panel so they can find them in Friends
+      var chatBtn=document.getElementById('zed-chat-btn'); if(chatBtn) chatBtn.click();
+    }); }
+  }
+  window.zedOpenUserProfile = openProfile;
+  window.zedOpenProfile = openProfile;
+
+  window.zedOpenUserProfileById = async function(id, opts){
+    if(!id) return;
+    try{
+      var res=await fetch(SUPA_URL+'/rest/v1/profiles?select=id,name,school,grade,province,district,avatar,avatar_url,coins,streak,created_at&id=eq.'+id,{headers:headers()});
+      var rows=await res.json();
+      if(rows && rows[0]) openProfile(rows[0], opts||{});
+      else alert('Profile not found');
+    }catch(e){ alert('Could not load profile. Check internet.'); }
+  };
+
+  // Friend Requests: tap person (not ACCEPT/DECLINE) = view profile
+  document.addEventListener('click', function(e){
+    if(e.target.closest && e.target.closest('button')) return;
+    var person = e.target.closest && e.target.closest('.zed-req-person');
+    if(!person) return;
+    var pid = person.getAttribute('data-zed-profile-id');
+    if(pid && window.zedOpenUserProfileById){ e.stopPropagation(); window.zedOpenUserProfileById(pid, {friendStatus:{status:'pending',dir:'in'}}); }
+  }, true);
+
+  console.log('[ZED] Facebook-style View Profile active - Search + Chats');
+})();
+</script>
+
+
+<style>
+/* ZED - Online dot + Fullscreen profile pic */
+.zed-online-dot{position:absolute !important;bottom:2px !important;right:2px !important;width:14px !important;height:14px !important;border-radius:999px !important;border:2px solid #111 !important;background:#666 !important;z-index:3 !important;pointer-events:none}
+.zed-online-dot.online{background:#22c55e !important;box-shadow:0 0 0 2px #111}
+#zed-pic-fullscreen{position:fixed !important;inset:0 !important;z-index:1000000 !important;background:#000 !important;display:flex !important;flex-direction:column !important;align-items:center !important;justify-content:center !important;padding:16px !important}
+#zed-pic-fullscreen img.zed-pic-big{width:min(320px,86vw);height:min(320px,86vw);border-radius:999px;object-fit:cover;border:4px solid #8CFF8A}
+</style>
+<script>
+// === ZED - Tap pic = Big Profile Pic + Online / Offline + Heartbeat + Offline Outbox ===
+(function(){
+  var SUPA_URL='https://biastmylavwhlsccvpyu.supabase.co';
+  var SUPA_KEY='sb_publishable_74vo5_RlNXb0U0TrNLCdCQ_8zjDwFni';
+  function headers(){ return {apikey:SUPA_KEY, Authorization:'Bearer '+SUPA_KEY, 'Content-Type':'application/json'}; }
+  function esc(s){ return String(s==null?'':s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;'); }
+  function getMe(){ try{ return JSON.parse(localStorage.getItem('zed_user')||'null'); }catch(e){ return null; } }
+  function cacheGet(k){ try{ return JSON.parse(localStorage.getItem(k)||'null'); }catch(e){ return null; } }
+  function cacheSet(k,v){ try{ localStorage.setItem(k, JSON.stringify(v)); }catch(e){} }
+  function isOnline(last_seen){
+    if(!last_seen) return false;
+    try{ return (Date.now() - new Date(last_seen).getTime()) < 120000; }catch(e){ return false; }
+  }
+  function lastSeenLabel(last_seen){
+    if(!last_seen) return 'Last seen unknown';
+    try{
+      var diff=Date.now()-new Date(last_seen).getTime();
+      if(diff<60000) return 'Active just now';
+      if(diff<3600000) return 'Active '+Math.floor(diff/60000)+' min ago';
+      if(diff<86400000) return 'Active '+Math.floor(diff/3600000)+' hr ago';
+      var d=new Date(last_seen); return 'Last seen '+d.toLocaleDateString('en-GB',{day:'numeric',month:'short'})+' '+d.getHours()+':'+String(d.getMinutes()).padStart(2,'0');
+    }catch(e){ return 'Last seen unknown'; }
+  }
+  window.zedIsOnline=isOnline; window.zedLastSeenLabel=lastSeenLabel;
+
+  // --- Heartbeat: tell Supabase I'm online ---
+  async function heartbeat(){
+    var me=getMe(); if(!me || !me.id) return;
+    try{ await fetch(SUPA_URL+'/rest/v1/profiles?id=eq.'+me.id, {method:'PATCH', headers:headers(), body: JSON.stringify({last_seen:new Date().toISOString()})}); }catch(e){}
+  }
+  heartbeat(); setInterval(heartbeat, 30000);
+  document.addEventListener('visibilitychange', function(){ if(!document.hidden) heartbeat(); });
+  window.addEventListener('online', function(){ heartbeat(); flushOutbox(); });
+
+  // --- Presence: fetch last_seen for ids on screen ---
+  async function fetchPresence(ids){
+    ids=(ids||[]).filter(function(x,i,a){ return x && a.indexOf(x)===i; });
+    if(!ids.length) return {};
+    var map=cacheGet('zed_presence_cache_v1')||{};
+    try{
+      var q=ids.map(function(id){ return 'id.eq.'+id; }).join(',');
+      var res=await fetch(SUPA_URL+'/rest/v1/profiles?select=id,last_seen&or=('+q+')', {headers:headers()});
+      var rows=await res.json();
+      if(Array.isArray(rows)){ rows.forEach(function(r){ if(r && r.id) map[r.id]=r.last_seen||''; }); cacheSet('zed_presence_cache_v1', map); }
+    }catch(e){}
+    return map;
+  }
+  window.zedFetchPresence=fetchPresence;
+
+  async function refreshPresence(){
+    try{
+      var els=document.querySelectorAll('[data-profile-id], [data-zed-profile-id]');
+      var ids=[]; els.forEach(function(el){ var id=el.getAttribute('data-profile-id')||el.getAttribute('data-zed-profile-id'); if(id) ids.push(id); });
+      if(!ids.length) return;
+      var map=await fetchPresence(ids);
+      // Also use cached map if fetch failed
+      if(!map || !Object.keys(map).length) map=cacheGet('zed_presence_cache_v1')||{};
+      els.forEach(function(el){
+        // Only add dot to avatar circles, not to whole person rows
+        var isAvatar = el.className && (el.className.indexOf('avatar')!==-1 || el.id==='zed-chat-view-avatar');
+        if(!isAvatar) return;
+        var id=el.getAttribute('data-profile-id')||el.getAttribute('data-zed-profile-id');
+        var ls=map[id];
+        var online=isOnline(ls);
+        var dot=el.querySelector(':scope > .zed-online-dot');
+        if(!dot){ dot=document.createElement('span'); dot.className='zed-online-dot'; el.style.position='relative'; el.appendChild(dot); }
+        dot.classList.toggle('online', online);
+        dot.style.background = online ? '#22c55e' : '#666';
+        dot.title = online ? 'Online' : lastSeenLabel(ls);
+      });
+    }catch(e){}
+  }
+  window.zedRefreshPresence=refreshPresence;
+  setInterval(refreshPresence, 30000);
+
+  // --- Find profile from cache, else Supabase ---
+  function profileFromCache(id){
+    try{
+      var fc=cacheGet('zed_friends_cache_v1'); if(fc && fc.friends) { var f=fc.friends.find(function(x){ return String(x.id)===String(id); }); if(f) return f; }
+      var pc=cacheGet('zed_profiles_cache_v1'); if(pc && pc.profiles) { var p=pc.profiles.find(function(x){ return String(x.id)===String(id); }); if(p) return p; }
+    }catch(e){}
+    return null;
+  }
+  async function fetchProfileById(id){
+    var cached=profileFromCache(id); 
+    try{
+      var res=await fetch(SUPA_URL+'/rest/v1/profiles?select=id,name,school,grade,province,district,avatar,avatar_url,coins,streak,created_at&id=eq.'+id, {headers:headers()});
+      var rows=await res.json(); if(rows && rows[0]) return rows[0];
+    }catch(e){}
+    return cached;
+  }
+  window.zedFetchProfileById=fetchProfileById;
+
+  // --- FULLSCREEN PROFILE PIC: tap any avatar -> big pic + Online/Offline ---
+  function openProfilePic(u, opts){
+    if(!u) return;
+    if(typeof u==='string'){ fetchProfileById(u).then(function(p){ if(p) openProfilePic(p, opts); }); return; }
+    var old=document.getElementById('zed-pic-fullscreen'); if(old) old.remove();
+    var av=(u.avatar||u.avatar_url||'');
+    var initial=(u.name||'S').charAt(0).toUpperCase();
+    var overlay=document.createElement('div'); overlay.id='zed-pic-fullscreen';
+    overlay.innerHTML =
+      '<button type="button" id="zed-picfs-close" style="position:absolute;top:14px;right:16px;background:rgba(255,255,255,0.15);border:none;color:#fff;font-size:22px;width:40px;height:40px;border-radius:999px;cursor:pointer;z-index:2">\u2715</button>'
+      + '<div style="position:relative">'+(av?'<img class="zed-pic-big" src="'+esc(av)+'" />':'<div class="zed-pic-big" style="display:flex;align-items:center;justify-content:center;font-size:96px;font-weight:900;color:#fff;background:#222">'+esc(initial)+'</div>')+'</div>'
+      + '<div id="zed-picfs-online" style="margin-top:14px;display:flex;align-items:center;gap:8px"><span style="width:12px;height:12px;border-radius:999px;background:#666;display:inline-block" id="zed-picfs-dot"></span><span id="zed-picfs-online-text" style="color:#fff;font-weight:800;font-size:14px">Checking status…</span></div>'
+      + '<div style="color:#fff;font-size:22px;font-weight:900;margin-top:10px;text-align:center">'+esc(u.name||'Student')+'</div>'
+      + (u.school?'<div style="color:#8CFF8A;font-size:14px;margin-top:4px;text-align:center">'+esc(u.school)+' • Grade '+(u.grade||'')+'</div>':'')
+      + '<div style="display:flex;gap:10px;margin-top:18px;flex-wrap:wrap;justify-content:center"><button id="zed-picfs-profile" style="background:#8CFF8A;color:#000;border:none;border-radius:999px;padding:11px 18px;font-weight:900;cursor:pointer">View Full Profile</button><button id="zed-picfs-close2" style="background:#222;color:#fff;border:1px solid #333;border-radius:999px;padding:11px 18px;font-weight:900;cursor:pointer">Close</button></div>'
+      + '<div style="color:#666;font-size:11px;margin-top:12px">Profile photo • Tap ✕ to close</div>';
+    document.body.appendChild(overlay);
+    function close(){ overlay.remove(); }
+    overlay.querySelector('#zed-picfs-close').addEventListener('click', close);
+    overlay.querySelector('#zed-picfs-close2').addEventListener('click', close);
+    overlay.addEventListener('click', function(e){ if(e.target===overlay) close(); });
+    overlay.querySelector('#zed-picfs-profile').addEventListener('click', function(){ close(); if(window.zedOpenUserProfile) window.zedOpenUserProfile(u, {friendStatus:{status:'accepted',dir:'both'}}); });
+    // Load Online / Offline for this person
+    (async function(){
+      try{
+        var map=await fetchPresence([u.id]);
+        var ls=map[u.id] || u.last_seen || '';
+        var on=isOnline(ls);
+        var dot=document.getElementById('zed-picfs-dot'); var txt=document.getElementById('zed-picfs-online-text');
+        if(dot && txt){ dot.style.background=on?'#22c55e':'#666'; txt.textContent=on?'● Online now':('○ '+lastSeenLabel(ls)); txt.style.color=on?'#22c55e':'#999'; }
+      }catch(e){}
+    })();
+  }
+  window.zedOpenProfilePic=openProfilePic;
+
+  // --- Capture: avatar tap = big pic, everywhere (CHATS, FRIENDS, SEARCH, header) ---
+  document.addEventListener('click', function(e){
+    var av = e.target.closest && e.target.closest('.zed-search-avatar, .zed-chat-avatar, .zed-friends-avatar, #zed-chat-view-avatar');
+    if(!av) return;
+    var id=av.getAttribute('data-profile-id');
+    if(!id) return;
+    e.preventDefault(); e.stopPropagation();
+    // Try cache instantly so it works offline too
+    var cached=profileFromCache(id);
+    if(cached) openProfilePic(cached);
+    fetchProfileById(id).then(function(p){ if(p && (!cached || p.avatar!==cached.avatar)) openProfilePic(p); });
+  }, true);
+
+  // --- Wrap old profile viewer to add Online / Offline line ---
+  try{
+    var _orig=window.zedOpenUserProfile;
+    if(_orig && !window._zedProfileWrapped){
+      window._zedProfileWrapped=true;
+      window.zedOpenUserProfile=function(u, opts){
+        _orig(u, opts);
+        setTimeout(async function(){
+          try{
+            var viewer=document.getElementById('zed-profile-viewer'); if(!viewer || !u || !u.id) return;
+            if(viewer.querySelector('#zed-prof-online')) return;
+            var map=await fetchPresence([u.id]); var ls=map[u.id]||u.last_seen||'';
+            var on=isOnline(ls);
+            var badge=document.createElement('div'); badge.id='zed-prof-online'; badge.style.cssText='display:flex;align-items:center;justify-content:center;gap:8px;margin-top:8px';
+            badge.innerHTML='<span style="width:10px;height:10px;border-radius:999px;background:'+(on?'#22c55e':'#666')+';display:inline-block"></span><span style="color:'+(on?'#22c55e':'#999')+';font-size:13px;font-weight:800">'+(on?'● Online now':'○ '+lastSeenLabel(ls))+'</span>';
+            var nameEl=viewer.querySelector('.zed-profile-card'); if(nameEl){ var first=nameEl.querySelector('div[style*="text-align:center"]'); if(first) first.appendChild(badge); else nameEl.appendChild(badge); }
+            refreshPresence();
+          }catch(e){}
+        }, 80);
+      };
+    }
+  }catch(e){}
+
+  // --- Outbox: send queued messages when back online ---
+  async function flushOutbox(){
+    try{
+      var out=JSON.parse(localStorage.getItem('zed_outbox_v1')||'[]'); if(!out.length) return;
+      var me=getMe(); if(!me) return;
+      var remaining=[];
+      for(var i=0;i<out.length;i++){
+        try{
+          var r=await fetch(SUPA_URL+'/rest/v1/chat_messages', {method:'POST', headers:headers(), body: JSON.stringify({sender_id:out[i].sender_id, receiver_id:out[i].receiver_id, text:out[i].text})});
+          if(!r.ok) remaining.push(out[i]);
+        }catch(e){ remaining.push(out[i]); }
+      }
+      localStorage.setItem('zed_outbox_v1', JSON.stringify(remaining));
+    }catch(e){}
+  }
+  window.zedFlushOutbox=flushOutbox;
+  console.log('[ZED] Pic-tap + Online/Offline + Offline cache active');
+})();
+</script>
+
+
+<style>
+/* ===== ZED FIX - FINAL: Chat button back + Leaderboard profile pics ===== */
+#zed-fab-stack{ gap:14px !important; overflow:visible !important; }
+#zed-chat-btn{
+  width:56px !important; height:56px !important; min-width:56px !important; min-height:56px !important;
+  display:flex !important; align-items:center !important; justify-content:center !important;
+  background:#111111 !important; color:#fff !important; border:2px solid #333 !important;
+  border-radius:50% !important; font-size:26px !important; line-height:1 !important;
+  box-shadow:0 6px 18px rgba(0,0,0,.5) !important; cursor:pointer !important;
+  position:relative !important; overflow:visible !important; flex-shrink:0 !important; margin:0 !important;
+}
+#zed-chat-btn .zed-fab-icon{ font-size:26px !important; line-height:1 !important; pointer-events:none !important; }
+.zed-lb-avatar{ flex-shrink:0 !important; cursor:pointer !important; }
+.zed-lb-avatar img{ width:100% !important; height:100% !important; object-fit:cover !important; display:block !important; }
+</style>
+<script>
+// ===== ZED FIX FINAL - Chat button (3rd, like the other two) + Real profile pics in Leaderboard =====
+(function(){
+  var SUPA_URL_FIX = 'https://biastmylavwhlsccvpyu.supabase.co';
+  var SUPA_KEY_FIX = 'sb_publishable_74vo5_RlNXb0U0TrNLCdCQ_8zjDwFni';
+  function fixHeaders(){ return { apikey: SUPA_KEY_FIX, Authorization: 'Bearer ' + SUPA_KEY_FIX, 'Content-Type': 'application/json' }; }
+  function isOnAuth(){
+    try{ if(document.body.classList.contains('zed-on-auth')) return true; }catch(e){}
+    return false;
+  }
+  function clearBadFabPositions(){
+    try{ localStorage.removeItem('zed_fab_positions'); }catch(e){}
+  }
+  function ensureStack(){
+    var s = document.getElementById('zed-fab-stack');
+    if(!s){
+      s = document.createElement('div');
+      s.id = 'zed-fab-stack';
+      s.style.cssText = 'position:fixed;right:12px;bottom:110px;z-index:9999;display:flex;flex-direction:column;gap:14px;align-items:center;';
+      document.body.appendChild(s);
+    }
+    return s;
+  }
+  function openChatPanelFallback(){
+    try{
+      var panel = document.getElementById('zed-chat-panel');
+      if(!panel) return;
+      panel.classList.add('open');
+      setTimeout(function(){
+        var tab = document.getElementById('zed-tab-chats');
+        if(tab) tab.click();
+      }, 120);
+    }catch(e){}
+  }
+  function ensureChatBtn(){
+    if(isOnAuth()) return;
+    var stack = ensureStack();
+    var chat = document.getElementById('zed-chat-btn');
+    var ai = document.getElementById('zed-ai-btn');
+    var off = document.getElementById('zed-offline-library-btn');
+    // --- If chat exists but is hidden / off-screen / stacked under another button, bring it back ---
+    if(chat){
+      var needsReset = false;
+      try{
+        var cs = window.getComputedStyle(chat);
+        if(cs.display === 'none' || cs.visibility === 'hidden' || parseFloat(cs.opacity) === 0) needsReset = true;
+        var r = chat.getBoundingClientRect();
+        // Off-screen (dragged away / saved position outside viewport)
+        if(r.width === 0 || r.height === 0) needsReset = true;
+        if(r.left < -20 || r.top < -20 || r.left > window.innerWidth - 10 || r.top > window.innerHeight - 10) needsReset = true;
+        // Overlapping another FAB (looks like only 2 buttons because one is directly under the other)
+        [ai, off].forEach(function(other){
+          if(!other || other === chat) return;
+          try{
+            var or = other.getBoundingClientRect();
+            var cx = r.left + r.width/2, cy = r.top + r.height/2;
+            var ocx = or.left + or.width/2, ocy = or.top + or.height/2;
+            if(Math.abs(cx-ocx) < 40 && Math.abs(cy-ocy) < 40) needsReset = true;
+          }catch(e){}
+        });
+      }catch(e){}
+      if(needsReset){
+        clearBadFabPositions();
+        try{
+          chat.classList.remove('zed-free','zed-dragging');
+          chat.style.removeProperty('position'); chat.style.removeProperty('left'); chat.style.removeProperty('top');
+          chat.style.removeProperty('right'); chat.style.removeProperty('bottom'); chat.style.removeProperty('z-index');
+          chat.style.setProperty('display','flex','important');
+          chat.style.setProperty('visibility','visible','important');
+          chat.style.setProperty('opacity','1','important');
+          chat.style.setProperty('pointer-events','auto','important');
+        }catch(e){}
+      }
+      // Must live in the stack, as the 3rd button (AI top, Papers middle, Chats bottom)
+      try{
+        if(chat.parentElement !== stack) stack.appendChild(chat);
+        else stack.appendChild(chat); // appendChild moves it to last = bottom
+        chat.style.setProperty('position','relative','important');
+        chat.style.setProperty('left','auto','important');
+        chat.style.setProperty('top','auto','important');
+        chat.style.setProperty('right','auto','important');
+        chat.style.setProperty('bottom','auto','important');
+      }catch(e){}
+      // Must show the speech-bubble icon like the other two show theirs, and keep its badge
+      try{
+        var badge = chat.querySelector('#zed-chat-unread-badge');
+        var hasIcon = (chat.textContent || '').indexOf('\uD83D\uDCAC') !== -1;
+        if(!hasIcon){
+          chat.innerHTML = '<span class="zed-fab-icon" aria-hidden="true">\uD83D\uDCAC</span>';
+          if(badge){ badge.id = 'zed-chat-unread-badge'; chat.appendChild(badge); }
+          else {
+            var b2 = document.createElement('span'); b2.id = 'zed-chat-unread-badge'; b2.textContent = '0';
+            chat.appendChild(b2);
+          }
+        }
+        if(!chat.querySelector('#zed-chat-unread-badge')){
+          var b3 = document.createElement('span'); b3.id = 'zed-chat-unread-badge'; b3.textContent = '0';
+          chat.appendChild(b3);
+        }
+        chat.title = 'Chats';
+        chat.setAttribute('aria-label','Chats');
+        chat.classList.add('zed-fab-nice');
+      }catch(e){}
+      return;
+    }
+    // --- Chat button truly missing: create it exactly like the other two, same size/stack ---
+    try{
+      var b = document.createElement('button');
+      b.id = 'zed-chat-btn';
+      b.type = 'button';
+      b.title = 'Chats';
+      b.setAttribute('aria-label','Chats');
+      b.className = 'zed-fab-nice';
+      b.innerHTML = '<span class="zed-fab-icon" aria-hidden="true">\uD83D\uDCAC</span><span id="zed-chat-unread-badge">0</span>';
+      b.addEventListener('click', function(e){
+        // Original chat opener lives in the chats script. If it is alive it will have
+        // recreated the button itself; this fallback just opens the panel + CHATS tab.
+        e.preventDefault();
+        openChatPanelFallback();
+      });
+      stack.appendChild(b);
+    }catch(e){}
+  }
+
+  // ---------- LEADERBOARD PROFILE PICS ----------
+  var lbCache = null;
+  var lbFetching = false;
+  function fetchLBProfiles(cb){
+    if(lbCache){ if(cb) cb(lbCache); return; }
+    if(lbFetching){ setTimeout(function(){ fetchLBProfiles(cb); }, 800); return; }
+    lbFetching = true;
+    try{
+      fetch(SUPA_URL_FIX + '/rest/v1/profiles?select=id,name,school,district,province,coins,streak,avatar,avatar_url&limit=500', { headers: fixHeaders() })
+        .then(function(r){ return r.json(); })
+        .then(function(rows){
+          lbCache = Array.isArray(rows) ? rows : [];
+          lbFetching = false;
+          if(cb) cb(lbCache);
+        })
+        .catch(function(){ lbFetching = false; if(cb) cb([]); });
+    }catch(e){ lbFetching = false; if(cb) cb([]); }
+  }
+  function norm(s){ return String(s||'').trim().toLowerCase(); }
+  function findProfile(name, school, district, coins){
+    if(!lbCache || !lbCache.length) return null;
+    var n = norm(name), s = norm(school), d = norm(district);
+    var c = (coins === '' || coins == null) ? null : parseInt(coins, 10);
+    var tests = [
+      function(p){ return norm(p.name)===n && norm(p.school)===s && norm(p.district)===d && c!==null && parseInt(p.coins||0,10)===c; },
+      function(p){ return norm(p.name)===n && norm(p.school)===s && c!==null && parseInt(p.coins||0,10)===c; },
+      function(p){ return norm(p.name)===n && norm(p.school)===s && norm(p.district)===d; },
+      function(p){ return norm(p.name)===n && norm(p.school)===s; },
+      function(p){ return norm(p.name)===n && c!==null && parseInt(p.coins||0,10)===c; },
+      function(p){ return norm(p.name)===n; }
+    ];
+    for(var i=0;i<tests.length;i++){
+      for(var j=0;j<lbCache.length;j++){ if(tests[i](lbCache[j])) return lbCache[j]; }
+    }
+    return null;
+  }
+  function makeAvatar(profile, size){
+    var wrap = document.createElement('div');
+    wrap.className = 'zed-lb-avatar';
+    wrap.setAttribute('data-profile-id', profile.id || '');
+    wrap.title = 'Tap to view ' + (profile.name||'Student') + ' profile pic';
+    wrap.style.cssText = 'width:'+size+'px;height:'+size+'px;min-width:'+size+'px;min-height:'+size+'px;border-radius:999px;overflow:hidden;background:#222;display:flex;align-items:center;justify-content:center;font-size:'+Math.round(size*0.45)+'px;font-weight:900;color:#fff;border:2px solid #8CFF8A;';
+    var av = profile.avatar || profile.avatar_url || '';
+    if(av){
+      var img = document.createElement('img');
+      img.src = av; img.alt = profile.name||'Student'; img.loading = 'lazy';
+      img.onerror = function(){ try{ img.remove(); wrap.textContent = (profile.name||'S').charAt(0).toUpperCase(); }catch(e){} };
+      wrap.appendChild(img);
+    } else {
+      wrap.textContent = (profile.name||'S').charAt(0).toUpperCase();
+    }
+    wrap.addEventListener('click', function(e){
+      e.preventDefault(); e.stopPropagation();
+      try{
+        if(window.zedOpenProfilePic) window.zedOpenProfilePic(profile);
+        else if(window.zedOpenUserProfile) window.zedOpenUserProfile(profile, {friendStatus:{status:'accepted',dir:'both'}});
+      }catch(err){}
+    });
+    return wrap;
+  }
+  function lbContainer(){
+    var heads = Array.from(document.querySelectorAll('h2'));
+    var h = heads.find(function(x){ return (x.textContent||'').indexOf('Whole Zambia Leaderboard') !== -1; });
+    if(!h) return null;
+    return h.closest('div.space-y-6') || h.parentNode.parentNode;
+  }
+  function enhanceTable(container){
+    var table = container.querySelector('table');
+    if(!table) return;
+    var rows = table.querySelectorAll('tbody tr');
+    rows.forEach(function(tr){
+      if(tr.querySelector('.zed-lb-avatar')) return;
+      var cells = tr.querySelectorAll('td');
+      if(cells.length < 5) return;
+      var nameCell = cells[1];
+      var schoolCell = cells[2];
+      var coinsCell = cells[4];
+      var rawName = (nameCell.textContent||'').replace('YOU','').trim();
+      // School cell is like "Munali Boys Secondary (Lusaka)" - split school / district
+      var schoolTxt = (schoolCell.textContent||'').trim();
+      var district = '';
+      var school = schoolTxt;
+      var m = schoolTxt.match(/^(.*)\s*\((.*)\)\s*$/);
+      if(m){ school = m[1].trim(); district = m[2].trim(); }
+      var coins = (coinsCell.textContent||'').replace(/[^0-9]/g,'');
+      var p = findProfile(rawName, school, district, coins);
+      if(!p) return;
+      var av = makeAvatar(p, 36);
+      nameCell.style.display = 'flex';
+      nameCell.style.alignItems = 'center';
+      nameCell.style.gap = '8px';
+      nameCell.insertBefore(av, nameCell.firstChild);
+      tr.setAttribute('data-profile-id', p.id||'');
+    });
+  }
+  function enhanceTop3(container){
+    // Top 3 cards: the 3-col grid directly under the filters
+    var grids = container.querySelectorAll('.grid.grid-cols-3');
+    grids.forEach(function(grid){
+      var cards = grid.children;
+      for(var i=0;i<cards.length;i++){
+        var card = cards[i];
+        // Remove the old fake letter-only avatar so the real photo can show
+        var oldFake = card.querySelector('.zed-leader-avatar');
+        if(oldFake && !card.querySelector('.zed-lb-avatar')){ try{ oldFake.remove(); }catch(e){} }
+        if(card.querySelector('.zed-lb-avatar')) continue;
+        var nameEl = card.querySelector('.font-serif');
+        if(!nameEl) continue;
+        var name = (nameEl.textContent||'').trim();
+        var txt = card.textContent||'';
+        var cm = txt.match(/(\d+)\s*coins/i);
+        var coins = cm ? cm[1] : '';
+        var p = findProfile(name, '', '', coins);
+        if(!p){
+          // Try name-only match against full cache (school may be truncated to 22 chars in card)
+          p = lbCache ? lbCache.find(function(x){ return norm(x.name)===norm(name); }) : null;
+        }
+        if(!p) continue;
+        var av = makeAvatar(p, 56);
+        av.style.margin = '0 auto 8px';
+        card.insertBefore(av, card.firstChild);
+      }
+    });
+  }
+  function enhanceDistrict(container){
+    // District top-3 cards: grid md:grid-cols-2, each row is "1. Name" + "123c"
+    var grids = container.querySelectorAll('.grid.md\\:grid-cols-2');
+    grids.forEach(function(grid){
+      var rows = grid.querySelectorAll('div.flex.justify-between');
+      rows.forEach(function(row){
+        if(row.querySelector('.zed-lb-avatar')) return;
+        var spans = row.querySelectorAll('span');
+        if(spans.length < 2) return;
+        var nameTxt = (spans[0].textContent||'').replace(/^\d+\.\s*/, '').trim();
+        var coinsTxt = (spans[1].textContent||'').replace(/[^0-9]/g,'');
+        var p = findProfile(nameTxt, '', '', coinsTxt);
+        if(!p) return;
+        row.style.display = 'flex';
+        row.style.alignItems = 'center';
+        row.style.gap = '8px';
+        var av = makeAvatar(p, 28);
+        row.insertBefore(av, row.firstChild);
+      });
+    });
+  }
+  function enhanceLeaderboard(){
+    var c = lbContainer();
+    if(!c) return;
+    fetchLBProfiles(function(){
+      try{ enhanceTable(c); enhanceTop3(c); enhanceDistrict(c); }catch(e){}
+    });
+  }
+
+  // Run both fixes often - React re-renders wipe injected DOM, and the old drag code can re-hide the chat button
+  setInterval(ensureChatBtn, 1000);
+  setInterval(enhanceLeaderboard, 1500);
+  setTimeout(ensureChatBtn, 300);
+  setTimeout(ensureChatBtn, 1500);
+  setTimeout(enhanceLeaderboard, 800);
+  document.addEventListener('DOMContentLoaded', function(){ setTimeout(ensureChatBtn, 300); setTimeout(enhanceLeaderboard, 800); });
+  console.log('[ZED] FIX FINAL active: 3 FABs (AI + Papers + Chats) + Leaderboard profile pics');
+})();
+</script>
 </body>
 </html>
