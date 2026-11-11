@@ -4699,7 +4699,7 @@ const db=await openDB();return new Promise((res,rej)=>{const tx=db.transaction(S
     });
   }
 
-  function filter(){ if(window._zedV7OwnsVideos || window._zedV8OwnsVideos || window._zedV9OwnsVideos || window._zedV10OwnsVideos) return; // V10 owns filtering
+  function filter(){ if(window._zedV7OwnsVideos || window._zedV8OwnsVideos || window._zedV9OwnsVideos || window._zedV10OwnsVideos || window._zedV11OwnsVideos || window._zedV12OwnsVideos) return; // V12 owns filtering
     let grids = document.querySelectorAll('.grid.md\\:grid-cols-2.gap-4');
     let allCards = [];
     grids.forEach(g=>{
@@ -4792,7 +4792,7 @@ const db=await openDB();return new Promise((res,rej)=>{const tx=db.transaction(S
       g.style.gap = g.style.gap || '16px';
     });
   }
-  /* V10 owns grid - V17 interval disabled */
+  /* V12 owns grid - V17 interval disabled */
   setTimeout(makeGrid, 300);
   window.addEventListener('resize', makeGrid);
   console.log('✅ V17 GRID - videos in grid');
@@ -4931,7 +4931,7 @@ const db=await openDB();return new Promise((res,rej)=>{const tx=db.transaction(S
     makeGrid();
   }
 
-  /* V10 owns grid - V18 interval disabled */;
+  /* V12 owns grid - V18 interval disabled */;
   
   setTimeout(()=>{
     makeGrid();
@@ -5218,8 +5218,8 @@ const db=await openDB();return new Promise((res,rej)=>{const tx=db.transaction(S
   }
   // Run immediately and keep enforcing to override V17/V18
   forceList();
-  /* V10 owns layout - V21 interval disabled */
-  /* V10 - V21 observer disabled */
+  /* V12 owns layout - V21 interval disabled */
+  /* V12 - V21 observer disabled */
   obs.observe(document.body, {childList:true, subtree:true});
   window.addEventListener('resize', forceList);
   console.log('✅ V21 LIST VIEW - single column');
@@ -5892,7 +5892,7 @@ console.log('[ZED] Welcome popup + fast login active');
       }
     });
   }
-  function applyPagination(){ if(window._zedV7OwnsVideos || window._zedV8OwnsVideos || window._zedV9OwnsVideos || window._zedV10OwnsVideos) return; // V10 owns pagination
+  function applyPagination(){ if(window._zedV7OwnsVideos || window._zedV8OwnsVideos || window._zedV9OwnsVideos || window._zedV10OwnsVideos || window._zedV11OwnsVideos || window._zedV12OwnsVideos) return; // V12 owns pagination
     var grid = getVideosGrid();
     if(!grid) return;
     var q = getSearchQuery();
@@ -5993,7 +5993,7 @@ console.log('[ZED] Welcome popup + fast login active');
     }
   }
   // Run pagination + shields on interval (React re-renders)
-  /* V10 owns pagination - interval disabled */ setInterval(function(){ try{ addShields(); }catch(e){}  }catch(e){}
+  /* V12 owns pagination - interval disabled */ setInterval(function(){ try{ addShields(); }catch(e){}  }catch(e){}
   }, 800);
   // Auto-load more on scroll near bottom
   var scrollTick = false;
@@ -10402,10 +10402,10 @@ header div[class*="bg-"][class*="border"][class*="rounded"] span:first-child{
 </style>
 
 
-<!-- ZED VIDEO COINS V10 - CHAT DRAGGABLE, NO FLICKER, PLAY OFFLINE WORKS -->
-<style id="zed-video-coins-v10-style">
+<!-- ZED VIDEO COINS V12 - PAPERS BACK, ONE UNLOCK BUTTON, PLAY IN BOTH, UNLOCKS SHARED -->
+<style id="zed-video-coins-v12-style">
 /* V7 - NO All, hidden until searched, exact/similar search only, all locked, YouTube+MP4 in Unlocked, chat button normal */
-#zed-v10-toolbar{display:block;margin:0 0 12px}
+#zed-v12-toolbar{display:block;margin:0 0 12px}
 .zed-v7-row{display:flex;flex-wrap:wrap;gap:8px;align-items:center}
 .zed-coin-pill{padding:6px 12px;border-radius:999px;background:#FFD600;color:#000;font-size:12px;font-weight:800;white-space:nowrap}
 .zed-vt-filter{height:36px;padding:0 14px;border-radius:999px;background:#1a1a1a;border:1px solid #333;color:#ddd;font-size:12px;font-weight:700;cursor:pointer;white-space:nowrap}
@@ -10416,23 +10416,28 @@ header div[class*="bg-"][class*="border"][class*="rounded"] span:first-child{
 #zed-v16-wrap input{font-size:15px}
 #zed-v16-info{display:none !important}
 /* Hide V16 search in Unlocked/Downloads - CSS !important beats V22's inline block */
-body.zed-v10-filter-downloads #zed-v16-wrap{display:none !important}
-body.zed-v10-filter-unlocked #zed-v16-wrap{display:none !important}
+body.zed-v12-filter-downloads #zed-v16-wrap{display:none !important}
+body.zed-v12-filter-unlocked #zed-v16-wrap{display:none !important}
 .zed-video-card{position:relative !important;contain:layout style}
 [data-zed-hidden="1"]{display:none !important}
-#zed-v10-toolbar[data-zed-hidden="1"], #zed-v16-wrap[data-zed-hidden="1"], #zed-v10-downloads-view[data-zed-hidden="1"]{display:block !important;visibility:visible !important}
-#zed-v10-toolbar{display:block !important;visibility:visible !important}
+  /* V11: No flash of all videos. New cards hidden until V11 approves with data-zed-hidden="0". Original shows 4 random before V11 runs - this stops it. */
+  /* V12: Flash CSS ONLY in Videos. Papers/Quiz/Docs use same grid class - without zed-v12-in-videos gate, Papers showed "13 papers" but blank list. */
+  body.zed-v12-in-videos.zed-v12-filter-search .grid.md\:grid-cols-2 > div:not([data-zed-hidden="0"]):not([id^="zed-"]),
+  body.zed-v12-in-videos.zed-v12-filter-unlocked .grid.md\:grid-cols-2 > div:not([data-zed-hidden="0"]):not([id^="zed-"]),
+  body.zed-v12-in-videos.zed-v12-filter-downloads .grid.md\:grid-cols-2 > div:not([data-zed-hidden="0"]):not([id^="zed-"]){display:none !important;visibility:hidden !important}
+#zed-v12-toolbar[data-zed-hidden="1"], #zed-v16-wrap[data-zed-hidden="1"], #zed-v12-downloads-view[data-zed-hidden="1"]{display:block !important;visibility:visible !important}
+#zed-v12-toolbar{display:block !important;visibility:visible !important}
 /* V8 hides cards individually, not the whole grid */
 
 
 
-#zed-v10-downloads-view{display:none;gap:12px;margin-top:4px}
-body.zed-v10-filter-downloads #zed-v10-downloads-view{display:grid !important}
-#zed-v10-search-empty,#zed-v10-unlocked-empty,#zed-v10-no-results{display:none;background:#18191A;border:1px solid #333;border-radius:14px;padding:20px;text-align:center;color:#ccc;font-size:13px;line-height:1.6;margin-top:4px}
-body.zed-v10-search-empty #zed-v10-search-empty{display:block !important}
-body.zed-v10-unlocked-empty #zed-v10-unlocked-empty{display:block !important}
-body.zed-v10-no-results #zed-v10-no-results{display:block !important}
-@media(min-width:768px){#zed-v10-downloads-view{grid-template-columns:1fr 1fr}}
+#zed-v12-downloads-view{display:none;gap:12px;margin-top:4px}
+body.zed-v12-filter-downloads #zed-v12-downloads-view{display:grid !important}
+#zed-v12-search-empty,#zed-v12-unlocked-empty,#zed-v12-no-results{display:none;background:#18191A;border:1px solid #333;border-radius:14px;padding:20px;text-align:center;color:#ccc;font-size:13px;line-height:1.6;margin-top:4px}
+body.zed-v12-search-empty #zed-v12-search-empty{display:block !important}
+body.zed-v12-unlocked-empty #zed-v12-unlocked-empty{display:block !important}
+body.zed-v12-no-results #zed-v12-no-results{display:block !important}
+@media(min-width:768px){#zed-v12-downloads-view{grid-template-columns:1fr 1fr}}
 .zed-dl-card{background:#18191A;border:1px solid #333;border-radius:14px;overflow:hidden}
 .zed-dl-card video{width:100%;aspect-ratio:16/9;background:#000}
 .zed-dl-body{padding:12px}
@@ -10460,7 +10465,7 @@ body.zed-v10-no-results #zed-v10-no-results{display:block !important}
 /* V10: NO CSS touching #zed-chat-btn - original makeMovable already makes it draggable like AI + Library. */
 </style>
 <script>
-// ===== ZED VIDEO COINS V10 =====
+// ===== ZED VIDEO COINS V12 =====
 // - Search = the ORIGINAL V16 search (zed-v16-input). V6 made its own search and V22 hid it every 700ms - that's why you couldn't press it.
 // - Search matching = exact / similar only. Title + subject only, all words must match. No more "everything shows".
 // - Stable IDs: YouTube uses ytId only (not full iframe URL which changes when we blank it). Unlocked now includes YouTube + MP4.
@@ -10469,12 +10474,13 @@ window._zedV5OwnsVideos = true;
 window._zedV6OwnsVideos = true;
 window._zedV7OwnsVideos = true;
 window._zedV8OwnsVideos = true;
-window._zedV10OwnsVideos = true;
+window._zedV12OwnsVideos = true;
 window._zedV8OwnsVideos = true;
-window._zedV10OwnsVideos = true;
-window._zedV10Filter = 'search';
-window._zedV10Filter = 'search';
+window._zedV12OwnsVideos = true;
+window._zedV12Filter = 'search';
+window._zedV12Filter = 'search';
 (function(){
+  try{ document.body.classList.add('zed-v12-filter-search'); }catch(e){} // V11: hide flash from start
   var UNLOCK_COST = 25;
   var SUPA_URL = 'https://biastmylavwhlsccvpyu.supabase.co';
   var SUPA_KEY = 'sb_publishable_74vo5_RlNXb0U0TrNLCdCQ_8zjDwFni';
@@ -10501,6 +10507,19 @@ window._zedV10Filter = 'search';
 
   function openDB(){ return new Promise(function(res,rej){ var r=indexedDB.open(DB_NAME,1); r.onupgradeneeded=function(e){ var db=e.target.result; if(!db.objectStoreNames.contains(STORE)){ db.createObjectStore(STORE,{keyPath:'id'}); } }; r.onsuccess=function(){ res(r.result); }; r.onerror=function(){ rej(r.error); }; }); }
   async function getAllDownloads(){ try{ var db=await openDB(); return new Promise(function(resolve){ var tx=db.transaction(STORE,'readonly'); var st=tx.objectStore(STORE); var req=st.getAll(); req.onsuccess=function(){ resolve(req.result||[]); }; req.onerror=function(){ resolve([]); }; }); }catch(e){ return []; } }
+  // V11: Downloads count = number of records in IndexedDB. NOT the Set size (Set holds many candidate IDs per video, so it over-counts).
+  async function refreshDownloadCount(){
+    try{
+      var all=await getAllDownloads();
+      downloadedIds=new Set(all.map(function(x){ return x.id; }));
+      var bar=document.getElementById('zed-v12-toolbar');
+      if(bar){
+        var el=bar.querySelector('[data-zed-count="downloads"]');
+        if(el) el.textContent='('+all.length+')';
+      }
+      return all.length;
+    }catch(e){ return 0; }
+  }
   async function ensureDownloadsLoaded(){ if(downloadedLoaded) return; var all=await getAllDownloads(); downloadedIds=new Set(all.map(function(x){return x.id;})); downloadedLoaded=true; }
   async function saveDownload(meta, blob){ var db=await openDB(); return new Promise(function(resolve,reject){ var tx=db.transaction(STORE,'readwrite'); var rec={ id: meta.id, title: meta.title, subject: meta.subject, video_url: meta.video_url, video_type: meta.video_type, thumbnail_url: meta.thumbnail_url||'', savedAt: Date.now(), size: blob.size||0, blob: blob }; tx.objectStore(STORE).put(rec); tx.oncomplete=function(){ resolve(rec); }; tx.onerror=function(){ reject(tx.error); }; }); }
   async function deleteDownload(id){ var db=await openDB(); return new Promise(function(resolve){ var tx=db.transaction(STORE,'readwrite'); tx.objectStore(STORE).delete(id); tx.oncomplete=function(){ resolve(); }; tx.onerror=function(){ resolve(); }; }); }
@@ -10525,12 +10544,16 @@ window._zedV10Filter = 'search';
     return null;
   }
   function isVideosTabActive(){
+    // V11: VIDEOS top button is boss. If NOT white, NOT in Videos - even if toolbar still in DOM. Fixes conflict where Videos kept hiding while in Papers/Quiz/Docs.
     var vb=findButton('videos');
     if(vb){
-      try{ var cs=getComputedStyle(vb); if(cs.backgroundColor && cs.backgroundColor.indexOf('255, 255, 255')!==-1) return true; }catch(e){}
-      var cls=vb.className||''; if(cls.indexOf('bg-white')!==-1 || cls.indexOf('bg-[var(--text)]')!==-1) return true;
+      var isWhite=false;
+      try{ var cs=getComputedStyle(vb); if(cs.backgroundColor && cs.backgroundColor.indexOf('255, 255, 255')!==-1) isWhite=true; }catch(e){}
+      var cls=vb.className||''; if(cls.indexOf('bg-white')!==-1 || cls.indexOf('bg-[var(--text)]')!==-1) isWhite=true;
+      if(!isWhite) return false;
+      return true;
     }
-    if(document.getElementById('zed-v10-toolbar')) return true;
+    if(document.getElementById('zed-v12-toolbar')) return true;
     if(document.getElementById('zed-v16-wrap')) return true;
     var allDivs=document.querySelectorAll('div');
     for(var i=0;i<allDivs.length;i++){ var t=(allDivs[i].textContent||'').trim(); if(/^\d+ VIDEOS$/.test(t) || t.indexOf('No videos')===0) return true; }
@@ -10572,7 +10595,7 @@ window._zedV10Filter = 'search';
     var titles=document.querySelectorAll('.font-semibold');
     for(var k=0;k<titles.length;k++){
       var el=titles[k];
-      if(el.closest && (el.closest('#zed-v10-toolbar') || el.closest('#zed-v10-downloads-view') || el.closest('#zed-chat-panel'))) continue;
+      if(el.closest && (el.closest('#zed-v12-toolbar') || el.closest('#zed-v12-downloads-view') || el.closest('#zed-chat-panel'))) continue;
       var cur=el.parentElement; var steps=0;
       while(cur && cur!==document.body && steps<4){
         steps++;
@@ -10734,10 +10757,10 @@ window._zedV10Filter = 'search';
   function isSafeCard(card){
     // V9 SAFETY: a card is ONE video only. Never hide the whole page / toolbar / search / a container with many videos.
     if(!card || !card.querySelector) return false;
-    if(card.id==='zed-v10-toolbar' || card.id==='zed-v10-downloads-view' || card.id==='zed-v16-wrap') return false;
-    if(card.closest && (card.closest('#zed-v10-toolbar') || card.closest('#zed-v10-downloads-view') || card.closest('#zed-v16-wrap') || card.closest('#zed-chat-panel'))) return false;
+    if(card.id==='zed-v12-toolbar' || card.id==='zed-v12-downloads-view' || card.id==='zed-v16-wrap') return false;
+    if(card.closest && (card.closest('#zed-v12-toolbar') || card.closest('#zed-v12-downloads-view') || card.closest('#zed-v16-wrap') || card.closest('#zed-chat-panel'))) return false;
     // If it contains the toolbar or search, it is a container, not a card
-    if(card.querySelector('#zed-v10-toolbar') || card.querySelector('#zed-v16-wrap') || card.querySelector('#zed-v10-downloads-view')) return false;
+    if(card.querySelector('#zed-v12-toolbar') || card.querySelector('#zed-v16-wrap') || card.querySelector('#zed-v12-downloads-view')) return false;
     // If it contains 3+ titles, it is a container with many videos, not ONE card
     var titles = card.querySelectorAll ? card.querySelectorAll('.font-semibold') : [];
     if(titles.length>2) return false;
@@ -10759,9 +10782,17 @@ window._zedV10Filter = 'search';
       try{ card.style.removeProperty('display'); card.style.removeProperty('visibility'); }catch(e){ card.style.display=''; }
     }
   }
+  function isAnyVideoPlaying(){
+    try{
+      var vids=document.querySelectorAll('video');
+      for(var i=0;i<vids.length;i++){ var v=vids[i]; if(v && !v.paused && !v.ended && v.currentTime>0) return true; }
+    }catch(e){}
+    return false;
+  }
+  var lastDownloadsSig='';
   function unhideToolbarAncestors(){
     // If anything above the toolbar/search got hidden, unhide it - toolbar must always be visible in Videos.
-    ['zed-v10-toolbar','zed-v16-wrap','zed-v10-downloads-view'].forEach(function(id){
+    ['zed-v12-toolbar','zed-v16-wrap','zed-v12-downloads-view'].forEach(function(id){
       var el=document.getElementById(id); if(!el) return;
       var cur=el;
       while(cur && cur!==document.body){
@@ -10789,13 +10820,15 @@ window._zedV10Filter = 'search';
     return null;
   }
   function hideOriginalVideosHeader(){
+    if(typeof isAnyVideoPlaying==='function' && isAnyVideoPlaying()) return;
+    if(typeof isVideosTabActive==='function' && !isVideosTabActive()) return; // V12: never touch Papers/Quiz/Docs
     // V9: hide ONLY the small "42 VIDEOS" header and circled words. Never hide a container that holds the toolbar, search, grid, or many videos.
     var els=document.querySelectorAll('div, h2, h3, p, span, section');
     for(var i=0;i<els.length;i++){
       var el=els[i]; if(!el) continue;
-      if(el.id==='zed-v10-toolbar' || el.id==='zed-v10-downloads-view' || el.id==='zed-v16-wrap') continue;
-      if(el.closest && (el.closest('#zed-v10-toolbar') || el.closest('#zed-v10-downloads-view') || el.closest('#zed-v16-wrap'))) continue;
-      if(el.querySelector && (el.querySelector('#zed-v10-toolbar') || el.querySelector('#zed-v16-wrap') || el.querySelector('.grid'))) continue;
+      if(el.id==='zed-v12-toolbar' || el.id==='zed-v12-downloads-view' || el.id==='zed-v16-wrap') continue;
+      if(el.closest && (el.closest('#zed-v12-toolbar') || el.closest('#zed-v12-downloads-view') || el.closest('#zed-v16-wrap'))) continue;
+      if(el.querySelector && (el.querySelector('#zed-v12-toolbar') || el.querySelector('#zed-v16-wrap') || el.querySelector('.grid'))) continue;
       var titlesInEl = el.querySelectorAll ? el.querySelectorAll('.font-semibold').length : 0;
       if(titlesInEl>1) continue; // container with videos - never hide
       var t=(el.textContent||'').trim();
@@ -10813,7 +10846,7 @@ window._zedV10Filter = 'search';
       }
     }
     var inf=document.getElementById('zed-v16-info'); if(inf) { try{ inf.style.setProperty('display','none','important'); }catch(e){ inf.style.display='none'; } }
-    ['zed-v10-search-empty','zed-v10-unlocked-empty','zed-v10-no-results','zed-v8-search-empty','zed-v8-unlocked-empty','zed-v8-no-results','zed-v7-search-empty','zed-v7-unlocked-empty','zed-v7-no-results'].forEach(function(id){
+    ['zed-v12-search-empty','zed-v12-unlocked-empty','zed-v12-no-results','zed-v8-search-empty','zed-v8-unlocked-empty','zed-v8-no-results','zed-v7-search-empty','zed-v7-unlocked-empty','zed-v7-no-results'].forEach(function(id){
       var v=document.getElementById(id); if(v){ try{ v.style.setProperty('display','none','important'); v.innerHTML=''; }catch(e){} }
     });
   }
@@ -10848,9 +10881,11 @@ window._zedV10Filter = 'search';
     return wrap;
   }
   function ensureToolbar(){
-    var existing=document.getElementById('zed-v10-toolbar');
+    var existing=document.getElementById('zed-v12-toolbar');
     if(existing){
       var sig=getCoins()+'|'+getUnlocked().length+'|'+downloadedIds.size+'|'+findVideoCards().length;
+      // V11: downloads count comes from DB - refresh in background so toolbar shows true count
+      refreshDownloadCount();
       if(sig!==lastToolbarSig){
         var pill=existing.querySelector('[data-zed-coins]');
         if(pill) pill.textContent='🪙 '+getCoins()+' coins';
@@ -10863,7 +10898,7 @@ window._zedV10Filter = 'search';
     }
     var anchor=getVideosAnchor();
     if(!anchor) return null;
-    var bar=document.createElement('div'); bar.id='zed-v10-toolbar';
+    var bar=document.createElement('div'); bar.id='zed-v12-toolbar';
     bar.innerHTML =
       '<div class="zed-v7-row">' +
         '<span class="zed-coin-pill" data-zed-coins>🪙 '+getCoins()+' coins</span>' +
@@ -10889,27 +10924,28 @@ window._zedV10Filter = 'search';
     // V8: NO empty-state words at all. No "Search for a video", no "Type a topic", no "No videos shown", no "All videos locked".
     // When nothing matches, show blank space - never words, never other videos.
     // Remove any old V7 empty views that might still be in the DOM.
-    ['zed-v10-search-empty','zed-v10-unlocked-empty','zed-v10-no-results','zed-v7-search-empty','zed-v7-unlocked-empty','zed-v7-no-results'].forEach(function(id){
+    ['zed-v12-search-empty','zed-v12-unlocked-empty','zed-v12-no-results','zed-v7-search-empty','zed-v7-unlocked-empty','zed-v7-no-results'].forEach(function(id){
       var old=document.getElementById(id); if(old) old.remove();
     });
     var anchor=getVideosAnchor();
-    var bar=document.getElementById('zed-v10-toolbar');
+    var bar=document.getElementById('zed-v12-toolbar');
     var parent = bar && bar.parentNode ? bar.parentNode : (anchor ? anchor.parent : null);
     var before = bar ? bar.nextSibling : (anchor ? anchor.before : null);
     if(!parent) return;
     var searchWrap=document.getElementById('zed-v16-wrap');
     var viewAnchor = searchWrap && searchWrap.parentNode===parent ? searchWrap.nextSibling : before;
-    if(!document.getElementById('zed-v10-downloads-view')){
-      var dv=document.createElement('div'); dv.id='zed-v10-downloads-view';
+    if(!document.getElementById('zed-v12-downloads-view')){
+      var dv=document.createElement('div'); dv.id='zed-v12-downloads-view';
       parent.insertBefore(dv, viewAnchor);
     }
   }
   function setFilter(f, keepQuery){
     filter=f;
-    window._zedV10Filter=f;
-    document.body.classList.remove('zed-v10-filter-search','zed-v10-filter-unlocked','zed-v10-filter-downloads');
-    document.body.classList.add('zed-v10-filter-'+f);
-    var bar=document.getElementById('zed-v10-toolbar');
+    window._zedV12Filter=f;
+    document.body.classList.remove('zed-v12-filter-search','zed-v12-filter-unlocked','zed-v12-filter-downloads');
+    document.body.classList.add('zed-v12-filter-'+f);
+    document.body.classList.add('zed-v12-in-videos'); // V12: only in Videos
+    var bar=document.getElementById('zed-v12-toolbar');
     if(bar){ bar.querySelectorAll('[data-zed-filter]').forEach(function(x){ x.classList.toggle('active', x.getAttribute('data-zed-filter')===f); }); }
     var wrap=document.getElementById('zed-v16-wrap');
     if(wrap){
@@ -10964,8 +11000,33 @@ window._zedV10Filter = 'search';
     });
   }
   async function renderDownloadsView(){
-    var view=document.getElementById('zed-v10-downloads-view'); if(!view) return;
+    var view=document.getElementById('zed-v12-downloads-view'); if(!view) return;
+    // V11: Downloads = ONLY IndexedDB records. Never main-grid videos. Count = all.length.
+    // Never rebuild while a download is playing - it destroys the <video> and resets to 0:00.
+    try{ var playingDl=view.querySelector('video'); if(playingDl && !playingDl.paused && playingDl.currentTime>0) return; }catch(e){}
     var all=await getAllDownloads();
+    // V12: Download = unlocked. If a downloaded video is not in unlock list, add it - so unlocks work in BOTH Videos and Downloads.
+    try{
+      var ul=getUnlocked(); var changed=false;
+      all.forEach(function(rec){ if(ul.indexOf(rec.id)===-1){ ul.push(rec.id); changed=true; } });
+      if(changed) saveUnlocked(ul);
+    }catch(e){}
+    // Update count from DB truth (not Set)
+    try{
+      downloadedIds=new Set(all.map(function(x){ return x.id; }));
+      var barC=document.getElementById('zed-v12-toolbar');
+      if(barC){ var elC=barC.querySelector('[data-zed-count="downloads"]'); if(elC) elC.textContent='('+all.length+')'; }
+    }catch(e){}
+    var sig=all.map(function(r){ return r.id+'|'+r.size+'|'+r.savedAt; }).join('||');
+    if(sig===lastDownloadsSig && view.querySelectorAll('.zed-dl-card').length===all.length){
+      // Same list - reuse existing <video> elements, don't destroy them
+      all.forEach(function(rec){
+        var card=view.querySelector('[data-dl-id="'+rec.id+'"]'); if(!card) return;
+        var v=card.querySelector('video'); if(v && !v.src && rec.blob){ try{ var u0=URL.createObjectURL(rec.blob); dlObjectUrls[rec.id]=u0; v.src=u0; }catch(e){} }
+      });
+      return;
+    }
+    lastDownloadsSig=sig;
     if(all.length===0){
       view.innerHTML='<div style="grid-column:1/-1;padding:20px;text-align:center"><button class="zed-vt-filter active" data-zed-back-search2>🔍 Search Videos →</button></div>';
       var b=view.querySelector('[data-zed-back-search2]'); if(b) b.addEventListener('click', function(){ setFilter('search'); setTimeout(function(){ var i=getSearchInput(); if(i) i.focus(); }, 100); });
@@ -10973,12 +11034,12 @@ window._zedV10Filter = 'search';
     }
     var html='';
     all.forEach(function(rec){
-      html+='<div class="zed-dl-card" data-dl-id="'+rec.id+'"><video controls playsinline preload="metadata"></video><div class="zed-dl-body"><div style="font-size:11px;color:#8CFF8A;text-transform:uppercase">'+escapeHtml(rec.subject||'')+'</div><div style="font-weight:700;font-size:14px;margin-top:4px">'+escapeHtml(rec.title||'Video')+'</div><div style="font-size:11px;color:#aaa;margin-top:4px">📥 Saved inside app • '+((rec.size/1024/1024)||0).toFixed(1)+' MB • '+new Date(rec.savedAt).toLocaleDateString()+'</div><div class="zed-video-actions"><button class="primary" data-zed-dl-play="'+rec.id+'">▶ Play Offline</button><button data-zed-dl-delete="'+rec.id+'">🗑 Delete</button></div></div></div>';
+      html+='<div class="zed-dl-card" data-dl-id="'+rec.id+'"><video controls playsinline preload="metadata"></video><div class="zed-dl-body"><div style="font-size:11px;color:#8CFF8A;text-transform:uppercase">'+escapeHtml(rec.subject||'')+'</div><div style="font-weight:700;font-size:14px;margin-top:4px">'+escapeHtml(rec.title||'Video')+'</div><div style="font-size:11px;color:#8CFF8A;margin-top:4px">🔓 Unlocked ✓ • 📥 Saved</div><div style="font-size:11px;color:#aaa;margin-top:4px">📥 Saved inside app • '+((rec.size/1024/1024)||0).toFixed(1)+' MB • '+new Date(rec.savedAt).toLocaleDateString()+'</div><div class="zed-video-actions"><button class="primary" data-zed-dl-play="'+rec.id+'">▶ Play Offline</button><button data-zed-dl-delete="'+rec.id+'">🗑 Delete</button></div></div></div>';
     });
     view.innerHTML=html;
     all.forEach(function(rec){
       var card=view.querySelector('[data-dl-id="'+rec.id+'"]'); if(!card) return;
-      var v=card.querySelector('video'); if(v && rec.blob){ try{ v.src=URL.createObjectURL(rec.blob); }catch(e){} }
+      var v=card.querySelector('video'); if(v && rec.blob){ try{ revokeDlUrl(rec.id); var u2=URL.createObjectURL(rec.blob); dlObjectUrls[rec.id]=u2; v.src=u2; v.load(); }catch(e){} }
     });
   }
 
@@ -11017,6 +11078,7 @@ window._zedV10Filter = 'search';
     return null;
   }
   function blankLockedMedia(card){
+    try{ var pv0=card.querySelector('video'); if(pv0 && !pv0.paused && pv0.currentTime>0) return; }catch(e){}
     var iframe=card.querySelector('iframe');
     if(iframe){
       var src=iframe.getAttribute('src')||iframe.src||'';
@@ -11049,12 +11111,13 @@ window._zedV10Filter = 'search';
     }
   }
   function applyLockToCard(card){
+    try{ var pv2=card.querySelector('video'); if(pv2 && !pv2.paused && pv2.currentTime>0) return; }catch(e){}
     var info=extractInfo(card);
     var unlocked=isUnlockedInfo(info);
     var downloaded=isDownloadedInfo(info);
     var sig=info.id+'|'+(unlocked?'1':'0')+'|'+(downloaded?'1':'0')+'|'+getCoins();
-    if(card.dataset.zedV10Sig===sig && card.dataset.zedLocked===(unlocked?'0':'1')) return;
-    card.dataset.zedV10Sig=sig;
+    if(card.dataset.zedV12Sig===sig && card.dataset.zedLocked===(unlocked?'0':'1')) return;
+    card.dataset.zedV12Sig=sig;
     card.classList.add('zed-video-card');
     try{ var cs=getComputedStyle(card); if(cs.position==='static') card.style.position='relative'; }catch(e){ card.style.position='relative'; }
     card.dataset.zedLocked=unlocked ? '0' : '1';
@@ -11067,15 +11130,20 @@ window._zedV10Filter = 'search';
       if(lite){ lite.style.pointerEvents='none'; }
       if(!cover){
         cover=document.createElement('div'); cover.className='zed-lock-cover';
+        cover.setAttribute('data-zed-unlock', info.id); // V12: tapping cover unlocks, but NO duplicate button/title
         if(info.thumbnail_url) cover.style.backgroundImage='url("'+info.thumbnail_url+'")';
-        cover.innerHTML='<div class="zed-lock-icon">🔒</div><div class="zed-lock-title">'+escapeHtml(info.title)+'</div><div class="zed-lock-sub">Unlock to watch • 25 coins<br>You have <b>'+getCoins()+' coins</b></div><button class="zed-unlock-btn" data-zed-unlock="'+info.id+'">🔓 Unlock • 25 🪙</button><button class="zed-goto-quiz-btn" data-zed-goto-quiz-2>📝 Need coins? Go to Quiz</button>';
+        // V12: ONE Unlock button only - the one in the card below. Cover shows only lock icon, no title, no second Unlock.
+        cover.innerHTML='<div class="zed-lock-icon">🔒</div><div class="zed-lock-sub">Locked • Tap Unlock below</div>';
         card.insertBefore(cover, card.firstChild);
       } else {
         cover.style.display='flex';
+        cover.setAttribute('data-zed-unlock', info.id);
         if(info.thumbnail_url && cover.style.backgroundImage.indexOf(info.thumbnail_url)===-1) cover.style.backgroundImage='url("'+info.thumbnail_url+'")';
-        var sub=cover.querySelector('.zed-lock-sub'); if(sub) sub.innerHTML='Unlock to watch • 25 coins<br>You have <b>'+getCoins()+' coins</b>';
-        var btn=cover.querySelector('[data-zed-unlock]'); if(btn) btn.setAttribute('data-zed-unlock', info.id);
-        var titleEl=cover.querySelector('.zed-lock-title'); if(titleEl) titleEl.textContent=info.title;
+        // V12: keep cover minimal - remove any old title/button left from earlier version
+        var oldTitle=cover.querySelector('.zed-lock-title'); if(oldTitle) oldTitle.remove();
+        var oldBtn=cover.querySelector('.zed-unlock-btn'); if(oldBtn) oldBtn.remove();
+        var oldQuiz=cover.querySelector('.zed-goto-quiz-btn'); if(oldQuiz) oldQuiz.remove();
+        var sub=cover.querySelector('.zed-lock-sub'); if(sub) sub.textContent='Locked • Tap Unlock below';
       }
     } else {
       if(cover) cover.remove();
@@ -11091,20 +11159,23 @@ window._zedV10Filter = 'search';
     if(now-lastProcess<200) return;
     lastProcess=now;
     try{
+      if(isAnyVideoPlaying()) return; // V11: freeze while playing - no flicker
       if(!isVideosTabActive()){
-        var tb=document.getElementById('zed-v10-toolbar'); if(tb) tb.style.display='none';
-        var dv=document.getElementById('zed-v10-downloads-view'); if(dv) dv.style.display='none';
+        var tb=document.getElementById('zed-v12-toolbar'); if(tb) tb.style.display='none';
+        var dv=document.getElementById('zed-v12-downloads-view'); if(dv) dv.style.display='none';
+        // V12: Leaving Videos - remove filter + in-videos so Papers/Quiz/Docs are NOT hidden by Videos CSS
+        document.body.classList.remove('zed-v12-in-videos','zed-v12-filter-search','zed-v12-filter-unlocked','zed-v12-filter-downloads');
         return;
       }
-      var tb2=document.getElementById('zed-v10-toolbar'); if(tb2) tb2.style.display='';
+      var tb2=document.getElementById('zed-v12-toolbar'); if(tb2) tb2.style.display='';
       hideOriginalVideosHeader();
       ensureToolbar();
       ensureV16Search();
       ensureViews();
       unhideToolbarAncestors();
-      if(!document.body.classList.contains('zed-v10-filter-'+filter)){
-        document.body.classList.remove('zed-v10-filter-search','zed-v10-filter-unlocked','zed-v10-filter-downloads');
-        document.body.classList.add('zed-v10-filter-'+filter);
+      if(!document.body.classList.contains('zed-v12-filter-'+filter)){
+        document.body.classList.remove('zed-v12-filter-search','zed-v12-filter-unlocked','zed-v12-filter-downloads');
+        document.body.classList.add('zed-v12-filter-'+filter);
       }
       var wrap=document.getElementById('zed-v16-wrap');
       if(wrap){
@@ -11207,6 +11278,29 @@ window._zedV10Filter = 'search';
     if(delBtn2){ e.preventDefault(); handleDeleteDownload(delBtn2.getAttribute('data-zed-dl-delete2')); return; }
     var quizBtn=t.closest('[data-zed-goto-quiz-2]');
     if(quizBtn){ e.preventDefault(); var q=findButton('quizzes'); if(q) q.click(); return; }
+    // V12: Play in Videos (main grid) - was missing, so Play did nothing in Videos. Now Play works in BOTH Videos and Downloads.
+    var playMain=t.closest('[data-zed-play]');
+    if(playMain){
+      e.preventDefault();
+      var playId=playMain.getAttribute('data-zed-play');
+      var cardM=document.querySelector('.zed-video-card[data-zed-video-id="'+playId+'"]') || document.querySelector('[data-zed-video-id="'+playId+'"]');
+      if(cardM){
+        var vM=cardM.querySelector('video');
+        var liteM=cardM.querySelector('.yt-lite');
+        if(liteM){ try{ liteM.click(); }catch(e){} return; }
+        if(vM){
+          try{
+            if(!vM.getAttribute('src') && cardM.dataset.zedOrigVideoSrc){ vM.setAttribute('src', cardM.dataset.zedOrigVideoSrc); vM.load(); }
+            if(!vM.getAttribute('src') && cardM.dataset.zedVideoUrl){ vM.setAttribute('src', cardM.dataset.zedVideoUrl); vM.load(); }
+            vM.controls=true;
+            vM.play().catch(function(){ try{ vM.muted=true; vM.play(); vM.muted=false; }catch(e){} });
+          }catch(e){}
+        } else {
+          var ifrM=cardM.querySelector('iframe'); if(ifrM && cardM.dataset.zedOrigSrc){ try{ ifrM.setAttribute('src', cardM.dataset.zedOrigSrc); }catch(e){} }
+        }
+      }
+      return;
+    }
     var playBtn=t.closest('[data-zed-dl-play]');
     if(playBtn){
       e.preventDefault();
@@ -11242,13 +11336,22 @@ window._zedV10Filter = 'search';
       var inPlayer=t.closest('.zed-lock-cover, .yt-lite, .aspect-video, video, iframe');
       if(inPlayer){ e.preventDefault(); e.stopPropagation(); var id=card.dataset.zedVideoId; if(id) handleUnlock(id); return; }
     }
-    // Only re-process when a main tab is tapped - not on every click (that was stealing focus / closing panels)
+    // V11: Top tabs are boss. Tapping VIDEOS always goes back to Search (not stuck in Downloads). Other tabs leave Videos cleanly.
     var tabBtn=t.closest('button');
     if(tabBtn){
       var txt=norm(tabBtn.textContent);
-      if(txt==='videos' || txt==='papers' || txt==='quizzes' || txt==='docs'){
-        if(obsTimer) clearTimeout(obsTimer);
-        obsTimer=setTimeout(function(){ lastProcess=0; processVideos(); }, 350);
+      if(txt==='videos'){
+        if(filter!=='search'){ setFilter('search'); }
+        else { lastProcess=0; setTimeout(function(){ processVideos(); }, 80); }
+        return;
+      }
+      if(txt==='papers' || txt==='quizzes' || txt==='docs'){
+        var tbL=document.getElementById('zed-v12-toolbar'); if(tbL) tbL.style.display='none';
+        var dvL=document.getElementById('zed-v12-downloads-view'); if(dvL) dvL.style.display='none';
+        var wL=document.getElementById('zed-v16-wrap'); if(wL) wL.style.display='none';
+        // V12: Papers must show - remove Videos CSS gate
+        document.body.classList.remove('zed-v12-in-videos','zed-v12-filter-search','zed-v12-filter-unlocked','zed-v12-filter-downloads');
+        return;
       }
     }
   }, true);
@@ -11259,7 +11362,7 @@ window._zedV10Filter = 'search';
       var relevant=false;
       for(var i=0;i<muts.length;i++){
         var tg=muts[i].target;
-        if(tg && tg.closest && (tg.closest('#zed-v10-toolbar') || tg.closest('.zed-lock-cover') || tg.closest('.zed-video-actions') || tg.closest('#zed-v10-downloads-view') || tg.closest('#zed-chat-btn') || tg.closest('#zed-chat-panel'))) continue;
+        if(tg && tg.closest && (tg.closest('#zed-v12-toolbar') || tg.closest('.zed-lock-cover') || tg.closest('.zed-video-actions') || tg.closest('#zed-v12-downloads-view') || tg.closest('#zed-chat-btn') || tg.closest('#zed-chat-panel'))) continue;
         if(muts[i].type==='attributes') continue;
         var added=muts[i].addedNodes||[];
         for(var j=0;j<added.length;j++){
@@ -11274,7 +11377,7 @@ window._zedV10Filter = 'search';
       if(!isAnyVideoPlaying()){ try{ hideOriginalVideosHeader(); }catch(e){} }
       if(!relevant) return;
       if(obsTimer) clearTimeout(obsTimer);
-      obsTimer=setTimeout(function(){ lastProcess=0; processVideos(); }, 350);
+      obsTimer=setTimeout(function(){ lastProcess=0; processVideos(); }, 80);
     });
     obs.observe(document.body, {childList:true, subtree:true, attributes:false});
   }catch(e){}
@@ -11293,9 +11396,10 @@ window._zedV10Filter = 'search';
   }, 600);
   // V10: No interval touching chat button.
   window.zedVideoCoins={ unlockCost: UNLOCK_COST, getCoins: getCoins, getUnlocked: getUnlocked, process: function(){ lastProcess=0; processVideos(); }, setFilter: setFilter };
-  console.log('[ZED] Video Coins V10 active - original search, exact search, YouTube+MP4 unlocked, chat normal');
+  console.log('[ZED] Video Coins V12 active - original search, exact search, YouTube+MP4 unlocked, chat normal');
 })();
 </script>
+
 
 </body>
 </html>
