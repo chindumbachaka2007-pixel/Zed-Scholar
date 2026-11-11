@@ -10402,7 +10402,7 @@ header div[class*="bg-"][class*="border"][class*="rounded"] span:first-child{
 </style>
 
 
-<!-- ZED VIDEO COINS V15 - DOWNLOADS FULL PLAYER -->
+<!-- ZED VIDEO COINS V16 - OFFLINE DOWNLOADS + COINS + UNLOCKS (like Papers) -->
 <style id="zed-video-coins-v15-style">
 /* V7 - NO All, hidden until searched, exact/similar search only, all locked, YouTube+MP4 in Unlocked, chat button normal */
 #zed-v15-toolbar{display:block;margin:0 0 12px}
@@ -10461,11 +10461,28 @@ body.zed-v15-no-results #zed-v15-no-results{display:block !important}
 .zed-modal h3{font-size:18px;font-weight:800;margin:0 0 8px}
 .zed-modal p{font-size:13px;color:#ccc;line-height:1.5;margin:0 0 12px}
 .zed-toast{position:fixed;left:12px;right:12px;bottom:90px;z-index:100000;background:#8CFF8A;color:#000;padding:12px 14px;border-radius:12px;font-weight:700;font-size:13px;text-align:center}
+    /* V16 OFFLINE - Videos work like Papers: Downloads + Coins + Unlocks visible without data */
+    #zed-v15-offline-banner{display:none;background:#1a1a1a;border:1px solid #FFD600;border-radius:12px;padding:10px 12px;margin:0 0 10px;color:#FFD600;font-size:12px;font-weight:700;line-height:1.4}
+    body.zed-offline #zed-v15-offline-banner{display:block !important}
+    #zed-v15-unlocked-view{display:none;gap:12px;margin-top:4px}
+    body.zed-v15-filter-unlocked #zed-v15-unlocked-view{display:grid !important}
+    @media(min-width:768px){#zed-v15-unlocked-view{grid-template-columns:1fr 1fr}}
+    .zed-offline-pill{background:#FFD600;color:#000 !important}
+    #zed-offline-videos-btn{position:fixed;bottom:160px;right:16px;z-index:9998;background:#1A1917;border:2px solid #8CFF8A;color:#8CFF8A;width:56px;height:56px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:24px;cursor:pointer;box-shadow:0 6px 20px rgba(0,0,0,0.4)}
+    #zed-v15-downloads-view .zed-dl-card video, #zed-v15-unlocked-view .zed-dl-card video{background:#000}
+    
 /* Chat button = NORMAL button again - never floating / dragging */
 /* V10: NO CSS touching #zed-chat-btn - original makeMovable already makes it draggable like AI + Library. */
 </style>
 <script>
-// ===== ZED VIDEO COINS V15 =====
+// ===== ZED VIDEO COINS V16 - OFFLINE FIRST =====
+// V16 FIX: Videos tab now works like Papers offline.
+// - Downloads, Coins, Unlocks are read from localStorage + IndexedDB, NOT from the online React grid.
+// - When offline, Videos auto-opens Downloads. Unlocked also renders from stored unlocks.
+// - Downloaded videos ALWAYS play from the saved blob offline - never fall back to online URL when offline.
+// - Fixed missing dlObjectUrls / revokeDlUrl (ReferenceError left downloads with no src, so they would not play).
+// - Floating 🎬 button opens My Offline Videos from ANY tab, same as 📚 for Papers.
+// - Unlocks/coin deductions made offline are queued and synced when back online.
 // - Search = the ORIGINAL V16 search (zed-v16-input). V6 made its own search and V22 hid it every 700ms - that's why you couldn't press it.
 // - Search matching = exact / similar only. Title + subject only, all words must match. No more "everything shows".
 // - Stable IDs: YouTube uses ytId only (not full iframe URL which changes when we blank it). Unlocked now includes YouTube + MP4.
@@ -10477,6 +10494,8 @@ window._zedV8OwnsVideos = true;
 window._zedV15OwnsVideos = true;
 window._zedV8OwnsVideos = true;
 window._zedV15OwnsVideos = true;
+window._zedV16OwnsVideos = true;
+window._zedV16OfflineVideos = true;
 window._zedV15Filter = 'search';
 window._zedV15Filter = 'search';
 (function(){
@@ -10484,7 +10503,7 @@ window._zedV15Filter = 'search';
   // V15: Show real version in header so user can verify they are on V15, not old v1 file
   try{
     var heads=document.querySelectorAll('div, h1, h2, span');
-    for(var hi=0;hi<heads.length;hi++){ var ht=(heads[hi].textContent||'').trim(); if(/^ZED SCHOLAR v1$/i.test(ht)){ heads[hi].textContent='ZED SCHOLAR V15'; break; } }
+    for(var hi=0;hi<heads.length;hi++){ var ht=(heads[hi].textContent||'').trim(); if(/^ZED SCHOLAR v1$/i.test(ht)){ heads[hi].textContent='ZED SCHOLAR V16'; break; } }
   }catch(e){}
   var UNLOCK_COST = 25;
   var SUPA_URL = 'https://biastmylavwhlsccvpyu.supabase.co';
@@ -10498,6 +10517,21 @@ window._zedV15Filter = 'search';
   var lastToolbarSig = '';
   var obsTimer = null;
   var searchTimer = null;
+  // ---- V16 OFFLINE CORE (was missing in V15) ----
+  var dlObjectUrls = {};
+  function revokeDlUrl(id){ try{ if(dlObjectUrls[id]){ URL.revokeObjectURL(dlObjectUrls[id]); delete dlObjectUrls[id]; } }catch(e){} }
+  function isOffline(){ try{ return typeof navigator!=='undefined' && 'onLine' in navigator ? !navigator.onLine : false; }catch(e){ return false; } }
+  function markOfflineClass(){ try{ document.body.classList.toggle('zed-offline', isOffline()); }catch(e){} }
+  function getUnlockedMetaKey(){ var u=getMe(); return 'zed_unlocked_meta_' + (u && u.id ? u.id : (u && u.phone ? u.phone : 'guest')); }
+  function getUnlockedMeta(){ try{ var a=JSON.parse(localStorage.getItem(getUnlockedMetaKey())||'[]'); return Array.isArray(a)?a:[]; }catch(e){ return []; } }
+  function saveUnlockedMeta(list){ try{ localStorage.setItem(getUnlockedMetaKey(), JSON.stringify(list||[])); }catch(e){} }
+  function rememberUnlockedMeta(info){ try{ if(!info || !info.id) return; var list=getUnlockedMeta(); var found=false; for(var i=0;i<list.length;i++){ if(list[i].id===info.id){ list[i].title=info.title||list[i].title; list[i].subject=info.subject||list[i].subject; list[i].video_url=info.video_url||list[i].video_url; list[i].video_type=info.video_type||list[i].video_type; list[i].thumbnail_url=info.thumbnail_url||list[i].thumbnail_url; list[i].ytId=info.ytId||list[i].ytId; found=true; break; } } if(!found) list.push({id:info.id,title:info.title||'Video',subject:info.subject||'',video_url:info.video_url||'',video_type:info.video_type||'mp4',thumbnail_url:info.thumbnail_url||'',ytId:info.ytId||'',savedAt:Date.now()}); saveUnlockedMeta(list); }catch(e){} }
+  function queuePendingSync(kind, payload){ try{ var k='zed_pending_video_sync_v16'; var q=JSON.parse(localStorage.getItem(k)||'[]'); q.push({kind:kind,payload:payload,at:Date.now()}); localStorage.setItem(k, JSON.stringify(q)); }catch(e){} }
+  async function flushPendingSync(){ if(isOffline()) return; try{ var k='zed_pending_video_sync_v16'; var q=JSON.parse(localStorage.getItem(k)||'[]'); if(!q.length) return; var remaining=[]; for(var i=0;i<q.length;i++){ var item=q[i]; var ok=false; try{ if(item.kind==='coins'){ ok=await deductCoinsOnServer(item.payload.coins); } else if(item.kind==='unlock'){ await trySaveUnlockOnServer(item.payload.videoId); ok=true; } }catch(e){ ok=false; } if(!ok) remaining.push(item); } localStorage.setItem(k, JSON.stringify(remaining)); }catch(e){} }
+  // Always build a playable blob URL from the saved blob, even if its MIME was lost / wrong in old saves.
+  function blobToVideoUrl(rec){ var b=rec.blob; if(!b) return ''; var t=(b.type||'').toLowerCase(); if(t.indexOf('video/')===0 || t.indexOf('application/octet')===0){ return URL.createObjectURL(b); } try{ var fixed=new Blob([b], {type:'video/mp4'}); return URL.createObjectURL(fixed); }catch(e){ return URL.createObjectURL(b); } }
+  function setDlVideoSrc(v, rec){ try{ revokeDlUrl(rec.id); var u=blobToVideoUrl(rec); if(!u) return false; dlObjectUrls[rec.id]=u; v.src=u; v.preload='auto'; v.dataset.zedFallbackUrl=rec.video_url||''; v.dataset.zedTriedFallback=''; v.load(); v.onerror=function(){ try{ if(isOffline()) return; var fb=v.dataset.zedFallbackUrl||''; if(fb && v.src!==fb && !v.dataset.zedTriedFallback){ v.dataset.zedTriedFallback='1'; v.src=fb; v.load(); } }catch(e){} }; return true; }catch(e){ return false; } }
+
 
   function norm(s){ return String(s||'').trim().toLowerCase(); }
   function getMe(){ try{ return JSON.parse(localStorage.getItem('zed_user')||'null'); }catch(e){ return null; } }
@@ -10508,9 +10542,13 @@ window._zedV15Filter = 'search';
   function getUnlockedVideoIds(){ try{ return JSON.parse(localStorage.getItem(unlockKey()+'_videos')||'[]'); }catch(e){ return []; } }
   function saveUnlockedVideoIds(list){ try{ localStorage.setItem(unlockKey()+'_videos', JSON.stringify(list)); }catch(e){} }
   function getUnlockedCount(){
-    // Count distinct VIDEOS that are unlocked, from cards if loaded (truth), else from canonical list
+    // V16: OFFLINE FIRST - coins/unlocks live in localStorage, not in the online grid.
+    // When offline or the React grid hasn't loaded (0 cards), the canonical list IS the truth.
+    // Old code counted from cards and returned 0 offline even though unlocks existed.
     try{
+      if(isOffline()) return getUnlockedVideoIds().length;
       var cards=findVideoCards();
+      if(!cards || cards.length===0) return getUnlockedVideoIds().length;
       if(cards.length>0){
         var seen={}; var n=0;
         for(var i=0;i<cards.length;i++){
@@ -10557,17 +10595,20 @@ window._zedV15Filter = 'search';
   async function deleteDownload(id){ var db=await openDB(); return new Promise(function(resolve){ var tx=db.transaction(STORE,'readwrite'); tx.objectStore(STORE).delete(id); tx.oncomplete=function(){ resolve(); }; tx.onerror=function(){ resolve(); }; }); }
   async function fetchFreshCoins(){
     var me=getMe(); if(!me || !me.id) return getCoins();
+    if(isOffline()) return getCoins(); // V16: never hang on network when offline - local coins are truth
     try{ var res=await fetch(SUPA_URL+'/rest/v1/profiles?id=eq.'+encodeURIComponent(me.id)+'&select=id,coins', { headers: supaHeaders() });
       if(res.ok){ var arr=await res.json(); if(arr && arr[0] && typeof arr[0].coins==='number'){ if(arr[0].coins!==me.coins){ me.coins=arr[0].coins; try{ localStorage.setItem('zed_user', JSON.stringify(me)); }catch(e){} } return arr[0].coins; } }
     }catch(e){} return getCoins();
   }
   async function deductCoinsOnServer(newCoins){
     var me=getMe(); if(!me || !me.id) return false;
-    try{ var res=await fetch(SUPA_URL+'/rest/v1/profiles?id=eq.'+encodeURIComponent(me.id), { method:'PATCH', headers: supaHeaders(), body: JSON.stringify({ coins: newCoins }) }); return res.ok; }catch(e){ return false; }
+    if(isOffline()){ queuePendingSync('coins', {coins:newCoins}); return true; } // V16: local deduct wins offline, sync later
+    try{ var res=await fetch(SUPA_URL+'/rest/v1/profiles?id=eq.'+encodeURIComponent(me.id), { method:'PATCH', headers: supaHeaders(), body: JSON.stringify({ coins: newCoins }) }); if(!res.ok){ queuePendingSync('coins', {coins:newCoins}); } return res.ok; }catch(e){ queuePendingSync('coins', {coins:newCoins}); return false; }
   }
   async function trySaveUnlockOnServer(videoId){
     var me=getMe(); if(!me || !me.id) return;
-    try{ await fetch(SUPA_URL+'/rest/v1/video_unlocks', { method:'POST', headers: supaHeaders(), body: JSON.stringify({ user_id: me.id, video_id: videoId, unlocked_at: new Date().toISOString() }) }); }catch(e){}
+    if(isOffline()){ queuePendingSync('unlock', {videoId:videoId}); return; }
+    try{ var res=await fetch(SUPA_URL+'/rest/v1/video_unlocks', { method:'POST', headers: supaHeaders(), body: JSON.stringify({ user_id: me.id, video_id: videoId, unlocked_at: new Date().toISOString() }) }); if(!res.ok) queuePendingSync('unlock', {videoId:videoId}); }catch(e){ queuePendingSync('unlock', {videoId:videoId}); }
   }
 
   function findButton(label){
@@ -10576,6 +10617,16 @@ window._zedV15Filter = 'search';
     return null;
   }
   function isVideosTabActive(){
+    // V16: OFFLINE - React may not re-render the white Videos button when offline / grid empty.
+    // If our toolbar is in the DOM and no other tab (Papers/Quizzes/Docs) is clearly active, stay in Videos.
+    // This is what kept hiding toolbar + downloads + coins when offline.
+    try{
+      if(document.body.classList.contains('zed-v15-in-videos') && document.getElementById('zed-v15-toolbar')){
+        var otherActive=false;
+        ['papers','quizzes','docs'].forEach(function(lbl){ var b=findButton(lbl); if(b){ try{ var cs2=getComputedStyle(b); if(cs2.backgroundColor && cs2.backgroundColor.indexOf('255, 255, 255')!==-1) otherActive=true; }catch(e){} var cl2=b.className||''; if(cl2.indexOf('bg-white')!==-1) otherActive=true; } });
+        if(!otherActive) return true;
+      }
+    }catch(e){}
     // V11: VIDEOS top button is boss. If NOT white, NOT in Videos - even if toolbar still in DOM. Fixes conflict where Videos kept hiding while in Papers/Quiz/Docs.
     var vb=findButton('videos');
     if(vb){
@@ -10915,12 +10966,21 @@ window._zedV15Filter = 'search';
   function ensureToolbar(){
     var existing=document.getElementById('zed-v15-toolbar');
     if(existing){
-      var sig=getCoins()+'|'+getUnlockedCount()+'|'+downloadedIds.size+'|'+findVideoCards().length;
+      markOfflineClass();
+      var sig=getCoins()+'|'+getUnlockedCount()+'|'+downloadedIds.size+'|'+findVideoCards().length+'|'+(isOffline()?'off':'on');
       // V11: downloads count comes from DB - refresh in background so toolbar shows true count
       refreshDownloadCount();
       if(sig!==lastToolbarSig){
         var pill=existing.querySelector('[data-zed-coins]');
         if(pill) pill.textContent='🪙 '+getCoins()+' coins';
+        // V16: show OFFLINE badge in toolbar so user knows coins/unlocks/downloads are local
+        var offPill=existing.querySelector('[data-zed-offline-pill]');
+        if(!offPill && isOffline()){
+          offPill=document.createElement('span'); offPill.setAttribute('data-zed-offline-pill','1'); offPill.className='zed-coin-pill zed-offline-pill'; offPill.textContent='📴 Offline • Saved videos work';
+          var row=existing.querySelector('.zed-v7-row'); if(row) row.appendChild(offPill);
+        }
+        if(offPill) offPill.style.display=isOffline()?'':'none';
+        if(offPill && isOffline()) offPill.textContent='📴 Offline • Saved videos work';
         var setCount=function(k,v){ var el=existing.querySelector('[data-zed-count="'+k+'"]'); if(el) el.textContent='('+v+')'; };
         setCount('unlocked', getUnlockedCount()); // V13: distinct videos, not candidate IDs
         setCount('downloads', downloadedIds.size);
@@ -10966,12 +11026,26 @@ window._zedV15Filter = 'search';
     if(!parent) return;
     var searchWrap=document.getElementById('zed-v16-wrap');
     var viewAnchor = searchWrap && searchWrap.parentNode===parent ? searchWrap.nextSibling : before;
+    if(!document.getElementById('zed-v15-offline-banner')){
+      var bn=document.createElement('div'); bn.id='zed-v15-offline-banner';
+      bn.textContent='📴 You are offline — showing your saved videos, coins and unlocks. Downloads play with no data.';
+      parent.insertBefore(bn, viewAnchor);
+    }
     if(!document.getElementById('zed-v15-downloads-view')){
       var dv=document.createElement('div'); dv.id='zed-v15-downloads-view';
       parent.insertBefore(dv, viewAnchor);
     }
+    if(!document.getElementById('zed-v15-unlocked-view')){
+      var uv=document.createElement('div'); uv.id='zed-v15-unlocked-view';
+      parent.insertBefore(uv, viewAnchor);
+    }
   }
   function setFilter(f, keepQuery){
+    // V16: Offline + Search with no results must not strand user on a blank Search screen.
+    // If offline and caller asks for Search, show Downloads instead - same as Papers opening Offline Papers.
+    if(f==='search' && isOffline()){
+      try{ var _q=getSearchQuery(); if(!_q) f='downloads'; }catch(e){ f='downloads'; }
+    }
     filter=f;
     window._zedV15Filter=f;
     document.body.classList.remove('zed-v15-filter-search','zed-v15-filter-unlocked','zed-v15-filter-downloads');
@@ -11003,14 +11077,24 @@ window._zedV15Filter = 'search';
   function applyFilter(){
     var cards=findVideoCards();
     var q=getSearchQuery();
-    // V8: Unlocked = ONLY unlocked, never any other video. Search = ONLY exact/nearly-exact, never any unsearched video.
-    // No text is shown for empty / no-results - blank space only.
+    // V16: Downloads / Unlocked must render from IndexedDB + localStorage even when React grid is empty offline.
     if(filter==='downloads'){
       cards.forEach(function(card){ setHidden(card, true); });
+      var uv0=document.getElementById('zed-v15-unlocked-view'); if(uv0) uv0.style.display='none';
+      var dv0=document.getElementById('zed-v15-downloads-view'); if(dv0) dv0.style.display='';
       renderDownloadsView();
       return;
     }
     if(filter==='unlocked'){
+      // Online: filter the live grid as before. Offline / empty grid: render from stored unlocks.
+      if(isOffline() || cards.length===0){
+        cards.forEach(function(card){ setHidden(card, true); });
+        var dvU=document.getElementById('zed-v15-downloads-view'); if(dvU) dvU.style.display='none';
+        renderUnlockedViewFromStorage();
+        return;
+      }
+      var uv1=document.getElementById('zed-v15-unlocked-view'); if(uv1) uv1.style.display='none';
+      var dvU2=document.getElementById('zed-v15-downloads-view'); if(dvU2) dvU2.style.display='none';
       cards.forEach(function(card){
         var info=extractInfo(card);
         var show = isUnlockedInfo(info);
@@ -11019,6 +11103,9 @@ window._zedV15Filter = 'search';
       });
       return;
     }
+    // filter === 'search' : hide unlocked view, show grid path
+    var uvS=document.getElementById('zed-v15-unlocked-view'); if(uvS) uvS.style.display='none';
+    var dvS=document.getElementById('zed-v15-downloads-view'); if(dvS) dvS.style.display='none';
     // filter === 'search'
     if(!q){
       // No search yet -> show NOTHING. No videos, no words.
@@ -11031,9 +11118,43 @@ window._zedV15Filter = 'search';
       setHidden(card, !show);
     });
   }
+  async function renderUnlockedViewFromStorage(){
+    // V16: Unlocked view that does NOT need the online grid. Built from:
+    //  1) IndexedDB downloads (all downloads are unlocked)
+    //  2) Stored unlock metadata (YouTube + MP4 unlocked but not yet downloaded)
+    var view=document.getElementById('zed-v15-unlocked-view'); if(!view) return;
+    try{
+      var allDl=await getAllDownloads();
+      var meta=getUnlockedMeta();
+      var vids=getUnlockedVideoIds();
+      // Merge: downloads first, then meta not already in downloads
+      var seen={}; var items=[];
+      allDl.forEach(function(r){ seen[r.id]=1; items.push({id:r.id,title:r.title,subject:r.subject,video_type:r.video_type,thumbnail_url:r.thumbnail_url,video_url:r.video_url,ytId:'',isDownload:true,blob:r.blob}); });
+      meta.forEach(function(m){ if(seen[m.id]) return; seen[m.id]=1; items.push({id:m.id,title:m.title,subject:m.subject,video_type:m.video_type,thumbnail_url:m.thumbnail_url,video_url:m.video_url,ytId:m.ytId||'',isDownload:false,blob:null}); });
+      // Any canonical unlock without meta (old unlocks) - show as unlocked entry so count matches
+      vids.forEach(function(id){ if(seen[id]) return; seen[id]=1; items.push({id:id,title:'Unlocked video',subject:'',video_type:'mp4',thumbnail_url:'',video_url:'',ytId:'',isDownload:false,blob:null}); });
+      if(items.length===0){
+        view.innerHTML='<div style="grid-column:1/-1;padding:20px;text-align:center;color:#ccc;font-size:13px">No unlocked videos yet.<br><span style="color:#aaa;font-size:12px">Unlock a video with 25 coins when online, then it stays unlocked offline.</span><br><button class="zed-vt-filter active" data-zed-back-search3 style="margin-top:12px">🔍 Search Videos →</button></div>';
+        var b=view.querySelector('[data-zed-back-search3]'); if(b) b.addEventListener('click', function(){ setFilter('search'); });
+        return;
+      }
+      var html='';
+      items.forEach(function(it){
+        var isYT = it.video_type==='youtube' || !!it.ytId;
+        var thumb = it.thumbnail_url ? '<img src="'+escapeHtml(it.thumbnail_url)+'" style="width:100%;aspect-ratio:16/9;object-fit:cover;background:#000" />' : '<div style="width:100%;aspect-ratio:16/9;background:#111;display:flex;align-items:center;justify-content:center;font-size:32px">🎬</div>';
+        var action='';
+        if(it.isDownload) action='<button class="primary" data-zed-dl-play="'+it.id+'">▶ Play Offline</button>';
+        else if(isYT) action='<button class="primary" data-zed-unlocked-yt="'+it.id+'">▶ Play (needs data)</button>';
+        else action='<button class="primary" data-zed-unlocked-dl="'+it.id+'">📥 Download for offline</button>';
+        html+='<div class="zed-dl-card" data-dl-id="'+it.id+'">'+thumb+'<div class="zed-dl-body"><div style="font-size:11px;color:#8CFF8A;text-transform:uppercase">'+escapeHtml(it.subject||'')+'</div><div style="font-weight:700;font-size:14px;margin-top:4px">'+escapeHtml(it.title||'Video')+'</div><div style="font-size:11px;color:#8CFF8A;margin-top:4px">🔓 Unlocked ✓'+(it.isDownload?' • 📥 Saved':'')+'</div><div style="font-size:11px;color:#aaa;margin-top:4px">'+(isYT ? 'YouTube • Needs data to play' : (it.isDownload ? 'Saved inside app • Plays offline' : 'Unlocked • Download to play offline'))+'</div><div class="zed-video-actions">'+action+'</div></div></div>';
+      });
+      view.innerHTML=html;
+    }catch(e){ try{ view.innerHTML='<div style="padding:16px;color:#ccc;font-size:13px">Could not load unlocked videos offline. Try Downloads tab.</div>'; }catch(e2){} }
+  }
   async function renderDownloadsView(){
     var view=document.getElementById('zed-v15-downloads-view'); if(!view) return;
-    // V11: Downloads = ONLY IndexedDB records. Never main-grid videos. Count = all.length.
+    markOfflineClass();
+    // V16: Downloads = ONLY IndexedDB records, and they must render even when React grid is empty.
     // Never rebuild while a download is playing - it destroys the <video> and resets to 0:00.
     try{ var playingDl=view.querySelector('video'); if(playingDl && !playingDl.paused && playingDl.currentTime>0) return; }catch(e){}
     var all=await getAllDownloads();
@@ -11044,6 +11165,8 @@ window._zedV15Filter = 'search';
       all.forEach(function(rec){
         if(ul.indexOf(rec.id)===-1){ ul.push(rec.id); changed=true; }
         if(vids2.indexOf(rec.id)===-1){ vids2.push(rec.id); changed2=true; }
+        // V16: remember download metadata so Unlocked view can show it offline too
+        rememberUnlockedMeta({id:rec.id,title:rec.title,subject:rec.subject,video_url:rec.video_url,video_type:rec.video_type,thumbnail_url:rec.thumbnail_url,ytId:''});
       });
       if(changed) saveUnlocked(ul);
       if(changed2) saveUnlockedVideoIds(vids2);
@@ -11056,24 +11179,17 @@ window._zedV15Filter = 'search';
     }catch(e){}
     var sig=all.map(function(r){ return r.id+'|'+r.size+'|'+r.savedAt; }).join('||');
     if(sig===lastDownloadsSig && view.querySelectorAll('.zed-dl-card').length===all.length){
-      // Same list - reuse existing <video> elements, don't destroy them
+      // Same list - reuse existing <video> elements, don't destroy them. V16: always use blob, never online URL when offline.
       all.forEach(function(rec){
         var card=view.querySelector('[data-dl-id="'+rec.id+'"]'); if(!card) return;
-        var v=card.querySelector('video'); if(v && !v.src && rec.blob){ try{
-          v.dataset.zedFallbackUrl = rec.video_url||'';
-          var bt=(rec.blob.type||'').toLowerCase();
-          if(bt && bt.indexOf('video/')!==0 && bt.indexOf('application/octet')!==0 && rec.video_url){ v.src=rec.video_url; }
-          else { var u0=URL.createObjectURL(rec.blob); dlObjectUrls[rec.id]=u0; v.src=u0; }
-          v.preload='auto'; v.load();
-          v.onerror=function(){ try{ var fb=v.dataset.zedFallbackUrl||''; if(fb && v.src!==fb && !v.dataset.zedTriedFallback){ v.dataset.zedTriedFallback='1'; v.src=fb; v.load(); } }catch(e){} };
-        }catch(e){} }
+        var v=card.querySelector('video'); if(v && !v.src && rec.blob){ try{ setDlVideoSrc(v, rec); }catch(e){} }
       });
       return;
     }
     lastDownloadsSig=sig;
     if(all.length===0){
-      view.innerHTML='<div style="grid-column:1/-1;padding:20px;text-align:center"><button class="zed-vt-filter active" data-zed-back-search2>🔍 Search Videos →</button></div>';
-      var b=view.querySelector('[data-zed-back-search2]'); if(b) b.addEventListener('click', function(){ setFilter('search'); setTimeout(function(){ var i=getSearchInput(); if(i) i.focus(); }, 100); });
+      view.innerHTML='<div style="grid-column:1/-1;padding:20px;text-align:center;color:#ccc;font-size:13px">'+(isOffline() ? '📴 You are offline and have no saved videos yet.<br><span style="color:#aaa;font-size:12px">When online, unlock a video (25 coins) then tap Download. It will appear here and play with no data.</span>' : 'No downloads yet.<br><span style="color:#aaa;font-size:12px">Unlock a video then tap Download to save it inside the app.</span>')+'<br><button class="zed-vt-filter active" data-zed-back-search2 style="margin-top:12px">🔍 Search Videos →</button></div>';
+      var b=view.querySelector('[data-zed-back-search2]'); if(b) b.addEventListener('click', function(){ if(isOffline()){ toast('You are offline — downloads need data once to save'); return; } setFilter('search'); setTimeout(function(){ var i=getSearchInput(); if(i) i.focus(); }, 100); });
       return;
     }
     var html='';
@@ -11083,21 +11199,7 @@ window._zedV15Filter = 'search';
     view.innerHTML=html;
     all.forEach(function(rec){
       var card=view.querySelector('[data-dl-id="'+rec.id+'"]'); if(!card) return;
-      var v=card.querySelector('video'); if(v && rec.blob){
-        try{
-          v.dataset.zedFallbackUrl = rec.video_url||'';
-          // V14: Old saved file may be HTML / not a video (saved by old version). If blob is not video, use online URL directly.
-          var btype=(rec.blob.type||'').toLowerCase();
-          if(btype && btype.indexOf('video/')!==0 && btype.indexOf('application/octet')!==0){
-            if(rec.video_url){ v.src=rec.video_url; v.preload='auto'; v.load(); }
-            else { revokeDlUrl(rec.id); var u2b=URL.createObjectURL(rec.blob); dlObjectUrls[rec.id]=u2b; v.src=u2b; v.preload='auto'; v.load(); }
-          } else {
-            revokeDlUrl(rec.id); var u2=URL.createObjectURL(rec.blob); dlObjectUrls[rec.id]=u2; v.src=u2; v.preload='auto'; v.load();
-          }
-          // V14: If blob fails to play, fall back to online URL once
-          v.onerror=function(){ try{ var fb=v.dataset.zedFallbackUrl||''; if(fb && v.src!==fb && !v.dataset.zedTriedFallback){ v.dataset.zedTriedFallback='1'; v.src=fb; v.load(); } }catch(e){} };
-        }catch(e){}
-      }
+      var v=card.querySelector('video'); if(v && rec.blob){ try{ setDlVideoSrc(v, rec); }catch(e){} }
     });
   }
 
@@ -11217,6 +11319,11 @@ window._zedV15Filter = 'search';
     if(now-lastProcess<200) return;
     lastProcess=now;
     try{
+      markOfflineClass();
+      // V16: If offline and user is on Search with no query, show Downloads - not a blank screen.
+      if(isOffline() && filter==='search'){
+        try{ if(!getSearchQuery()){ filter='downloads'; window._zedV15Filter='downloads'; document.body.classList.remove('zed-v15-filter-search'); document.body.classList.add('zed-v15-filter-downloads'); } }catch(e){}
+      }
       if(isAnyVideoPlaying()) return; // V11: freeze while playing - no flicker
       if(!isVideosTabActive()){
         var tb=document.getElementById('zed-v15-toolbar'); if(tb) tb.style.display='none';
@@ -11270,10 +11377,11 @@ window._zedV15Filter = 'search';
       return;
     }
     showUnlockConfirm(info, async function(){
-      var fresh=await fetchFreshCoins();
+      var fresh=isOffline() ? getCoins() : await fetchFreshCoins();
       if(fresh < UNLOCK_COST){ toast('Not enough coins — you have '+fresh+' coins'); return; }
       var newCoins=fresh-UNLOCK_COST;
       await deductCoinsOnServer(newCoins);
+      rememberUnlockedMeta(info); // V16: so Unlocked shows offline even when grid is gone
       var u=getMe(); if(u){ u.coins=newCoins; try{ localStorage.setItem('zed_user', JSON.stringify(u)); }catch(e){} }
       // V13: Save ONLY one canonical ID per video for counting. Legacy list still keeps candidates for matching (below), but count uses distinct videos, not candidate IDs.
       // Old bug: saving ALL candidates (2 per video) + counting list.length gave 1 unlock -> 2, 2 -> 4, 3 -> 6.
@@ -11299,27 +11407,30 @@ window._zedV15Filter = 'search';
       var allDl=await getAllDownloads();
       var rec=null; for(var i=0;i<allDl.length;i++){ if(allDl[i].id===recId){ rec=allDl[i]; break; } }
       if(!rec || !rec.blob){ toast('Download not found - please download again'); return; }
+      // If it's a YouTube unlock without a saved blob, it needs data
+      if(!rec.blob && rec.video_type==='youtube'){ toast('YouTube videos need data to play'); return; }
       var old=document.getElementById('zed-dl-player'); if(old) old.remove();
       var ov=document.createElement('div'); ov.id='zed-dl-player';
       ov.style.cssText='position:fixed;inset:0;z-index:9999;background:#000;display:flex;flex-direction:column;';
-      ov.innerHTML='<div style="display:flex;justify-content:space-between;align-items:center;padding:12px;color:#fff"><div style="font-weight:700;font-size:14px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">'+escapeHtml(rec.title||'Video')+'</div><button data-zed-close-dl-player style="background:#fff;color:#000;border:none;border-radius:20px;padding:8px 14px;font-weight:700">✕ Close</button></div><video controls autoplay playsinline style="width:100%;flex:1;background:#000;object-fit:contain"></video><div style="padding:10px;color:#aaa;font-size:12px;text-align:center">Downloaded • Plays offline inside app</div>';
+      ov.innerHTML='<div style="display:flex;justify-content:space-between;align-items:center;padding:12px;color:#fff"><div style="font-weight:700;font-size:14px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">'+escapeHtml(rec.title||'Video')+'</div><button data-zed-close-dl-player style="background:#fff;color:#000;border:none;border-radius:20px;padding:8px 14px;font-weight:700">✕ Close</button></div><video controls autoplay playsinline style="width:100%;flex:1;background:#000;object-fit:contain"></video><div style="padding:10px;color:#aaa;font-size:12px;text-align:center">'+(isOffline() ? '📴 Offline • Playing saved video • No data used' : 'Downloaded • Plays offline inside app')+'</div>';
       document.body.appendChild(ov);
       var v=ov.querySelector('video');
-      var btype=(rec.blob.type||'').toLowerCase();
-      var useOnline = btype && btype.indexOf('video/')!==0 && btype.indexOf('application/octet')!==0 && rec.video_url;
+      // V16: OFFLINE = blob ONLY. Never fall back to online URL when offline.
+      // Old code used online URL when blob MIME was missing, so saved videos failed offline.
       try{
-        if(useOnline){ v.src=rec.video_url; }
-        else { var u=URL.createObjectURL(rec.blob); dlObjectUrls[rec.id]=u; v.src=u; }
+        revokeDlUrl(rec.id);
+        var u=blobToVideoUrl(rec);
+        dlObjectUrls[rec.id]=u; v.src=u;
         v.load();
         try{ await v.play(); }catch(e){ try{ v.muted=true; await v.play(); v.muted=false; }catch(e2){} }
       }catch(e){}
-      // If blob fails, fall back to online URL
-      v.onerror=function(){ try{ if(rec.video_url && v.src!==rec.video_url && !v.dataset.zedTried){ v.dataset.zedTried='1'; v.src=rec.video_url; v.load(); v.play(); } }catch(e){} };
-      ov.querySelector('[data-zed-close-dl-player]').addEventListener('click', function(){ try{ v.pause(); }catch(e){} try{ if(v.src && v.src.indexOf('blob:')===0) URL.revokeObjectURL(v.src); }catch(e){} ov.remove(); });
+      v.onerror=function(){ try{ if(isOffline()){ toast('Saved file could not play — try Re-download when online'); return; } if(rec.video_url && v.src!==rec.video_url && !v.dataset.zedTried){ v.dataset.zedTried='1'; v.src=rec.video_url; v.load(); v.play(); } }catch(e){} };
+      ov.querySelector('[data-zed-close-dl-player]').addEventListener('click', function(){ try{ v.pause(); }catch(e){} try{ if(v.src && v.src.indexOf('blob:')===0) URL.revokeObjectURL(v.src); }catch(e){} revokeDlUrl(rec.id); ov.remove(); });
       ov.addEventListener('click', function(e){ if(e.target===ov) ov.querySelector('[data-zed-close-dl-player]').click(); });
     }catch(e){ toast('Could not play download'); }
   }
   async function handleDownload(videoId){
+    if(isOffline()){ toast('You are offline — downloading needs data once. Your saved videos below still play offline.'); return; }
     var cards=findVideoCards(); var info=null;
     for(var i=0;i<cards.length;i++){ var inf=extractInfo(cards[i]); if(inf.id===videoId){ info=inf; break; } }
     if(!info) info={ id: videoId, title:'Video' };
@@ -11338,6 +11449,7 @@ window._zedV15Filter = 'search';
         try{ blob=new Blob([blob], {type:'video/mp4'}); }catch(e){}
       }
       await saveDownload(info, blob);
+      rememberUnlockedMeta(info);
       lastDownloadsSig=''; // new download - rebuild Downloads view once
       getCandidateIds(info).forEach(function(cid){ downloadedIds.add(cid); });
       downloadedIds.add(videoId);
@@ -11432,11 +11544,18 @@ window._zedV15Filter = 'search';
       var inPlayer=t.closest('.zed-lock-cover, .yt-lite, .aspect-video, video, iframe');
       if(inPlayer){ e.preventDefault(); e.stopPropagation(); var id=card.dataset.zedVideoId; if(id) handleUnlock(id); return; }
     }
+    // V16: Unlocked view - Play Offline / Download buttons inside the stored-unlocks view
+    var unlDl=t.closest('[data-zed-unlocked-dl]');
+    if(unlDl){ e.preventDefault(); var _uid=unlDl.getAttribute('data-zed-unlocked-dl'); if(isOffline()){ toast('You are offline — download needs data once'); return; } (function(){ var _m=getUnlockedMeta(); for(var _i=0;_i<_m.length;_i++){ if(_m[_i].id===_uid){ handleDownload(_uid); break; } } })(); return; }
+    var unlYt=t.closest('[data-zed-unlocked-yt]');
+    if(unlYt){ e.preventDefault(); if(isOffline()){ toast('YouTube videos need data to play'); return; } toast('YouTube video needs data — opening online player'); return; }
     // V11: Top tabs are boss. Tapping VIDEOS always goes back to Search (not stuck in Downloads). Other tabs leave Videos cleanly.
+    // V16: ... except OFFLINE, where Videos opens Downloads (like Papers opens Offline Papers)
     var tabBtn=t.closest('button');
     if(tabBtn){
       var txt=norm(tabBtn.textContent);
       if(txt==='videos'){
+        if(isOffline()){ setFilter('downloads'); return; }
         if(filter!=='search'){ setFilter('search'); }
         else { lastProcess=0; setTimeout(function(){ processVideos(); }, 80); }
         return;
@@ -11479,20 +11598,62 @@ window._zedV15Filter = 'search';
   }catch(e){}
 
   document.addEventListener('visibilitychange', function(){ if(!document.hidden && !isAnyVideoPlaying()){ lastProcess=0; processVideos(); } });
-  window.addEventListener('online', function(){ lastProcess=0; setTimeout(processVideos, 500); });
-  window.addEventListener('offline', function(){ lastProcess=0; setTimeout(processVideos, 200); });
+  window.addEventListener('online', function(){ markOfflineClass(); flushPendingSync(); lastProcess=0; setTimeout(processVideos, 500); });
+  window.addEventListener('offline', function(){ markOfflineClass(); if(isVideosTabActive() || document.body.classList.contains('zed-v15-in-videos')){ setFilter('downloads'); } lastProcess=0; setTimeout(processVideos, 200); });
   window.addEventListener('load', function(){ setTimeout(function(){ ensureDownloadsLoaded().then(function(){ lastProcess=0; processVideos(); }); }, 800); });
   setTimeout(function(){ ensureDownloadsLoaded().then(function(){ lastProcess=0; processVideos(); }); }, 1200);
+  // ---- V16: Floating 🎬 button + My Offline Videos library - mirrors 📚 My Offline Papers ----
+  // Works from ANY tab, even when the Videos React grid fails offline.
+  function isOnAuthPageV16(){ try{ var bt=(document.body?document.body.innerText||'':''); if(bt.indexOf('Welcome back')!==-1) return true; if(bt.indexOf('Log in to access past papers')!==-1) return true; if(document.querySelector('input[placeholder*="097"]')) return true; }catch(e){} return false; }
+  function createOfflineVideosBtn(){
+    if(isOnAuthPageV16()){ var ex=document.getElementById('zed-offline-videos-btn'); if(ex) ex.remove(); return; }
+    if(document.getElementById('zed-offline-videos-btn')) return;
+    var btn=document.createElement('button'); btn.id='zed-offline-videos-btn'; btn.textContent='🎬'; btn.title='My Offline Videos';
+    btn.addEventListener('click', function(){ showOfflineVideosLibrary(); });
+    document.body.appendChild(btn);
+    updateOfflineVideosBtnCount();
+  }
+  async function updateOfflineVideosBtnCount(){
+    try{ var all=await getAllDownloads(); var btn=document.getElementById('zed-offline-videos-btn'); if(!btn) return; var c=btn.querySelector('.zed-count-badge'); if(!c){ c=document.createElement('div'); c.className='zed-count-badge'; c.style.cssText='position:absolute;top:-6px;right:-6px;background:#8CFF8A;color:#000;font-size:10px;font-weight:800;min-width:20px;height:20px;border-radius:999px;display:flex;align-items:center;justify-content:center;padding:0 5px;border:2px solid #1A1917;'; btn.style.position='fixed'; btn.appendChild(c); } c.textContent=all.length; c.style.display=all.length>0?'flex':'none'; }catch(e){}
+  }
+  async function showOfflineVideosLibrary(){
+    var all=await getAllDownloads();
+    var coins=getCoins(); var unlockedCount=getUnlockedCount();
+    var old=document.getElementById('zed-offline-videos-modal'); if(old) old.remove();
+    var modal=document.createElement('div'); modal.id='zed-offline-videos-modal';
+    modal.style.cssText='position:fixed;inset:0;z-index:999999;background:rgba(0,0,0,0.88);display:flex;align-items:center;justify-content:center;padding:16px;backdrop-filter:blur(6px);';
+    modal.innerHTML='<div style="background:#0F0E0D;border:2px solid #8CFF8A;border-radius:18px;width:100%;max-width:440px;max-height:88vh;display:flex;flex-direction:column;overflow:hidden"><div style="padding:14px 16px;border-bottom:1px solid #2A2825;display:flex;justify-content:space-between;align-items:center;gap:12px"><div style="color:#F5F1E8;font-weight:800;font-size:15px">🎬 My Offline Videos ('+all.length+')</div><button data-zed-lib-close style="background:#F5F1E8;color:#000;border:none;width:36px;height:36px;border-radius:10px;font-weight:800;cursor:pointer">✕</button></div><div style="padding:10px 16px;border-bottom:1px solid #1F1D1B;background:#141312;display:flex;gap:8px;flex-wrap:wrap"><span style="background:#FFD600;color:#000;font-size:12px;font-weight:800;padding:6px 12px;border-radius:999px">🪙 '+coins+' coins</span><span style="background:#0f2a12;color:#8CFF8A;border:1px solid #8CFF8A;font-size:12px;font-weight:800;padding:6px 12px;border-radius:999px">🔓 '+unlockedCount+' unlocked</span><span style="background:#1a1a1a;color:#FFD600;border:1px solid #FFD600;font-size:12px;font-weight:800;padding:6px 12px;border-radius:999px">'+(isOffline()?'📴 Offline':'🌐 Online')+'</span></div><div style="padding:10px 16px"><input data-zed-lib-search placeholder="Search my offline videos..." style="width:100%;height:42px;background:#1A1917;border:1px solid #2A2825;border-radius:12px;padding:0 14px;color:#F5F1E8;font-size:13px;outline:none"></div><div data-zed-lib-list style="padding:12px 16px;overflow-y:auto;flex:1;-webkit-overflow-scrolling:touch;min-height:200px"></div><div style="padding:10px 16px;border-top:1px solid #2A2825;text-align:center;color:#9A9590;font-size:10px">Private app storage • Works with no data • Same as My Offline Papers</div></div>';
+    document.body.appendChild(modal);
+    modal.querySelector('[data-zed-lib-close]').addEventListener('click', function(){ modal.remove(); });
+    modal.addEventListener('click', function(e){ if(e.target===modal) modal.remove(); });
+    var listEl=modal.querySelector('[data-zed-lib-list]'); var searchEl=modal.querySelector('[data-zed-lib-search]');
+    function renderLib(q){
+      var qn=(q||'').toLowerCase().trim();
+      var items=all.filter(function(r){ if(!qn) return true; return ((r.title||'')+' '+(r.subject||'')).toLowerCase().indexOf(qn)!==-1; });
+      if(!items.length){ listEl.innerHTML='<div style="text-align:center;padding:30px 20px;color:#9A9590"><div style="font-size:32px;margin-bottom:10px">🎬</div>'+(all.length===0 ? 'No offline videos yet<br><small style="font-size:11px;line-height:1.4;display:block;margin-top:6px">When online, unlock a video (25 coins) then tap Download.<br>It will appear here and play with no data.</small>' : 'No match for "'+escapeHtml(q||'')+'"')+'</div>'; return; }
+      var h=''; items.forEach(function(r){ h+='<div style="background:#18191A;border:1px solid #333;border-radius:14px;overflow:hidden;margin-bottom:12px"><div style="padding:12px"><div style="font-size:11px;color:#8CFF8A;text-transform:uppercase">'+escapeHtml(r.subject||'')+'</div><div style="font-weight:700;font-size:14px;margin-top:4px;color:#fff">'+escapeHtml(r.title||'Video')+'</div><div style="font-size:11px;color:#aaa;margin-top:4px">🔓 Unlocked ✓ • 📥 Saved • '+((r.size/1024/1024)||0).toFixed(1)+' MB • '+new Date(r.savedAt).toLocaleDateString()+'</div><div style="display:flex;gap:8px;margin-top:10px;flex-wrap:wrap"><button data-zed-lib-play="'+r.id+'" style="flex:1;height:36px;border-radius:8px;background:#fff;color:#000;border:none;font-weight:700;font-size:12px;cursor:pointer">▶ Play Offline</button><button data-zed-lib-del="'+r.id+'" style="height:36px;padding:0 12px;border-radius:8px;background:transparent;color:#ff9a9a;border:1px solid #ff9a9a;font-size:12px;cursor:pointer">🗑</button></div></div></div>'; });
+      listEl.innerHTML=h;
+      listEl.querySelectorAll('[data-zed-lib-play]').forEach(function(btn){ btn.addEventListener('click', function(){ modal.remove(); playDownloadInFullPlayer(btn.getAttribute('data-zed-lib-play')); }); });
+      listEl.querySelectorAll('[data-zed-lib-del]').forEach(function(btn){ btn.addEventListener('click', async function(){ if(!confirm('Remove this download?')) return; var id=btn.getAttribute('data-zed-lib-del'); revokeDlUrl(id); lastDownloadsSig=''; await deleteDownload(id); all=await getAllDownloads(); updateOfflineVideosBtnCount(); renderLib(searchEl.value); lastProcess=0; processVideos(); }); });
+    }
+    searchEl.addEventListener('input', function(){ renderLib(searchEl.value); });
+    renderLib('');
+  }
+  window.zedShowOfflineVideos = showOfflineVideosLibrary;
   // V8: steady re-apply every 600ms while in Videos - React recreates cards/headers, so one pass is not enough.
   // This is what keeps Unlocked showing ONLY unlocked and Search showing ONLY searched, even after React re-renders.
   setInterval(function(){
     if(isAnyVideoPlaying()) return; // V10: freeze while playing - no flicker
     try{ hideOriginalVideosHeader(); }catch(e){}
+    try{ createOfflineVideosBtn(); }catch(e){}
+    try{ updateOfflineVideosBtnCount(); }catch(e){}
+    try{ markOfflineClass(); }catch(e){}
     try{ if(isVideosTabActive()){ lastProcess=0; processVideos(); } }catch(e){}
   }, 600);
+  setTimeout(function(){ try{ createOfflineVideosBtn(); markOfflineClass(); flushPendingSync(); }catch(e){} }, 1000);
   // V10: No interval touching chat button.
   window.zedVideoCoins={ unlockCost: UNLOCK_COST, getCoins: getCoins, getUnlocked: getUnlocked, process: function(){ lastProcess=0; processVideos(); }, setFilter: setFilter };
-  console.log('[ZED] Video Coins V15 active - original search, exact search, YouTube+MP4 unlocked, chat normal');
+  console.log('[ZED] Video Coins V16 OFFLINE active - original search, exact search, YouTube+MP4 unlocked, chat normal');
 })();
 </script>
 
