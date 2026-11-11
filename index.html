@@ -3410,7 +3410,29 @@ const db=await openDB();return new Promise((res,rej)=>{const tx=db.transaction(S
       modal.style.cssText='position:fixed;inset:0;z-index:9999999;background:#0F0E0B;display:flex;flex-direction:column;';
 
       modal.innerHTML=`
-        <style>@keyframes spin{to{transform:rotate(360deg)}}</style>
+        <style>
+        @keyframes spin{to{transform:rotate(360deg)}}
+        /* V16.6: Controls bar was wider than portrait screen, so + / FIT slid off the right edge (your circled button). */
+        #zed-pdf-controls-bar{overflow-x:auto !important;overflow-y:hidden !important;scrollbar-width:none !important;-webkit-overflow-scrolling:touch !important}
+        #zed-pdf-controls-bar::-webkit-scrollbar{display:none !important}
+        #zed-pdf-controls-bar > div{flex-shrink:0 !important}
+        #zed-pdf-controls-bar button, #zed-pdf-controls-bar span, #zed-pdf-controls-bar input{flex-shrink:0 !important}
+        #zed-pdf-bottom-bar{overflow-x:auto !important;scrollbar-width:none !important}
+        #zed-pdf-bottom-bar::-webkit-scrollbar{display:none !important}
+        #zed-pdf-bottom-bar > div, #zed-pdf-bottom-bar > span{flex-shrink:0 !important}
+        @media (max-width:480px){
+          /* Portrait: compact controls so ALL buttons fit - no more cut-off + / FIT */
+          #zed-pdf-controls-bar{height:42px !important;padding:0 6px !important;gap:4px !important;justify-content:flex-start !important}
+          #zed-pdf-controls-bar button{width:30px !important;height:30px !important;font-size:13px !important;border-radius:8px !important}
+          #pdf-page-input{width:28px !important;font-size:11px !important}
+          #pdf-zoom-label{min-width:36px !important;font-size:10px !important;padding:0 4px !important;height:30px !important}
+          #pdf-fit{width:auto !important;height:30px !important;padding:0 8px !important;font-size:9px !important}
+          /* Portrait bottom bar: hide long hint so SCROLL + ROTATE fit on screen */
+          #zed-pdf-bottom-hint{display:none !important}
+          #zed-pdf-bottom-bar{height:42px !important;padding:0 8px !important;justify-content:flex-end !important}
+          #zed-pdf-bottom-bar button{height:28px !important}
+        }
+      </style>
         <div style="height:52px;background:#1A1917;border-bottom:1px solid #2A2825;display:flex;align-items:center;justify-content:space-between;padding:0 12px;flex-shrink:0;">
           <div style="display:flex;align-items:center;gap:8px;min-width:0;flex:1;">
             <div style="color:#F5F1E8;font-size:13px;font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">${(meta.title||'Paper').slice(0,45)}</div>
@@ -3991,12 +4013,18 @@ const db=await openDB();return new Promise((res,rej)=>{const tx=db.transaction(S
   let currentPageNum = 1;
   let totalPages = 0;
   let currentScale = 1.3;
+  let currentRotation = 0; // V16.3: 0, 90, 180, 270 - ROTATE button was dead, now actually rotates
   let isScrollMode = false;
   let currentBlob = null;
   let currentBlobUrl = null;
   let currentTitle = 'Paper';
   let renderQueue = [];
   let isRendering = false;
+  // V16.4: Smooth pinch - generation guard stops overlapping renders from fighting each other
+  let renderGen = 0;
+  let activeRenderTask = null;
+  let pinchCommitTimer = null;
+  function isCancelledRenderErr(e){ if(!e) return false; const n=(e.name||''); const m=(e.message||''); return n==='RenderingCancelledException' || /cancel/i.test(n) || /cancel/i.test(m); }
   
   function showToast(m,isError){
     let t=document.getElementById('zed-offline-toast');
@@ -4037,45 +4065,62 @@ const db=await openDB();return new Promise((res,rej)=>{const tx=db.transaction(S
 
   async function renderPage(pdf, num, canvas, scale){
     const page = await pdf.getPage(num);
-    const viewport = page.getViewport({scale});
-    const dpr = window.devicePixelRatio || 1;
-    canvas.width = viewport.width * dpr;
-    canvas.height = viewport.height * dpr;
+    const viewport = page.getViewport({scale, rotation: currentRotation});
+    // V16.4: Cap pixels - rotated + pinch-zoomed pages at dpr 3 could exceed canvas limits and throw 'Failed to render'
+    let dpr = Math.min(window.devicePixelRatio || 1, 2);
+    if(viewport.width * dpr > 3500) dpr = 3500 / viewport.width;
+    if(viewport.height * dpr > 3500) dpr = 3500 / viewport.height;
+    dpr = Math.max(0.5, dpr);
+    try{ canvas.style.transform=''; canvas.style.willChange=''; }catch(e){}
+    canvas.width = Math.floor(viewport.width * dpr);
+    canvas.height = Math.floor(viewport.height * dpr);
     canvas.style.width = viewport.width + 'px';
     canvas.style.height = viewport.height + 'px';
     const ctx = canvas.getContext('2d');
     ctx.setTransform(dpr,0,0,dpr,0,0);
     const renderContext = { canvasContext: ctx, viewport };
-    await page.render(renderContext).promise;
+    const task = page.render(renderContext);
+    activeRenderTask = task;
+    try{ await task.promise; }finally{ if(activeRenderTask===task) activeRenderTask=null; }
     return viewport;
   }
 
   async function renderSinglePage(){
     if(!currentPdf) return;
+    const myGen = ++renderGen;
     const loader = document.getElementById('zed-pdf-loader');
     const canvas = document.getElementById('pdf-canvas');
     const scrollContainer = document.getElementById('pdf-scroll-container');
-    if(loader) loader.style.display='flex';
-    if(canvas) canvas.style.display='none';
+    // V16.4: NEVER hide the current page before the new one is ready, and NEVER show loader instantly.
+    // Old code hid the canvas + showed loader on every pinch move, so a cancelled mid-pinch render left a 'Failed to render' screen.
+    // Now: keep old page visible, only show loader if render really takes >350ms.
     if(scrollContainer) scrollContainer.style.display='none';
-    
+    let loaderTimer = setTimeout(()=>{ if(renderGen===myGen && loader) loader.style.display='flex'; }, 350);
     try{
       const c = document.getElementById('pdf-canvas');
-      if(!c) return;
+      if(!c) { clearTimeout(loaderTimer); return; }
+      if(renderGen!==myGen){ clearTimeout(loaderTimer); return; }
+      // Cancel any in-flight render so pinch/rotate/zoom don't pile up overlapping renders
+      if(activeRenderTask){ try{ activeRenderTask.cancel(); }catch(e){} }
       c.style.display='block';
       await renderPage(currentPdf, currentPageNum, c, currentScale);
+      if(renderGen!==myGen){ clearTimeout(loaderTimer); return; } // stale - a newer pinch/rotate already started
+      clearTimeout(loaderTimer);
       if(loader) loader.style.display='none';
       updateUI();
     }catch(e){
+      clearTimeout(loaderTimer);
+      if(isCancelledRenderErr(e) || renderGen!==myGen){ if(loader && renderGen===myGen) loader.style.display='none'; return; } // cancelled/stale = silent, not an error
       console.log('render error', e);
-      if(loader){
-        loader.innerHTML = `<div style="color:#ff9a9a;font-size:12px;text-align:center;">Failed to render<br><span style="font-size:10px;color:#9A9590;">${e.message}</span><br><button onclick="location.reload()" style="margin-top:8px;background:#2A2A2A;color:#F5F1E8;border:1px solid #3A3632;padding:6px 12px;border-radius:8px;font-size:11px;cursor:pointer;">Retry</button></div>`;
-      }
+      // V16.4: Real error -> keep old page visible, hide loader, tiny toast. Never replace loader with a blocking 'Failed to render' wall.
+      if(loader) loader.style.display='none';
+      try{ showToast('Could not re-render - tap + / - to try again', true); }catch(e2){}
     }
   }
 
   async function renderScrollMode(){
     if(!currentPdf) return;
+    const myGen = ++renderGen;
     const loader = document.getElementById('zed-pdf-loader');
     const canvas = document.getElementById('pdf-canvas');
     const scrollContainer = document.getElementById('pdf-scroll-container');
@@ -4084,10 +4129,10 @@ const db=await openDB();return new Promise((res,rej)=>{const tx=db.transaction(S
       scrollContainer.style.display='flex';
       scrollContainer.innerHTML='';
     }
-    if(loader) loader.style.display='flex';
-    
+    let loaderTimer = setTimeout(()=>{ if(renderGen===myGen && loader) loader.style.display='flex'; }, 350);
     try{
       for(let i=1;i<=totalPages;i++){
+        if(renderGen!==myGen){ clearTimeout(loaderTimer); return; } // stale - newer pinch/rotate started, abort this loop
         const wrapper = document.createElement('div');
         wrapper.style.cssText='position:relative;display:flex;flex-direction:column;align-items:center;gap:6px;width:100%;';
         const pageCanvas = document.createElement('canvas');
@@ -4100,16 +4145,20 @@ const db=await openDB();return new Promise((res,rej)=>{const tx=db.transaction(S
         wrapper.appendChild(pageCanvas);
         wrapper.appendChild(label);
         scrollContainer.appendChild(wrapper);
-        // Render with slight delay for smooth UI
         await renderPage(currentPdf, i, pageCanvas, currentScale);
+        if(renderGen!==myGen){ clearTimeout(loaderTimer); return; }
         if(i===1 && loader) loader.style.display='none';
-        // Small pause to keep UI responsive
-        await new Promise(r=>setTimeout(r, 30));
+        await new Promise(r=>setTimeout(r, 20));
       }
+      clearTimeout(loaderTimer);
+      if(renderGen!==myGen) return;
       if(loader) loader.style.display='none';
       updateUI();
     }catch(e){
+      clearTimeout(loaderTimer);
+      if(isCancelledRenderErr(e) || renderGen!==myGen){ if(loader && renderGen===myGen) loader.style.display='none'; return; }
       console.log('scroll render error', e);
+      if(loader) loader.style.display='none';
     }
   }
 
@@ -4149,7 +4198,7 @@ const db=await openDB();return new Promise((res,rej)=>{const tx=db.transaction(S
           <button id="zed-pdf-close-btn-enhanced" style="background:#F5F1E8;color:#000;border:none;width:32px;height:32px;border-radius:8px;font-size:14px;font-weight:700;cursor:pointer;display:flex;align-items:center;justify-content:center;">✕</button>
         </div>
       </div>
-      <div style="height:46px;background:#141312;border-bottom:1px solid #2A2825;display:flex;align-items:center;justify-content:space-between;padding:0 10px;gap:8px;flex-shrink:0;">
+      <div id="zed-pdf-controls-bar" style="height:46px;background:#141312;border-bottom:1px solid #2A2825;display:flex;align-items:center;justify-content:space-between;padding:0 10px;gap:8px;flex-shrink:0;overflow-x:auto;overflow-y:hidden;">
         <div style="display:flex;align-items:center;gap:6px;">
           <button id="pdf-prev" class="zed-pdf-enhanced-btn" style="background:#2A2A2A;border:1px solid #3A3632;color:#F5F1E8;width:36px;height:34px;border-radius:10px;display:flex;align-items:center;justify-content:center;cursor:pointer;font-size:16px;font-weight:700;">‹</button>
           <div style="background:#1A1A1A;border:1px solid #2A2A2A;border-radius:10px;padding:0 8px;height:34px;display:flex;align-items:center;gap:6px;">
@@ -4177,8 +4226,8 @@ const db=await openDB();return new Promise((res,rej)=>{const tx=db.transaction(S
           <div id="pdf-scroll-container" style="width:100%;display:none;flex-direction:column;align-items:center;gap:16px;"></div>
         </div>
       </div>
-      <div style="height:40px;background:#1A1917;border-top:1px solid #2A2825;display:flex;align-items:center;justify-content:space-between;padding:0 12px;flex-shrink:0;">
-        <span style="color:#6B6763;font-size:10px;display:flex;align-items:center;gap:6px;"><span style="width:6px;height:6px;background:#8CFF8A;border-radius:50%;display:inline-block;"></span> Offline • Pinch zoom • Swipe</span>
+      <div id="zed-pdf-bottom-bar" style="height:40px;background:#1A1917;border-top:1px solid #2A2825;display:flex;align-items:center;justify-content:space-between;padding:0 12px;flex-shrink:0;overflow-x:auto;">
+        <span id="zed-pdf-bottom-hint" style="color:#6B6763;font-size:10px;display:flex;align-items:center;gap:6px;"><span style="width:6px;height:6px;background:#8CFF8A;border-radius:50%;display:inline-block;"></span> Offline • Pinch zoom • Swipe</span>
         <div style="display:flex;gap:6px;">
           <button id="pdf-toggle-scroll" style="background:#2A2A2A;border:1px solid #3A3632;color:#9A9590;height:28px;padding:0 12px;border-radius:999px;font-size:10px;font-weight:700;cursor:pointer;letter-spacing:0.04em;">SCROLL MODE</button>
           <button id="pdf-rotate" style="background:#2A2A2A;border:1px solid #3A3632;color:#9A9590;height:28px;padding:0 10px;border-radius:999px;font-size:10px;font-weight:700;cursor:pointer;">↻ ROTATE</button>
@@ -4195,6 +4244,7 @@ const db=await openDB();return new Promise((res,rej)=>{const tx=db.transaction(S
     currentTitle = title;
     currentPageNum = 1;
     currentScale = 1.3;
+    currentRotation = 0; // V16.3: every new document starts upright
     isScrollMode = false;
     
     // Close handler
@@ -4268,7 +4318,7 @@ const db=await openDB();return new Promise((res,rej)=>{const tx=db.transaction(S
       if(container && currentPdf){
         const availableWidth = container.clientWidth - 24;
         currentPdf.getPage(currentPageNum).then(page=>{
-          const viewport = page.getViewport({scale:1});
+          const viewport = page.getViewport({scale:1, rotation: currentRotation}); // V16.3: FIT respects rotation
           const scale = availableWidth / viewport.width;
           currentScale = Math.min(2.5, Math.max(0.5, scale*0.95));
           if(isScrollMode) renderScrollMode(); else renderSinglePage();
@@ -4302,29 +4352,95 @@ const db=await openDB();return new Promise((res,rej)=>{const tx=db.transaction(S
       }
     };
     
-    // Pinch zoom handling
-    let lastDist = 0;
+    // V16.3: ROTATE - was a dead button (no onclick). Now cycles 0 -> 90 -> 180 -> 270 -> 0.
+    // In your photo the scan is sideways, so one tap turns it to portrait, another to landscape.
+    function updateRotateBtn(){
+      const rBtn=document.getElementById('pdf-rotate');
+      if(!rBtn) return;
+      rBtn.textContent = currentRotation===0 ? '↻ ROTATE' : '↻ '+currentRotation+'°';
+      rBtn.style.background = currentRotation!==0 ? '#8CFF8A' : '#2A2A2A';
+      rBtn.style.color = currentRotation!==0 ? '#000' : '#9A9590';
+      rBtn.style.borderColor = currentRotation!==0 ? '#8CFF8A' : '#3A3632';
+    }
+    document.getElementById('pdf-rotate').onclick=()=>{
+      currentRotation = (currentRotation + 90) % 360;
+      updateRotateBtn();
+      // V16.3: After turning to landscape (90/270) the page gets wider than the screen.
+      // Auto-fit to width so it stays readable instead of overflowing / squashing.
+      if(currentPdf){
+        currentPdf.getPage(currentPageNum).then(page=>{
+          const vp = page.getViewport({scale:1, rotation: currentRotation});
+          const container = document.getElementById('zed-pdf-container');
+          if(container){
+            const avail = container.clientWidth - 24;
+            if(vp.width * currentScale > avail){
+              currentScale = Math.min(2.5, Math.max(0.5, (avail / vp.width) * 0.98));
+            }
+          }
+          if(isScrollMode) renderScrollMode(); else renderSinglePage();
+        }).catch(()=>{ if(isScrollMode) renderScrollMode(); else renderSinglePage(); });
+      } else {
+        if(isScrollMode) renderScrollMode(); else renderSinglePage();
+      }
+    };
+    // V16.4 SMOOTH PINCH: old code re-rendered the PDF on EVERY touchmove, so overlapping renders
+    // raced, cancelled each other, and left 'Failed to render'. New code:
+    // - WHILE pinching: only CSS scale the already-rendered canvas (instant, no render, no failure)
+    // - ON release: commit scale once, clear CSS, do ONE clean re-render at the final zoom
+    let pinchStartDist = 0;
+    let pinchStartScale = 1.3;
+    let pinchLiveScale = 1.3;
+    let isPinching = false;
+    let pinchTarget = null;
     const pdfContainer = document.getElementById('zed-pdf-container');
+    try{ pdfContainer.style.touchAction = 'pan-x pan-y'; }catch(e){}
+    function getPinchTarget(){ return isScrollMode ? document.getElementById('pdf-scroll-container') : document.getElementById('pdf-canvas'); }
+    function applyPinchLive(){
+      const el = getPinchTarget(); if(!el) return;
+      pinchTarget = el;
+      const ratio = pinchLiveScale / currentScale;
+      el.style.willChange = 'transform';
+      el.style.transformOrigin = 'center top';
+      el.style.transition = 'none';
+      el.style.transform = 'scale(' + ratio + ')';
+      const zl = document.getElementById('pdf-zoom-label'); if(zl) zl.textContent = Math.round(pinchLiveScale * 75) + '%';
+    }
+    function clearPinchLive(){ if(pinchTarget){ pinchTarget.style.transform=''; pinchTarget.style.willChange=''; pinchTarget.style.transition=''; } pinchTarget=null; }
+    function endPinch(){
+      if(!isPinching) return;
+      isPinching = false;
+      const finalScale = pinchLiveScale;
+      clearPinchLive();
+      pinchStartDist = 0;
+      if(Math.abs(finalScale - currentScale) > 0.01){
+        currentScale = finalScale;
+        clearTimeout(pinchCommitTimer);
+        pinchCommitTimer = setTimeout(()=>{ if(isScrollMode) renderScrollMode(); else renderSinglePage(); }, 60);
+      } else { try{ updateUI(); }catch(e){} }
+    }
     pdfContainer.addEventListener('touchstart', (e)=>{
       if(e.touches.length===2){
-        lastDist = Math.hypot(e.touches[0].pageX - e.touches[1].pageX, e.touches[0].pageY - e.touches[1].pageY);
+        isPinching = true;
+        clearTimeout(pinchCommitTimer);
+        pinchStartDist = Math.hypot(e.touches[0].pageX - e.touches[1].pageX, e.touches[0].pageY - e.touches[1].pageY);
+        pinchStartScale = currentScale;
+        pinchLiveScale = currentScale;
       }
     }, {passive:true});
     pdfContainer.addEventListener('touchmove', (e)=>{
-      if(e.touches.length===2){
+      if(e.touches.length===2 && isPinching){
+        try{ e.preventDefault(); }catch(err){}
         const dist = Math.hypot(e.touches[0].pageX - e.touches[1].pageX, e.touches[0].pageY - e.touches[1].pageY);
-        if(lastDist>0){
-          const delta = (dist - lastDist) * 0.01;
-          currentScale = Math.min(3.5, Math.max(0.5, currentScale + delta));
-          clearTimeout(window._pinchTimeout);
-          window._pinchTimeout = setTimeout(()=>{
-            if(isScrollMode) renderScrollMode(); else renderSinglePage();
-          }, 150);
+        if(pinchStartDist>0 && dist>0){
+          const ratio = dist / pinchStartDist;
+          pinchLiveScale = Math.min(3.5, Math.max(0.5, pinchStartScale * ratio));
+          // Live CSS zoom only - no PDF re-render while fingers are moving
+          if(window.requestAnimationFrame){ requestAnimationFrame(applyPinchLive); } else { applyPinchLive(); }
         }
-        lastDist = dist;
       }
-    }, {passive:true});
-    pdfContainer.addEventListener('touchend', ()=>{ lastDist=0; }, {passive:true});
+    }, {passive:false});
+    pdfContainer.addEventListener('touchend', (e)=>{ if(e.touches.length<2) endPinch(); }, {passive:true});
+    pdfContainer.addEventListener('touchcancel', ()=>{ endPinch(); }, {passive:true});
     
     // Keyboard navigation
     const keyHandler = (e)=>{
@@ -4333,6 +4449,7 @@ const db=await openDB();return new Promise((res,rej)=>{const tx=db.transaction(S
       if(e.key==='Escape'){ closeViewer(); document.removeEventListener('keydown', keyHandler); }
       if(e.key==='+' || e.key==='='){ currentScale=Math.min(3.5, currentScale+0.2); if(isScrollMode) renderScrollMode(); else renderSinglePage(); }
       if(e.key==='-' || e.key==='_'){ currentScale=Math.max(0.5, currentScale-0.2); if(isScrollMode) renderScrollMode(); else renderSinglePage(); }
+      if(e.key==='r' || e.key==='R'){ const rb=document.getElementById('pdf-rotate'); if(rb) rb.click(); } // V16.3: R = rotate
     };
     document.addEventListener('keydown', keyHandler);
     
@@ -5245,6 +5362,8 @@ const db=await openDB();return new Promise((res,rej)=>{const tx=db.transaction(S
   }
 
   function cleanSearchBars(){
+    // V16.7: Never touch the search bar while user is typing - this ran every 700ms + on every click + on every DOM mutation.
+    try{ if(document.activeElement && document.activeElement.id==='zed-v16-input') return; }catch(e){}
     let videosActive = isVideosTab();
     
     // Find all search inputs
@@ -5295,14 +5414,14 @@ const db=await openDB();return new Promise((res,rej)=>{const tx=db.transaction(S
       for(let i=1;i<wraps.length;i++) wraps[i].remove();
     }
     
-    // Show/hide Search a topic based on tab
+    // Show/hide Search a topic based on tab - V16.7: only set when changed, so we don't re-layout the focused input every 700ms
     let bigWrap = document.getElementById('zed-v16-wrap');
     if(bigWrap){
       if(videosActive){
-        bigWrap.style.display = 'block';
-        bigWrap.style.margin = '16px 0';
+        if(bigWrap.style.display!=='block') bigWrap.style.display = 'block';
+        if(bigWrap.style.margin!=='16px 0px') bigWrap.style.margin = '16px 0';
       } else {
-        bigWrap.style.display = 'none';
+        if(bigWrap.style.display!=='none') bigWrap.style.display = 'none';
       }
     }
   }
@@ -5409,12 +5528,12 @@ input[placeholder="search a topic"], input[placeholder="Search here"] {
   function fixInput(){
     let inp = document.getElementById('zed-v16-input');
     if(!inp) return;
-    inp.style.color = '#FFFFFF';
-    inp.style.background = 'transparent';
-    inp.style.webkitTextFillColor = '#FFFFFF';
-    // Ensure parent is dark
+    // V16.7: Only set when different - old code rewrote these styles every 500ms, forcing a re-layout of the focused input while typing.
+    if(inp.style.color!=='#FFFFFF' && inp.style.color!=='rgb(255, 255, 255)') inp.style.color = '#FFFFFF';
+    if(inp.style.background!=='transparent') inp.style.background = 'transparent';
+    if(inp.style.webkitTextFillColor!=='#FFFFFF' && inp.style.webkitTextFillColor!=='rgb(255, 255, 255)') inp.style.webkitTextFillColor = '#FFFFFF';
     let parent = inp.parentElement;
-    if(parent){
+    if(parent && parent.style.background!=='#1a1a1a' && parent.style.background!=='rgb(26, 26, 26)'){
       parent.style.background = '#1a1a1a';
     }
   }
@@ -7463,45 +7582,38 @@ console.log('[ZED] Welcome popup + fast login active');
 .zed-ai-msg{max-width:85%;padding:10px 12px;border-radius:14px;font-size:14px;line-height:1.5;white-space:pre-wrap}
 .zed-ai-msg.user{background:#8CFF8A;color:#000;align-self:flex-end}
 .zed-ai-msg.ai{background:#1e1e1e;color:#fff;align-self:flex-start;border:1px solid #333}
-#zed-ai-inputrow{display:flex;gap:8px;padding:10px;background:#1a1a1a;border-top:1px solid #333}
-#zed-ai-input{flex:1;background:#222;color:#fff;border:1px solid #333;border-radius:12px;padding:11px;font-size:14px}
-#zed-ai-send{background:#8CFF8A;color:#000;border:none;border-radius:12px;padding:0 18px;font-weight:900;cursor:pointer}
+#zed-ai-inputrow{display:flex;gap:8px;padding:10px;background:#1a1a1a;border-top:1px solid #333;align-items:center;flex-shrink:0;box-sizing:border-box;width:100%}
+#zed-ai-input{flex:1;min-width:0;flex-shrink:1;background:#222;color:#fff;border:1px solid #333;border-radius:12px;padding:11px;font-size:14px;box-sizing:border-box}
+#zed-ai-send{background:#8CFF8A;color:#000;border:none;border-radius:999px;padding:0 16px;font-weight:900;cursor:pointer;flex-shrink:0;min-width:64px;height:44px;font-size:13px;display:flex;align-items:center;justify-content:center;white-space:nowrap}
 #zed-ai-keyrow{background:#1e2b1e;border:1px solid #8CFF8A;border-radius:12px;padding:10px;margin:0 12px 8px;font-size:13px;color:#fff}
 </style>
-<button id="zed-ai-btn" type="button">🤖 AI TUTOR</button>
+<button id="zed-ai-btn" type="button">🤖 ZED AI</button>
 <div id="zed-ai-panel">
   <div id="zed-ai-head">
     <button id="zed-ai-close" type="button" style="background:none;border:none;color:#fff;font-size:22px;cursor:pointer">‹</button>
-    <div style="flex:1"><div style="font-weight:900;color:#fff;font-size:16px">🤖 ZED AI TUTOR</div><div style="color:#8CFF8A;font-size:11px">Form 1-5 &amp; Grade 10-12 • ECZ • Zambia</div></div>
+    <div style="flex:1"><div style="font-weight:900;color:#fff;font-size:16px">🤖 ZED AI</div></div>
     <button id="zed-ai-clear" type="button" style="background:#222;color:#fff;border:1px solid #333;border-radius:999px;padding:6px 10px;font-size:11px;cursor:pointer">Clear</button>
   </div>
-  <div style="display:flex;gap:8px;padding:10px 12px;background:#0F0E0B">
-    <select id="zed-ai-subject" style="flex:1;background:#1e1e1e;color:#fff;border:1px solid #333;border-radius:10px;padding:9px;font-size:13px"><option>Mathematics</option><option>English</option><option>Science</option><option>Biology</option><option>Chemistry</option><option>Physics</option><option>Geography</option><option>History</option><option>Commerce</option><option>Principles of Accounts</option><option>Computer Studies</option><option>General</option></select>
-    <select id="zed-ai-grade" style="flex:1;background:#1e1e1e;color:#fff;border:1px solid #333;border-radius:10px;padding:9px;font-size:13px"><option>Form 1</option><option>Form 2</option><option>Form 3</option><option>Form 4</option><option>Form 5</option><option>Grade 10</option><option>Grade 11</option><option selected>Grade 12</option></select>
-  </div>
-  <div id="zed-ai-keyrow" style="display:none;background:#1e2b1e;border:1px solid #8CFF8A;border-radius:12px;padding:12px;margin:0 12px 8px;font-size:13px;color:#fff">
-    <b>🔒 AI Tutor needs the School Key</b><br/><span style="color:#ccc">Only Admin can set the key — in the <b>Admin</b> tab. Students never paste a key.</span><br/>
-    <button id="zed-ai-go-admin" type="button" style="margin-top:10px;background:#8CFF8A;color:#000;border:none;border-radius:10px;padding:11px 14px;font-weight:900;cursor:pointer;width:100%">👑 GO TO ADMIN TO SET KEY →</button>
-    <div style="margin-top:8px;color:#999;font-size:11px;text-align:center">If you are Admin, open Admin tab → “AI Tutor School Key”.</div>
-    <!-- Hidden dummies kept only so old JS does not crash. No key can be pasted here. -->
-    <input id="zed-ai-keyinput" type="password" style="display:none" disabled />
+
+  <div id="zed-ai-keyrow" style="display:none !important"><!-- Key banner REMOVED - never show in chat. Key is Admin-only. --></div>
+    <!-- Hidden dummies kept only so old JS does not crash. type=hidden so password-eye code never adds an eye to them. -->
+    <input id="zed-ai-keyinput" type="hidden" disabled />
     <button id="zed-ai-keysave" type="button" style="display:none" disabled></button>
     <button id="zed-ai-admin-open" type="button" style="display:none" disabled></button>
-  </div>
   <div id="zed-ai-adminrow" style="display:none !important">
     <!-- MOVED TO ADMIN TAB ONLY. Kept hidden so old JS does not crash. -->
-    <input id="zed-ai-admin-code" type="password" style="display:none" disabled />
-    <input id="zed-ai-admin-key" type="password" style="display:none" disabled />
+    <input id="zed-ai-admin-code" type="hidden" disabled />
+    <input id="zed-ai-admin-key" type="hidden" disabled />
     <button id="zed-ai-admin-save" type="button" style="display:none" disabled></button>
     <div id="zed-ai-admin-status" style="display:none"></div>
     <button id="zed-ai-admin-close" type="button" style="display:none" disabled></button>
   </div>
   <div id="zed-ai-msgs"></div>
   <div id="zed-ai-inputrow">
-    <button id="zed-ai-shot" type="button" title="Send screenshot to AI Tutor">📷</button>
+    <button id="zed-ai-shot" type="button" title="Send screenshot to ZED AI">📷</button>
     <input id="zed-ai-shot-input" type="file" accept="image/*" style="display:none" />
-    <input id="zed-ai-input" placeholder="Ask anything, e.g. Explain quadratic equations..." />
-    <button id="zed-ai-send" type="button">SEND →</button>
+    <input id="zed-ai-input" placeholder="What do you have in mind..." enterkeyhint="send" autocomplete="off" />
+    <button id="zed-ai-send" type="button">SEND ➤</button>
   </div>
 </div>
 <script>
@@ -7528,7 +7640,7 @@ console.log('[ZED] Welcome popup + fast login active');
     return raw.split(',').map(function(s){ return s.trim(); }).filter(function(s){ return s.length>10; });
   }
   function getKey(){ var ks=getAllKeys(); return ks.length? ks[0] : ''; }
-  async function fetchSchoolKey(){
+  async function fetchSchoolKey(force){ if(force) schoolKeyFetching=null;
     // If we already have a key in memory or phone storage, return it instantly - don't wait for Supabase on every question
     var cached = schoolKeyCache || localStorage.getItem('zed_school_gemini_key') || '';
     if(cached){ schoolKeyCache=cached; schoolKeyLoaded=true; }
@@ -7552,8 +7664,8 @@ console.log('[ZED] Welcome popup + fast login active');
   }
   // Prefetch on app load - NOT only when tutor is opened. So first question is already fast.
   fetchSchoolKey();
-  // ---- FAST ANSWER CACHE: same ECZ question = instant, no API call ----
-  function aiCacheKey(q, subj, grade){ return (grade+'|'+subj+'|'+q).toLowerCase().replace(/\s+/g,' ').trim().slice(0,300); }
+  // ---- FAST ANSWER CACHE: same question = instant, no API call ----
+  function aiCacheKey(q){ return String(q||'').toLowerCase().replace(/\s+/g,' ').trim().slice(0,300); }
   function aiCacheGet(key){
     try{
       var c=JSON.parse(localStorage.getItem('zed_ai_cache')||'{}');
@@ -7571,17 +7683,20 @@ console.log('[ZED] Welcome popup + fast login active');
   function showWelcome(){
     if(msgs.children.length===0){
       var d=document.createElement('div'); d.className='zed-ai-msg ai';
-      d.textContent='Hi! I am ZED AI TUTOR \u{1F44B}\nI help with Form 1-5 & Grade 10-12 ECZ \u2014 Maths, English, Science, Biology, Chemistry, Physics and more.\n\nAsk me to explain a topic, solve a past paper question step-by-step, or make a quick quiz. What do you want to learn today?';
+      d.innerHTML='👋 Welcome to ZED Scholar AI Tutor by Hope Chaka<br>What do you have in mind today?';
       msgs.appendChild(d);
     }
   }
   async function checkKey(){
-    // Don't block UI waiting for Supabase if we already have a cached key
-    if(!getKey()) await fetchSchoolKey();
-    else fetchSchoolKey(); // refresh in background
-    if(!getKey()){ keyRow.style.display='block'; } else { keyRow.style.display='none'; }
+    // V17.4: Show welcome INSTANTLY - old code waited up to 6s for Supabase before showing welcome, so panel looked empty/black.
     showWelcome();
+    if(keyRow) keyRow.style.display='none';
+    try{ await fetchSchoolKey(true); }catch(e){}
+    if(keyRow) keyRow.style.display='none';
   }
+  // If Admin saves a key elsewhere, this panel must notice instantly
+  window.addEventListener('zed-key-saved', function(){ try{ schoolKeyCache = localStorage.getItem('zed_school_gemini_key')||schoolKeyCache; checkKey(); }catch(e){} });
+  window.addEventListener('storage', function(e){ if(e && e.key==='zed_school_gemini_key'){ try{ schoolKeyCache=e.newValue||''; checkKey(); }catch(_e){} } });
   // Admin handlers
   var adminOpen=document.getElementById('zed-ai-admin-open');
   var adminRow=document.getElementById('zed-ai-adminrow');
@@ -7608,7 +7723,7 @@ console.log('[ZED] Welcome popup + fast login active');
       setTimeout(function(){ adminRow.style.display='none'; checkKey(); }, 1200);
     }catch(e){ status.textContent='Could not save. Did you run the SQL to create app_settings table? '+e.message; status.style.color='#FF6B6B'; }
   });
-  btn.addEventListener('click', function(){ panel.classList.add('open'); checkKey(); });
+  btn.addEventListener('click', function(){ panel.classList.add('open'); showWelcome(); checkKey(); });
   closeBtn.addEventListener('click', function(){ panel.classList.remove('open'); });
   clearBtn.addEventListener('click', function(){ msgs.innerHTML=''; lastQ=''; lastA=''; showWelcome(); });
   if(keySave) keySave.addEventListener('click', function(){
@@ -7674,11 +7789,10 @@ console.log('[ZED] Welcome popup + fast login active');
     if(q.length>1000) q=q.slice(0,1000);
     // Use cached school key instantly - don't wait for Supabase if we have it
     if(!getKey()){ await fetchSchoolKey(); }
-    if(!getKey()){ keyRow.style.display='block'; alert('School key not set yet. Only Admin can set it in the Admin tab.'); return; }
-    var subj=document.getElementById('zed-ai-subject').value;
-    var grade=document.getElementById('zed-ai-grade').value;
+    if(!getKey()){ var _nm=document.createElement('div'); _nm.className='zed-ai-msg ai'; _nm.textContent='ZED AI is not ready yet. Please tell Admin.'; msgs.appendChild(_nm); msgs.scrollTop=msgs.scrollHeight; return; }
+    // V16.9: No subject / grade selection - anyone can ask anything.
     // Instant cache hit - same question asked before
-    var cKey=aiCacheKey(q, subj, grade);
+    var cKey=aiCacheKey(q);
     var cachedAns=aiCacheGet(cKey);
     var um=document.createElement('div'); um.className='zed-ai-msg user'; um.textContent=q; msgs.appendChild(um);
     input.value=''; msgs.scrollTop=msgs.scrollHeight;
@@ -7688,13 +7802,13 @@ console.log('[ZED] Welcome popup + fast login active');
     var isFollowUp=(qLower==='tell me more'||qLower==='tell me more please'||qLower==='explain more'||qLower==='more'||qLower==='continue'||qLower==='go on'||qLower==='more detail'||qLower==='more details'||qLower==='elaborate'||qLower.indexOf('tell me more')===0||qLower.indexOf('explain more')===0);
     var qForAI=q;
     if(isFollowUp && lastQ){
-      qForAI='Tell me more about: '+lastQ+'. Go deeper, give more detail and 2 more Zambian examples. Do not repeat your last answer word for word. Last answer was: '+lastA.slice(0,600);
+      qForAI='Tell me more about: '+lastQ+'. Go deeper, give more detail and 2 more examples. Do not repeat your last answer word for word. Last answer was: '+lastA.slice(0,600);
     } else if(lastQ && q!==lastQ){
       // Normal new question - still give Gemini the last Q+A as context so follow-ups make sense
       qForAI='Previous question: '+lastQ+'. Previous answer (short): '+lastA.slice(0,400)+'. Now new question: '+q;
     }
     // Cache must use the EXPANDED question, not just 'tell me more' - otherwise every 'tell me more' gets the same cached answer
-    cKey=aiCacheKey(qForAI, subj, grade);
+    cKey=aiCacheKey(qForAI);
     cachedAns=aiCacheGet(cKey);
     if(cachedAns){
       var cm2=document.createElement('div'); cm2.className='zed-ai-msg ai'; cm2.textContent=cachedAns+'\n\n\u26A1 Instant \u2014 you asked this before.'; msgs.appendChild(cm2); msgs.scrollTop=msgs.scrollHeight; if(!isFollowUp) lastQ=q; lastA=cachedAns; return;
@@ -7704,7 +7818,7 @@ console.log('[ZED] Welcome popup + fast login active');
     var streamingStarted=false;
     var dots=0; var dotTimer=setInterval(function(){ if(streamingStarted) return; dots=(dots+1)%4; loading.textContent='Thinking'+'.'.repeat(dots); }, 400);
     // FIX v8: dotTimer used to wipe streaming text every 400ms - that is why answers showed only the tail like 'big for harvest.' It now stops once streaming starts.
-    var prompt='Zambia ECZ '+grade+' '+subj+' tutor. Simple English, short step-by-step bullets, 1 Zambian example. If past paper Q, solve step-by-step + final answer. End with 1 practice Q. Q: '+qForAI;
+    var prompt='You are ZED AI, a helpful friendly assistant for anyone. Answer ANYTHING - not just school. Business, farming, money, health, cooking, relationships, coding, football, music, life advice, school, Maths, Science, anything at all. Do NOT assume the question is about school. Answer what the person actually asked. Use simple clear English. Use short step-by-step bullets when it helps. Give 1 Zambian example when it fits. If it is a school / past paper question, solve it step-by-step + final answer. If it is NOT a school question, just answer it directly and helpfully and end with a useful tip or follow-up - do NOT turn it into a school lesson or add a practice question. Be respectful - do not insult anyone. If asked to insult someone, politely decline to insult and offer to help with something useful instead. Q: '+qForAI;
     var ans=''; var lastErr=''; var lastStatus=0; var wasBlocked=false;
     var keys=getAllKeys();
     // FIX: Google retired gemini-2.5-flash-lite (see screenshot). Try models in order - 3.5 first, then fallbacks.
@@ -7744,11 +7858,11 @@ console.log('[ZED] Welcome popup + fast login active');
     clearInterval(dotTimer);
     if(!ans){
       if(wasBlocked){
-        ans='I can\'t answer that one as written \u2014 try rephrasing it as a school question. Example: \u201cExplain [topic] for Grade 12 ECZ\u201d or paste the exact past-paper question.';
+        ans='I can\'t answer that one as written \u2014 try rephrasing it in your own words. Example: \u201cExplain [topic] simply\u201d.';
       } else if(lastErr==='TIMEOUT' || (lastErr||'').toLowerCase().indexOf('abort')!==-1){
         ans='Slow network \u2014 I timed out after 25s. Check your data and tap SEND again. Your question was saved above, just resend it.';
       } else if(lastStatus===429){
-        ans='Many students are asking at once \u2014 the free key hit its per-minute limit. Wait 30 seconds and tap SEND again. Tip for Admin: paste 2-3 Gemini keys separated by commas in Admin \u2014 I will rotate them automatically.';
+        ans='Many people are asking at once \u2014 the free key hit its per-minute limit. Wait 30 seconds and tap SEND again. Tip for Admin: paste 2-3 Gemini keys separated by commas in Admin \u2014 I will rotate them automatically.';
       } else if((lastErr||'').toLowerCase().indexOf('api key')!==-1){
         ans='Error: School key not valid. Admin must check it in Admin tab \u2192 AI Tutor School Key, or get a new one from Google AI Studio (aistudio.google.com).';
       } else if(lastErr){
@@ -7787,7 +7901,7 @@ console.log('[ZED] Welcome popup + fast login active');
             var cx=cv.getContext('2d'); cx.drawImage(img,0,0,cw,ch);
             var dataUrl=cv.toDataURL('image/jpeg',0.8);
             var b64=dataUrl.split(',')[1]||'';
-            var um=document.createElement('div'); um.className='zed-ai-msg user'; um.innerHTML='<div style="font-size:12px;color:#333;margin-bottom:4px">Screenshot sent to AI Tutor</div><img src="'+dataUrl+'" style="max-width:100%;border-radius:10px;display:block" />';
+            var um=document.createElement('div'); um.className='zed-ai-msg user'; um.innerHTML='<div style="font-size:12px;color:#333;margin-bottom:4px">Screenshot sent to ZED AI</div><img src="'+dataUrl+'" style="max-width:100%;border-radius:10px;display:block" />';
             msgs.appendChild(um); msgs.scrollTop=msgs.scrollHeight;
             sendImageToAI(b64);
           }catch(e){ alert('Could not read that photo. Try again.'); }
@@ -7799,10 +7913,8 @@ console.log('[ZED] Welcome popup + fast login active');
     async function sendImageToAI(b64){
       if(aiSending) return;
       if(!getKey()) await fetchSchoolKey();
-      if(!getKey()){ keyRow.style.display='block'; alert('School key not set yet. Only Admin can set it in the Admin tab.'); return; }
-      var subj=document.getElementById('zed-ai-subject').value;
-      var grade=document.getElementById('zed-ai-grade').value;
-      var prompt='You are ZED AI Tutor for Zambia ECZ Form 1-5 & Grade 10-12. Look at this screenshot / photo. If it shows a question, solve it step-by-step simply, then give the final answer. If it shows notes, explain them simply with 1 Zambian example. Subject: '+subj+'. Grade: '+grade+'. Keep it short and clear.';
+      if(!getKey()){ return; }
+      var prompt='You are ZED AI, a helpful assistant. Look at this screenshot / photo. Answer ANYTHING about it - not just school. If it shows a question, solve it step-by-step simply, then give the final answer. If it shows notes, a document, a product, a message, a chat, a price, a farm, anything else, explain it simply and helpfully. Do NOT assume it is schoolwork. Keep it short and clear. Be respectful - do not insult anyone.';
       aiSending=true; sendBtn.disabled=true; sendBtn.textContent='...';
       var loading=document.createElement('div'); loading.className='zed-ai-msg ai'; loading.textContent='Looking at your screenshot...'; msgs.appendChild(loading); msgs.scrollTop=msgs.scrollHeight;
       var ans=''; var keys=getAllKeys(); var MODELS=['gemini-3.5-flash-lite','gemini-3-flash','gemini-2.5-flash'];
@@ -8300,7 +8412,7 @@ console.log('[ZED] Welcome popup + fast login active');
         if(_fcEmpty && _fcEmpty.friends && _fcEmpty.friends.length){ return; } // already showing saved friends at top - don't wipe
         // No offline banner - just show normal empty state
         friendsList.innerHTML='<div style="padding:20px;color:#999;text-align:center">No friends yet.<br/>Tap Search for friends to find friends.</div>'; return; }
-      var res3=await fetch(SUPA_URL+'/rest/v1/profiles?select=id,name,school,grade,province,district,avatar,avatar_url,coins,streak,created_at&or=('+friendIds.map(function(id){ return 'id.eq.'+id; }).join(',')+')', {headers:headers()});
+      var res3=await fetch(SUPA_URL+'/rest/v1/profiles?select=id,name,school,grade,province,district,avatar,avatar_url,coins,streak,created_at,last_seen&or=('+friendIds.map(function(id){ return 'id.eq.'+id; }).join(',')+')', {headers:headers()});
       var friends=await res3.json();
       friendsList.innerHTML='';
       (friends||[]).forEach(function(f){
@@ -8345,7 +8457,7 @@ console.log('[ZED] Welcome popup + fast login active');
         reqList.appendChild(h);
         for(var i=0;i<incoming.length;i++){
           var sid=incoming[i].user_id;
-          var resP=await fetch(SUPA_URL+'/rest/v1/profiles?select=id,name,school,grade,province,district,avatar,avatar_url,coins,streak,created_at&id=eq.'+sid, {headers:headers()});
+          var resP=await fetch(SUPA_URL+'/rest/v1/profiles?select=id,name,school,grade,province,district,avatar,avatar_url,coins,streak,created_at,last_seen&id=eq.'+sid, {headers:headers()});
           var pRows=await resP.json(); var p=pRows && pRows[0] ? pRows[0] : {name:'Student'};
           var card=document.createElement('div');
           card.style.cssText='display:flex;justify-content:space-between;align-items:center;background:#1e1e1e;border:1px solid #FFD93D;border-radius:12px;padding:12px;margin:0 12px 10px';
@@ -8362,7 +8474,7 @@ console.log('[ZED] Welcome popup + fast login active');
         reqList.appendChild(h2);
         for(var j=0;j<outgoing.length;j++){
           var oid=outgoing[j].friend_id;
-          var resP2=await fetch(SUPA_URL+'/rest/v1/profiles?select=id,name,school,grade,province,district,avatar,avatar_url,coins,streak,created_at&id=eq.'+oid, {headers:headers()});
+          var resP2=await fetch(SUPA_URL+'/rest/v1/profiles?select=id,name,school,grade,province,district,avatar,avatar_url,coins,streak,created_at,last_seen&id=eq.'+oid, {headers:headers()});
           var pRows2=await resP2.json(); var p2=pRows2 && pRows2[0] ? pRows2[0] : {name:'Student'};
           var card2=document.createElement('div');
           card2.style.cssText='display:flex;gap:8px;align-items:center;background:#1e1e1e;border:1px solid #333;border-radius:12px;padding:8px;margin:0 10px 8px';
@@ -8439,7 +8551,7 @@ console.log('[ZED] Welcome popup + fast login active');
     resEl.innerHTML='<div style="color:#999;font-size:13px">Searching...</div>';
     try{
       // Fetch all profiles, filter on phone
-      var res=await fetch(SUPA_URL+'/rest/v1/profiles?select=id,name,school,grade,province,district,avatar,avatar_url,coins,streak,created_at&limit=500', {headers:headers()});
+      var res=await fetch(SUPA_URL+'/rest/v1/profiles?select=id,name,school,grade,province,district,avatar,avatar_url,coins,streak,created_at,last_seen&limit=500', {headers:headers()});
       var allRows=await res.json();
       try{ zedCacheSet('zed_profiles_cache_v1', {savedAt: Date.now(), profiles: (allRows||[]).slice(0,500)}); }catch(e){}
       var qLower=q.toLowerCase();
@@ -8610,7 +8722,7 @@ console.log('[ZED] Welcome popup + fast login active');
         for(var ri=0; ri<incoming.length; ri++){
           var senderId=incoming[ri].user_id;
           try{
-            var resP=await fetch(SUPA_URL+'/rest/v1/profiles?select=id,name,school,grade,province,district,avatar,avatar_url,coins,streak,created_at&id=eq.'+senderId, {headers:headers()});
+            var resP=await fetch(SUPA_URL+'/rest/v1/profiles?select=id,name,school,grade,province,district,avatar,avatar_url,coins,streak,created_at,last_seen&id=eq.'+senderId, {headers:headers()});
             var pRows=await resP.json();
             var p=pRows && pRows[0] ? pRows[0] : {name:'Student'};
             var card=document.createElement('div');
@@ -8667,7 +8779,7 @@ console.log('[ZED] Welcome popup + fast login active');
         if(mySeq===_loadFriendsSeq){ listEl.innerHTML=''; while(renderEl.firstChild) listEl.appendChild(renderEl.firstChild); } _loadFriendsBusy=false; return; }
       // (duplicate check removed in V5 - already handled above)
       // Get friend profiles for accepted friends
-      var res3=await fetch(SUPA_URL+'/rest/v1/profiles?select=id,name,school,grade,province,district,avatar,avatar_url,coins,streak,created_at&or=('+friendIds.map(function(id){ return 'id.eq.'+id; }).join(',')+')', {headers:headers()});
+      var res3=await fetch(SUPA_URL+'/rest/v1/profiles?select=id,name,school,grade,province,district,avatar,avatar_url,coins,streak,created_at,last_seen&or=('+friendIds.map(function(id){ return 'id.eq.'+id; }).join(',')+')', {headers:headers()});
       var friends=await res3.json();
       if(mySeq!==_loadFriendsSeq) return; // stale
       var _seen={}; friends=(friends||[]).filter(function(f){ if(!f||!f.id||_seen[f.id]) return false; _seen[f.id]=true; return true; });
@@ -9046,7 +9158,7 @@ console.log('[ZED] Welcome popup + fast login active');
         }
         try{ localStorage.setItem('zed_school_gemini_key', k); }catch(e){}
         try{ localStorage.removeItem('zed_gemini_key'); }catch(e){}
-        if(st){ st.textContent='\u2705 School key saved! All students can now use AI Tutor without pasting a key.'; st.style.color='#8CFF8A'; }
+        if(st){ st.textContent='\u2705 School key saved! All students can now use AI Tutor without pasting a key.'; st.style.color='#8CFF8A'; } try{ window.dispatchEvent(new Event('zed-key-saved')); }catch(e){}
         var kc=document.getElementById('zed-admin-gemini-key'); if(kc) kc.value='';
         var cc=document.getElementById('zed-admin-gemini-code'); if(cc) cc.value='';
       }catch(e){
@@ -9831,7 +9943,7 @@ header div[class*="bg-"][class*="border"][class*="rounded"] span:first-child{
   window.zedOpenUserProfileById = async function(id, opts){
     if(!id) return;
     try{
-      var res=await fetch(SUPA_URL+'/rest/v1/profiles?select=id,name,school,grade,province,district,avatar,avatar_url,coins,streak,created_at&id=eq.'+id,{headers:headers()});
+      var res=await fetch(SUPA_URL+'/rest/v1/profiles?select=id,name,school,grade,province,district,avatar,avatar_url,coins,streak,created_at,last_seen&id=eq.'+id,{headers:headers()});
       var rows=await res.json();
       if(rows && rows[0]) openProfile(rows[0], opts||{});
       else alert('Profile not found');
@@ -9869,43 +9981,72 @@ header div[class*="bg-"][class*="border"][class*="rounded"] span:first-child{
   function getMe(){ try{ return JSON.parse(localStorage.getItem('zed_user')||'null'); }catch(e){ return null; } }
   function cacheGet(k){ try{ return JSON.parse(localStorage.getItem(k)||'null'); }catch(e){ return null; } }
   function cacheSet(k,v){ try{ localStorage.setItem(k, JSON.stringify(v)); }catch(e){} }
+  // --- V16.8 PRESENCE FIX: hours were fake because (1) heartbeat wrote the PHONE clock (many phones are hours off), (2) fetchPresence used OR=(...) which the code itself notes fails on some phones, so it silently returned a stale cached map as if fresh, (3) friends/profile fetches never selected last_seen, so cached profiles had last_seen=''. Fix: use SERVER time for both writing + reading, fetch each id with single id=eq. (no OR), never present stale cache as fresh. ---
+  var _zedServerOffsetMs = 0; // serverNow - phoneNow. 0 until first sync.
+  try{ var _so = JSON.parse(localStorage.getItem('zed_server_offset_v1')||'null'); if(_so && typeof _so.offset==='number' && Math.abs(_so.offset)<86400000) _zedServerOffsetMs=_so.offset; }catch(e){}
+  function zedServerNow(){ return Date.now() + _zedServerOffsetMs; }
+  function zedNoteServerDate(dateHeader){
+    try{
+      if(!dateHeader) return;
+      var t=Date.parse(dateHeader); if(isNaN(t)) return;
+      var off=t - Date.now();
+      if(Math.abs(off)<86400000){ _zedServerOffsetMs=off; try{ localStorage.setItem('zed_server_offset_v1', JSON.stringify({offset:off, at:Date.now()})); }catch(e){} }
+    }catch(e){}
+  }
+  async function zedSyncServerTime(){
+    try{
+      var r=await fetch(SUPA_URL+'/rest/v1/profiles?select=id&limit=1', {headers:headers()});
+      if(r && r.headers && r.headers.get) zedNoteServerDate(r.headers.get('Date'));
+    }catch(e){}
+  }
   function isOnline(last_seen){
     if(!last_seen) return false;
-    try{ return (Date.now() - new Date(last_seen).getTime()) < 120000; }catch(e){ return false; }
+    try{ var d=zedServerNow() - new Date(last_seen).getTime(); if(d<0) d=0; return d < 120000; }catch(e){ return false; }
   }
   function lastSeenLabel(last_seen){
     if(!last_seen) return 'Last seen unknown';
     try{
-      var diff=Date.now()-new Date(last_seen).getTime();
+      var diff=zedServerNow()-new Date(last_seen).getTime();
+      if(diff<0) diff=0; // future timestamp = clock skew, never show negative / fake hours
       if(diff<60000) return 'Active just now';
       if(diff<3600000) return 'Active '+Math.floor(diff/60000)+' min ago';
       if(diff<86400000) return 'Active '+Math.floor(diff/3600000)+' hr ago';
-      var d=new Date(last_seen); return 'Last seen '+d.toLocaleDateString('en-GB',{day:'numeric',month:'short'})+' '+d.getHours()+':'+String(d.getMinutes()).padStart(2,'0');
+      var d=new Date(new Date(last_seen).getTime()); return 'Last seen '+d.toLocaleDateString('en-GB',{day:'numeric',month:'short'})+' '+d.getHours()+':'+String(d.getMinutes()).padStart(2,'0');
     }catch(e){ return 'Last seen unknown'; }
   }
-  window.zedIsOnline=isOnline; window.zedLastSeenLabel=lastSeenLabel;
+  window.zedIsOnline=isOnline; window.zedLastSeenLabel=lastSeenLabel; window.zedServerNow=zedServerNow;
 
-  // --- Heartbeat: tell Supabase I'm online ---
+  // --- Heartbeat: tell Supabase I'm online - using SERVER time, not phone clock ---
   async function heartbeat(){
     var me=getMe(); if(!me || !me.id) return;
-    try{ await fetch(SUPA_URL+'/rest/v1/profiles?id=eq.'+me.id, {method:'PATCH', headers:headers(), body: JSON.stringify({last_seen:new Date().toISOString()})}); }catch(e){}
+    try{ await fetch(SUPA_URL+'/rest/v1/profiles?id=eq.'+me.id, {method:'PATCH', headers:headers(), body: JSON.stringify({last_seen:new Date(zedServerNow()).toISOString()})}); }catch(e){}
   }
-  heartbeat(); setInterval(heartbeat, 30000);
-  document.addEventListener('visibilitychange', function(){ if(!document.hidden) heartbeat(); });
-  window.addEventListener('online', function(){ heartbeat(); flushOutbox(); });
+  zedSyncServerTime(); heartbeat(); setInterval(heartbeat, 30000);
+  document.addEventListener('visibilitychange', function(){ if(!document.hidden){ zedSyncServerTime(); heartbeat(); } });
+  window.addEventListener('online', function(){ zedSyncServerTime(); heartbeat(); flushOutbox(); });
+  // Also heartbeat when user actually uses the app, not just every 30s while idle
+  (function(){ var _lastHb=0; function _hbAct(){ var n=Date.now(); if(n-_lastHb<20000) return; _lastHb=n; heartbeat(); } document.addEventListener('click', _hbAct); document.addEventListener('keydown', _hbAct); })();
 
-  // --- Presence: fetch last_seen for ids on screen ---
+  // --- Presence: fetch last_seen for ids on screen - one id=eq. per id, NO OR= ---
   async function fetchPresence(ids){
     ids=(ids||[]).filter(function(x,i,a){ return x && a.indexOf(x)===i; });
     if(!ids.length) return {};
-    var map=cacheGet('zed_presence_cache_v1')||{};
-    try{
-      var q=ids.map(function(id){ return 'id.eq.'+id; }).join(',');
-      var res=await fetch(SUPA_URL+'/rest/v1/profiles?select=id,last_seen&or=('+q+')', {headers:headers()});
-      var rows=await res.json();
-      if(Array.isArray(rows)){ rows.forEach(function(r){ if(r && r.id) map[r.id]=r.last_seen||''; }); cacheSet('zed_presence_cache_v1', map); }
-    }catch(e){}
-    return map;
+    var fresh={}; var anyOk=false;
+    // Single-id fetches in parallel. The old OR=(id.eq..,id.eq..) fails on some phones (same reason friendships fetch was split into 2 calls) - it returned an error object, Array check failed, and the OLD cached map was returned as if it was fresh. That is what showed 6 hr / 12 hr ago for people who were online minutes ago.
+    await Promise.all(ids.map(async function(id){
+      try{
+        var res=await fetch(SUPA_URL+'/rest/v1/profiles?select=id,last_seen&id=eq.'+id, {headers:headers()});
+        if(res && res.headers && res.headers.get) zedNoteServerDate(res.headers.get('Date'));
+        var rows=await res.json();
+        if(Array.isArray(rows) && rows[0]){ fresh[id]=rows[0].last_seen||''; anyOk=true; }
+      }catch(e){}
+    }));
+    if(anyOk){
+      try{ var cached=cacheGet('zed_presence_cache_v1')||{}; Object.keys(fresh).forEach(function(k){ cached[k]=fresh[k]; }); cacheSet('zed_presence_cache_v1', cached); }catch(e){}
+      return fresh;
+    }
+    // All fetches failed (offline) - return {} so callers know it is NOT fresh and fall back to their own cached value explicitly, instead of us silently serving hours-old cache as truth.
+    return {};
   }
   window.zedFetchPresence=fetchPresence;
 
@@ -9914,9 +10055,10 @@ header div[class*="bg-"][class*="border"][class*="rounded"] span:first-child{
       var els=document.querySelectorAll('[data-profile-id], [data-zed-profile-id]');
       var ids=[]; els.forEach(function(el){ var id=el.getAttribute('data-profile-id')||el.getAttribute('data-zed-profile-id'); if(id) ids.push(id); });
       if(!ids.length) return;
-      var map=await fetchPresence(ids);
-      // Also use cached map if fetch failed
-      if(!map || !Object.keys(map).length) map=cacheGet('zed_presence_cache_v1')||{};
+      var freshMap=await fetchPresence(ids);
+      // Fresh only. If fetch failed (offline), keep the dots as they are - do NOT repaint them from hours-old cache and pretend it is now.
+      var map=freshMap;
+      if(!map || !Object.keys(map).length) return;
       els.forEach(function(el){
         // Only add dot to avatar circles, not to whole person rows
         var isAvatar = el.className && (el.className.indexOf('avatar')!==-1 || el.id==='zed-chat-view-avatar');
@@ -9946,7 +10088,7 @@ header div[class*="bg-"][class*="border"][class*="rounded"] span:first-child{
   async function fetchProfileById(id){
     var cached=profileFromCache(id); 
     try{
-      var res=await fetch(SUPA_URL+'/rest/v1/profiles?select=id,name,school,grade,province,district,avatar,avatar_url,coins,streak,created_at&id=eq.'+id, {headers:headers()});
+      var res=await fetch(SUPA_URL+'/rest/v1/profiles?select=id,name,school,grade,province,district,avatar,avatar_url,coins,streak,created_at,last_seen&id=eq.'+id, {headers:headers()});
       var rows=await res.json(); if(rows && rows[0]) return rows[0];
     }catch(e){}
     return cached;
@@ -9970,21 +10112,27 @@ header div[class*="bg-"][class*="border"][class*="rounded"] span:first-child{
       + '<div style="display:flex;gap:10px;margin-top:18px;flex-wrap:wrap;justify-content:center"><button id="zed-picfs-profile" style="background:#8CFF8A;color:#000;border:none;border-radius:999px;padding:11px 18px;font-weight:900;cursor:pointer">View Full Profile</button><button id="zed-picfs-close2" style="background:#222;color:#fff;border:1px solid #333;border-radius:999px;padding:11px 18px;font-weight:900;cursor:pointer">Close</button></div>'
       + '<div style="color:#666;font-size:11px;margin-top:12px">Profile photo • Tap ✕ to close</div>';
     document.body.appendChild(overlay);
-    function close(){ overlay.remove(); }
+    var _picTimer=null;
+    function close(){ try{ if(_picTimer) clearInterval(_picTimer); }catch(e){} overlay.remove(); }
     overlay.querySelector('#zed-picfs-close').addEventListener('click', close);
     overlay.querySelector('#zed-picfs-close2').addEventListener('click', close);
     overlay.addEventListener('click', function(e){ if(e.target===overlay) close(); });
     overlay.querySelector('#zed-picfs-profile').addEventListener('click', function(){ close(); if(window.zedOpenUserProfile) window.zedOpenUserProfile(u, {friendStatus:{status:'accepted',dir:'both'}}); });
-    // Load Online / Offline for this person
-    (async function(){
-      try{
-        var map=await fetchPresence([u.id]);
-        var ls=map[u.id] || u.last_seen || '';
+    // Load Online / Offline for this person - FRESH first, cached only if offline. Re-check every 30s while this overlay is open so the hour count ticks live instead of freezing at open time.
+    function zedPicUpdatePresence(){
+      fetchPresence([u.id]).then(function(map){
+        var ls = (map && map[u.id]) ? map[u.id] : '';
+        if(!ls){
+          // Offline / fetch failed - fall back to cached profile value, but it is last-known, not fresh
+          var cm = cacheGet('zed_presence_cache_v1')||{}; ls = cm[u.id] || u.last_seen || '';
+        }
         var on=isOnline(ls);
         var dot=document.getElementById('zed-picfs-dot'); var txt=document.getElementById('zed-picfs-online-text');
         if(dot && txt){ dot.style.background=on?'#22c55e':'#666'; txt.textContent=on?'● Online now':('○ '+lastSeenLabel(ls)); txt.style.color=on?'#22c55e':'#999'; }
-      }catch(e){}
-    })();
+      }).catch(function(){});
+    }
+    zedPicUpdatePresence();
+    _picTimer=setInterval(function(){ if(!document.getElementById('zed-pic-fullscreen')){ try{ clearInterval(_picTimer); }catch(e){} return; } zedPicUpdatePresence(); }, 30000);
   }
   window.zedOpenProfilePic=openProfilePic;
 
@@ -10012,7 +10160,7 @@ header div[class*="bg-"][class*="border"][class*="rounded"] span:first-child{
           try{
             var viewer=document.getElementById('zed-profile-viewer'); if(!viewer || !u || !u.id) return;
             if(viewer.querySelector('#zed-prof-online')) return;
-            var map=await fetchPresence([u.id]); var ls=map[u.id]||u.last_seen||'';
+            var map=await fetchPresence([u.id]); var ls=(map && map[u.id]) ? map[u.id] : ((cacheGet('zed_presence_cache_v1')||{})[u.id] || u.last_seen || '');
             var on=isOnline(ls);
             var badge=document.createElement('div'); badge.id='zed-prof-online'; badge.style.cssText='display:flex;align-items:center;justify-content:center;gap:8px;margin-top:8px';
             badge.innerHTML='<span style="width:10px;height:10px;border-radius:999px;background:'+(on?'#22c55e':'#666')+';display:inline-block"></span><span style="color:'+(on?'#22c55e':'#999')+';font-size:13px;font-weight:800">'+(on?'● Online now':'○ '+lastSeenLabel(ls))+'</span>';
@@ -10415,9 +10563,17 @@ header div[class*="bg-"][class*="border"][class*="rounded"] span:first-child{
 #zed-v16-wrap{margin:12px 0}
 #zed-v16-wrap input{font-size:15px}
 #zed-v16-info{display:none !important}
-/* Hide V16 search in Unlocked/Downloads - CSS !important beats V22's inline block */
-body.zed-v15-filter-downloads #zed-v16-wrap{display:none !important}
-body.zed-v15-filter-unlocked #zed-v16-wrap{display:none !important}
+/* V16.1: Search stays VISIBLE in Search / Unlocked / Downloads - it filters downloads offline */
+body.zed-v15-filter-downloads #zed-v16-wrap{display:block !important}
+body.zed-v15-filter-unlocked #zed-v16-wrap{display:block !important}
+body.zed-v15-filter-search #zed-v16-wrap{display:block !important}
+/* V16.1: Offline Search shows downloaded results - Downloads view must be visible even in Search filter when offline */
+body.zed-v15-filter-search.zed-offline #zed-v15-downloads-view{display:grid !important}
+#zed-v15-downloads-view .zed-dl-no-match{grid-column:1/-1;padding:20px;text-align:center;color:#ccc;font-size:13px}
+    /* V16.5: Toolbar FIXED ON TOP online + offline. Sticky + very high z + solid bg so it never slides under videos when scrolling. Search stays normal below it (was sticky at 56px and overlapped). */
+    #zed-v15-toolbar{position:-webkit-sticky !important;position:sticky !important;top:0 !important;z-index:999 !important;background:#0F0E0B !important;padding:10px 0 10px !important;margin:0 !important;width:100% !important;box-shadow:0 4px 16px rgba(0,0,0,.6) !important;border-bottom:1px solid #2A2A2A !important}
+    #zed-v16-wrap{position:static !important;top:auto !important;z-index:1 !important;background:transparent !important;padding:6px 0 10px !important;margin:0 !important}
+#zed-v15-unlocked-view .zed-dl-no-match{grid-column:1/-1;padding:20px;text-align:center;color:#ccc;font-size:13px}
 .zed-video-card{position:relative !important;contain:layout style}
 [data-zed-hidden="1"]{display:none !important}
   /* V11: No flash of all videos. New cards hidden until V11 approves with data-zed-hidden="0". Original shows 4 random before V11 runs - this stops it. */
@@ -10468,14 +10624,15 @@ body.zed-v15-no-results #zed-v15-no-results{display:block !important}
     body.zed-v15-filter-unlocked #zed-v15-unlocked-view{display:grid !important}
     @media(min-width:768px){#zed-v15-unlocked-view{grid-template-columns:1fr 1fr}}
     .zed-offline-pill{background:#FFD600;color:#000 !important}
-    #zed-offline-videos-btn{position:fixed;bottom:160px;right:16px;z-index:9998;background:#1A1917;border:2px solid #8CFF8A;color:#8CFF8A;width:56px;height:56px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:24px;cursor:pointer;box-shadow:0 6px 20px rgba(0,0,0,0.4)}
+    /* V16.1: floating offline-videos button REMOVED completely per user request - no 🎬 button anywhere */
+    #zed-offline-videos-btn{display:none !important}
     #zed-v15-downloads-view .zed-dl-card video, #zed-v15-unlocked-view .zed-dl-card video{background:#000}
     
 /* Chat button = NORMAL button again - never floating / dragging */
 /* V10: NO CSS touching #zed-chat-btn - original makeMovable already makes it draggable like AI + Library. */
 </style>
 <script>
-// ===== ZED VIDEO COINS V16 - OFFLINE FIRST =====
+// ===== ZED VIDEO COINS V17.6 - ZED AI SMALL LIKE CHAT + NICE WELCOME =====
 // V16 FIX: Videos tab now works like Papers offline.
 // - Downloads, Coins, Unlocks are read from localStorage + IndexedDB, NOT from the online React grid.
 // - When offline, Videos auto-opens Downloads. Unlocked also renders from stored unlocks.
@@ -10503,7 +10660,7 @@ window._zedV15Filter = 'search';
   // V15: Show real version in header so user can verify they are on V15, not old v1 file
   try{
     var heads=document.querySelectorAll('div, h1, h2, span');
-    for(var hi=0;hi<heads.length;hi++){ var ht=(heads[hi].textContent||'').trim(); if(/^ZED SCHOLAR v1$/i.test(ht)){ heads[hi].textContent='ZED SCHOLAR V16'; break; } }
+    for(var hi=0;hi<heads.length;hi++){ var ht=(heads[hi].textContent||'').trim(); if(/^ZED SCHOLAR v1$/i.test(ht)){ heads[hi].textContent='ZED SCHOLAR V17.6'; break; } }
   }catch(e){}
   var UNLOCK_COST = 25;
   var SUPA_URL = 'https://biastmylavwhlsccvpyu.supabase.co';
@@ -10948,17 +11105,21 @@ window._zedV15Filter = 'search';
       }
       inp=document.getElementById('zed-v16-input');
     }
+    // V16.1: Placeholder tells user what search does right now
+    try{ if(inp){ inp.placeholder = isOffline() ? 'Search downloaded videos...' : (filter==='downloads' ? 'Search downloaded videos...' : (filter==='unlocked' ? 'Search unlocked videos...' : 'Search a topic, e.g. Forces')); } }catch(e){}
     if(inp && !inp.dataset.v7Bound){
       inp.dataset.v7Bound='1';
       // Make sure it can be tapped: no pointer-events block, not readonly, not disabled
       inp.removeAttribute('readonly'); inp.disabled=false;
       inp.style.pointerEvents='auto';
       inp.addEventListener('input', function(){
-        if(filter!=='search'){ setFilter('search', true); return; }
+        // V16.1: Typing in Downloads / Unlocked must filter THAT view, not jump back to Search.
+        // Typing in Search filters the online grid when online, and downloaded videos when offline.
         if(searchTimer) clearTimeout(searchTimer);
         searchTimer=setTimeout(function(){ lastProcess=0; processVideos(); }, 120);
       });
-      inp.addEventListener('focus', function(){ if(filter!=='search') setFilter('search', true); });
+      // V16.7: Focus does NOT force a re-process. Old code set lastProcess=0 on focus, so the very next 600ms tick re-ran processVideos -> moved the search box -> keyboard dropped. Focus now does nothing, typing (input event) is what filters.
+      inp.addEventListener('focus', function(){ /* keep keyboard - no re-process on focus */ });
       // Tapping the Search filter button focuses this input
     }
     return wrap;
@@ -11003,7 +11164,8 @@ window._zedV15Filter = 'search';
     bar.querySelectorAll('[data-zed-filter]').forEach(function(btn){
       btn.addEventListener('click', function(){
         var f=btn.getAttribute('data-zed-filter');
-        setFilter(f);
+        // V16.1: Keep the search text when switching Search / Unlocked / Downloads, so it filters the new view
+        setFilter(f, true);
         if(f==='search'){
           setTimeout(function(){ var i=getSearchInput(); if(i){ try{ i.focus({preventScroll:false}); }catch(e){ i.focus(); } } }, 120);
         }
@@ -11040,6 +11202,55 @@ window._zedV15Filter = 'search';
       parent.insertBefore(uv, viewAnchor);
     }
   }
+  // V16.2 FIX: React re-renders can delete + recreate ONE of our elements (e.g. toolbar) AFTER the others.
+  // If toolbar is recreated before the grid, it lands BELOW the Downloads view that already exists -> toolbar at bottom (your screenshot).
+  // This enforces the order on EVERY pass: Toolbar -> Search -> Banner -> Downloads -> Unlocked -> Grid
+  function enforceVideoTopOrder(){
+    try{
+      // V16.7: NEVER move the search box while user is typing - moving a focused input's ancestor kills the keyboard on Android.
+      try{ if(document.activeElement && document.activeElement.id==='zed-v16-input') return; }catch(e){}
+      var bar=document.getElementById('zed-v15-toolbar');
+      if(!bar || !bar.parentNode) return;
+      var parent=bar.parentNode;
+      var wrap=document.getElementById('zed-v16-wrap');
+      var bn=document.getElementById('zed-v15-offline-banner');
+      var dv=document.getElementById('zed-v15-downloads-view');
+      var uv=document.getElementById('zed-v15-unlocked-view');
+      // V16.7 IDEMPOTENT: if already in correct order, do NOTHING. Old code did insertBefore on every 600ms pass even when order was already right - every move re-laid out the page and dropped the keyboard.
+      try{
+        var _kids=Array.prototype.slice.call(parent.children||[]);
+        var _idx=function(el){ return el ? _kids.indexOf(el) : -1; };
+        var _barI=_idx(bar), _wrapI=_idx(wrap), _bnI=_idx(bn), _dvI=_idx(dv), _uvI=_idx(uv);
+        var _inOrder=true;
+        var _seq=[_barI,_wrapI,_bnI,_dvI,_uvI].filter(function(v){ return v>=0; });
+        for(var _k=1;_k<_seq.length;_k++){ if(_seq[_k]<=_seq[_k-1]) _inOrder=false; }
+        if(_inOrder){
+          // Also check anchor is after us (if it exists in this parent) - if so, order is already correct
+          var _grids0=findVideoGrids();
+          var _anchor0=null;
+          for(var _g=0;_g<_grids0.length;_g++){ if(_grids0[_g].parentNode===parent){ _anchor0=_grids0[_g]; break; } }
+          if(!_anchor0 || _idx(_anchor0)>_seq[_seq.length-1]) return;
+        }
+      }catch(e){}
+      // Move any of our elements that ended up in a different parent into bar's parent
+      [wrap,bn,dv,uv].forEach(function(el){ if(el && el.parentNode!==parent){ parent.appendChild(el); } });
+      // Find the grid anchor in the same parent - our block must sit directly before it
+      var anchor=null;
+      var grids=findVideoGrids();
+      for(var i=0;i<grids.length;i++){ if(grids[i].parentNode===parent){ anchor=grids[i]; break; } }
+      if(anchor){
+        // V16.5 FIX: Insert FORWARD before anchor => final order: bar, wrap, bn, dv, uv, anchor = toolbar on TOP.
+        // Old code inserted REVERSE ([uv,dv,bn,wrap,bar]) which produced [uv,dv,bn,wrap,bar,anchor] = toolbar at BOTTOM (offline screenshot).
+        var forward=[bar,wrap,bn,dv,uv];
+        for(var j=0;j<forward.length;j++){ var el2=forward[j]; if(el2 && el2.parentNode===parent && el2!==anchor){ parent.insertBefore(el2, anchor); } }
+      } else {
+        // No grid in this parent - put our block at the very top of the parent, in order
+        if(bar!==parent.firstChild) parent.insertBefore(bar, parent.firstChild);
+        var cur=bar;
+        [wrap,bn,dv,uv].forEach(function(el){ if(el && el.parentNode===parent){ parent.insertBefore(el, cur.nextSibling); cur=el; } });
+      }
+    }catch(e){}
+  }
   function setFilter(f, keepQuery){
     // V16: Offline + Search with no results must not strand user on a blank Search screen.
     // If offline and caller asks for Search, show Downloads instead - same as Papers opening Offline Papers.
@@ -11055,8 +11266,9 @@ window._zedV15Filter = 'search';
     if(bar){ bar.querySelectorAll('[data-zed-filter]').forEach(function(x){ x.classList.toggle('active', x.getAttribute('data-zed-filter')===f); }); }
     var wrap=document.getElementById('zed-v16-wrap');
     if(wrap){
-      if(f==='search') wrap.style.display='block';
-      else wrap.style.display='none';
+      // V16.1: Search bar stays visible in Search / Unlocked / Downloads so it can filter downloads offline
+      wrap.style.display='block';
+      try{ var _inp2=getSearchInput(); if(_inp2) _inp2.placeholder = isOffline() ? 'Search downloaded videos...' : (f==='downloads' ? 'Search downloaded videos...' : (f==='unlocked' ? 'Search unlocked videos...' : 'Search a topic, e.g. Forces')); }catch(e){}
     }
     if(!keepQuery){
       var inp=getSearchInput(); if(inp && inp.value) inp.value='';
@@ -11077,12 +11289,12 @@ window._zedV15Filter = 'search';
   function applyFilter(){
     var cards=findVideoCards();
     var q=getSearchQuery();
-    // V16: Downloads / Unlocked must render from IndexedDB + localStorage even when React grid is empty offline.
+    // V16.1: Search bar filters Downloads / Unlocked too - q is passed through, not ignored.
     if(filter==='downloads'){
       cards.forEach(function(card){ setHidden(card, true); });
       var uv0=document.getElementById('zed-v15-unlocked-view'); if(uv0) uv0.style.display='none';
       var dv0=document.getElementById('zed-v15-downloads-view'); if(dv0) dv0.style.display='';
-      renderDownloadsView();
+      renderDownloadsView(q);
       return;
     }
     if(filter==='unlocked'){
@@ -11090,7 +11302,7 @@ window._zedV15Filter = 'search';
       if(isOffline() || cards.length===0){
         cards.forEach(function(card){ setHidden(card, true); });
         var dvU=document.getElementById('zed-v15-downloads-view'); if(dvU) dvU.style.display='none';
-        renderUnlockedViewFromStorage();
+        renderUnlockedViewFromStorage(q);
         return;
       }
       var uv1=document.getElementById('zed-v15-unlocked-view'); if(uv1) uv1.style.display='none';
@@ -11103,10 +11315,19 @@ window._zedV15Filter = 'search';
       });
       return;
     }
-    // filter === 'search' : hide unlocked view, show grid path
+    // filter === 'search'
+    // V16.1 OFFLINE SEARCH: when offline, Search searches DOWNLOADED videos, not the online grid.
+    // No query offline -> show all downloads (handled by processVideos auto-switch, but also here).
+    if(isOffline()){
+      cards.forEach(function(card){ setHidden(card, true); });
+      var uvOff=document.getElementById('zed-v15-unlocked-view'); if(uvOff) uvOff.style.display='none';
+      var dvOff=document.getElementById('zed-v15-downloads-view'); if(dvOff) dvOff.style.display='grid';
+      renderDownloadsView(q);
+      return;
+    }
     var uvS=document.getElementById('zed-v15-unlocked-view'); if(uvS) uvS.style.display='none';
     var dvS=document.getElementById('zed-v15-downloads-view'); if(dvS) dvS.style.display='none';
-    // filter === 'search'
+    // filter === 'search' online
     if(!q){
       // No search yet -> show NOTHING. No videos, no words.
       cards.forEach(function(card){ setHidden(card, true); });
@@ -11118,28 +11339,38 @@ window._zedV15Filter = 'search';
       setHidden(card, !show);
     });
   }
-  async function renderUnlockedViewFromStorage(){
+  async function renderUnlockedViewFromStorage(searchQ){
     // V16: Unlocked view that does NOT need the online grid. Built from:
     //  1) IndexedDB downloads (all downloads are unlocked)
     //  2) Stored unlock metadata (YouTube + MP4 unlocked but not yet downloaded)
+    // V16.1: searchQ filters by title + subject, same matching as online search.
     var view=document.getElementById('zed-v15-unlocked-view'); if(!view) return;
+    var q = (typeof searchQ==='string' ? searchQ : getSearchQuery()||'');
     try{
       var allDl=await getAllDownloads();
       var meta=getUnlockedMeta();
       var vids=getUnlockedVideoIds();
-      // Merge: downloads first, then meta not already in downloads
       var seen={}; var items=[];
       allDl.forEach(function(r){ seen[r.id]=1; items.push({id:r.id,title:r.title,subject:r.subject,video_type:r.video_type,thumbnail_url:r.thumbnail_url,video_url:r.video_url,ytId:'',isDownload:true,blob:r.blob}); });
       meta.forEach(function(m){ if(seen[m.id]) return; seen[m.id]=1; items.push({id:m.id,title:m.title,subject:m.subject,video_type:m.video_type,thumbnail_url:m.thumbnail_url,video_url:m.video_url,ytId:m.ytId||'',isDownload:false,blob:null}); });
-      // Any canonical unlock without meta (old unlocks) - show as unlocked entry so count matches
       vids.forEach(function(id){ if(seen[id]) return; seen[id]=1; items.push({id:id,title:'Unlocked video',subject:'',video_type:'mp4',thumbnail_url:'',video_url:'',ytId:'',isDownload:false,blob:null}); });
+      // V16.1: filter by search query if present
+      var filtered=items;
+      if(q){
+        filtered=items.filter(function(it){ return matchesSearch({title:it.title,subject:it.subject}, q); });
+      }
       if(items.length===0){
         view.innerHTML='<div style="grid-column:1/-1;padding:20px;text-align:center;color:#ccc;font-size:13px">No unlocked videos yet.<br><span style="color:#aaa;font-size:12px">Unlock a video with 25 coins when online, then it stays unlocked offline.</span><br><button class="zed-vt-filter active" data-zed-back-search3 style="margin-top:12px">🔍 Search Videos →</button></div>';
         var b=view.querySelector('[data-zed-back-search3]'); if(b) b.addEventListener('click', function(){ setFilter('search'); });
         return;
       }
+      if(filtered.length===0){
+        view.innerHTML='<div class="zed-dl-no-match">No unlocked video matches "'+escapeHtml(q.slice(0,30))+'"<br><button class="zed-vt-filter active" data-zed-clear-unlocked-search style="margin-top:12px">Clear search</button></div>';
+        var cb=view.querySelector('[data-zed-clear-unlocked-search]'); if(cb) cb.addEventListener('click', function(){ var inp=getSearchInput(); if(inp) inp.value=''; lastProcess=0; processVideos(); });
+        return;
+      }
       var html='';
-      items.forEach(function(it){
+      filtered.forEach(function(it){
         var isYT = it.video_type==='youtube' || !!it.ytId;
         var thumb = it.thumbnail_url ? '<img src="'+escapeHtml(it.thumbnail_url)+'" style="width:100%;aspect-ratio:16/9;object-fit:cover;background:#000" />' : '<div style="width:100%;aspect-ratio:16/9;background:#111;display:flex;align-items:center;justify-content:center;font-size:32px">🎬</div>';
         var action='';
@@ -11151,9 +11382,10 @@ window._zedV15Filter = 'search';
       view.innerHTML=html;
     }catch(e){ try{ view.innerHTML='<div style="padding:16px;color:#ccc;font-size:13px">Could not load unlocked videos offline. Try Downloads tab.</div>'; }catch(e2){} }
   }
-  async function renderDownloadsView(){
+  async function renderDownloadsView(searchQ){
     var view=document.getElementById('zed-v15-downloads-view'); if(!view) return;
     markOfflineClass();
+    var q = (typeof searchQ==='string' ? searchQ : getSearchQuery()||'');
     // V16: Downloads = ONLY IndexedDB records, and they must render even when React grid is empty.
     // Never rebuild while a download is playing - it destroys the <video> and resets to 0:00.
     try{ var playingDl=view.querySelector('video'); if(playingDl && !playingDl.paused && playingDl.currentTime>0) return; }catch(e){}
@@ -11165,22 +11397,22 @@ window._zedV15Filter = 'search';
       all.forEach(function(rec){
         if(ul.indexOf(rec.id)===-1){ ul.push(rec.id); changed=true; }
         if(vids2.indexOf(rec.id)===-1){ vids2.push(rec.id); changed2=true; }
-        // V16: remember download metadata so Unlocked view can show it offline too
         rememberUnlockedMeta({id:rec.id,title:rec.title,subject:rec.subject,video_url:rec.video_url,video_type:rec.video_type,thumbnail_url:rec.thumbnail_url,ytId:''});
       });
       if(changed) saveUnlocked(ul);
       if(changed2) saveUnlockedVideoIds(vids2);
     }catch(e){}
-    // Update count from DB truth (not Set)
     try{
       downloadedIds=new Set(all.map(function(x){ return x.id; }));
       var barC=document.getElementById('zed-v15-toolbar');
       if(barC){ var elC=barC.querySelector('[data-zed-count="downloads"]'); if(elC) elC.textContent='('+all.length+')'; }
     }catch(e){}
-    var sig=all.map(function(r){ return r.id+'|'+r.size+'|'+r.savedAt; }).join('||');
-    if(sig===lastDownloadsSig && view.querySelectorAll('.zed-dl-card').length===all.length){
-      // Same list - reuse existing <video> elements, don't destroy them. V16: always use blob, never online URL when offline.
-      all.forEach(function(rec){
+    // V16.1: Filter downloads by search query (title + subject, same matching as online search)
+    var filtered=all;
+    if(q){ filtered=all.filter(function(rec){ return matchesSearch({title:rec.title,subject:rec.subject}, q); }); }
+    var sig=q+'|'+filtered.map(function(r){ return r.id+'|'+r.size+'|'+r.savedAt; }).join('||');
+    if(sig===lastDownloadsSig && view.querySelectorAll('.zed-dl-card').length===filtered.length){
+      filtered.forEach(function(rec){
         var card=view.querySelector('[data-dl-id="'+rec.id+'"]'); if(!card) return;
         var v=card.querySelector('video'); if(v && !v.src && rec.blob){ try{ setDlVideoSrc(v, rec); }catch(e){} }
       });
@@ -11192,12 +11424,17 @@ window._zedV15Filter = 'search';
       var b=view.querySelector('[data-zed-back-search2]'); if(b) b.addEventListener('click', function(){ if(isOffline()){ toast('You are offline — downloads need data once to save'); return; } setFilter('search'); setTimeout(function(){ var i=getSearchInput(); if(i) i.focus(); }, 100); });
       return;
     }
+    if(filtered.length===0){
+      view.innerHTML='<div class="zed-dl-no-match">No downloaded video matches "'+escapeHtml(q.slice(0,30))+'"<br><span style="color:#aaa;font-size:12px">Try a different topic, or clear search to see all '+all.length+' saved videos.</span><br><button class="zed-vt-filter active" data-zed-clear-dl-search style="margin-top:12px">Clear search</button></div>';
+      var cb2=view.querySelector('[data-zed-clear-dl-search]'); if(cb2) cb2.addEventListener('click', function(){ var inp=getSearchInput(); if(inp) inp.value=''; lastProcess=0; lastDownloadsSig=''; processVideos(); });
+      return;
+    }
     var html='';
-    all.forEach(function(rec){
+    filtered.forEach(function(rec){
       html+='<div class="zed-dl-card" data-dl-id="'+rec.id+'"><video controls playsinline preload="auto"></video><div class="zed-dl-body"><div style="font-size:11px;color:#8CFF8A;text-transform:uppercase">'+escapeHtml(rec.subject||'')+'</div><div style="font-weight:700;font-size:14px;margin-top:4px">'+escapeHtml(rec.title||'Video')+'</div><div style="font-size:11px;color:#8CFF8A;margin-top:4px">🔓 Unlocked ✓ • 📥 Saved</div><div style="font-size:11px;color:#aaa;margin-top:4px">📥 Saved inside app • '+((rec.size/1024/1024)||0).toFixed(1)+' MB • '+new Date(rec.savedAt).toLocaleDateString()+'</div><div class="zed-video-actions"><button class="primary" data-zed-dl-play="'+rec.id+'">▶ Play Offline</button><button data-zed-dl-redownload="'+rec.id+'">↻ Re-download</button><button data-zed-dl-delete="'+rec.id+'">🗑 Delete</button></div></div></div>';
     });
     view.innerHTML=html;
-    all.forEach(function(rec){
+    filtered.forEach(function(rec){
       var card=view.querySelector('[data-dl-id="'+rec.id+'"]'); if(!card) return;
       var v=card.querySelector('video'); if(v && rec.blob){ try{ setDlVideoSrc(v, rec); }catch(e){} }
     });
@@ -11324,7 +11561,9 @@ window._zedV15Filter = 'search';
       if(isOffline() && filter==='search'){
         try{ if(!getSearchQuery()){ filter='downloads'; window._zedV15Filter='downloads'; document.body.classList.remove('zed-v15-filter-search'); document.body.classList.add('zed-v15-filter-downloads'); } }catch(e){}
       }
-      if(isAnyVideoPlaying()) return; // V11: freeze while playing - no flicker
+      // V16.5: Even while a video is playing, still pin toolbar to top. Old code returned here, so enforce never ran while playing (your screenshot: video at 2:55, toolbar stuck at bottom).
+      // V16.7: ...unless user is typing in search - then do NOT move anything, or keyboard drops.
+      if(isAnyVideoPlaying()){ try{ if(!(document.activeElement && document.activeElement.id==='zed-v16-input')){ ensureToolbar(); ensureV16Search(); ensureViews(); enforceVideoTopOrder(); } }catch(e){} return; } // V11: freeze video re-render while playing - but toolbar order still enforced
       if(!isVideosTabActive()){
         var tb=document.getElementById('zed-v15-toolbar'); if(tb) tb.style.display='none';
         var dv=document.getElementById('zed-v15-downloads-view'); if(dv) dv.style.display='none';
@@ -11333,19 +11572,23 @@ window._zedV15Filter = 'search';
         return;
       }
       var tb2=document.getElementById('zed-v15-toolbar'); if(tb2) tb2.style.display='';
-      hideOriginalVideosHeader();
+      var _searchFocused = !!(document.activeElement && document.activeElement.id==='zed-v16-input');
+      if(!_searchFocused) hideOriginalVideosHeader();
       ensureToolbar();
       ensureV16Search();
       ensureViews();
-      unhideToolbarAncestors();
+      if(!_searchFocused) enforceVideoTopOrder(); // V16.2: toolbar on TOP, never below downloads - V16.7: skipped while typing
+      if(!_searchFocused) unhideToolbarAncestors();
       if(!document.body.classList.contains('zed-v15-filter-'+filter)){
         document.body.classList.remove('zed-v15-filter-search','zed-v15-filter-unlocked','zed-v15-filter-downloads');
         document.body.classList.add('zed-v15-filter-'+filter);
       }
       var wrap=document.getElementById('zed-v16-wrap');
       if(wrap){
-        if(filter==='search' && wrap.style.display==='none') wrap.style.display='block';
-        if(filter!=='search' && wrap.style.display!=='none') wrap.style.display='none';
+        // V16.1: Search always visible - it filters downloads when offline / in Downloads
+        if(wrap.style.display!=='block') wrap.style.display='block';
+        // V16.7: Do NOT rewrite placeholder while typing - it can re-layout / blur the input on Android
+        if(!_searchFocused){ try{ var _inp3=getSearchInput(); if(_inp3) _inp3.placeholder = isOffline() ? 'Search downloaded videos...' : (filter==='downloads' ? 'Search downloaded videos...' : (filter==='unlocked' ? 'Search unlocked videos...' : 'Search a topic, e.g. Forces')); }catch(e){} }
       }
       var cards=findVideoCards();
       applyFilter();
@@ -11555,7 +11798,7 @@ window._zedV15Filter = 'search';
     if(tabBtn){
       var txt=norm(tabBtn.textContent);
       if(txt==='videos'){
-        if(isOffline()){ setFilter('downloads'); return; }
+        if(isOffline()){ setFilter('downloads', true); return; }
         if(filter!=='search'){ setFilter('search'); }
         else { lastProcess=0; setTimeout(function(){ processVideos(); }, 80); }
         return;
@@ -11574,6 +11817,8 @@ window._zedV15Filter = 'search';
   // Debounced observer for NEW cards only. Also hide the "42 VIDEOS" header immediately when React recreates it.
   try{
     var obs=new MutationObserver(function(muts){
+      // V16.7: While typing, ignore all mutations - do not re-process, do not re-hide header, or keyboard drops.
+      try{ if(document.activeElement && document.activeElement.id==='zed-v16-input') return; }catch(e){}
       var relevant=false;
       for(var i=0;i<muts.length;i++){
         var tg=muts[i].target;
@@ -11588,8 +11833,8 @@ window._zedV15Filter = 'search';
         }
         if(relevant) break;
       }
-      // Always re-hide the count header if it reappeared - cheap, no debounce needed (skipped while playing)
-      if(!isAnyVideoPlaying()){ try{ hideOriginalVideosHeader(); }catch(e){} }
+      // Always re-hide the count header if it reappeared - cheap, no debounce needed (skipped while playing / typing)
+      if(!isAnyVideoPlaying() && !(document.activeElement && document.activeElement.id==='zed-v16-input')){ try{ hideOriginalVideosHeader(); }catch(e){} }
       if(!relevant) return;
       if(obsTimer) clearTimeout(obsTimer);
       obsTimer=setTimeout(function(){ lastProcess=0; processVideos(); }, 80);
@@ -11599,64 +11844,66 @@ window._zedV15Filter = 'search';
 
   document.addEventListener('visibilitychange', function(){ if(!document.hidden && !isAnyVideoPlaying()){ lastProcess=0; processVideos(); } });
   window.addEventListener('online', function(){ markOfflineClass(); flushPendingSync(); lastProcess=0; setTimeout(processVideos, 500); });
-  window.addEventListener('offline', function(){ markOfflineClass(); if(isVideosTabActive() || document.body.classList.contains('zed-v15-in-videos')){ setFilter('downloads'); } lastProcess=0; setTimeout(processVideos, 200); });
+  window.addEventListener('offline', function(){ markOfflineClass(); if(isVideosTabActive() || document.body.classList.contains('zed-v15-in-videos')){ setFilter('downloads', true); } lastProcess=0; setTimeout(processVideos, 200); });
   window.addEventListener('load', function(){ setTimeout(function(){ ensureDownloadsLoaded().then(function(){ lastProcess=0; processVideos(); }); }, 800); });
   setTimeout(function(){ ensureDownloadsLoaded().then(function(){ lastProcess=0; processVideos(); }); }, 1200);
-  // ---- V16: Floating 🎬 button + My Offline Videos library - mirrors 📚 My Offline Papers ----
-  // Works from ANY tab, even when the Videos React grid fails offline.
-  function isOnAuthPageV16(){ try{ var bt=(document.body?document.body.innerText||'':''); if(bt.indexOf('Welcome back')!==-1) return true; if(bt.indexOf('Log in to access past papers')!==-1) return true; if(document.querySelector('input[placeholder*="097"]')) return true; }catch(e){} return false; }
-  function createOfflineVideosBtn(){
-    if(isOnAuthPageV16()){ var ex=document.getElementById('zed-offline-videos-btn'); if(ex) ex.remove(); return; }
-    if(document.getElementById('zed-offline-videos-btn')) return;
-    var btn=document.createElement('button'); btn.id='zed-offline-videos-btn'; btn.textContent='🎬'; btn.title='My Offline Videos';
-    btn.addEventListener('click', function(){ showOfflineVideosLibrary(); });
-    document.body.appendChild(btn);
-    updateOfflineVideosBtnCount();
-  }
-  async function updateOfflineVideosBtnCount(){
-    try{ var all=await getAllDownloads(); var btn=document.getElementById('zed-offline-videos-btn'); if(!btn) return; var c=btn.querySelector('.zed-count-badge'); if(!c){ c=document.createElement('div'); c.className='zed-count-badge'; c.style.cssText='position:absolute;top:-6px;right:-6px;background:#8CFF8A;color:#000;font-size:10px;font-weight:800;min-width:20px;height:20px;border-radius:999px;display:flex;align-items:center;justify-content:center;padding:0 5px;border:2px solid #1A1917;'; btn.style.position='fixed'; btn.appendChild(c); } c.textContent=all.length; c.style.display=all.length>0?'flex':'none'; }catch(e){}
-  }
-  async function showOfflineVideosLibrary(){
-    var all=await getAllDownloads();
-    var coins=getCoins(); var unlockedCount=getUnlockedCount();
-    var old=document.getElementById('zed-offline-videos-modal'); if(old) old.remove();
-    var modal=document.createElement('div'); modal.id='zed-offline-videos-modal';
-    modal.style.cssText='position:fixed;inset:0;z-index:999999;background:rgba(0,0,0,0.88);display:flex;align-items:center;justify-content:center;padding:16px;backdrop-filter:blur(6px);';
-    modal.innerHTML='<div style="background:#0F0E0D;border:2px solid #8CFF8A;border-radius:18px;width:100%;max-width:440px;max-height:88vh;display:flex;flex-direction:column;overflow:hidden"><div style="padding:14px 16px;border-bottom:1px solid #2A2825;display:flex;justify-content:space-between;align-items:center;gap:12px"><div style="color:#F5F1E8;font-weight:800;font-size:15px">🎬 My Offline Videos ('+all.length+')</div><button data-zed-lib-close style="background:#F5F1E8;color:#000;border:none;width:36px;height:36px;border-radius:10px;font-weight:800;cursor:pointer">✕</button></div><div style="padding:10px 16px;border-bottom:1px solid #1F1D1B;background:#141312;display:flex;gap:8px;flex-wrap:wrap"><span style="background:#FFD600;color:#000;font-size:12px;font-weight:800;padding:6px 12px;border-radius:999px">🪙 '+coins+' coins</span><span style="background:#0f2a12;color:#8CFF8A;border:1px solid #8CFF8A;font-size:12px;font-weight:800;padding:6px 12px;border-radius:999px">🔓 '+unlockedCount+' unlocked</span><span style="background:#1a1a1a;color:#FFD600;border:1px solid #FFD600;font-size:12px;font-weight:800;padding:6px 12px;border-radius:999px">'+(isOffline()?'📴 Offline':'🌐 Online')+'</span></div><div style="padding:10px 16px"><input data-zed-lib-search placeholder="Search my offline videos..." style="width:100%;height:42px;background:#1A1917;border:1px solid #2A2825;border-radius:12px;padding:0 14px;color:#F5F1E8;font-size:13px;outline:none"></div><div data-zed-lib-list style="padding:12px 16px;overflow-y:auto;flex:1;-webkit-overflow-scrolling:touch;min-height:200px"></div><div style="padding:10px 16px;border-top:1px solid #2A2825;text-align:center;color:#9A9590;font-size:10px">Private app storage • Works with no data • Same as My Offline Papers</div></div>';
-    document.body.appendChild(modal);
-    modal.querySelector('[data-zed-lib-close]').addEventListener('click', function(){ modal.remove(); });
-    modal.addEventListener('click', function(e){ if(e.target===modal) modal.remove(); });
-    var listEl=modal.querySelector('[data-zed-lib-list]'); var searchEl=modal.querySelector('[data-zed-lib-search]');
-    function renderLib(q){
-      var qn=(q||'').toLowerCase().trim();
-      var items=all.filter(function(r){ if(!qn) return true; return ((r.title||'')+' '+(r.subject||'')).toLowerCase().indexOf(qn)!==-1; });
-      if(!items.length){ listEl.innerHTML='<div style="text-align:center;padding:30px 20px;color:#9A9590"><div style="font-size:32px;margin-bottom:10px">🎬</div>'+(all.length===0 ? 'No offline videos yet<br><small style="font-size:11px;line-height:1.4;display:block;margin-top:6px">When online, unlock a video (25 coins) then tap Download.<br>It will appear here and play with no data.</small>' : 'No match for "'+escapeHtml(q||'')+'"')+'</div>'; return; }
-      var h=''; items.forEach(function(r){ h+='<div style="background:#18191A;border:1px solid #333;border-radius:14px;overflow:hidden;margin-bottom:12px"><div style="padding:12px"><div style="font-size:11px;color:#8CFF8A;text-transform:uppercase">'+escapeHtml(r.subject||'')+'</div><div style="font-weight:700;font-size:14px;margin-top:4px;color:#fff">'+escapeHtml(r.title||'Video')+'</div><div style="font-size:11px;color:#aaa;margin-top:4px">🔓 Unlocked ✓ • 📥 Saved • '+((r.size/1024/1024)||0).toFixed(1)+' MB • '+new Date(r.savedAt).toLocaleDateString()+'</div><div style="display:flex;gap:8px;margin-top:10px;flex-wrap:wrap"><button data-zed-lib-play="'+r.id+'" style="flex:1;height:36px;border-radius:8px;background:#fff;color:#000;border:none;font-weight:700;font-size:12px;cursor:pointer">▶ Play Offline</button><button data-zed-lib-del="'+r.id+'" style="height:36px;padding:0 12px;border-radius:8px;background:transparent;color:#ff9a9a;border:1px solid #ff9a9a;font-size:12px;cursor:pointer">🗑</button></div></div></div>'; });
-      listEl.innerHTML=h;
-      listEl.querySelectorAll('[data-zed-lib-play]').forEach(function(btn){ btn.addEventListener('click', function(){ modal.remove(); playDownloadInFullPlayer(btn.getAttribute('data-zed-lib-play')); }); });
-      listEl.querySelectorAll('[data-zed-lib-del]').forEach(function(btn){ btn.addEventListener('click', async function(){ if(!confirm('Remove this download?')) return; var id=btn.getAttribute('data-zed-lib-del'); revokeDlUrl(id); lastDownloadsSig=''; await deleteDownload(id); all=await getAllDownloads(); updateOfflineVideosBtnCount(); renderLib(searchEl.value); lastProcess=0; processVideos(); }); });
-    }
-    searchEl.addEventListener('input', function(){ renderLib(searchEl.value); });
-    renderLib('');
-  }
-  window.zedShowOfflineVideos = showOfflineVideosLibrary;
+  // ---- V16.1: Floating offline-videos button REMOVED completely ----
+  // No 🎬 button, no offline-videos modal. Downloads are reached via Videos tab only.
+  // Cleanup: if an old cached DOM still has the button/modal, remove it once.
+  (function(){ try{ var _b=document.getElementById('zed-offline-videos-btn'); if(_b) _b.remove(); var _m=document.getElementById('zed-offline-videos-modal'); if(_m) _m.remove(); }catch(e){} })();
   // V8: steady re-apply every 600ms while in Videos - React recreates cards/headers, so one pass is not enough.
   // This is what keeps Unlocked showing ONLY unlocked and Search showing ONLY searched, even after React re-renders.
   setInterval(function(){
     if(isAnyVideoPlaying()) return; // V10: freeze while playing - no flicker
+    // V16.7: While user is typing in search, do NOT run the 600ms re-apply at all. Typing already filters via the input handler. The interval was re-moving the search box every 600ms -> keyboard up/down loop, online AND offline.
+    try{ if(document.activeElement && document.activeElement.id==='zed-v16-input') return; }catch(e){}
     try{ hideOriginalVideosHeader(); }catch(e){}
-    try{ createOfflineVideosBtn(); }catch(e){}
-    try{ updateOfflineVideosBtnCount(); }catch(e){}
+    // V16.1: no floating button - nothing to create/update here
     try{ markOfflineClass(); }catch(e){}
     try{ if(isVideosTabActive()){ lastProcess=0; processVideos(); } }catch(e){}
   }, 600);
-  setTimeout(function(){ try{ createOfflineVideosBtn(); markOfflineClass(); flushPendingSync(); }catch(e){} }, 1000);
+  setTimeout(function(){ try{ var _b2=document.getElementById('zed-offline-videos-btn'); if(_b2) _b2.remove(); markOfflineClass(); flushPendingSync(); }catch(e){} }, 1000);
   // V10: No interval touching chat button.
   window.zedVideoCoins={ unlockCost: UNLOCK_COST, getCoins: getCoins, getUnlocked: getUnlocked, process: function(){ lastProcess=0; processVideos(); }, setFilter: setFilter };
-  console.log('[ZED] Video Coins V16 OFFLINE active - original search, exact search, YouTube+MP4 unlocked, chat normal');
+  console.log('[ZED] Video Coins V16.2 OFFLINE active - toolbar on top - no floating button, offline search - original search, exact search, YouTube+MP4 unlocked, chat normal');
 })();
 </script>
 
+
+
+<!-- V17.6 FIX: ZED AI SMALL like Chat button - NOT fullscreen. Same size/position as friends chat. -->
+<style>
+#zed-ai-panel{ position:fixed !important; left:auto !important; top:auto !important; right:12px !important; bottom:12px !important; width:min(320px, calc(100vw - 24px)) !important; height:min(400px, calc(100vh - 24px)) !important; max-height:none !important; background:#0F0E0B !important; border-radius:16px !important; box-shadow:0 12px 40px rgba(0,0,0,.65) !important; overflow:hidden !important; border:1px solid #333 !important; z-index:10000 !important; display:none !important; flex-direction:column !important; }
+#zed-ai-panel.open{ display:flex !important; }
+#zed-ai-panel > div:nth-child(2){ display:none !important; }
+#zed-ai-keyrow{ display:none !important; visibility:hidden !important; height:0 !important; min-height:0 !important; padding:0 !important; margin:0 !important; border:none !important; background:transparent !important; }
+#zed-ai-adminrow{ display:none !important; }
+#zed-ai-msgs{ flex:1 !important; overflow-y:auto !important; min-height:0 !important; }
+#zed-ai-inputrow{ flex-shrink:0 !important; }
+</style>
+
+
+<!-- V17.5 FIX: stray </div> fixed + eyes inside ZED AI never show -->
+<style>
+#zed-ai-panel .zed-eye-btn, #zed-ai-panel .zed-pw-eye, #zed-ai-panel .zed-pw-eye-btn { display:none !important; visibility:hidden !important; }
+#zed-ai-msgs{ flex:1 !important; overflow-y:auto !important; min-height:0 !important; display:flex !important; flex-direction:column !important; gap:10px !important; padding:12px !important; }
+#zed-ai-inputrow{ display:flex !important; }
+</style>
+<script>
+(function(){
+  // Remove any eye button that password-eye code already stuck inside ZED AI, and keep removing it
+  function cleanAIEyes(){
+    try{
+      document.querySelectorAll('#zed-ai-panel .zed-eye-btn, #zed-ai-panel .zed-pw-eye').forEach(function(b){ b.remove(); });
+      // Also un-mark the hidden AI inputs so eye code skips them if it runs again
+      ['zed-ai-keyinput','zed-ai-admin-code','zed-ai-admin-key'].forEach(function(id){
+        var el=document.getElementById(id); if(el){ el.type='hidden'; el.dataset.zedEye='1'; el.dataset.zedEyeBound='1'; }
+      });
+    }catch(e){}
+  }
+  cleanAIEyes(); setInterval(cleanAIEyes, 800);
+})();
+</script>
 
 </body>
 </html>
