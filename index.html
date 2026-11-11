@@ -4699,7 +4699,7 @@ const db=await openDB();return new Promise((res,rej)=>{const tx=db.transaction(S
     });
   }
 
-  function filter(){ if(window._zedV7OwnsVideos || window._zedV8OwnsVideos || window._zedV9OwnsVideos || window._zedV10OwnsVideos || window._zedV11OwnsVideos || window._zedV12OwnsVideos) return; // V12 owns filtering
+  function filter(){ if(window._zedV7OwnsVideos || window._zedV8OwnsVideos || window._zedV9OwnsVideos || window._zedV10OwnsVideos || window._zedV11OwnsVideos || window._zedV12OwnsVideos || window._zedV13OwnsVideos || window._zedV14OwnsVideos || window._zedV15OwnsVideos) return; // V15 owns filtering
     let grids = document.querySelectorAll('.grid.md\\:grid-cols-2.gap-4');
     let allCards = [];
     grids.forEach(g=>{
@@ -4792,7 +4792,7 @@ const db=await openDB();return new Promise((res,rej)=>{const tx=db.transaction(S
       g.style.gap = g.style.gap || '16px';
     });
   }
-  /* V12 owns grid - V17 interval disabled */
+  /* V15 owns grid - V17 interval disabled */
   setTimeout(makeGrid, 300);
   window.addEventListener('resize', makeGrid);
   console.log('✅ V17 GRID - videos in grid');
@@ -4931,7 +4931,7 @@ const db=await openDB();return new Promise((res,rej)=>{const tx=db.transaction(S
     makeGrid();
   }
 
-  /* V12 owns grid - V18 interval disabled */;
+  /* V15 owns grid - V18 interval disabled */;
   
   setTimeout(()=>{
     makeGrid();
@@ -5218,8 +5218,8 @@ const db=await openDB();return new Promise((res,rej)=>{const tx=db.transaction(S
   }
   // Run immediately and keep enforcing to override V17/V18
   forceList();
-  /* V12 owns layout - V21 interval disabled */
-  /* V12 - V21 observer disabled */
+  /* V15 owns layout - V21 interval disabled */
+  /* V15 - V21 observer disabled */
   obs.observe(document.body, {childList:true, subtree:true});
   window.addEventListener('resize', forceList);
   console.log('✅ V21 LIST VIEW - single column');
@@ -5892,7 +5892,7 @@ console.log('[ZED] Welcome popup + fast login active');
       }
     });
   }
-  function applyPagination(){ if(window._zedV7OwnsVideos || window._zedV8OwnsVideos || window._zedV9OwnsVideos || window._zedV10OwnsVideos || window._zedV11OwnsVideos || window._zedV12OwnsVideos) return; // V12 owns pagination
+  function applyPagination(){ if(window._zedV7OwnsVideos || window._zedV8OwnsVideos || window._zedV9OwnsVideos || window._zedV10OwnsVideos || window._zedV11OwnsVideos || window._zedV12OwnsVideos || window._zedV13OwnsVideos || window._zedV14OwnsVideos || window._zedV15OwnsVideos) return; // V15 owns pagination
     var grid = getVideosGrid();
     if(!grid) return;
     var q = getSearchQuery();
@@ -5993,7 +5993,7 @@ console.log('[ZED] Welcome popup + fast login active');
     }
   }
   // Run pagination + shields on interval (React re-renders)
-  /* V12 owns pagination - interval disabled */ setInterval(function(){ try{ addShields(); }catch(e){}  }catch(e){}
+  /* V15 owns pagination - interval disabled */ setInterval(function(){ try{ addShields(); }catch(e){}  }catch(e){}
   }, 800);
   // Auto-load more on scroll near bottom
   var scrollTick = false;
@@ -10402,10 +10402,10 @@ header div[class*="bg-"][class*="border"][class*="rounded"] span:first-child{
 </style>
 
 
-<!-- ZED VIDEO COINS V12 - PAPERS BACK, ONE UNLOCK BUTTON, PLAY IN BOTH, UNLOCKS SHARED -->
-<style id="zed-video-coins-v12-style">
+<!-- ZED VIDEO COINS V15 - DOWNLOADS FULL PLAYER -->
+<style id="zed-video-coins-v15-style">
 /* V7 - NO All, hidden until searched, exact/similar search only, all locked, YouTube+MP4 in Unlocked, chat button normal */
-#zed-v12-toolbar{display:block;margin:0 0 12px}
+#zed-v15-toolbar{display:block;margin:0 0 12px}
 .zed-v7-row{display:flex;flex-wrap:wrap;gap:8px;align-items:center}
 .zed-coin-pill{padding:6px 12px;border-radius:999px;background:#FFD600;color:#000;font-size:12px;font-weight:800;white-space:nowrap}
 .zed-vt-filter{height:36px;padding:0 14px;border-radius:999px;background:#1a1a1a;border:1px solid #333;color:#ddd;font-size:12px;font-weight:700;cursor:pointer;white-space:nowrap}
@@ -10416,28 +10416,28 @@ header div[class*="bg-"][class*="border"][class*="rounded"] span:first-child{
 #zed-v16-wrap input{font-size:15px}
 #zed-v16-info{display:none !important}
 /* Hide V16 search in Unlocked/Downloads - CSS !important beats V22's inline block */
-body.zed-v12-filter-downloads #zed-v16-wrap{display:none !important}
-body.zed-v12-filter-unlocked #zed-v16-wrap{display:none !important}
+body.zed-v15-filter-downloads #zed-v16-wrap{display:none !important}
+body.zed-v15-filter-unlocked #zed-v16-wrap{display:none !important}
 .zed-video-card{position:relative !important;contain:layout style}
 [data-zed-hidden="1"]{display:none !important}
   /* V11: No flash of all videos. New cards hidden until V11 approves with data-zed-hidden="0". Original shows 4 random before V11 runs - this stops it. */
-  /* V12: Flash CSS ONLY in Videos. Papers/Quiz/Docs use same grid class - without zed-v12-in-videos gate, Papers showed "13 papers" but blank list. */
-  body.zed-v12-in-videos.zed-v12-filter-search .grid.md\:grid-cols-2 > div:not([data-zed-hidden="0"]):not([id^="zed-"]),
-  body.zed-v12-in-videos.zed-v12-filter-unlocked .grid.md\:grid-cols-2 > div:not([data-zed-hidden="0"]):not([id^="zed-"]),
-  body.zed-v12-in-videos.zed-v12-filter-downloads .grid.md\:grid-cols-2 > div:not([data-zed-hidden="0"]):not([id^="zed-"]){display:none !important;visibility:hidden !important}
-#zed-v12-toolbar[data-zed-hidden="1"], #zed-v16-wrap[data-zed-hidden="1"], #zed-v12-downloads-view[data-zed-hidden="1"]{display:block !important;visibility:visible !important}
-#zed-v12-toolbar{display:block !important;visibility:visible !important}
+  /* V12: Flash CSS ONLY in Videos. Papers/Quiz/Docs use same grid class - without zed-v15-in-videos gate, Papers showed "13 papers" but blank list. */
+  body.zed-v15-in-videos.zed-v15-filter-search .grid.md\:grid-cols-2 > div:not([data-zed-hidden="0"]):not([id^="zed-"]),
+  body.zed-v15-in-videos.zed-v15-filter-unlocked .grid.md\:grid-cols-2 > div:not([data-zed-hidden="0"]):not([id^="zed-"]),
+  body.zed-v15-in-videos.zed-v15-filter-downloads .grid.md\:grid-cols-2 > div:not([data-zed-hidden="0"]):not([id^="zed-"]){display:none !important;visibility:hidden !important}
+#zed-v15-toolbar[data-zed-hidden="1"], #zed-v16-wrap[data-zed-hidden="1"], #zed-v15-downloads-view[data-zed-hidden="1"]{display:block !important;visibility:visible !important}
+#zed-v15-toolbar{display:block !important;visibility:visible !important}
 /* V8 hides cards individually, not the whole grid */
 
 
 
-#zed-v12-downloads-view{display:none;gap:12px;margin-top:4px}
-body.zed-v12-filter-downloads #zed-v12-downloads-view{display:grid !important}
-#zed-v12-search-empty,#zed-v12-unlocked-empty,#zed-v12-no-results{display:none;background:#18191A;border:1px solid #333;border-radius:14px;padding:20px;text-align:center;color:#ccc;font-size:13px;line-height:1.6;margin-top:4px}
-body.zed-v12-search-empty #zed-v12-search-empty{display:block !important}
-body.zed-v12-unlocked-empty #zed-v12-unlocked-empty{display:block !important}
-body.zed-v12-no-results #zed-v12-no-results{display:block !important}
-@media(min-width:768px){#zed-v12-downloads-view{grid-template-columns:1fr 1fr}}
+#zed-v15-downloads-view{display:none;gap:12px;margin-top:4px}
+body.zed-v15-filter-downloads #zed-v15-downloads-view{display:grid !important}
+#zed-v15-search-empty,#zed-v15-unlocked-empty,#zed-v15-no-results{display:none;background:#18191A;border:1px solid #333;border-radius:14px;padding:20px;text-align:center;color:#ccc;font-size:13px;line-height:1.6;margin-top:4px}
+body.zed-v15-search-empty #zed-v15-search-empty{display:block !important}
+body.zed-v15-unlocked-empty #zed-v15-unlocked-empty{display:block !important}
+body.zed-v15-no-results #zed-v15-no-results{display:block !important}
+@media(min-width:768px){#zed-v15-downloads-view{grid-template-columns:1fr 1fr}}
 .zed-dl-card{background:#18191A;border:1px solid #333;border-radius:14px;overflow:hidden}
 .zed-dl-card video{width:100%;aspect-ratio:16/9;background:#000}
 .zed-dl-body{padding:12px}
@@ -10465,7 +10465,7 @@ body.zed-v12-no-results #zed-v12-no-results{display:block !important}
 /* V10: NO CSS touching #zed-chat-btn - original makeMovable already makes it draggable like AI + Library. */
 </style>
 <script>
-// ===== ZED VIDEO COINS V12 =====
+// ===== ZED VIDEO COINS V15 =====
 // - Search = the ORIGINAL V16 search (zed-v16-input). V6 made its own search and V22 hid it every 700ms - that's why you couldn't press it.
 // - Search matching = exact / similar only. Title + subject only, all words must match. No more "everything shows".
 // - Stable IDs: YouTube uses ytId only (not full iframe URL which changes when we blank it). Unlocked now includes YouTube + MP4.
@@ -10474,13 +10474,18 @@ window._zedV5OwnsVideos = true;
 window._zedV6OwnsVideos = true;
 window._zedV7OwnsVideos = true;
 window._zedV8OwnsVideos = true;
-window._zedV12OwnsVideos = true;
+window._zedV15OwnsVideos = true;
 window._zedV8OwnsVideos = true;
-window._zedV12OwnsVideos = true;
-window._zedV12Filter = 'search';
-window._zedV12Filter = 'search';
+window._zedV15OwnsVideos = true;
+window._zedV15Filter = 'search';
+window._zedV15Filter = 'search';
 (function(){
-  try{ document.body.classList.add('zed-v12-filter-search'); }catch(e){} // V11: hide flash from start
+  try{ document.body.classList.add('zed-v15-filter-search'); }catch(e){} // V11: hide flash from start
+  // V15: Show real version in header so user can verify they are on V15, not old v1 file
+  try{
+    var heads=document.querySelectorAll('div, h1, h2, span');
+    for(var hi=0;hi<heads.length;hi++){ var ht=(heads[hi].textContent||'').trim(); if(/^ZED SCHOLAR v1$/i.test(ht)){ heads[hi].textContent='ZED SCHOLAR V15'; break; } }
+  }catch(e){}
   var UNLOCK_COST = 25;
   var SUPA_URL = 'https://biastmylavwhlsccvpyu.supabase.co';
   var SUPA_KEY = 'sb_publishable_74vo5_RlNXb0U0TrNLCdCQ_8zjDwFni';
@@ -10499,6 +10504,33 @@ window._zedV12Filter = 'search';
   function getCoins(){ var u=getMe(); return u ? (u.coins||0) : 0; }
   function unlockKey(){ var u=getMe(); return 'zed_unlocked_videos_' + (u && u.id ? u.id : (u && u.phone ? u.phone : 'guest')); }
   function getUnlocked(){ try{ return JSON.parse(localStorage.getItem(unlockKey())||'[]'); }catch(e){ return []; } }
+  // V13: Canonical unlocked videos - ONE id per video. Count = distinct videos, not candidate IDs.
+  function getUnlockedVideoIds(){ try{ return JSON.parse(localStorage.getItem(unlockKey()+'_videos')||'[]'); }catch(e){ return []; } }
+  function saveUnlockedVideoIds(list){ try{ localStorage.setItem(unlockKey()+'_videos', JSON.stringify(list)); }catch(e){} }
+  function getUnlockedCount(){
+    // Count distinct VIDEOS that are unlocked, from cards if loaded (truth), else from canonical list
+    try{
+      var cards=findVideoCards();
+      if(cards.length>0){
+        var seen={}; var n=0;
+        for(var i=0;i<cards.length;i++){
+          try{
+            var inf=extractInfo(cards[i]);
+            if(!inf || !inf.id) continue;
+            if(seen[inf.id]) continue;
+            if(isUnlockedInfo(inf)){ seen[inf.id]=1; n++; }
+          }catch(e){}
+        }
+        // If cards show 0 but canonical list has entries (grid not yet loaded with those videos), use canonical
+        if(n===0){
+          var vids0=getUnlockedVideoIds();
+          if(vids0.length>0) return vids0.length;
+        }
+        return n;
+      }
+    }catch(e){}
+    try{ return getUnlockedVideoIds().length; }catch(e){ return 0; }
+  }
   function saveUnlocked(list){ try{ localStorage.setItem(unlockKey(), JSON.stringify(list)); }catch(e){} }
   function hashId(str){ var h=5381; for(var i=0;i<str.length;i++){ h=((h<<5)+h)+str.charCodeAt(i); h=h&h; } return 'vid_' + Math.abs(h).toString(36); }
   function toast(msg){ var old=document.getElementById('zed-video-toast'); if(old) old.remove(); var t=document.createElement('div'); t.id='zed-video-toast'; t.className='zed-toast'; t.textContent=msg; document.body.appendChild(t); setTimeout(function(){ try{t.remove();}catch(e){} }, 3500); }
@@ -10512,7 +10544,7 @@ window._zedV12Filter = 'search';
     try{
       var all=await getAllDownloads();
       downloadedIds=new Set(all.map(function(x){ return x.id; }));
-      var bar=document.getElementById('zed-v12-toolbar');
+      var bar=document.getElementById('zed-v15-toolbar');
       if(bar){
         var el=bar.querySelector('[data-zed-count="downloads"]');
         if(el) el.textContent='('+all.length+')';
@@ -10553,7 +10585,7 @@ window._zedV12Filter = 'search';
       if(!isWhite) return false;
       return true;
     }
-    if(document.getElementById('zed-v12-toolbar')) return true;
+    if(document.getElementById('zed-v15-toolbar')) return true;
     if(document.getElementById('zed-v16-wrap')) return true;
     var allDivs=document.querySelectorAll('div');
     for(var i=0;i<allDivs.length;i++){ var t=(allDivs[i].textContent||'').trim(); if(/^\d+ VIDEOS$/.test(t) || t.indexOf('No videos')===0) return true; }
@@ -10595,7 +10627,7 @@ window._zedV12Filter = 'search';
     var titles=document.querySelectorAll('.font-semibold');
     for(var k=0;k<titles.length;k++){
       var el=titles[k];
-      if(el.closest && (el.closest('#zed-v12-toolbar') || el.closest('#zed-v12-downloads-view') || el.closest('#zed-chat-panel'))) continue;
+      if(el.closest && (el.closest('#zed-v15-toolbar') || el.closest('#zed-v15-downloads-view') || el.closest('#zed-chat-panel'))) continue;
       var cur=el.parentElement; var steps=0;
       while(cur && cur!==document.body && steps<4){
         steps++;
@@ -10757,10 +10789,10 @@ window._zedV12Filter = 'search';
   function isSafeCard(card){
     // V9 SAFETY: a card is ONE video only. Never hide the whole page / toolbar / search / a container with many videos.
     if(!card || !card.querySelector) return false;
-    if(card.id==='zed-v12-toolbar' || card.id==='zed-v12-downloads-view' || card.id==='zed-v16-wrap') return false;
-    if(card.closest && (card.closest('#zed-v12-toolbar') || card.closest('#zed-v12-downloads-view') || card.closest('#zed-v16-wrap') || card.closest('#zed-chat-panel'))) return false;
+    if(card.id==='zed-v15-toolbar' || card.id==='zed-v15-downloads-view' || card.id==='zed-v16-wrap') return false;
+    if(card.closest && (card.closest('#zed-v15-toolbar') || card.closest('#zed-v15-downloads-view') || card.closest('#zed-v16-wrap') || card.closest('#zed-chat-panel'))) return false;
     // If it contains the toolbar or search, it is a container, not a card
-    if(card.querySelector('#zed-v12-toolbar') || card.querySelector('#zed-v16-wrap') || card.querySelector('#zed-v12-downloads-view')) return false;
+    if(card.querySelector('#zed-v15-toolbar') || card.querySelector('#zed-v16-wrap') || card.querySelector('#zed-v15-downloads-view')) return false;
     // If it contains 3+ titles, it is a container with many videos, not ONE card
     var titles = card.querySelectorAll ? card.querySelectorAll('.font-semibold') : [];
     if(titles.length>2) return false;
@@ -10792,7 +10824,7 @@ window._zedV12Filter = 'search';
   var lastDownloadsSig='';
   function unhideToolbarAncestors(){
     // If anything above the toolbar/search got hidden, unhide it - toolbar must always be visible in Videos.
-    ['zed-v12-toolbar','zed-v16-wrap','zed-v12-downloads-view'].forEach(function(id){
+    ['zed-v15-toolbar','zed-v16-wrap','zed-v15-downloads-view'].forEach(function(id){
       var el=document.getElementById(id); if(!el) return;
       var cur=el;
       while(cur && cur!==document.body){
@@ -10826,9 +10858,9 @@ window._zedV12Filter = 'search';
     var els=document.querySelectorAll('div, h2, h3, p, span, section');
     for(var i=0;i<els.length;i++){
       var el=els[i]; if(!el) continue;
-      if(el.id==='zed-v12-toolbar' || el.id==='zed-v12-downloads-view' || el.id==='zed-v16-wrap') continue;
-      if(el.closest && (el.closest('#zed-v12-toolbar') || el.closest('#zed-v12-downloads-view') || el.closest('#zed-v16-wrap'))) continue;
-      if(el.querySelector && (el.querySelector('#zed-v12-toolbar') || el.querySelector('#zed-v16-wrap') || el.querySelector('.grid'))) continue;
+      if(el.id==='zed-v15-toolbar' || el.id==='zed-v15-downloads-view' || el.id==='zed-v16-wrap') continue;
+      if(el.closest && (el.closest('#zed-v15-toolbar') || el.closest('#zed-v15-downloads-view') || el.closest('#zed-v16-wrap'))) continue;
+      if(el.querySelector && (el.querySelector('#zed-v15-toolbar') || el.querySelector('#zed-v16-wrap') || el.querySelector('.grid'))) continue;
       var titlesInEl = el.querySelectorAll ? el.querySelectorAll('.font-semibold').length : 0;
       if(titlesInEl>1) continue; // container with videos - never hide
       var t=(el.textContent||'').trim();
@@ -10846,7 +10878,7 @@ window._zedV12Filter = 'search';
       }
     }
     var inf=document.getElementById('zed-v16-info'); if(inf) { try{ inf.style.setProperty('display','none','important'); }catch(e){ inf.style.display='none'; } }
-    ['zed-v12-search-empty','zed-v12-unlocked-empty','zed-v12-no-results','zed-v8-search-empty','zed-v8-unlocked-empty','zed-v8-no-results','zed-v7-search-empty','zed-v7-unlocked-empty','zed-v7-no-results'].forEach(function(id){
+    ['zed-v15-search-empty','zed-v15-unlocked-empty','zed-v15-no-results','zed-v8-search-empty','zed-v8-unlocked-empty','zed-v8-no-results','zed-v7-search-empty','zed-v7-unlocked-empty','zed-v7-no-results'].forEach(function(id){
       var v=document.getElementById(id); if(v){ try{ v.style.setProperty('display','none','important'); v.innerHTML=''; }catch(e){} }
     });
   }
@@ -10881,16 +10913,16 @@ window._zedV12Filter = 'search';
     return wrap;
   }
   function ensureToolbar(){
-    var existing=document.getElementById('zed-v12-toolbar');
+    var existing=document.getElementById('zed-v15-toolbar');
     if(existing){
-      var sig=getCoins()+'|'+getUnlocked().length+'|'+downloadedIds.size+'|'+findVideoCards().length;
+      var sig=getCoins()+'|'+getUnlockedCount()+'|'+downloadedIds.size+'|'+findVideoCards().length;
       // V11: downloads count comes from DB - refresh in background so toolbar shows true count
       refreshDownloadCount();
       if(sig!==lastToolbarSig){
         var pill=existing.querySelector('[data-zed-coins]');
         if(pill) pill.textContent='🪙 '+getCoins()+' coins';
         var setCount=function(k,v){ var el=existing.querySelector('[data-zed-count="'+k+'"]'); if(el) el.textContent='('+v+')'; };
-        setCount('unlocked', getUnlocked().length);
+        setCount('unlocked', getUnlockedCount()); // V13: distinct videos, not candidate IDs
         setCount('downloads', downloadedIds.size);
         lastToolbarSig=sig;
       }
@@ -10898,7 +10930,7 @@ window._zedV12Filter = 'search';
     }
     var anchor=getVideosAnchor();
     if(!anchor) return null;
-    var bar=document.createElement('div'); bar.id='zed-v12-toolbar';
+    var bar=document.createElement('div'); bar.id='zed-v15-toolbar';
     bar.innerHTML =
       '<div class="zed-v7-row">' +
         '<span class="zed-coin-pill" data-zed-coins>🪙 '+getCoins()+' coins</span>' +
@@ -10924,28 +10956,28 @@ window._zedV12Filter = 'search';
     // V8: NO empty-state words at all. No "Search for a video", no "Type a topic", no "No videos shown", no "All videos locked".
     // When nothing matches, show blank space - never words, never other videos.
     // Remove any old V7 empty views that might still be in the DOM.
-    ['zed-v12-search-empty','zed-v12-unlocked-empty','zed-v12-no-results','zed-v7-search-empty','zed-v7-unlocked-empty','zed-v7-no-results'].forEach(function(id){
+    ['zed-v15-search-empty','zed-v15-unlocked-empty','zed-v15-no-results','zed-v7-search-empty','zed-v7-unlocked-empty','zed-v7-no-results'].forEach(function(id){
       var old=document.getElementById(id); if(old) old.remove();
     });
     var anchor=getVideosAnchor();
-    var bar=document.getElementById('zed-v12-toolbar');
+    var bar=document.getElementById('zed-v15-toolbar');
     var parent = bar && bar.parentNode ? bar.parentNode : (anchor ? anchor.parent : null);
     var before = bar ? bar.nextSibling : (anchor ? anchor.before : null);
     if(!parent) return;
     var searchWrap=document.getElementById('zed-v16-wrap');
     var viewAnchor = searchWrap && searchWrap.parentNode===parent ? searchWrap.nextSibling : before;
-    if(!document.getElementById('zed-v12-downloads-view')){
-      var dv=document.createElement('div'); dv.id='zed-v12-downloads-view';
+    if(!document.getElementById('zed-v15-downloads-view')){
+      var dv=document.createElement('div'); dv.id='zed-v15-downloads-view';
       parent.insertBefore(dv, viewAnchor);
     }
   }
   function setFilter(f, keepQuery){
     filter=f;
-    window._zedV12Filter=f;
-    document.body.classList.remove('zed-v12-filter-search','zed-v12-filter-unlocked','zed-v12-filter-downloads');
-    document.body.classList.add('zed-v12-filter-'+f);
-    document.body.classList.add('zed-v12-in-videos'); // V12: only in Videos
-    var bar=document.getElementById('zed-v12-toolbar');
+    window._zedV15Filter=f;
+    document.body.classList.remove('zed-v15-filter-search','zed-v15-filter-unlocked','zed-v15-filter-downloads');
+    document.body.classList.add('zed-v15-filter-'+f);
+    document.body.classList.add('zed-v15-in-videos'); // V12: only in Videos
+    var bar=document.getElementById('zed-v15-toolbar');
     if(bar){ bar.querySelectorAll('[data-zed-filter]').forEach(function(x){ x.classList.toggle('active', x.getAttribute('data-zed-filter')===f); }); }
     var wrap=document.getElementById('zed-v16-wrap');
     if(wrap){
@@ -11000,7 +11032,7 @@ window._zedV12Filter = 'search';
     });
   }
   async function renderDownloadsView(){
-    var view=document.getElementById('zed-v12-downloads-view'); if(!view) return;
+    var view=document.getElementById('zed-v15-downloads-view'); if(!view) return;
     // V11: Downloads = ONLY IndexedDB records. Never main-grid videos. Count = all.length.
     // Never rebuild while a download is playing - it destroys the <video> and resets to 0:00.
     try{ var playingDl=view.querySelector('video'); if(playingDl && !playingDl.paused && playingDl.currentTime>0) return; }catch(e){}
@@ -11008,13 +11040,18 @@ window._zedV12Filter = 'search';
     // V12: Download = unlocked. If a downloaded video is not in unlock list, add it - so unlocks work in BOTH Videos and Downloads.
     try{
       var ul=getUnlocked(); var changed=false;
-      all.forEach(function(rec){ if(ul.indexOf(rec.id)===-1){ ul.push(rec.id); changed=true; } });
+      var vids2=getUnlockedVideoIds(); var changed2=false;
+      all.forEach(function(rec){
+        if(ul.indexOf(rec.id)===-1){ ul.push(rec.id); changed=true; }
+        if(vids2.indexOf(rec.id)===-1){ vids2.push(rec.id); changed2=true; }
+      });
       if(changed) saveUnlocked(ul);
+      if(changed2) saveUnlockedVideoIds(vids2);
     }catch(e){}
     // Update count from DB truth (not Set)
     try{
       downloadedIds=new Set(all.map(function(x){ return x.id; }));
-      var barC=document.getElementById('zed-v12-toolbar');
+      var barC=document.getElementById('zed-v15-toolbar');
       if(barC){ var elC=barC.querySelector('[data-zed-count="downloads"]'); if(elC) elC.textContent='('+all.length+')'; }
     }catch(e){}
     var sig=all.map(function(r){ return r.id+'|'+r.size+'|'+r.savedAt; }).join('||');
@@ -11022,7 +11059,14 @@ window._zedV12Filter = 'search';
       // Same list - reuse existing <video> elements, don't destroy them
       all.forEach(function(rec){
         var card=view.querySelector('[data-dl-id="'+rec.id+'"]'); if(!card) return;
-        var v=card.querySelector('video'); if(v && !v.src && rec.blob){ try{ var u0=URL.createObjectURL(rec.blob); dlObjectUrls[rec.id]=u0; v.src=u0; }catch(e){} }
+        var v=card.querySelector('video'); if(v && !v.src && rec.blob){ try{
+          v.dataset.zedFallbackUrl = rec.video_url||'';
+          var bt=(rec.blob.type||'').toLowerCase();
+          if(bt && bt.indexOf('video/')!==0 && bt.indexOf('application/octet')!==0 && rec.video_url){ v.src=rec.video_url; }
+          else { var u0=URL.createObjectURL(rec.blob); dlObjectUrls[rec.id]=u0; v.src=u0; }
+          v.preload='auto'; v.load();
+          v.onerror=function(){ try{ var fb=v.dataset.zedFallbackUrl||''; if(fb && v.src!==fb && !v.dataset.zedTriedFallback){ v.dataset.zedTriedFallback='1'; v.src=fb; v.load(); } }catch(e){} };
+        }catch(e){} }
       });
       return;
     }
@@ -11034,12 +11078,26 @@ window._zedV12Filter = 'search';
     }
     var html='';
     all.forEach(function(rec){
-      html+='<div class="zed-dl-card" data-dl-id="'+rec.id+'"><video controls playsinline preload="metadata"></video><div class="zed-dl-body"><div style="font-size:11px;color:#8CFF8A;text-transform:uppercase">'+escapeHtml(rec.subject||'')+'</div><div style="font-weight:700;font-size:14px;margin-top:4px">'+escapeHtml(rec.title||'Video')+'</div><div style="font-size:11px;color:#8CFF8A;margin-top:4px">🔓 Unlocked ✓ • 📥 Saved</div><div style="font-size:11px;color:#aaa;margin-top:4px">📥 Saved inside app • '+((rec.size/1024/1024)||0).toFixed(1)+' MB • '+new Date(rec.savedAt).toLocaleDateString()+'</div><div class="zed-video-actions"><button class="primary" data-zed-dl-play="'+rec.id+'">▶ Play Offline</button><button data-zed-dl-delete="'+rec.id+'">🗑 Delete</button></div></div></div>';
+      html+='<div class="zed-dl-card" data-dl-id="'+rec.id+'"><video controls playsinline preload="auto"></video><div class="zed-dl-body"><div style="font-size:11px;color:#8CFF8A;text-transform:uppercase">'+escapeHtml(rec.subject||'')+'</div><div style="font-weight:700;font-size:14px;margin-top:4px">'+escapeHtml(rec.title||'Video')+'</div><div style="font-size:11px;color:#8CFF8A;margin-top:4px">🔓 Unlocked ✓ • 📥 Saved</div><div style="font-size:11px;color:#aaa;margin-top:4px">📥 Saved inside app • '+((rec.size/1024/1024)||0).toFixed(1)+' MB • '+new Date(rec.savedAt).toLocaleDateString()+'</div><div class="zed-video-actions"><button class="primary" data-zed-dl-play="'+rec.id+'">▶ Play Offline</button><button data-zed-dl-redownload="'+rec.id+'">↻ Re-download</button><button data-zed-dl-delete="'+rec.id+'">🗑 Delete</button></div></div></div>';
     });
     view.innerHTML=html;
     all.forEach(function(rec){
       var card=view.querySelector('[data-dl-id="'+rec.id+'"]'); if(!card) return;
-      var v=card.querySelector('video'); if(v && rec.blob){ try{ revokeDlUrl(rec.id); var u2=URL.createObjectURL(rec.blob); dlObjectUrls[rec.id]=u2; v.src=u2; v.load(); }catch(e){} }
+      var v=card.querySelector('video'); if(v && rec.blob){
+        try{
+          v.dataset.zedFallbackUrl = rec.video_url||'';
+          // V14: Old saved file may be HTML / not a video (saved by old version). If blob is not video, use online URL directly.
+          var btype=(rec.blob.type||'').toLowerCase();
+          if(btype && btype.indexOf('video/')!==0 && btype.indexOf('application/octet')!==0){
+            if(rec.video_url){ v.src=rec.video_url; v.preload='auto'; v.load(); }
+            else { revokeDlUrl(rec.id); var u2b=URL.createObjectURL(rec.blob); dlObjectUrls[rec.id]=u2b; v.src=u2b; v.preload='auto'; v.load(); }
+          } else {
+            revokeDlUrl(rec.id); var u2=URL.createObjectURL(rec.blob); dlObjectUrls[rec.id]=u2; v.src=u2; v.preload='auto'; v.load();
+          }
+          // V14: If blob fails to play, fall back to online URL once
+          v.onerror=function(){ try{ var fb=v.dataset.zedFallbackUrl||''; if(fb && v.src!==fb && !v.dataset.zedTriedFallback){ v.dataset.zedTriedFallback='1'; v.src=fb; v.load(); } }catch(e){} };
+        }catch(e){}
+      }
     });
   }
 
@@ -11116,8 +11174,8 @@ window._zedV12Filter = 'search';
     var unlocked=isUnlockedInfo(info);
     var downloaded=isDownloadedInfo(info);
     var sig=info.id+'|'+(unlocked?'1':'0')+'|'+(downloaded?'1':'0')+'|'+getCoins();
-    if(card.dataset.zedV12Sig===sig && card.dataset.zedLocked===(unlocked?'0':'1')) return;
-    card.dataset.zedV12Sig=sig;
+    if(card.dataset.zedV15Sig===sig && card.dataset.zedLocked===(unlocked?'0':'1')) return;
+    card.dataset.zedV15Sig=sig;
     card.classList.add('zed-video-card');
     try{ var cs=getComputedStyle(card); if(cs.position==='static') card.style.position='relative'; }catch(e){ card.style.position='relative'; }
     card.dataset.zedLocked=unlocked ? '0' : '1';
@@ -11161,21 +11219,21 @@ window._zedV12Filter = 'search';
     try{
       if(isAnyVideoPlaying()) return; // V11: freeze while playing - no flicker
       if(!isVideosTabActive()){
-        var tb=document.getElementById('zed-v12-toolbar'); if(tb) tb.style.display='none';
-        var dv=document.getElementById('zed-v12-downloads-view'); if(dv) dv.style.display='none';
+        var tb=document.getElementById('zed-v15-toolbar'); if(tb) tb.style.display='none';
+        var dv=document.getElementById('zed-v15-downloads-view'); if(dv) dv.style.display='none';
         // V12: Leaving Videos - remove filter + in-videos so Papers/Quiz/Docs are NOT hidden by Videos CSS
-        document.body.classList.remove('zed-v12-in-videos','zed-v12-filter-search','zed-v12-filter-unlocked','zed-v12-filter-downloads');
+        document.body.classList.remove('zed-v15-in-videos','zed-v15-filter-search','zed-v15-filter-unlocked','zed-v15-filter-downloads');
         return;
       }
-      var tb2=document.getElementById('zed-v12-toolbar'); if(tb2) tb2.style.display='';
+      var tb2=document.getElementById('zed-v15-toolbar'); if(tb2) tb2.style.display='';
       hideOriginalVideosHeader();
       ensureToolbar();
       ensureV16Search();
       ensureViews();
       unhideToolbarAncestors();
-      if(!document.body.classList.contains('zed-v12-filter-'+filter)){
-        document.body.classList.remove('zed-v12-filter-search','zed-v12-filter-unlocked','zed-v12-filter-downloads');
-        document.body.classList.add('zed-v12-filter-'+filter);
+      if(!document.body.classList.contains('zed-v15-filter-'+filter)){
+        document.body.classList.remove('zed-v15-filter-search','zed-v15-filter-unlocked','zed-v15-filter-downloads');
+        document.body.classList.add('zed-v15-filter-'+filter);
       }
       var wrap=document.getElementById('zed-v16-wrap');
       if(wrap){
@@ -11217,16 +11275,49 @@ window._zedV12Filter = 'search';
       var newCoins=fresh-UNLOCK_COST;
       await deductCoinsOnServer(newCoins);
       var u=getMe(); if(u){ u.coins=newCoins; try{ localStorage.setItem('zed_user', JSON.stringify(u)); }catch(e){} }
-      // Save ALL candidate IDs so YouTube + MP4 both match next time, even if URL format changes
+      // V13: Save ONLY one canonical ID per video for counting. Legacy list still keeps candidates for matching (below), but count uses distinct videos, not candidate IDs.
+      // Old bug: saving ALL candidates (2 per video) + counting list.length gave 1 unlock -> 2, 2 -> 4, 3 -> 6.
       var list=getUnlocked();
       var cands = info.ytId || info.video_url ? getCandidateIds(info) : [videoId];
       cands.forEach(function(cid){ if(list.indexOf(cid)===-1) list.push(cid); });
       if(list.indexOf(videoId)===-1) list.push(videoId);
       saveUnlocked(list);
+      // Canonical list: one ID per video, used ONLY for counting
+      try{
+        var vids=getUnlockedVideoIds();
+        if(vids.indexOf(videoId)===-1){ vids.push(videoId); saveUnlockedVideoIds(vids); }
+      }catch(e){}
       await trySaveUnlockOnServer(videoId);
       toast('Unlocked ✓ • 25 coins used • '+newCoins+' coins left');
       lastProcess=0; setTimeout(processVideos, 100);
     });
+  }
+  // V15: Downloads play in a full player attached to body, NOT the small inline card video.
+  // The inline card video gets rebuilt by processVideos, which resets it to 0:00. The body player never gets rebuilt.
+  async function playDownloadInFullPlayer(recId){
+    try{
+      var allDl=await getAllDownloads();
+      var rec=null; for(var i=0;i<allDl.length;i++){ if(allDl[i].id===recId){ rec=allDl[i]; break; } }
+      if(!rec || !rec.blob){ toast('Download not found - please download again'); return; }
+      var old=document.getElementById('zed-dl-player'); if(old) old.remove();
+      var ov=document.createElement('div'); ov.id='zed-dl-player';
+      ov.style.cssText='position:fixed;inset:0;z-index:9999;background:#000;display:flex;flex-direction:column;';
+      ov.innerHTML='<div style="display:flex;justify-content:space-between;align-items:center;padding:12px;color:#fff"><div style="font-weight:700;font-size:14px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">'+escapeHtml(rec.title||'Video')+'</div><button data-zed-close-dl-player style="background:#fff;color:#000;border:none;border-radius:20px;padding:8px 14px;font-weight:700">✕ Close</button></div><video controls autoplay playsinline style="width:100%;flex:1;background:#000;object-fit:contain"></video><div style="padding:10px;color:#aaa;font-size:12px;text-align:center">Downloaded • Plays offline inside app</div>';
+      document.body.appendChild(ov);
+      var v=ov.querySelector('video');
+      var btype=(rec.blob.type||'').toLowerCase();
+      var useOnline = btype && btype.indexOf('video/')!==0 && btype.indexOf('application/octet')!==0 && rec.video_url;
+      try{
+        if(useOnline){ v.src=rec.video_url; }
+        else { var u=URL.createObjectURL(rec.blob); dlObjectUrls[rec.id]=u; v.src=u; }
+        v.load();
+        try{ await v.play(); }catch(e){ try{ v.muted=true; await v.play(); v.muted=false; }catch(e2){} }
+      }catch(e){}
+      // If blob fails, fall back to online URL
+      v.onerror=function(){ try{ if(rec.video_url && v.src!==rec.video_url && !v.dataset.zedTried){ v.dataset.zedTried='1'; v.src=rec.video_url; v.load(); v.play(); } }catch(e){} };
+      ov.querySelector('[data-zed-close-dl-player]').addEventListener('click', function(){ try{ v.pause(); }catch(e){} try{ if(v.src && v.src.indexOf('blob:')===0) URL.revokeObjectURL(v.src); }catch(e){} ov.remove(); });
+      ov.addEventListener('click', function(e){ if(e.target===ov) ov.querySelector('[data-zed-close-dl-player]').click(); });
+    }catch(e){ toast('Could not play download'); }
   }
   async function handleDownload(videoId){
     var cards=findVideoCards(); var info=null;
@@ -11242,6 +11333,10 @@ window._zedV12Filter = 'search';
       var res=await fetch(url);
       if(!res.ok) throw new Error('Download failed: '+res.status);
       var blob=await res.blob();
+      // V15: If fetch returns no MIME type, phone won't play it as video. Force video/mp4.
+      if(!blob.type || blob.type.indexOf('video/')!==0){
+        try{ blob=new Blob([blob], {type:'video/mp4'}); }catch(e){}
+      }
       await saveDownload(info, blob);
       lastDownloadsSig=''; // new download - rebuild Downloads view once
       getCandidateIds(info).forEach(function(cid){ downloadedIds.add(cid); });
@@ -11274,6 +11369,24 @@ window._zedV12Filter = 'search';
     if(dlBtn){ e.preventDefault(); e.stopPropagation(); handleDownload(dlBtn.getAttribute('data-zed-download')); return; }
     var delBtn=t.closest('[data-zed-dl-delete]');
     if(delBtn){ e.preventDefault(); handleDeleteDownload(delBtn.getAttribute('data-zed-dl-delete')); return; }
+    // V14: Re-download replaces a bad old saved file with a fresh one
+    var redlBtn=t.closest('[data-zed-dl-redownload]');
+    if(redlBtn){
+      e.preventDefault();
+      var redlId=redlBtn.getAttribute('data-zed-dl-redownload');
+      (async function(){
+        try{
+          revokeDlUrl(redlId);
+          await deleteDownload(redlId);
+          lastDownloadsSig='';
+          toast('Re-downloading fresh file...');
+          // handleDownload uses the main-grid card - find its info via Downloads record first
+          var allR=await getAllDownloads(); // old record gone, so use main grid
+          handleDownload(redlId);
+        }catch(e){ toast('Could not re-download - try again online'); }
+      })();
+      return;
+    }
     var delBtn2=t.closest('[data-zed-dl-delete2]');
     if(delBtn2){ e.preventDefault(); handleDeleteDownload(delBtn2.getAttribute('data-zed-dl-delete2')); return; }
     var quizBtn=t.closest('[data-zed-goto-quiz-2]');
@@ -11301,34 +11414,17 @@ window._zedV12Filter = 'search';
       }
       return;
     }
+    // V13: Tapping the Downloads VIDEO itself must play (not just Play Offline button). In screenshots user taps big play in video, not button below.
+    var dlVideoEl=t.closest('#zed-v15-downloads-view video');
+    if(dlVideoEl){
+      var dlCard0=dlVideoEl.closest('[data-dl-id]');
+      if(dlCard0){ e.preventDefault(); playDownloadInFullPlayer(dlCard0.getAttribute('data-dl-id')); return; }
+    }
     var playBtn=t.closest('[data-zed-dl-play]');
     if(playBtn){
       e.preventDefault();
       var dlId=playBtn.getAttribute('data-zed-dl-play');
-      var card2=document.querySelector('[data-dl-id="'+dlId+'"]');
-      if(card2){
-        var v=card2.querySelector('video');
-        if(v){
-          // V10: Play Offline must work offline - re-fetch blob from IndexedDB fresh, set src, load, then play. Don't rely on src set at render time.
-          (async function(){
-            try{
-              var allDl=await getAllDownloads();
-              var recDl=null; for(var ri=0;ri<allDl.length;ri++){ if(allDl[ri].id===dlId){ recDl=allDl[ri]; break; } }
-              if(!recDl || !recDl.blob){ toast('Download not found - please download again'); return; }
-              if(!v.src || v.src.indexOf('blob:')!==0 || v.readyState===0){
-                try{ revokeDlUrl(dlId); var uDl=URL.createObjectURL(recDl.blob); dlObjectUrls[dlId]=uDl; v.src=uDl; v.load(); }catch(e){}
-              }
-              v.controls=true; v.playsInline=true;
-              try{ v.scrollIntoView({block:'center'}); }catch(e){}
-              try{ await v.play(); }
-              catch(e){
-                // Some browsers block unmuted autoplay even on tap - retry muted then unmute
-                try{ v.muted=true; await v.play(); v.muted=false; }catch(e2){ toast('Tap the video itself to play'); }
-              }
-            }catch(e){ toast('Could not play download'); }
-          })();
-        }
-      }
+      playDownloadInFullPlayer(dlId); // V15: full player, not inline
       return;
     }
     var card=t.closest('.zed-video-card');
@@ -11346,11 +11442,11 @@ window._zedV12Filter = 'search';
         return;
       }
       if(txt==='papers' || txt==='quizzes' || txt==='docs'){
-        var tbL=document.getElementById('zed-v12-toolbar'); if(tbL) tbL.style.display='none';
-        var dvL=document.getElementById('zed-v12-downloads-view'); if(dvL) dvL.style.display='none';
+        var tbL=document.getElementById('zed-v15-toolbar'); if(tbL) tbL.style.display='none';
+        var dvL=document.getElementById('zed-v15-downloads-view'); if(dvL) dvL.style.display='none';
         var wL=document.getElementById('zed-v16-wrap'); if(wL) wL.style.display='none';
         // V12: Papers must show - remove Videos CSS gate
-        document.body.classList.remove('zed-v12-in-videos','zed-v12-filter-search','zed-v12-filter-unlocked','zed-v12-filter-downloads');
+        document.body.classList.remove('zed-v15-in-videos','zed-v15-filter-search','zed-v15-filter-unlocked','zed-v15-filter-downloads');
         return;
       }
     }
@@ -11362,7 +11458,7 @@ window._zedV12Filter = 'search';
       var relevant=false;
       for(var i=0;i<muts.length;i++){
         var tg=muts[i].target;
-        if(tg && tg.closest && (tg.closest('#zed-v12-toolbar') || tg.closest('.zed-lock-cover') || tg.closest('.zed-video-actions') || tg.closest('#zed-v12-downloads-view') || tg.closest('#zed-chat-btn') || tg.closest('#zed-chat-panel'))) continue;
+        if(tg && tg.closest && (tg.closest('#zed-v15-toolbar') || tg.closest('.zed-lock-cover') || tg.closest('.zed-video-actions') || tg.closest('#zed-v15-downloads-view') || tg.closest('#zed-chat-btn') || tg.closest('#zed-chat-panel'))) continue;
         if(muts[i].type==='attributes') continue;
         var added=muts[i].addedNodes||[];
         for(var j=0;j<added.length;j++){
@@ -11396,7 +11492,7 @@ window._zedV12Filter = 'search';
   }, 600);
   // V10: No interval touching chat button.
   window.zedVideoCoins={ unlockCost: UNLOCK_COST, getCoins: getCoins, getUnlocked: getUnlocked, process: function(){ lastProcess=0; processVideos(); }, setFilter: setFilter };
-  console.log('[ZED] Video Coins V12 active - original search, exact search, YouTube+MP4 unlocked, chat normal');
+  console.log('[ZED] Video Coins V15 active - original search, exact search, YouTube+MP4 unlocked, chat normal');
 })();
 </script>
 
