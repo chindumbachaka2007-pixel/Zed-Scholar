@@ -2464,7 +2464,7 @@ header div{flex-wrap:wrap}
   #zed-ai-inputrow{padding-bottom:max(10px, env(safe-area-inset-bottom)) !important}
 }
 /* AI Tutor panel selects - never cut off */
-#zed-ai-panel > div:nth-child(2){display:flex !important;gap:8px !important;padding:10px 12px !important;width:100% !important;box-sizing:border-box !important}
+/* selects row removed */
 #zed-ai-panel select{box-sizing:border-box !important;min-width:0 !important}
 /* Main content bottom padding so floating buttons don't cover Download */
 main, div[class*="min-h"]{padding-bottom:180px !important}
@@ -7425,10 +7425,7 @@ console.log('[ZED] Welcome popup + fast login active');
     <div style="flex:1"><div style="font-weight:900;color:#fff;font-size:16px">🤖 ZED AI TUTOR</div><div style="color:#8CFF8A;font-size:11px">Form 1-5 &amp; Grade 10-12 • ECZ • Zambia</div></div>
     <button id="zed-ai-clear" type="button" style="background:#222;color:#fff;border:1px solid #333;border-radius:999px;padding:6px 10px;font-size:11px;cursor:pointer">Clear</button>
   </div>
-  <div style="display:flex;gap:8px;padding:10px 12px;background:#0F0E0B">
-    <select id="zed-ai-subject" style="flex:1;background:#1e1e1e;color:#fff;border:1px solid #333;border-radius:10px;padding:9px;font-size:13px"><option>Mathematics</option><option>English</option><option>Science</option><option>Biology</option><option>Chemistry</option><option>Physics</option><option>Geography</option><option>History</option><option>Commerce</option><option>Principles of Accounts</option><option>Computer Studies</option><option>General</option></select>
-    <select id="zed-ai-grade" style="flex:1;background:#1e1e1e;color:#fff;border:1px solid #333;border-radius:10px;padding:9px;font-size:13px"><option>Form 1</option><option>Form 2</option><option>Form 3</option><option>Form 4</option><option>Form 5</option><option>Grade 10</option><option>Grade 11</option><option selected>Grade 12</option></select>
-  </div>
+  <!-- No subject / grade dropdowns - just ask. AI figures out the subject and grade from your question. -->
   <div id="zed-ai-keyrow" style="display:none;background:#1e2b1e;border:1px solid #8CFF8A;border-radius:12px;padding:12px;margin:0 12px 8px;font-size:13px;color:#fff">
     <b>🔒 AI Tutor needs the School Key</b><br/><span style="color:#ccc">Only Admin can set the key — in the <b>Admin</b> tab. Students never paste a key.</span><br/>
     <button id="zed-ai-go-admin" type="button" style="margin-top:10px;background:#8CFF8A;color:#000;border:none;border-radius:10px;padding:11px 14px;font-weight:900;cursor:pointer;width:100%">👑 GO TO ADMIN TO SET KEY →</button>
@@ -7447,9 +7444,16 @@ console.log('[ZED] Welcome popup + fast login active');
     <button id="zed-ai-admin-close" type="button" style="display:none" disabled></button>
   </div>
   <div id="zed-ai-msgs"></div>
+  <div id="zed-ai-img-preview" style="display:none;background:#242526;border-top:1px solid #3A3B3C;padding:6px 8px;gap:8px;align-items:center;flex-shrink:0">
+    <img id="zed-ai-img-thumb" style="width:40px;height:40px;object-fit:cover;border-radius:8px;flex-shrink:0" />
+    <div style="flex:1;min-width:0"><div style="font-size:11px;color:#fff;font-weight:700">📷 Screenshot attached</div><div style="font-size:10px;color:#B0B3B8">Ask what to solve in it, then tap ➤</div></div>
+    <button id="zed-ai-img-remove" type="button" style="background:#3A3B3C;color:#fff;border:none;border-radius:999px;width:26px;height:26px;font-size:12px;cursor:pointer;flex-shrink:0">✕</button>
+  </div>
   <div id="zed-ai-inputrow">
-    <input id="zed-ai-input" placeholder="Ask anything, e.g. Explain quadratic equations..." />
-    <button id="zed-ai-send" type="button">SEND →</button>
+    <button id="zed-ai-attach" type="button" title="Send screenshot">🖼️</button>
+    <input id="zed-ai-file" type="file" accept="image/*" style="display:none" />
+    <input id="zed-ai-input" placeholder="Ask anything..." />
+    <button id="zed-ai-send" type="button">➤</button>
   </div>
 </div>
 <script>
@@ -7464,6 +7468,51 @@ console.log('[ZED] Welcome popup + fast login active');
   var keyInput=document.getElementById('zed-ai-keyinput');
   var keySave=document.getElementById('zed-ai-keysave');
   var clearBtn=document.getElementById('zed-ai-clear');
+  var attachBtn=document.getElementById('zed-ai-attach');
+  var fileInput=document.getElementById('zed-ai-file');
+  var imgPreview=document.getElementById('zed-ai-img-preview');
+  var imgThumb=document.getElementById('zed-ai-img-thumb');
+  var imgRemoveBtn=document.getElementById('zed-ai-img-remove');
+  var aiImage=null;
+  function clearAiImage(){ aiImage=null; if(fileInput) fileInput.value=''; if(imgPreview){ imgPreview.classList.remove('show'); imgPreview.style.display='none'; } if(input && !input.value) input.placeholder='Ask anything...'; }
+  function compressAiImage(file){
+    return new Promise(function(resolve, reject){
+      var reader=new FileReader();
+      reader.onload=function(){
+        var img=new Image();
+        img.onload=function(){
+          try{
+            var maxSide=1024; var w=img.width, h=img.height;
+            var scale=Math.min(1, maxSide/Math.max(w,h));
+            var cw=Math.round(w*scale), ch=Math.round(h*scale);
+            var canvas=document.createElement('canvas'); canvas.width=cw; canvas.height=ch;
+            var ctx=canvas.getContext('2d'); ctx.drawImage(img,0,0,cw,ch);
+            var dataUrl=canvas.toDataURL('image/jpeg', 0.8);
+            var base64=dataUrl.split(',')[1]||'';
+            resolve({data:base64, mimeType:'image/jpeg', previewUrl:dataUrl});
+          }catch(e){ reject(e); }
+        };
+        img.onerror=function(){ reject(new Error('Could not read image')); };
+        img.src=reader.result;
+      };
+      reader.onerror=function(){ reject(new Error('Could not read file')); };
+      reader.readAsDataURL(file);
+    });
+  }
+  if(attachBtn && fileInput){
+    attachBtn.addEventListener('click', function(){ try{ fileInput.click(); }catch(e){} });
+    fileInput.addEventListener('change', function(){
+      var f=fileInput.files && fileInput.files[0];
+      if(!f) return;
+      compressAiImage(f).then(function(res){
+        aiImage=res;
+        if(imgThumb) imgThumb.src=res.previewUrl;
+        if(imgPreview){ imgPreview.classList.add('show'); imgPreview.style.display='flex'; }
+        if(input){ input.placeholder='What should I solve in this screenshot?'; try{ input.focus(); }catch(e){} }
+      }).catch(function(){ alert('Could not read that screenshot. Try another image.'); clearAiImage(); });
+    });
+  }
+  if(imgRemoveBtn){ imgRemoveBtn.addEventListener('click', function(){ clearAiImage(); }); }
   var schoolKeyCache='';
   var schoolKeyLoaded=false;
   var schoolKeyFetching=null;
@@ -7519,7 +7568,7 @@ console.log('[ZED] Welcome popup + fast login active');
   function showWelcome(){
     if(msgs.children.length===0){
       var d=document.createElement('div'); d.className='zed-ai-msg ai';
-      d.textContent='Hi! I am ZED AI TUTOR \u{1F44B}\nI help with Form 1-5 & Grade 10-12 ECZ \u2014 Maths, English, Science, Biology, Chemistry, Physics and more.\n\nAsk me to explain a topic, solve a past paper question step-by-step, or make a quick quiz. What do you want to learn today?';
+      d.textContent='I can help with ECZ Maths, English, Science, Biology, Chemistry, Physics and more.\n\nAsk me to explain a topic, solve a past paper question step-by-step, or make a quick quiz.';
       msgs.appendChild(d);
     }
   }
@@ -7558,19 +7607,20 @@ console.log('[ZED] Welcome popup + fast login active');
   });
   btn.addEventListener('click', function(){ panel.classList.add('open'); checkKey(); });
   closeBtn.addEventListener('click', function(){ panel.classList.remove('open'); });
-  clearBtn.addEventListener('click', function(){ msgs.innerHTML=''; lastQ=''; lastA=''; showWelcome(); });
+  clearBtn.addEventListener('click', function(){ try{ clearAiImage(); }catch(e){} msgs.innerHTML=''; lastQ=''; lastA=''; showWelcome(); });
   if(keySave) keySave.addEventListener('click', function(){
     alert('Only Admin can set the key \u2014 in the Admin tab. Students never paste a key.');
     return;
   });
   // ---- FAST SEND: streaming + timeout + 1 fallback only, not 3 slow tries ----
-  async function callGeminiStream(prompt, key, onChunk, model){
+  async function callGeminiStream(prompt, key, onChunk, model, image){
     model=model||'gemini-3.5-flash-lite'; // FIX: 2.5-flash-lite retired by Google - now 3.5-flash-lite
     // Use stream endpoint so first words appear in ~1s instead of waiting for full answer
     var url='https://generativelanguage.googleapis.com/v1beta/models/'+model+':streamGenerateContent?alt=sse&key='+encodeURIComponent(key);
     var ctrl=new AbortController(); var timer=setTimeout(function(){ try{ctrl.abort();}catch(e){} }, 25000);
     try{
-      var res=await fetch(url, {method:'POST', headers:{'Content-Type':'application/json'}, signal:ctrl.signal, body: JSON.stringify({contents:[{parts:[{text:prompt}]}], generationConfig:{maxOutputTokens:900, temperature:0.4}})});
+      var _parts=[{text:prompt}]; if(image && image.data){ _parts.push({inlineData:{mimeType:image.mimeType||'image/jpeg', data:image.data}}); }
+      var res=await fetch(url, {method:'POST', headers:{'Content-Type':'application/json'}, signal:ctrl.signal, body: JSON.stringify({contents:[{parts:_parts}], generationConfig:{maxOutputTokens:900, temperature:0.4}})});
       if(!res.ok){
         var errTxt=''; try{ var ej=await res.json(); errTxt=(ej.error&&ej.error.message)||''; }catch(e){}
         var err=new Error(errTxt||('HTTP '+res.status)); err.status=res.status; err.msg=errTxt; throw err;
@@ -7598,11 +7648,12 @@ console.log('[ZED] Welcome popup + fast login active');
       return full;
     } finally { clearTimeout(timer); }
   }
-  async function callGeminiOnce(prompt, key, model){
+  async function callGeminiOnce(prompt, key, model, image){
     model=model||'gemini-3.5-flash-lite'; // FIX: 2.5-flash-lite retired - now 3.5-flash-lite
     var ctrl=new AbortController(); var timer=setTimeout(function(){ try{ctrl.abort();}catch(e){} }, 25000);
     try{
-      var res=await fetch('https://generativelanguage.googleapis.com/v1beta/models/'+model+':generateContent?key='+encodeURIComponent(key), {method:'POST', headers:{'Content-Type':'application/json'}, signal:ctrl.signal, body: JSON.stringify({contents:[{parts:[{text:prompt}]}], generationConfig:{maxOutputTokens:900, temperature:0.4}})});
+      var _parts2=[{text:prompt}]; if(image && image.data){ _parts2.push({inlineData:{mimeType:image.mimeType||'image/jpeg', data:image.data}}); }
+      var res=await fetch('https://generativelanguage.googleapis.com/v1beta/models/'+model+':generateContent?key='+encodeURIComponent(key), {method:'POST', headers:{'Content-Type':'application/json'}, signal:ctrl.signal, body: JSON.stringify({contents:[{parts:_parts2}], generationConfig:{maxOutputTokens:900, temperature:0.4}})});
       var data=await res.json().catch(function(){ return {}; });
       if(!res.ok){ var e=new Error((data.error&&data.error.message)||('HTTP '+res.status)); e.status=res.status; throw e; }
       // Safety filter / blocked = no candidates. Old code treated this as empty and hung.
@@ -7618,17 +7669,29 @@ console.log('[ZED] Welcome popup + fast login active');
   }
   async function send(){
     if(aiSending) return;
-    var q=input.value.trim(); if(!q) return;
+    var q=input.value.trim();
+    var sendImage=aiImage;
+    if(!q && !sendImage) return;
+    if(!q && sendImage) q='What is in this screenshot? Solve it step-by-step.';
     if(q.length>1000) q=q.slice(0,1000);
+    if(sendImage){ try{ clearAiImage(); }catch(e){} }
     // Use cached school key instantly - don't wait for Supabase if we have it
     if(!getKey()){ await fetchSchoolKey(); }
     if(!getKey()){ keyRow.style.display='block'; alert('School key not set yet. Only Admin can set it in the Admin tab.'); return; }
-    var subj=document.getElementById('zed-ai-subject').value;
-    var grade=document.getElementById('zed-ai-grade').value;
-    // Instant cache hit - same question asked before
+    var _subjEl=document.getElementById('zed-ai-subject'); var subj=_subjEl?_subjEl.value:'General';
+    var _gradeEl=document.getElementById('zed-ai-grade'); var grade=_gradeEl?_gradeEl.value:'';
     var cKey=aiCacheKey(q, subj, grade);
-    var cachedAns=aiCacheGet(cKey);
-    var um=document.createElement('div'); um.className='zed-ai-msg user'; um.textContent=q; msgs.appendChild(um);
+    var cachedAns=sendImage ? '' : aiCacheGet(cKey);
+    if(sendImage){
+      var um=document.createElement('div'); um.className='zed-ai-msg user';
+      var _img=document.createElement('img'); _img.src=sendImage.previewUrl; _img.alt='Screenshot';
+      um.appendChild(_img);
+      var _txt=document.createElement('div'); _txt.textContent=q;
+      um.appendChild(_txt);
+      msgs.appendChild(um);
+    } else {
+      var um2=document.createElement('div'); um2.className='zed-ai-msg user'; um2.textContent=q; msgs.appendChild(um2);
+    }
     input.value=''; msgs.scrollTop=msgs.scrollHeight;
     // FIX v8: old cache check removed - cache is now checked AFTER expanding 'Tell me more' (see below), so it uses the right topic.
     // FIX v8: 'Tell me more' alone means nothing to Gemini - it has no chat history. Expand it to the last topic.
@@ -7643,7 +7706,7 @@ console.log('[ZED] Welcome popup + fast login active');
     }
     // Cache must use the EXPANDED question, not just 'tell me more' - otherwise every 'tell me more' gets the same cached answer
     cKey=aiCacheKey(qForAI, subj, grade);
-    cachedAns=aiCacheGet(cKey);
+    cachedAns=sendImage ? '' : aiCacheGet(cKey);
     if(cachedAns){
       var cm2=document.createElement('div'); cm2.className='zed-ai-msg ai'; cm2.textContent=cachedAns+'\n\n\u26A1 Instant \u2014 you asked this before.'; msgs.appendChild(cm2); msgs.scrollTop=msgs.scrollHeight; if(!isFollowUp) lastQ=q; lastA=cachedAns; return;
     }
@@ -7652,7 +7715,9 @@ console.log('[ZED] Welcome popup + fast login active');
     var streamingStarted=false;
     var dots=0; var dotTimer=setInterval(function(){ if(streamingStarted) return; dots=(dots+1)%4; loading.textContent='Thinking'+'.'.repeat(dots); }, 400);
     // FIX v8: dotTimer used to wipe streaming text every 400ms - that is why answers showed only the tail like 'big for harvest.' It now stops once streaming starts.
-    var prompt='Zambia ECZ '+grade+' '+subj+' tutor. Simple English, short step-by-step bullets, 1 Zambian example. If past paper Q, solve step-by-step + final answer. End with 1 practice Q. Q: '+qForAI;
+    var prompt=sendImage
+      ? 'Zambia ECZ tutor for Form 1-5 & Grade 10-12. Look at the screenshot carefully. Read ALL text, numbers, diagrams, tables and handwriting in it. If it is a question, solve it step-by-step + final answer. If it is notes, explain them simply. Simple English, short step-by-step bullets, 1 Zambian example. End with 1 practice Q. Q: '+qForAI
+      : 'Zambia ECZ tutor for Form 1-5 & Grade 10-12. Simple English, short step-by-step bullets, 1 Zambian example. If past paper Q, solve step-by-step + final answer. End with 1 practice Q. Q: '+qForAI;
     var ans=''; var lastErr=''; var lastStatus=0; var wasBlocked=false;
     var keys=getAllKeys();
     // FIX: Google retired gemini-2.5-flash-lite (see screenshot). Try models in order - 3.5 first, then fallbacks.
@@ -7665,9 +7730,9 @@ console.log('[ZED] Welcome popup + fast login active');
           ans=await callGeminiStream(prompt, keys[ki], function(chunk){
             if(!streamingStarted){ streamingStarted=true; clearInterval(dotTimer); loading.textContent=''; }
             loading.textContent+=chunk; msgs.scrollTop=msgs.scrollHeight;
-          }, MODELS[mi]);
+          }, MODELS[mi], sendImage);
           if(ans) break;
-          ans=await callGeminiOnce(prompt, keys[ki], MODELS[mi]);
+          ans=await callGeminiOnce(prompt, keys[ki], MODELS[mi], sendImage);
           if(ans){ loading.textContent=ans; break; }
         }catch(e){
           lastErr=(e && e.msg) || (e && e.message) || String(e);
@@ -7707,13 +7772,13 @@ console.log('[ZED] Welcome popup + fast login active');
       loading.textContent=ans;
     } else {
       // Save good answer to cache so next student / same question is instant
-      aiCacheSet(cKey, ans);
+      if(!sendImage) aiCacheSet(cKey, ans);
       if(!isFollowUp) lastQ=q; lastA=ans; // FIX v8: remember for next 'Tell me more' - keep original topic, not 'Tell me more'
       // If streaming already filled loading, keep it. If we used non-stream, loading already set.
       if(loading.textContent.indexOf('Thinking')===0) loading.textContent=ans;
     }
     msgs.scrollTop=msgs.scrollHeight;
-    aiSending=false; sendBtn.disabled=false; sendBtn.textContent='SEND \u2192';
+    aiSending=false; sendBtn.disabled=false; sendBtn.textContent='➤';
   }
   sendBtn.addEventListener('click', send);
   input.addEventListener('keydown', function(e){ if(e.key==='Enter'){ send(); } });
@@ -7813,11 +7878,13 @@ console.log('[ZED] Welcome popup + fast login active');
 <script>
 // ZED FIX v2 - Each of the 3 buttons is movable with LONG-PRESS (not just the whole stack)
 (function(){
+  var _zedRestoredOnce=false;
   function restorePositions(){
     var saved=null; try{ saved=JSON.parse(localStorage.getItem('zed_fab_positions')||'null'); }catch(e){}
     if(!saved) return;
     ['zed-ai-btn','zed-offline-library-btn','zed-chat-btn'].forEach(function(id){
       var btn=document.getElementById(id); if(!btn || !saved[id]) return;
+      if(btn.classList.contains('zed-dragging')) return;
       var p=saved[id];
       btn.classList.add('zed-free');
       btn.style.setProperty('position','fixed','important');
@@ -7837,12 +7904,15 @@ console.log('[ZED] Welcome popup + fast login active');
   function makeMovable(btn){
     if(!btn || btn.dataset.movableReady) return;
     btn.dataset.movableReady='1';
-    var longTimer=null, dragging=false, moved=false, startX=0, startY=0, offsetX=0, offsetY=0, blockedClick=false;
+    var longTimer=null, dragging=false, moved=false, startX=0, startY=0, offsetX=0, offsetY=0, blockedClick=false, _lastTouchStart=0, _lastTouchMove=0, _lastMoveX=-1, _lastMoveY=-1;
     var hint=document.getElementById('zed-fab-hint');
     function showHint(){ if(hint){ hint.textContent='✋ Moving — drag anywhere • Release to drop • Double-tap to reset'; hint.classList.add('show'); } }
     function hideHint(){ if(hint) hint.classList.remove('show'); }
     function startPress(e){
-      // Stop the old stack-drag from also firing
+      if(dragging) return;
+      try{ window._zedAnyDragging=true; }catch(e2){}
+      if(e.type==='mousedown' && Date.now()-_lastTouchStart<600) return;
+      if(e.type==='touchstart') _lastTouchStart=Date.now();
       if(e.stopPropagation) e.stopPropagation();
       var t=e.touches ? e.touches[0] : e;
       startX=t.clientX; startY=t.clientY; moved=false; dragging=false;
@@ -7850,7 +7920,7 @@ console.log('[ZED] Welcome popup + fast login active');
       offsetX=t.clientX-rect.left; offsetY=t.clientY-rect.top;
       clearTimeout(longTimer);
       longTimer=setTimeout(function(){
-        dragging=true; moved=true;
+        dragging=true; moved=true; try{ window._zedAnyDragging=true; }catch(e){}
         btn.classList.add('zed-dragging');
         // Take this ONE button out of the stack so it can move freely
         if(btn.parentElement && btn.parentElement.id==='zed-fab-stack'){
@@ -7868,24 +7938,48 @@ console.log('[ZED] Welcome popup + fast login active');
       }, 350);
     }
     function onMove(e){
+      if(e.type==='touchmove'){ _lastTouchMove=Date.now(); }
+      if(e.type==='mousemove' && Date.now()-_lastTouchMove<500){ return; }
+      if(dragging){
+        if(e.type==='mousemove' && typeof e.buttons!=='undefined' && e.buttons===0){ onEnd(e); return; }
+        if(e.type==='touchmove' && (!e.touches || e.touches.length===0)){ onEnd(e); return; }
+      }
       if(!dragging){
-        // If user scrolls before long-press, cancel
         if(longTimer){
           var t2=e.touches ? e.touches[0] : e;
-          if(Math.abs(t2.clientX-startX)>10 || Math.abs(t2.clientY-startY)>10){ clearTimeout(longTimer); longTimer=null; }
-        }
-        return;
+          if(Math.abs(t2.clientX-startX)>10 || Math.abs(t2.clientY-startY)>10){
+            clearTimeout(longTimer); longTimer=null;
+            dragging=true; moved=true; try{ window._zedAnyDragging=true; }catch(e2){}
+            btn.classList.add('zed-dragging');
+            if(btn.parentElement && btn.parentElement.id==='zed-fab-stack'){ document.body.appendChild(btn); }
+            btn.classList.add('zed-free');
+            var _r0=btn.getBoundingClientRect();
+            offsetX=t2.clientX-_r0.left; offsetY=t2.clientY-_r0.top;
+            btn.style.setProperty('position','fixed','important');
+            btn.style.setProperty('left', _r0.left+'px','important');
+            btn.style.setProperty('top', _r0.top+'px','important');
+            btn.style.setProperty('right','auto','important');
+            btn.style.setProperty('bottom','auto','important');
+            btn.style.setProperty('z-index','10002','important');
+            showHint();
+            if(navigator.vibrate) navigator.vibrate(50);
+          } else return;
+        } else return;
       }
       if(e.cancelable) e.preventDefault();
       if(e.stopPropagation) e.stopPropagation();
       var t=e.touches ? e.touches[0] : e;
       var nl=Math.max(4, Math.min(window.innerWidth-60, t.clientX-offsetX));
       var nt=Math.max(60, Math.min(window.innerHeight-70, t.clientY-offsetY));
+      if(Math.abs(nl-_lastMoveX)<1 && Math.abs(nt-_lastMoveY)<1){ return; }
+      _lastMoveX=nl; _lastMoveY=nt;
       btn.style.setProperty('left', nl+'px','important');
       btn.style.setProperty('top', nt+'px','important');
     }
     function onEnd(e){
       if(longTimer){ clearTimeout(longTimer); longTimer=null; }
+      try{ window._zedAnyDragging=false; }catch(e2){}
+      _lastMoveX=-1; _lastMoveY=-1;
       if(dragging){
         dragging=false;
         btn.classList.remove('zed-dragging');
@@ -7899,12 +7993,14 @@ console.log('[ZED] Welcome popup + fast login active');
       }
     }
     btn.addEventListener('touchstart', startPress, {passive:true});
-    btn.addEventListener('touchmove', onMove, {passive:false});
-    btn.addEventListener('touchend', onEnd);
-    btn.addEventListener('touchcancel', onEnd);
+    window.addEventListener('touchmove', onMove, {passive:false});
+    window.addEventListener('touchend', onEnd);
+    window.addEventListener('touchcancel', onEnd);
     btn.addEventListener('mousedown', startPress);
     window.addEventListener('mousemove', onMove);
     window.addEventListener('mouseup', onEnd);
+    window.addEventListener('blur', onEnd);
+    document.addEventListener('visibilitychange', function(){ if(document.hidden) onEnd(); });
     // Double-tap / double-click any button = reset all three to the side stack
     btn.addEventListener('dblclick', function(){
       try{ localStorage.removeItem('zed_fab_positions'); }catch(e){}
@@ -7923,6 +8019,7 @@ console.log('[ZED] Welcome popup + fast login active');
     });
   }
   function initMovable(){
+    if(window._zedAnyDragging) return;
     // Ensure stack exists (for buttons that have not been dragged yet)
     var stack=document.getElementById('zed-fab-stack');
     if(!stack){
@@ -7931,9 +8028,9 @@ console.log('[ZED] Welcome popup + fast login active');
     // Put non-free buttons back in stack on first load
     ['zed-ai-btn','zed-offline-library-btn','zed-chat-btn'].forEach(function(id){
       var b=document.getElementById(id);
-      if(b && !b.classList.contains('zed-free') && b.parentElement!==stack) stack.appendChild(b);
+      if(b && !b.classList.contains('zed-free') && !b.classList.contains('zed-dragging') && b.parentElement!==stack) stack.appendChild(b);
     });
-    restorePositions();
+    if(!_zedRestoredOnce){ restorePositions(); _zedRestoredOnce=true; }
     ['zed-ai-btn','zed-offline-library-btn','zed-chat-btn'].forEach(function(id){
       var b=document.getElementById(id); if(b) makeMovable(b);
     });
@@ -7946,7 +8043,7 @@ console.log('[ZED] Welcome popup + fast login active');
 </script>
 
 
-<!-- ZED CHATS - Friends + 1-to-1 Chat, auto-delete 1hr, read receipts in list -->
+<!-- ZED CHATS - Friends + 1-to-1 Chat, auto-delete 48hrs, read receipts in list -->
 <style>
 #zed-chat-btn{position:static !important;background:#fff;color:#000;border:none;border-radius:999px;padding:11px 14px;font-weight:900;font-size:13px;cursor:pointer;box-shadow:0 4px 12px rgba(0,0,0,.4)}
 #zed-chat-panel{position:fixed;inset:0;z-index:10001;background:#0F0E0B;display:none;flex-direction:column}
@@ -7981,7 +8078,7 @@ console.log('[ZED] Welcome popup + fast login active');
   panel.innerHTML = `
     <div id="zed-chat-head">
       <button id="zed-chat-back" type="button" style="background:none;border:none;color:#fff;font-size:22px;cursor:pointer">‹</button>
-      <div style="flex:1"><div style="font-weight:900;color:#fff;font-size:16px">💬 ZED CHATS</div><div style="color:#8CFF8A;font-size:11px">Chats delete after 1 hour • Form 1-5 & Grade 10-12</div></div>
+      <div style="flex:1"><div style="font-weight:900;color:#fff;font-size:16px">💬 ZED CHATS</div><div style="color:#8CFF8A;font-size:11px">Chats delete after 48 hours • Form 1-5 & Grade 10-12</div></div>
       <button id="zed-chat-add-open" type="button" style="background:#8CFF8A;color:#000;border:none;border-radius:999px;padding:7px 10px;font-weight:900;font-size:11px;cursor:pointer;white-space:nowrap">🔍 Search for friends</button>
     </div>
     <div id="zed-chat-tabs" style="display:flex;gap:6px;padding:10px 12px;background:#0F0E0B;border-bottom:1px solid #333">
@@ -7992,7 +8089,7 @@ console.log('[ZED] Welcome popup + fast login active');
     <div id="zed-chat-friends-list" style="display:none;flex:1;overflow-y:auto"></div>
     <div id="zed-chat-requests-list" style="display:none;flex:1;overflow-y:auto"></div>
     <div id="zed-chat-search-add" style="display:none;padding:10px 12px;background:#0F0E0B;border-bottom:1px solid #333">
-      <input id="zed-chat-search-input" placeholder="Search for friends - name or school, e.g. Chanda or Munali" style="width:100%;background:#1e1e1e;color:#fff;border:1px solid #333;border-radius:10px;padding:10px;font-size:13px"/>
+      <input id="zed-chat-search-input" placeholder="Search for friends - name or school" style="width:100%;background:#1e1e1e;color:#fff;border:1px solid #333;border-radius:10px;padding:10px;font-size:13px"/>
       <div id="zed-chat-search-results" style="margin-top:8px;display:flex;flex-direction:column;gap:6px"></div>
     </div>
     <div id="zed-chat-list" style="flex:1;overflow-y:auto"></div>
@@ -8000,12 +8097,12 @@ console.log('[ZED] Welcome popup + fast login active');
       <div id="zed-chat-view-head" style="display:flex;align-items:center;gap:10px;padding:10px 12px;background:#1a1a1a;border-bottom:1px solid #333">
         <button id="zed-chat-view-back" type="button" style="background:none;border:none;color:#fff;font-size:20px;cursor:pointer">‹</button>
         <div id="zed-chat-view-avatar" title="Tap to view profile" style="width:40px;height:40px;min-width:40px;border-radius:999px;overflow:hidden;background:#222;display:flex;align-items:center;justify-content:center;font-weight:900;color:#fff;font-size:16px;border:2px solid #8CFF8A;cursor:pointer;display:none"></div><div id="zed-chat-view-name" style="flex:1;font-weight:800;color:#fff;font-size:15px;cursor:pointer" title="Tap to view profile"></div>
-        <div style="font-size:11px;color:#FF9A9A">⏳ Deletes in 1hr</div>
+        <div style="font-size:11px;color:#FF9A9A">⏳ Deletes in 48hrs</div>
       </div>
       <div id="zed-chat-msgs"></div>
       <div style="display:flex;gap:8px;padding:10px;background:#1a1a1a;border-top:1px solid #333">
         <input id="zed-chat-input" placeholder="Type a message..." style="flex:1;background:#222;color:#fff;border:1px solid #333;border-radius:12px;padding:11px;font-size:14px"/>
-        <button id="zed-chat-send" type="button" style="background:#8CFF8A;color:#000;border:none;border-radius:12px;padding:0 18px;font-weight:900;cursor:pointer">SEND →</button>
+        <button id="zed-chat-send" type="button" style="background:#0084FF;color:#fff;border:none;border-radius:999px;width:34px;height:34px;min-width:34px;font-size:16px;font-weight:900;cursor:pointer;display:flex;align-items:center;justify-content:center;flex-shrink:0">➤</button>
       </div>
     </div>
   `;
@@ -8039,11 +8136,12 @@ console.log('[ZED] Welcome popup + fast login active');
     }catch(e){}
     return all;
   }
-  function oneHourAgoISO(){ return new Date(Date.now()-1*60*60*1000).toISOString(); }
+  function oneHourAgoISO(){ return new Date(Date.now()-48*60*60*1000).toISOString(); } /* 48 HRS */
   function openChats(){
     var me=getMe();
     if(!me){ alert('Log in first to chat with friends.'); return; }
     panel.classList.add('open');
+    try{ document.body.style.overflow='hidden'; document.documentElement.style.overflow='hidden'; }catch(e){}
     // Default to CHATS tab, but if there are pending requests, show REQUESTS first so you can't miss them
     showList();
     setTimeout(async function(){
@@ -8057,7 +8155,7 @@ console.log('[ZED] Welcome popup + fast login active');
       }catch(e){}
     }, 600);
     // FIX v5: REMOVED 2nd loadFriends() - showList() above already calls it. This was the duplicate bug.
-    // Auto-delete old messages every 1 min (client-side cleanup)
+    // Auto-delete messages older than 48hrs, check every 1 min
     setInterval(cleanupOld, 60000);
     cleanupOld();
   }
@@ -8095,6 +8193,7 @@ console.log('[ZED] Welcome popup + fast login active');
   setTimeout(updateChatBadge, 1000);
   function closeChats(){
     panel.classList.remove('open');
+    try{ document.body.style.overflow=''; document.documentElement.style.overflow=''; }catch(e){}
     if(pollTimer) clearInterval(pollTimer);
   }
   document.getElementById('zed-chat-back').addEventListener('click', function(){
@@ -8105,6 +8204,7 @@ console.log('[ZED] Welcome popup + fast login active');
   var currentTab='chats';
   function switchChatTab(tab){
     currentTab=tab;
+    try{ var _h3=document.getElementById('zed-chat-head'); if(_h3) _h3.style.display='flex'; var _tb3=document.getElementById('zed-chat-tabs'); if(_tb3) _tb3.style.display='flex'; }catch(e){}
     var chatsTab=document.getElementById('zed-tab-chats');
     var friendsTab=document.getElementById('zed-tab-friends');
     var reqTab=document.getElementById('zed-tab-requests');
@@ -8176,11 +8276,13 @@ console.log('[ZED] Welcome popup + fast login active');
       friendsList.innerHTML='<div style="padding:20px;color:#999;text-align:center">No friends yet.<br/>Tap Search for friends to find friends.</div>'; }
   }
   // Load Requests tab: incoming + outgoing
+  var _lastReqKey='';
   async function loadRequestsTab(){
     var me=getMe(); if(!me) return;
     var reqList=document.getElementById('zed-chat-requests-list');
     if(!reqList) return;
-    reqList.innerHTML='<div style="padding:16px;color:#999;text-align:center">Loading requests...</div>';
+    var _hadContent = reqList.innerHTML.trim().length>0 && reqList.innerHTML.indexOf('Loading requests')===-1;
+    if(!_hadContent){ reqList.innerHTML='<div style="padding:16px;color:#999;text-align:center">Loading requests...</div>'; }
     try{
       var allRows=await fetchFriendships(me);
       if(!Array.isArray(allRows)){ allRows=[]; }
@@ -8188,6 +8290,11 @@ console.log('[ZED] Welcome popup + fast login active');
       allRows.forEach(function(r){ if(r.user_id===me.id) outSet2[r.friend_id]=true; if(r.friend_id===me.id) inSet2[r.user_id]=true; });
       var incoming=allRows.filter(function(r){ return r.friend_id===me.id && !outSet2[r.user_id]; });
       var outgoing=allRows.filter(function(r){ return r.user_id===me.id && !inSet2[r.friend_id]; });
+      try{
+        var _rk = (incoming.map(function(r){return r.user_id;}).sort().join(',')) + '|' + (outgoing.map(function(r){return r.friend_id;}).sort().join(','));
+        if(_rk===_lastReqKey && _hadContent){ return; }
+        _lastReqKey=_rk;
+      }catch(e){}
       reqList.innerHTML='';
       if(incoming.length===0 && outgoing.length===0){
         reqList.innerHTML='<div style="padding:20px;color:#999;text-align:center">No friend requests yet.<br/>When someone sends you a request, it will show here.<br/><br/><button id="zed-req-refresh" style="background:#8CFF8A;color:#000;border:none;border-radius:999px;padding:9px 16px;font-weight:900;cursor:pointer">Refresh Requests</button></div>';
@@ -8202,7 +8309,7 @@ console.log('[ZED] Welcome popup + fast login active');
           var pRows=await resP.json(); var p=pRows && pRows[0] ? pRows[0] : {name:'Student'};
           var card=document.createElement('div');
           card.style.cssText='display:flex;justify-content:space-between;align-items:center;background:#1e1e1e;border:1px solid #FFD93D;border-radius:12px;padding:12px;margin:0 12px 10px';
-          card.innerHTML='<div class="zed-req-person" data-zed-profile-id="'+(p.id||'')+'" title="Tap to view profile" style="display:flex;align-items:center;gap:10px;flex:1;min-width:0;cursor:pointer"><div style="width:44px;height:44px;min-width:44px;border-radius:999px;overflow:hidden;background:#222;display:flex;align-items:center;justify-content:center;font-weight:900;color:#fff;font-size:16px;border:2px solid #8CFF8A">'+((p.avatar||p.avatar_url)?'<img src="'+(p.avatar||p.avatar_url)+'" style="width:100%;height:100%;object-fit:cover" />':(p.name||'S')[0])+'</div><div style="min-width:0"><div style="font-weight:800;color:#fff;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">'+(p.name||'Student')+'</div><div style="font-size:12px;color:#999">'+(p.school||'')+' \u2022 '+(p.grade||'')+'</div><div style="font-size:11px;color:#8CFF8A">Tap to view profile</div></div></div><div style="display:flex;gap:6px"><button data-act="accept" style="background:#8CFF8A;color:#000;border:none;border-radius:999px;padding:8px 12px;font-weight:900;font-size:12px">ACCEPT</button><button data-act="decline" style="background:#333;color:#fff;border:none;border-radius:999px;padding:8px 12px;font-weight:900;font-size:12px">DECLINE</button></div>';
+          card.innerHTML='<div class="zed-req-person" data-zed-profile-id="'+(p.id||'')+'" title="Tap to view profile" style="display:flex;align-items:center;gap:10px;flex:1;min-width:0;cursor:pointer"><div style="width:44px;height:44px;min-width:44px;border-radius:999px;overflow:hidden;background:#222;display:flex;align-items:center;justify-content:center;font-weight:900;color:#fff;font-size:16px;border:2px solid #8CFF8A">'+((p.avatar||p.avatar_url)?'<img src="'+(p.avatar||p.avatar_url)+'" style="width:100%;height:100%;object-fit:cover" />':(p.name||'S')[0])+'</div><div style="min-width:0"><div style="font-weight:700;color:#fff;font-size:13px;line-height:1.2;white-space:normal;word-break:keep-all;overflow-wrap:normal">'+(p.name||'Student')+'</div><div style="font-size:11px;color:#999;line-height:1.2;white-space:normal;word-break:keep-all;overflow-wrap:normal">'+(p.school||'')+' \u2022 '+(p.grade||'')+'</div><div style="font-size:11px;color:#8CFF8A;white-space:nowrap">Tap to view profile</div></div></div><div style="display:flex;gap:6px"><button data-act="accept" style="background:#8CFF8A;color:#000;border:none;border-radius:999px;padding:8px 12px;font-weight:900;font-size:12px">ACCEPT</button><button data-act="decline" style="background:#333;color:#fff;border:none;border-radius:999px;padding:8px 12px;font-weight:900;font-size:12px">DECLINE</button></div>';
           (function(sid2, cardEl){
             cardEl.querySelector('[data-act="accept"]').addEventListener('click', async function(){ await fetch(SUPA_URL+'/rest/v1/friendships', {method:'POST', headers:headers(), body: JSON.stringify({user_id:me.id, friend_id:sid2})}); loadRequestsTab(); loadFriends(); updateChatBadge(); });
             cardEl.querySelector('[data-act="decline"]').addEventListener('click', async function(){ await fetch(SUPA_URL+'/rest/v1/friendships?user_id=eq.'+sid2+'&friend_id=eq.'+me.id, {method:'DELETE', headers:headers()}); loadRequestsTab(); loadFriends(); updateChatBadge(); });
@@ -8218,8 +8325,8 @@ console.log('[ZED] Welcome popup + fast login active');
           var resP2=await fetch(SUPA_URL+'/rest/v1/profiles?select=id,name,school,grade,province,district,avatar,avatar_url,coins,streak,created_at&id=eq.'+oid, {headers:headers()});
           var pRows2=await resP2.json(); var p2=pRows2 && pRows2[0] ? pRows2[0] : {name:'Student'};
           var card2=document.createElement('div');
-          card2.style.cssText='display:flex;justify-content:space-between;align-items:center;background:#1e1e1e;border:1px solid #333;border-radius:12px;padding:12px;margin:0 12px 10px';
-          card2.innerHTML='<div class="zed-req-person" data-zed-profile-id="'+(p2.id||'')+'" title="Tap to view profile" style="display:flex;align-items:center;gap:10px;flex:1;min-width:0;cursor:pointer"><div style="width:44px;height:44px;min-width:44px;border-radius:999px;overflow:hidden;background:#222;display:flex;align-items:center;justify-content:center;font-weight:900;color:#fff;font-size:16px;border:2px solid #8CFF8A">'+((p2.avatar||p2.avatar_url)?'<img src="'+(p2.avatar||p2.avatar_url)+'" style="width:100%;height:100%;object-fit:cover" />':(p2.name||'S')[0])+'</div><div style="min-width:0"><div style="font-weight:800;color:#fff">'+(p2.name||'Student')+'</div><div style="font-size:12px;color:#999">'+(p2.school||'')+'</div><div style="font-size:11px;color:#8CFF8A">Tap to view profile</div></div></div><span style="background:#333;color:#999;border-radius:999px;padding:6px 10px;font-size:12px;font-weight:900">✓ REQUEST SENT</span>';
+          card2.style.cssText='display:flex;gap:8px;align-items:center;background:#1e1e1e;border:1px solid #333;border-radius:12px;padding:8px;margin:0 10px 8px';
+          card2.innerHTML='<div class="zed-req-person" data-zed-profile-id="'+(p2.id||'')+'" title="Tap to view profile" style="display:flex;align-items:center;gap:10px;flex:1;min-width:0;cursor:pointer"><div style="width:44px;height:44px;min-width:44px;border-radius:999px;overflow:hidden;background:#222;display:flex;align-items:center;justify-content:center;font-weight:900;color:#fff;font-size:16px;border:2px solid #8CFF8A">'+((p2.avatar||p2.avatar_url)?'<img src="'+(p2.avatar||p2.avatar_url)+'" style="width:100%;height:100%;object-fit:cover" />':(p2.name||'S')[0])+'</div><div style="min-width:0;flex:1"><div style="font-weight:700;color:#fff;font-size:13px;line-height:1.2;white-space:normal;word-break:keep-all;overflow-wrap:normal">'+(p2.name||'Student')+'</div><div style="font-size:11px;color:#999;line-height:1.2;white-space:normal;word-break:keep-all;overflow-wrap:normal">'+(p2.school||'')+'</div><div style="font-size:11px;color:#8CFF8A;white-space:nowrap">Tap to view profile</div></div></div><span style="background:#333;color:#999;border-radius:999px;padding:5px 7px;font-size:10px;font-weight:900;white-space:nowrap;flex-shrink:0">✓ REQUEST SENT</span>';
           reqList.appendChild(card2);
         }
       }
@@ -8227,6 +8334,7 @@ console.log('[ZED] Welcome popup + fast login active');
   }
   function showList(){
     viewEl.style.display='none';
+    try{ var _h2=document.getElementById('zed-chat-head'); if(_h2) _h2.style.display='flex'; var _tb2=document.getElementById('zed-chat-tabs'); if(_tb2) _tb2.style.display='flex'; }catch(e){}
     // FIX: respect current tab - pressing Back from a chat opened via FRIENDS used to force CHATS list visible while FRIENDS stayed visible = double list
     var _fl=document.getElementById('zed-chat-friends-list'); var _rl=document.getElementById('zed-chat-requests-list');
     if(currentTab==='friends'){
@@ -8251,8 +8359,10 @@ console.log('[ZED] Welcome popup + fast login active');
     }, 8000);
   }
   function showView(friend){
-    currentFriend=friend;
-    listEl.style.display='none'; viewEl.style.display='flex';
+    try{ _lastMsgsKey=''; }catch(e){} currentFriend=friend;
+    listEl.style.display='none';
+    try{ var _h=document.getElementById('zed-chat-head'); if(_h) _h.style.display='none'; var _tb=document.getElementById('zed-chat-tabs'); if(_tb) _tb.style.display='none'; var _sa=document.getElementById('zed-chat-search-add'); if(_sa) _sa.style.display='none'; var _fl=document.getElementById('zed-chat-friends-list'); if(_fl) _fl.style.display='none'; var _rl=document.getElementById('zed-chat-requests-list'); if(_rl) _rl.style.display='none'; }catch(e){}
+    viewEl.style.display='flex';
     (function(){ var _n=document.getElementById('zed-chat-view-name'); if(_n){ _n.textContent=friend.name+' \u2022 '+(friend.school||''); _n.onclick=function(){ if(window.zedOpenUserProfile) window.zedOpenUserProfile(friend, {friendStatus:{status:'accepted',dir:'both'}}); }; } var _a=document.getElementById('zed-chat-view-avatar'); if(_a){ _a.setAttribute('data-profile-id', friend.id||''); _a.style.display='flex'; _a.innerHTML=((friend.avatar||friend.avatar_url)?'<img src="'+(friend.avatar||friend.avatar_url)+'" style="width:100%;height:100%;object-fit:cover" />':(friend.name||'S')[0]); _a.onclick=function(){ if(window.zedOpenProfilePic) window.zedOpenProfilePic(friend); else if(window.zedOpenUserProfile) window.zedOpenUserProfile(friend, {friendStatus:{status:'accepted',dir:'both'}}); }; } })();
     loadMessages();
     markRead(friend);
@@ -8260,22 +8370,26 @@ console.log('[ZED] Welcome popup + fast login active');
     if(pollTimer) clearInterval(pollTimer);
     pollTimer=setInterval(function(){ if(currentFriend) { loadMessages(); markRead(currentFriend); } }, 3000);
   }
-  // SEARCH FOR FRIENDS - always opens search
+  // SEARCH FOR FRIENDS - opens search ONLY, right there. Hides lists while searching so only results show.
   document.getElementById('zed-chat-add-open').addEventListener('click', function(){
     try{
-      /* If inside a chat, go back to list first so search is visible */
       var viewEl2=document.getElementById('zed-chat-view');
-      var listEl2=document.getElementById('zed-chat-list');
-      if(viewEl2 && viewEl2.style.display!=='none' && listEl2){
-        viewEl2.style.display='none';
-        listEl2.style.display='block';
-        try{ if(typeof showList==='function'){ /* keep current tab list, just show search below */ } }catch(e){}
-        try{ if(window._zedClearPoll) {} }catch(e){}
-      }
+      if(viewEl2 && viewEl2.style.display!=='none'){ showList(); }
       var s=document.getElementById('zed-chat-search-add');
-      if(s){ s.style.display='block'; }
-      var inp=document.getElementById('zed-chat-search-input');
-      if(inp){ setTimeout(function(){ try{ inp.focus(); }catch(e){} }, 100); }
+      if(!s) return;
+      var isOpen = s.style.display==='block';
+      if(isOpen){
+        s.style.display='none';
+        var resEl=document.getElementById('zed-chat-search-results'); if(resEl) resEl.innerHTML='';
+        try{ switchChatTab(currentTab||'chats'); }catch(e){}
+      } else {
+        s.style.display='block';
+        var listEl2=document.getElementById('zed-chat-list'); if(listEl2) listEl2.style.display='none';
+        var fl2=document.getElementById('zed-chat-friends-list'); if(fl2) fl2.style.display='none';
+        var rl2=document.getElementById('zed-chat-requests-list'); if(rl2) rl2.style.display='none';
+        var inp=document.getElementById('zed-chat-search-input');
+        if(inp){ setTimeout(function(){ try{ inp.focus(); }catch(e){} }, 100); }
+      }
     }catch(e){}
   });
   document.getElementById('zed-chat-search-input').addEventListener('input', async function(){
@@ -8461,7 +8575,7 @@ console.log('[ZED] Welcome popup + fast login active');
             var p=pRows && pRows[0] ? pRows[0] : {name:'Student'};
             var card=document.createElement('div');
             card.style.cssText='display:flex;justify-content:space-between;align-items:center;background:#1e1e1e;border:1px solid #FFD93D;border-radius:12px;padding:12px;margin:0 12px 8px';
-            card.innerHTML='<div class="zed-req-person" data-zed-profile-id="'+(p.id||'')+'" title="Tap to view profile" style="display:flex;align-items:center;gap:10px;flex:1;min-width:0;cursor:pointer"><div style="width:44px;height:44px;min-width:44px;border-radius:999px;overflow:hidden;background:#222;display:flex;align-items:center;justify-content:center;font-weight:900;color:#fff;font-size:16px;border:2px solid #8CFF8A">'+((p.avatar||p.avatar_url)?'<img src="'+(p.avatar||p.avatar_url)+'" style="width:100%;height:100%;object-fit:cover" />':(p.name||'S')[0])+'</div><div style="min-width:0"><div style="font-weight:800;color:#fff;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">'+(p.name||'Student')+'</div><div style="font-size:12px;color:#999">'+(p.school||'')+' \u2022 '+(p.grade||'')+'</div><div style="font-size:11px;color:#8CFF8A">Tap to view profile</div></div></div><div style="display:flex;gap:6px"><button data-act="accept" style="background:#8CFF8A;color:#000;border:none;border-radius:999px;padding:7px 12px;font-weight:900;font-size:12px;cursor:pointer">ACCEPT</button><button data-act="decline" style="background:#333;color:#fff;border:none;border-radius:999px;padding:7px 12px;font-weight:900;font-size:12px;cursor:pointer">DECLINE</button></div>';
+            card.innerHTML='<div class="zed-req-person" data-zed-profile-id="'+(p.id||'')+'" title="Tap to view profile" style="display:flex;align-items:center;gap:10px;flex:1;min-width:0;cursor:pointer"><div style="width:44px;height:44px;min-width:44px;border-radius:999px;overflow:hidden;background:#222;display:flex;align-items:center;justify-content:center;font-weight:900;color:#fff;font-size:16px;border:2px solid #8CFF8A">'+((p.avatar||p.avatar_url)?'<img src="'+(p.avatar||p.avatar_url)+'" style="width:100%;height:100%;object-fit:cover" />':(p.name||'S')[0])+'</div><div style="min-width:0"><div style="font-weight:700;color:#fff;font-size:13px;line-height:1.2;white-space:normal;word-break:keep-all;overflow-wrap:normal">'+(p.name||'Student')+'</div><div style="font-size:11px;color:#999;line-height:1.2;white-space:normal;word-break:keep-all;overflow-wrap:normal">'+(p.school||'')+' \u2022 '+(p.grade||'')+'</div><div style="font-size:11px;color:#8CFF8A;white-space:nowrap">Tap to view profile</div></div></div><div style="display:flex;gap:6px"><button data-act="accept" style="background:#8CFF8A;color:#000;border:none;border-radius:999px;padding:7px 12px;font-weight:900;font-size:12px;cursor:pointer">ACCEPT</button><button data-act="decline" style="background:#333;color:#fff;border:none;border-radius:999px;padding:7px 12px;font-weight:900;font-size:12px;cursor:pointer">DECLINE</button></div>';
             (function(sid, cardEl){
               cardEl.querySelector('[data-act="accept"]').addEventListener('click', async function(){
                 // Accept = add reverse row
@@ -8517,7 +8631,7 @@ console.log('[ZED] Welcome popup + fast login active');
       var friends=await res3.json();
       if(mySeq!==_loadFriendsSeq) return; // stale
       var _seen={}; friends=(friends||[]).filter(function(f){ if(!f||!f.id||_seen[f.id]) return false; _seen[f.id]=true; return true; });
-      // For each friend, get last message in last 1hr (do NOT clear listEl - requests are already there)
+      // For each friend, get last message in last 48hrs (do NOT clear listEl - requests are already there)
       var friendsHeader=document.createElement('div');
       friendsHeader.style.cssText='padding:10px 12px 6px;font-weight:900;color:#fff;font-size:13px';
       friendsHeader.textContent='💬 YOUR FRIENDS ('+friends.length+')';
@@ -8571,36 +8685,43 @@ console.log('[ZED] Welcome popup + fast login active');
       }
     }catch(e){ _loadFriendsBusy=false; if(!zedRenderCachedFriends()){ listEl.innerHTML='<div style="padding:20px;color:#999;text-align:center">No friends yet.<br/>Tap Search for friends above to find friends by name or school.</div>'; } }
   }
+  var _lastMsgsKey='';
+  function _msgsKey(list){ try{ return (list||[]).map(function(m){ return (m.id||'')+'|'+(m.text||'')+'|'+(m.read_at||''); }).join(';;'); }catch(e){ return ''; } }
+  function _tickHtml(m, isMe){ if(!isMe) return ''; return m.read_at ? '<div class="zed-chat-tick read" style="text-align:right">\u2713\u2713 Read</div>' : '<div class="zed-chat-tick" style="text-align:right">\u2713 Sent</div>'; }
   async function loadMessages(){
     if(!currentFriend) return;
     var me=getMe();
-    // OFFLINE: show saved messages instantly
     try{
       var _mc=zedCacheGet('zed_msgs_cache_v1')||{}; var _cachedMsgs=_mc[currentFriend.id]||[];
       if(_cachedMsgs.length){
-        msgsEl.innerHTML='';
-        _cachedMsgs.forEach(function(m){ var _d=document.createElement('div'); var _isMe=m.sender_id===me.id; _d.className='zed-chat-msg '+(_isMe?'me':'them'); _d.innerHTML='<div>'+(m.text||'').replace(/</g,'&lt;')+'</div>'; msgsEl.appendChild(_d); });
-        msgsEl.scrollTop=msgsEl.scrollHeight;
+        var _ck=_msgsKey(_cachedMsgs);
+        if(_ck!==_lastMsgsKey){
+          msgsEl.innerHTML='';
+          _cachedMsgs.forEach(function(m){ var _d=document.createElement('div'); var _isMe=m.sender_id===me.id; _d.className='zed-chat-msg '+(_isMe?'me':'them'); _d.innerHTML='<div>'+(m.text||'').replace(/</g,'&lt;')+'</div>'+_tickHtml(m,_isMe); msgsEl.appendChild(_d); });
+          _lastMsgsKey=_ck; msgsEl.scrollTop=msgsEl.scrollHeight;
+        }
       }
     }catch(e){}
     try{
       var res=await fetch(SUPA_URL+'/rest/v1/chat_messages?select=*&created_at=gt.'+encodeURIComponent(oneHourAgoISO())+'&or=(and(sender_id.eq.'+me.id+',receiver_id.eq.'+currentFriend.id+'),and(sender_id.eq.'+currentFriend.id+',receiver_id.eq.'+me.id+'))&order=created_at.asc', {headers:headers()});
       var msgs=await res.json();
       try{ var _allMc=zedCacheGet('zed_msgs_cache_v1')||{}; _allMc[currentFriend.id]=(msgs||[]).slice(-100); zedCacheSet('zed_msgs_cache_v1', _allMc); }catch(e){}
+      var _nk=_msgsKey(msgs);
+      if(_nk===_lastMsgsKey){ return; }
+      _lastMsgsKey=_nk;
       msgsEl.innerHTML='';
       (msgs||[]).forEach(function(m){
         var d=document.createElement('div');
         var isMe=m.sender_id===me.id;
         d.className='zed-chat-msg '+(isMe?'me':'them');
-        var tick='';
-        if(isMe){ tick = m.read_at ? '<div class="zed-chat-tick read" style="text-align:right">✓✓ Read</div>' : '<div class="zed-chat-tick" style="text-align:right">✓ Sent</div>'; }
+        var tick=_tickHtml(m,isMe);
         d.innerHTML='<div>'+m.text+'</div>'+tick;
         msgsEl.appendChild(d);
       });
       if((msgs||[]).length===0){
         var empty=document.createElement('div');
         empty.style.cssText='text-align:center;color:#999;font-size:13px;padding:20px';
-        empty.textContent='No messages yet in last 1 hour. Say hi! Chats delete after 1 hour.';
+        empty.textContent='No messages yet in last 48 hours. Say hi! Chats delete after 48 hours.';
         msgsEl.appendChild(empty);
       }
       msgsEl.scrollTop=msgsEl.scrollHeight;
@@ -8618,7 +8739,7 @@ console.log('[ZED] Welcome popup + fast login active');
       // OFFLINE: queue message, show it locally, send when back online
       try{
         var _ob=JSON.parse(localStorage.getItem('zed_outbox_v1')||'[]'); _ob.push({sender_id:me.id, receiver_id:currentFriend.id, text:q, created_at:new Date().toISOString()}); localStorage.setItem('zed_outbox_v1', JSON.stringify(_ob.slice(-100)));
-        var _d=document.createElement('div'); _d.className='zed-chat-msg me'; _d.innerHTML='<div>'+q.replace(/</g,'&lt;')+'</div>'; msgsEl.appendChild(_d); msgsEl.scrollTop=msgsEl.scrollHeight;
+        var _d=document.createElement('div'); _d.className='zed-chat-msg me'; _d.innerHTML='<div>'+q.replace(/</g,'&lt;')+'</div><div class="zed-chat-tick" style="text-align:right">\u2713 Sent</div>'; msgsEl.appendChild(_d); msgsEl.scrollTop=msgsEl.scrollHeight;
       }catch(_e){ alert('Could not send. Check your data and try again.'); }
     }
   }
@@ -8669,6 +8790,7 @@ console.log('[ZED] Welcome popup + fast login active');
     }catch(e){ return false; }
   }
   function updateFabVisibility(){
+    if(window._zedAnyDragging) return;
     var stack=document.getElementById('zed-fab-stack');
     var aiBtn=document.getElementById('zed-ai-btn');
     var chatBtn=document.getElementById('zed-chat-btn');
@@ -8708,6 +8830,7 @@ console.log('[ZED] Welcome popup + fast login active');
 (function(){
   function niceOne(btn, icon, label){
     if(!btn) return;
+    if(window._zedAnyDragging) return;
     // FIX v5: don't rebuild every 1.2s - rebuilding innerHTML every second = flicker. Only rebuild if wrong.
     var _ic=btn.querySelector('.zed-fab-icon');
     if(_ic && _ic.textContent===icon && btn.getAttribute('data-label')===label && btn.classList.contains('zed-fab-nice')) return;
@@ -8738,6 +8861,7 @@ console.log('[ZED] Welcome popup + fast login active');
     btn.classList.add('zed-fab-nice');
   }
   function tidyFabs(){
+    if(window._zedAnyDragging) return;
     var stack=document.getElementById('zed-fab-stack');
     if(!stack) return;
     var ai=document.getElementById('zed-ai-btn');
@@ -8893,6 +9017,7 @@ console.log('[ZED] Welcome popup + fast login active');
   setInterval(injectAdminCard, 1200); injectAdminCard();
   // 4) Badge guard - run often so a stray badge can never stick to the wrong button
   function guardBadges(){
+    if(window._zedAnyDragging) return;
     // AI: no badge ever
     document.querySelectorAll('#zed-ai-btn #zed-offline-count-badge, #zed-ai-btn .zed-count-badge, #zed-ai-btn #zed-chat-unread-badge').forEach(function(b){ b.remove(); });
     // Offline count badge must live on offline button
@@ -8993,6 +9118,7 @@ body > #zed-ai-btn, body > #zed-offline-library-btn, body > #zed-chat-btn{
     btn.style.setProperty('overflow','visible','important');
   }
   function fixBadges(){
+    if(window._zedAnyDragging) return;
     var ai=document.getElementById('zed-ai-btn');
     var off=document.getElementById('zed-offline-library-btn');
     var chat=document.getElementById('zed-chat-btn');
@@ -9076,6 +9202,7 @@ body > #zed-ai-btn, body > #zed-offline-library-btn, body > #zed-chat-btn{
   // This clears the bad saved positions from the previous version where dragging saved overlapping spots.
   var overlapFixDone=false;
   function checkOverlap(){
+    if(window._zedAnyDragging) return;
     var ids=['zed-ai-btn','zed-offline-library-btn','zed-chat-btn'];
     var btns=ids.map(function(id){ return document.getElementById(id); }).filter(Boolean);
     if(btns.length<3) return;
@@ -9928,6 +10055,7 @@ header div[class*="bg-"][class*="border"][class*="rounded"] span:first-child{
     }catch(e){}
   }
   function ensureChatBtn(){
+    if(window._zedAnyDragging) return;
     if(isOnAuth()) return;
     var stack = ensureStack();
     var chat = document.getElementById('zed-chat-btn');
@@ -9954,7 +10082,7 @@ header div[class*="bg-"][class*="border"][class*="rounded"] span:first-child{
           }catch(e){}
         });
       }catch(e){}
-      if(needsReset){
+      if(needsReset && !chat.classList.contains('zed-free') && !chat.classList.contains('zed-dragging') && !window._zedAnyDragging){
         clearBadFabPositions();
         try{
           chat.classList.remove('zed-free','zed-dragging');
@@ -9966,16 +10094,18 @@ header div[class*="bg-"][class*="border"][class*="rounded"] span:first-child{
           chat.style.setProperty('pointer-events','auto','important');
         }catch(e){}
       }
-      // Must live in the stack, as the 3rd button (AI top, Papers middle, Chats bottom)
-      try{
-        if(chat.parentElement !== stack) stack.appendChild(chat);
-        else stack.appendChild(chat); // appendChild moves it to last = bottom
-        chat.style.setProperty('position','relative','important');
-        chat.style.setProperty('left','auto','important');
-        chat.style.setProperty('top','auto','important');
-        chat.style.setProperty('right','auto','important');
-        chat.style.setProperty('bottom','auto','important');
-      }catch(e){}
+      var _chatIsFree = chat.classList.contains('zed-free') || chat.classList.contains('zed-dragging') || window._zedAnyDragging;
+      if(!_chatIsFree){
+        try{
+          if(chat.parentElement !== stack) stack.appendChild(chat);
+          else stack.appendChild(chat);
+          chat.style.setProperty('position','relative','important');
+          chat.style.setProperty('left','auto','important');
+          chat.style.setProperty('top','auto','important');
+          chat.style.setProperty('right','auto','important');
+          chat.style.setProperty('bottom','auto','important');
+        }catch(e){}
+      }
       // Must show the speech-bubble icon like the other two show theirs, and keep its badge
       try{
         var badge = chat.querySelector('#zed-chat-unread-badge');
@@ -10180,5 +10310,72 @@ header div[class*="bg-"][class*="border"][class*="rounded"] span:first-child{
   console.log('[ZED] FIX FINAL active: 3 FABs (AI + Papers + Chats) + Leaderboard profile pics');
 })();
 </script>
+
+<style> /* FACEBOOK MESSENGER-STYLE - JUST SMALL, input always visible, messages small, chat-only view */
+#zed-chat-panel{ position:fixed !important; left:auto !important; top:auto !important; right:12px !important; bottom:12px !important; width:320px !important; height:400px !important; max-height:calc(100vh - 24px) !important; background:#18191A !important; border-radius:16px !important; box-shadow:0 12px 40px rgba(0,0,0,.65) !important; overflow:hidden !important; border:1px solid #3A3B3C !important; display:none; flex-direction:column; overscroll-behavior:contain !important; }
+#zed-chat-panel.open{ display:flex !important; }
+@media (max-width:500px){
+  #zed-chat-panel{ left:auto !important; right:12px !important; top:auto !important; bottom:12px !important; width:min(320px, calc(100vw - 24px)) !important; height:min(400px, calc(100vh - 24px)) !important; max-height:none !important; border-radius:16px !important; }
+}
+#zed-chat-panel, #zed-chat-list, #zed-chat-friends-list, #zed-chat-requests-list, #zed-chat-msgs{ overscroll-behavior:contain !important; }
+#zed-chat-list, #zed-chat-friends-list, #zed-chat-requests-list, #zed-chat-msgs{ touch-action:pan-y !important; }
+#zed-chat-head, #zed-chat-tabs{ touch-action:none !important; }
+#zed-chat-head{ background:#242526 !important; border-bottom:none !important; padding:10px 12px !important; gap:8px !important; flex-wrap:nowrap !important; flex-shrink:0 !important; }
+#zed-chat-head > div:nth-child(2){ flex:1 !important; min-width:0 !important; }
+#zed-chat-head > div:nth-child(2) > div:first-child{ font-size:15px !important; font-weight:800 !important; white-space:nowrap !important; overflow:hidden !important; text-overflow:ellipsis !important; }
+#zed-chat-head > div:nth-child(2) > div:last-child{ color:#B0B3B8 !important; font-size:10px !important; white-space:nowrap !important; overflow:hidden !important; text-overflow:ellipsis !important; }
+#zed-chat-back{ flex-shrink:0 !important; }
+#zed-chat-add-open{ background:#3A3B3C !important; color:#fff !important; border-radius:999px !important; padding:7px 10px !important; font-size:11px !important; flex-shrink:0 !important; }
+#zed-chat-tabs{ background:#18191A !important; border-bottom:1px solid #3A3B3C !important; padding:8px 10px !important; gap:6px !important; flex-shrink:0 !important; }
+#zed-chat-tabs button{ border-radius:999px !important; font-size:12px !important; padding:8px 8px !important; background:#3A3B3C !important; color:#E4E6EB !important; border:none !important; }
+#zed-chat-tabs button#zed-tab-chats{ background:#0084FF !important; color:#fff !important; }
+#zed-chat-list, #zed-chat-friends-list, #zed-chat-requests-list{ background:#18191A !important; flex:1 !important; min-height:0 !important; overflow-y:auto !important; }
+#zed-chat-view{ background:#18191A !important; flex:1 !important; min-height:0 !important; display:flex; flex-direction:column; overflow:hidden !important; }
+#zed-chat-view-head{ background:#242526 !important; border-bottom:1px solid #3A3B3C !important; padding:8px 10px !important; gap:8px !important; flex-wrap:nowrap !important; flex-shrink:0 !important; }
+#zed-chat-view-avatar{ width:34px !important; height:34px !important; min-width:34px !important; border:none !important; flex-shrink:0 !important; }
+#zed-chat-view-name{ font-size:13px !important; font-weight:700 !important; color:#fff !important; white-space:nowrap !important; overflow:hidden !important; text-overflow:ellipsis !important; max-width:55% !important; flex:1 !important; min-width:0 !important; }
+#zed-chat-msgs{ background:#18191A !important; padding:10px 10px 6px !important; gap:2px !important; flex:1 !important; min-height:0 !important; overflow-y:auto !important; }
+.zed-chat-msg{ max-width:70% !important; padding:6px 10px !important; border-radius:16px !important; font-size:13px !important; line-height:1.3 !important; min-height:0 !important; }
+.zed-chat-msg.me{ background:#0084FF !important; background-image:linear-gradient(135deg,#0099FF,#0084FF) !important; color:#fff !important; align-self:flex-end !important; border-bottom-right-radius:4px !important; }
+.zed-chat-msg.them{ background:#3A3B3C !important; color:#E4E6EB !important; align-self:flex-start !important; border:none !important; border-bottom-left-radius:4px !important; }
+.zed-chat-tick{ font-size:10px !important; color:#B0B3B8 !important; opacity:1 !important; min-height:0 !important; margin-top:1px !important; }
+#zed-chat-view > div:last-child{ background:#242526 !important; border-top:1px solid #3A3B3C !important; padding:7px 8px !important; gap:6px !important; align-items:center !important; flex-shrink:0 !important; position:relative !important; z-index:5 !important; }
+#zed-chat-input{ background:#3A3B3C !important; border:none !important; border-radius:999px !important; padding:8px 12px !important; font-size:13px !important; color:#fff !important; flex:1 !important; min-width:0 !important; }
+#zed-chat-input::placeholder{ color:#B0B3B8 !important; }
+#zed-chat-send{ background:#0084FF !important; color:#fff !important; width:34px !important; height:34px !important; min-width:34px !important; border-radius:999px !important; font-size:16px !important; padding:0 !important; flex-shrink:0 !important; }
+#zed-chat-search-add{ background:#18191A !important; border-bottom:1px solid #3A3B3C !important; padding:8px 10px !important; flex-shrink:0 !important; }
+#zed-chat-search-input{ background:#3A3B3C !important; border:none !important; border-radius:999px !important; padding:7px 10px !important; font-size:13px !important; }
+#zed-chat-btn.zed-free{ position:fixed !important; }
+#zed-chat-btn.zed-dragging{ position:fixed !important; }
+</style>
+
+
+<style> /* AI TUTOR - SAME SMALL FLOATING BOX AS CHATS (320x400), NO SELECTS */
+#zed-ai-panel{ position:fixed !important; left:auto !important; top:auto !important; right:12px !important; bottom:12px !important; width:320px !important; height:400px !important; max-height:calc(100vh - 24px) !important; background:#18191A !important; border-radius:16px !important; box-shadow:0 12px 40px rgba(0,0,0,.65) !important; overflow:hidden !important; border:1px solid #3A3B3C !important; display:none; flex-direction:column; overscroll-behavior:contain !important; }
+#zed-ai-panel.open{ display:flex !important; }
+@media (max-width:500px){
+  #zed-ai-panel{ left:auto !important; right:12px !important; top:auto !important; bottom:12px !important; width:min(320px, calc(100vw - 24px)) !important; height:min(400px, calc(100vh - 24px)) !important; max-height:none !important; border-radius:16px !important; }
+}
+#zed-ai-msgs{ touch-action:pan-y !important; }
+#zed-ai-head{ background:#242526 !important; border-bottom:1px solid #3A3B3C !important; padding:10px 12px !important; gap:8px !important; flex-wrap:nowrap !important; flex-shrink:0 !important; }
+#zed-ai-head > div:nth-child(2){ flex:1 !important; min-width:0 !important; }
+#zed-ai-head > div:nth-child(2) > div:first-child{ font-size:15px !important; font-weight:800 !important; white-space:nowrap !important; overflow:hidden !important; text-overflow:ellipsis !important; }
+#zed-ai-head > div:nth-child(2) > div:last-child{ color:#B0B3B8 !important; font-size:10px !important; white-space:nowrap !important; overflow:hidden !important; text-overflow:ellipsis !important; }
+#zed-ai-clear{ background:#3A3B3C !important; color:#E4E6EB !important; border:none !important; border-radius:999px !important; padding:6px 10px !important; font-size:11px !important; flex-shrink:0 !important; }
+#zed-ai-keyrow{ background:#1e2b1e !important; border:1px solid #8CFF8A !important; border-radius:12px !important; padding:10px !important; margin:8px 10px !important; font-size:12px !important; flex-shrink:0 !important; }
+#zed-ai-msgs{ background:#18191A !important; padding:10px 10px 6px !important; gap:6px !important; flex:1 !important; min-height:0 !important; overflow-y:auto !important; display:flex !important; flex-direction:column !important; }
+.zed-ai-msg{ max-width:70% !important; padding:6px 10px !important; border-radius:16px !important; font-size:13px !important; line-height:1.3 !important; white-space:pre-wrap !important; }
+.zed-ai-msg.user{ background:#0084FF !important; color:#fff !important; align-self:flex-end !important; border-bottom-right-radius:4px !important; }
+.zed-ai-msg.ai{ background:#3A3B3C !important; color:#E4E6EB !important; align-self:flex-start !important; border:none !important; border-bottom-left-radius:4px !important; }
+#zed-ai-inputrow{ background:#242526 !important; border-top:1px solid #3A3B3C !important; padding:7px 8px !important; gap:6px !important; align-items:center !important; flex-shrink:0 !important; display:flex !important; }
+#zed-ai-input{ background:#3A3B3C !important; border:none !important; border-radius:999px !important; padding:8px 12px !important; font-size:13px !important; color:#fff !important; flex:1 !important; min-width:0 !important; }
+#zed-ai-input::placeholder{ color:#B0B3B8 !important; }
+#zed-ai-send{ background:#0084FF !important; color:#fff !important; width:34px !important; height:34px !important; min-width:34px !important; border-radius:999px !important; font-size:16px !important; padding:0 !important; flex-shrink:0 !important; display:flex !important; align-items:center !important; justify-content:center !important; }
+#zed-ai-panel select{ display:none !important; }
+#zed-ai-attach{ background:#3A3B3C !important; color:#fff !important; width:34px !important; height:34px !important; min-width:34px !important; border-radius:999px !important; font-size:16px !important; padding:0 !important; flex-shrink:0 !important; border:none !important; cursor:pointer !important; display:flex !important; align-items:center !important; justify-content:center !important; }
+#zed-ai-img-preview.show{ display:flex !important; }
+#zed-ai-msgs .zed-ai-msg.user img{ max-width:100% !important; border-radius:10px !important; display:block !important; margin-bottom:4px !important; }
+</style>
+
 </body>
 </html>
