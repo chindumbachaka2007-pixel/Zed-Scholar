@@ -1,92 +1,97 @@
-// ZED SCHOLAR - Auto-Update Service Worker V25
-// Bump this version every time you push a new build - this FORCES update check
-const CACHE_NAME = 'zed-scholar-v3-'; // ← NUMBER 1: change v3 to v4 on next push
-const CACHE_VERSION = 'v4'; // ← NUMBER 2: change v3 to 4 on next push
-
-const ASSETS_TO_CACHE = [
+/* ZED SCHOLAR - Offline Service Worker - SILENT, no offline banner */
+const CACHE = 'zed-scholar-v2';
+const PRECACHE = [
   './',
   './index.html',
+  './ZED-SCHOLAR-fixed.html',
   './manifest.json',
-  // Add your icons if you have them
-  // './icon-192.png',
-  // './icon-512.png'
+  './icon-192.png',
+  './icon-512.png'
 ];
 
-// 1. INSTALL - cache new files and force new SW to take over immediately
-self.addEventListener('install', (event) => {
-  console.log('[SW] Install', CACHE_VERSION);
-  self.skipWaiting(); // IMPORTANT: new SW activates immediately, doesn't wait
-  event.waitUntil(
-    caches.open(CACHE_NAME).then((cache) => {
-      return cache.addAll(ASSETS_TO_CACHE);
-    })
+self.addEventListener('install', (e) => {
+  e.waitUntil(
+    caches.open(CACHE).then(async (cache) => {
+      // Cache each file that exists - if one 404s, don't fail the whole install
+      for (const url of PRECACHE) {
+        try { await cache.add(url); } catch (err) {}
+      }
+    }).then(() => self.skipWaiting())
   );
 });
 
-// 2. ACTIVATE - delete old caches
-self.addEventListener('activate', (event) => {
-  console.log('[SW] Activate', CACHE_VERSION);
-  event.waitUntil(
-    caches.keys().then((keys) => {
-      return Promise.all(
-        keys.map((key) => {
-          if (key !== CACHE_NAME) {
-            console.log('[SW] Deleting old cache', key);
-            return caches.delete(key);
+self.addEventListener('activate', (e) => {
+  e.waitUntil(
+    caches.keys().then((keys) =>
+      Promise.all(keys.filter((k) => k !== CACHE).map((k) => caches.delete(k)))
+    ).then(() => self.clients.claim())
+  );
+});
+
+self.addEventListener('message', (e) => {
+  if (e.data && e.data.type === 'SKIP_WAITING') self.skipWaiting();
+});
+
+function isApi(url) {
+  return url.hostname.includes('supabase.co')
+    || url.hostname.includes('generativelanguage.googleapis.com')
+    || url.hostname.includes('googleapis.com')
+    || url.hostname.includes('firebase')
+    || url.hostname.includes('analytics')
+    || url.hostname.includes('googletagmanager');
+}
+
+self.addEventListener('fetch', (e) => {
+  const req = e.request;
+  if (req.method !== 'GET') return;
+  const url = new URL(req.url);
+
+  // API calls - network only, never cache. If offline they fail silently,
+  // the app already shows its normal empty state / saved papers.
+  if (isApi(url)) return;
+
+  // Navigation - open the app itself: network first, fall back to cached app shell
+  if (req.mode === 'navigate' || (req.headers.get('accept') || '').includes('text/html')) {
+    e.respondWith(
+      fetch(req).then((res) => {
+        // Save a fresh copy for next offline open
+        try {
+          const copy = res.clone();
+          caches.open(CACHE).then((c) => c.put('./index.html', copy)).catch(() => {});
+          // Also keep the fixed filename in sync if this IS that file
+          if (req.url.includes('ZED-SCHOLAR')) {
+            caches.open(CACHE).then((c) => c.put(req, res.clone())).catch(() => {});
           }
-        })
-      );
-    }).then(() => {
-      return self.clients.claim(); // Take control of all pages immediately
-    })
-  );
-});
-
-// 3. FETCH - Network first for HTML (so updates show fast), Cache first for others
-self.addEventListener('fetch', (event) => {
-  // Skip non-GET and chrome extensions
-  if (event.request.method !== 'GET' || event.request.url.startsWith('chrome-extension')) return;
-
-  // For HTML pages - try network first, fall back to cache
-  if (event.request.headers.get('accept')?.includes('text/html')) {
-    event.respondWith(
-      fetch(event.request)
-        .then((res) => {
-          // Update cache with fresh HTML
-          const clone = res.clone();
-          caches.open(CACHE_NAME).then((cache) => cache.put(event.request, clone));
-          return res;
-        })
-        .catch(() => {
-          // Offline - serve cached HTML
-          return caches.match(event.request).then((cached) => cached || caches.match('./index.html'));
-        })
+        } catch (err) {}
+        return res;
+      }).catch(async () => {
+        const cache = await caches.open(CACHE);
+        const cached = await cache.match(req, { ignoreSearch: true })
+          || await cache.match('./index.html')
+          || await cache.match('./ZED-SCHOLAR-fixed.html')
+          || await cache.match('./');
+        if (cached) return cached;
+        // Last resort - still return something, never a blank browser error page
+        return new Response('<h1 style="font-family:sans-serif;padding:20px">ZED SCHOLAR</h1><p style="font-family:sans-serif;padding:0 20px">Open once with data, then it works offline.</p>', { headers: { 'Content-Type': 'text/html' } });
+      })
     );
     return;
   }
 
-  // For everything else - cache first, then network
-  event.respondWith(
-    caches.match(event.request).then((cached) => {
-      if (cached) return cached;
-      return fetch(event.request).then((res) => {
-        // Don't cache supabase, youtube, etc
-        if (event.request.url.includes('supabase') || event.request.url.includes('youtube') || event.request.url.includes('ytimg')) {
-          return res;
+  // Everything else (CSS, JS, images, fonts, PDF.js, Tailwind CDN) - show cached copy instantly, update in background
+  e.respondWith(
+    caches.match(req, { ignoreSearch: true }).then((cached) => {
+      const network = fetch(req).then((res) => {
+        if (res && res.status === 200 && (url.origin === self.location.origin || url.hostname.includes('cdnjs') || url.hostname.includes('cdn') || url.hostname.includes('fonts') || url.hostname.includes('tailwind'))) {
+          try {
+            const copy = res.clone();
+            caches.open(CACHE).then((c) => c.put(req, copy)).catch(() => {});
+          } catch (err) {}
         }
-        const clone = res.clone();
-        caches.open(CACHE_NAME).then((cache) => cache.put(event.request, clone));
         return res;
-      });
+      }).catch(() => null);
+      // If we have a cached copy, return it now and update in background. If not, wait for network.
+      return cached || network.then((r) => r || new Response('', { status: 504 }));
     })
   );
-});
-
-// Allow page to trigger skipWaiting
-self.addEventListener('message', (event) => {
-  if (event.data && event.data.type === 'SKIP_WAITING') {
-    self.skipWaiting();
-  }
-});
- }
 });
