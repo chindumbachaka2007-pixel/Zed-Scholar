@@ -6483,6 +6483,8 @@ console.log('[ZED] Welcome popup + fast login active');
         { id:'appearance', icon:'🎨', title:'Appearance', sub:'Dark / Light mode • Font size' },
         { id:'prefs', icon:'🔔', title:'Preferences', sub:'Notifications • Reminders • Data saver' },
         { id:'storage', icon:'💾', title:'Storage & About', sub:'Offline papers • About ZED' },
+        { id:'privacy', icon:'🔒', title:'Privacy & Policies', sub:'Privacy Policy • Terms • What we collect' },
+        { id:'feedback', icon:'💬', title:'Feedback', sub:'Send feedback on WhatsApp to developer' },
         { id:'account', icon:'🚪', title:'Account', sub:'Logout' },
       ];
       var list = card.querySelector('#zed-cat-list');
@@ -6788,6 +6790,84 @@ console.log('[ZED] Welcome popup + fast login active');
             location.reload();
           }
         });
+      }
+      if(id === 'privacy'){
+        card.innerHTML += '<h2>🔒 Privacy & Policies</h2><div style="color:#999;font-size:12px;margin-bottom:12px;">Last updated: 12 Nov 2026 • ZED SCHOLAR, Zambia</div>'
+          + '<h3 style="margin:14px 0 6px;">Privacy Policy</h3>'
+          + '<div style="color:#ccc;font-size:13px;line-height:1.6;">'
+          + '<b style="color:#fff;">What we collect:</b> Your name, phone number, school, grade, province & district, profile photo (if you add one), quiz scores, coins & streak. We do NOT collect your contacts, messages outside ZED, or your exact location.<br/><br/>'
+          + '<b style="color:#fff;">How we use it:</b> To create your account, show your progress, rank you on the Leaderboard, and help you study. Your name, school & quiz scores appear on the Leaderboard — that is how the app works.<br/><br/>'
+          + '<b style="color:#fff;">What we NEVER do:</b> We never sell your data. We never share your phone number or password with other learners. Your password is only used to log you in.<br/><br/>'
+          + '<b style="color:#fff;">Where it is stored:</b> Securely in our database (Supabase) and on your phone (for offline papers & login). If you log out on a shared phone, log back in with your own phone + password.<br/><br/>'
+          + '<b style="color:#fff;">Your controls:</b> You can edit your name/school/photo in Settings → Profile. You can clear your quiz history in Profile → Clear Quiz History. You can log out anytime in Settings → Account. To delete your account, send us a message on WhatsApp (Settings → Feedback) with “Delete my account”.'
+          + '</div>'
+          + '<h3 style="margin:16px 0 6px;">Terms of Use</h3>'
+          + '<div style="color:#ccc;font-size:13px;line-height:1.6;">'
+          + '1. ZED SCHOLAR is free for Grade 10-12 / Form 1-5 learners in Zambia.<br/>'
+          + '2. Use your real name & school so teachers and friends can find you.<br/>'
+          + '3. Do not share your password. Do not create fake accounts to cheat the Leaderboard.<br/>'
+          + '4. Be kind in Chats. No bullying, no insults, no sharing of personal phone numbers or photos of others without permission.<br/>'
+          + '5. Past papers & videos are for studying only — do not re-upload them as your own.<br/>'
+          + '6. We may remove accounts that cheat, bully, or misuse the app.'
+          + '</div>'
+          + '<div style="background:#1a1a1a;border:1px solid #333;border-radius:12px;padding:12px;margin-top:14px;font-size:12px;color:#999;line-height:1.5;">Questions about privacy? Tap below — it opens WhatsApp to the developer. We reply as soon as we can.</div>'
+          + '<button class="zed-settings-btn-primary" id="zed-privacy-wa" type="button">💬 ASK ABOUT PRIVACY ON WHATSAPP</button>';
+        var _pw = card.querySelector('#zed-privacy-wa');
+        if(_pw){ _pw.addEventListener('click', function(){ var msg='Hi ZED SCHOLAR Developer, I have a question about Privacy & Policies. My name is '+(user?user.name:'')+' ('+(user?user.phone:'')+').'; window.open('https://wa.me/260966983200?text='+encodeURIComponent(msg), '_blank'); }); }
+      }
+      if(id === 'feedback'){
+        card.innerHTML += '<h2>💬 Feedback</h2><div style="color:#999;font-size:13px;margin-bottom:12px;">Send it straight to the developer on WhatsApp</div>'
+          + '<div style="background:#1a1a1a;border:1px solid #25D366;border-radius:12px;padding:12px;display:flex;gap:10px;align-items:center;"><span style="font-size:28px;">💬</span><div><div style="font-weight:900;font-size:15px;">Developer on WhatsApp</div><div style="color:#ccc;font-size:13px;">Usually replies within a day</div><div style="color:#888;font-size:11px;margin-top:2px;">Nothing is sent until you tap Send inside WhatsApp.</div></div></div>'
+          + '<label style="margin-top:14px;">⭐ Rate the app</label>'
+          + '<div style="background:#1a1a1a;border:1px solid #333;border-radius:12px;padding:12px;text-align:center;">'
+          + '<div style="display:flex;justify-content:center;gap:4px;">'
+          + '<button class="zed-star-btn" data-star="1" type="button" style="font-size:36px;line-height:1;background:none;border:none;cursor:pointer;color:#444;padding:0 2px;">★</button>'
+          + '<button class="zed-star-btn" data-star="2" type="button" style="font-size:36px;line-height:1;background:none;border:none;cursor:pointer;color:#444;padding:0 2px;">★</button>'
+          + '<button class="zed-star-btn" data-star="3" type="button" style="font-size:36px;line-height:1;background:none;border:none;cursor:pointer;color:#444;padding:0 2px;">★</button>'
+          + '<button class="zed-star-btn" data-star="4" type="button" style="font-size:36px;line-height:1;background:none;border:none;cursor:pointer;color:#444;padding:0 2px;">★</button>'
+          + '<button class="zed-star-btn" data-star="5" type="button" style="font-size:36px;line-height:1;background:none;border:none;cursor:pointer;color:#444;padding:0 2px;">★</button>'
+          + '</div>'
+          + '<div id="zed-fb-rating-label" style="font-size:13px;font-weight:800;color:#FFD700;margin-top:6px;">Tap a star to rate ⭐</div>'
+          + '</div>'
+          + '<div style="display:flex;gap:8px;margin-top:12px;"><button class="zed-chip" id="zed-fb-bug" type="button">🐛 Report a bug</button><button class="zed-chip" id="zed-fb-idea" type="button">💡 Suggest a feature</button></div>'
+          + '<label style="margin-top:14px;">What is it about?</label>'
+          + '<select id="zed-fb-cat"><option>Bug — something is broken</option><option>Suggestion — new feature / idea</option><option>Question — I need help</option><option>Praise — I like ZED SCHOLAR</option><option>Other</option></select>'
+          + '<label>Your message</label>'
+          + '<textarea id="zed-fb-msg" placeholder="Example: The leaderboard shows 2 profile pics on my phone..." style="width:100%;min-height:110px;padding:12px;background:#0a0a0a;border:1px solid #333;border-radius:10px;color:#fff;font-size:14px;outline:none;resize:vertical;"></textarea>'
+          + '<label style="display:flex;align-items:center;gap:8px;text-transform:none;letter-spacing:0;color:#ccc;font-size:13px;"><input id="zed-fb-include" type="checkbox" checked style="width:18px;height:18px;"> Include my name, school & phone so you can reply</label>'
+          + '<button class="zed-settings-btn-primary" id="zed-fb-send" type="button" style="background:#25D366;">💬 SEND ON WHATSAPP</button>'
+          + '<div style="color:#999;font-size:11px;margin-top:8px;text-align:center;">Opens WhatsApp with your rating + message ready. You tap Send there.</div>';
+        var _rating = 0;
+        var _ratingLabels = {1:'1 / 5 stars — Poor', 2:'2 / 5 stars — Fair', 3:'3 / 5 stars — Good', 4:'4 / 5 stars — Very Good', 5:'5 / 5 stars — Excellent'};
+        var _stars = card.querySelectorAll('.zed-star-btn');
+        _stars.forEach(function(btn){
+          btn.addEventListener('click', function(){
+            _rating = parseInt(btn.getAttribute('data-star'), 10) || 0;
+            _stars.forEach(function(b){
+              var v = parseInt(b.getAttribute('data-star'), 10);
+              if(v <= _rating){ b.style.color='#FFD700'; b.style.transform='scale(1.15)'; } else { b.style.color='#444'; b.style.transform='scale(1)'; }
+            });
+            var lab = card.querySelector('#zed-fb-rating-label');
+            if(lab) lab.textContent = _ratingLabels[_rating] || 'Tap a star to rate ⭐';
+          });
+        });
+        var _cat = card.querySelector('#zed-fb-cat');
+        var _msg = card.querySelector('#zed-fb-msg');
+        var _b1 = card.querySelector('#zed-fb-bug');
+        var _b2 = card.querySelector('#zed-fb-idea');
+        if(_b1){ _b1.addEventListener('click', function(){ if(_cat) _cat.value='Bug — something is broken'; if(_msg){ _msg.focus(); if(!_msg.value) _msg.value='I found a bug: '; } }); }
+        if(_b2){ _b2.addEventListener('click', function(){ if(_cat) _cat.value='Suggestion — new feature / idea'; if(_msg){ _msg.focus(); if(!_msg.value) _msg.value='My idea: '; } }); }
+        var _send = card.querySelector('#zed-fb-send');
+        if(_send){ _send.addEventListener('click', function(){
+          var m = _msg ? _msg.value.trim() : '';
+          if(!_rating){ alert('Please tap a star to rate us first ⭐'); return; }
+          if(!m){ alert('Write your feedback first 🙂'); if(_msg) _msg.focus(); return; }
+          var c = _cat ? _cat.value : 'Feedback';
+          var inc = card.querySelector('#zed-fb-include');
+          var who = (inc && inc.checked && user) ? ('\n\nFrom: '+(user.name||'')+'\nPhone: '+(user.phone||'')+'\nSchool: '+(user.school||'')+' • Grade '+(user.grade||'')+' • '+(user.province||'')+' ('+(user.district||'')+')') : '';
+          var full = 'Hi ZED SCHOLAR Developer 👋\n\n⭐ My Rating: ' + (_ratingLabels[_rating] || (_rating + ' / 5 stars')) + '\n\n['+c+']\n'+m+who;
+          window.open('https://wa.me/260966983200?text='+encodeURIComponent(full), '_blank');
+        }); }
       }
       // FIX: Bind Back AFTER all innerHTML - otherwise innerHTML rebuild destroys the listener
       var _bb = card.querySelector('.zed-back-btn');
@@ -13025,5 +13105,371 @@ table tbody tr td:nth-child(2) .zed-lb-avatar ~ .zed-lb-avatar,
 table tbody tr td:nth-child(2) img ~ img { display:none !important; }
 </style>
 
+<!-- ===== ZED AUTH LOADER v6: Decorated like AI Quiz loader ===== -->
+<style>
+/* --- SAME style as AI Quiz loader (#zed-quiz-loader) - nice colours, decorated --- */
+#zed-auth-loader{
+  position:fixed !important; inset:0 !important;
+  z-index:9999999 !important;
+  background:rgba(0,0,0,.78) !important;
+  backdrop-filter:blur(2px); -webkit-backdrop-filter:blur(2px);
+  display:none !important;
+  flex-direction:column !important; align-items:center !important; justify-content:center !important;
+  gap:16px !important; padding:20px !important; box-sizing:border-box;
+  pointer-events:none !important; text-align:center;
+}
+#zed-auth-loader.show{ display:flex !important; pointer-events:none !important; }
+.zed-auth-pill{
+  font-size:10px; letter-spacing:3px; font-weight:900; color:#FFD93D;
+  border:1px solid rgba(255,255,255,.35); background:rgba(255,255,255,.08);
+  padding:6px 12px; border-radius:999px;
+}
+.zed-auth-ring-wrap{ position:relative; width:84px; height:84px; display:flex; align-items:center; justify-content:center; }
+.zed-auth-ring{
+  width:84px; height:84px; border-radius:50%;
+  border:7px solid rgba(255,255,255,.18);
+  border-top-color:#FFD93D; border-right-color:#8CFF8A;
+  animation:zedAuthSpin 0.9s linear infinite;
+  box-shadow:0 0 0 4px rgba(0,0,0,.2);
+}
+@keyframes zedAuthSpin{ to{ transform:rotate(360deg); } }
+.zed-auth-ring-emoji{ position:absolute; font-size:22px; font-weight:900; }
+#zed-auth-loader-text{
+  max-width:88vw; text-align:center; color:#fff;
+  font-size:17px; font-weight:800; line-height:1.6; padding:0 18px;
+  text-shadow:0 2px 12px rgba(0,0,0,.6);
+}
+#zed-auth-loader-sub{ color:#ccc; font-size:12px; font-weight:400; margin-top:2px; text-align:center; max-width:88vw; }
+.zed-auth-dots{ display:flex; gap:8px; margin-top:2px; align-items:center; justify-content:center; }
+.zed-auth-dots span{ width:10px; height:10px; border-radius:50%; display:block; animation:zedAuthDot 0.9s ease-in-out infinite; }
+.zed-auth-dots span:nth-child(1){ background:#8CFF8A; }
+.zed-auth-dots span:nth-child(2){ background:#FFD93D; animation-delay:0.15s; }
+.zed-auth-dots span:nth-child(3){ background:#fff; animation-delay:0.3s; }
+@keyframes zedAuthDot{ 0%,100%{ transform:translateY(0); opacity:.55; } 50%{ transform:translateY(-6px); opacity:1; } }
+#zed-native-feedback, #zed-signup-feedback-live{ display:none !important; visibility:hidden !important; }
+html[data-signup="open"] #zed-forgot-link,
+html[data-signup="open"] #zed-login-forgot-link,
+#signup #zed-forgot-link,
+#signup #zed-login-forgot-link{ display:none !important; visibility:hidden !important; }
+#zed-login-btn:not(:disabled), #zed-signup-btn:not(:disabled){ cursor:pointer !important; }
+#zed-login-forgot-link, #zed-forgot-link{
+  display:block !important; width:100% !important; text-align:center !important;
+  margin-top:14px !important; padding:6px 0 2px !important;
+}
+#zed-signup-stuck-bar{
+  position:fixed !important; left:12px !important; right:12px !important; bottom:18px !important;
+  z-index:9999998 !important; background:#F5F1E8 !important; color:#0F0E0B !important;
+  border:2px solid #8CFF8A !important; border-radius:12px !important; padding:12px !important;
+  display:none !important; pointer-events:auto !important;
+  box-shadow:0 10px 30px rgba(0,0,0,0.5);
+}
+#zed-signup-stuck-bar.show{ display:block !important; }
+#zed-signup-stuck-bar .zed-stuck-title{ font-weight:800; font-size:13px; margin-bottom:6px; }
+#zed-signup-stuck-bar .zed-stuck-sub{ font-size:12px; color:#555; margin-bottom:10px; }
+#zed-signup-stuck-bar .zed-stuck-row{ display:flex; gap:8px; }
+#zed-signup-stuck-bar button{ flex:1; height:40px; border-radius:10px; font-weight:800; font-size:12px; border:none; cursor:pointer; }
+#zed-stuck-retry{ background:#8CFF8A; color:#000; }
+#zed-stuck-cancel{ background:#111; color:#fff; }
+</style>
+<script>
+// === ZED - v6 - Auth loadings decorated EXACTLY like AI Quiz loader ===
+// Quiz loader style (copied from #zed-quiz-loader):
+// - bg rgba(0,0,0,.78) + blur, 84px ring, border-top #FFD93D yellow, border-right #8CFF8A green, spin 0.9s
+// - emoji in centre of ring, text 17px/800 with yellow 19px + white + green 900, emojis, sub #ccc 12px
+// Auth loadings now use the SAME decorated look, with a different emoji + words per action.
+(function(){
+  if(window._zedAuthLoaderV6) return; window._zedAuthLoaderV6 = true;
+
+  // --- Fetch timeout for Supabase (Create Account hang fix) ---
+  try{
+    if(!window._zedFetchPatched){
+      window._zedFetchPatched = true;
+      var origFetch = window.fetch.bind(window);
+      window.fetch = function(url, opts){
+        try{
+          var urlStr = (typeof url === 'string' ? url : (url && url.url ? url.url : '')) + '';
+          var isSupabase = urlStr.indexOf('supabase') !== -1 || urlStr.indexOf('/rest/v1') !== -1 || urlStr.indexOf('/auth/v1') !== -1;
+          if(!isSupabase) return origFetch(url, opts);
+          var ctrl = new AbortController();
+          var timer = setTimeout(function(){ try{ ctrl.abort(); }catch(e){} }, 12000);
+          var newOpts = Object.assign({}, opts || {}, { signal: ctrl.signal });
+          if(opts && opts.signal){
+            try{ if(opts.signal.aborted) ctrl.abort(); else opts.signal.addEventListener('abort', function(){ try{ ctrl.abort(); }catch(e){} }); }catch(e){}
+          }
+          return origFetch(url, newOpts).then(function(res){ clearTimeout(timer); return res; }, function(err){ clearTimeout(timer); throw err; });
+        }catch(e){ return origFetch(url, opts); }
+      };
+    }
+  }catch(e){}
+
+  // --- Decorated loader - SAME as quiz loader ---
+  var existing = document.getElementById('zed-auth-loader');
+  if(existing) existing.remove();
+  var overlay = document.createElement('div');
+  overlay.id = 'zed-auth-loader';
+  overlay.setAttribute('aria-live','polite');
+  overlay.innerHTML = '<div class="zed-auth-pill">ZED SCHOLAR \u2022 ZAMBIA</div>'
+    + '<div class="zed-auth-ring-wrap"><div class="zed-auth-ring"></div><div class="zed-auth-ring-emoji" id="zed-auth-ring-emoji">\ud83e\udd16</div></div>'
+    + '<div id="zed-auth-loader-text">Loading...</div>'
+    + '<div id="zed-auth-loader-sub">Please keep this screen open</div>'
+    + '<div class="zed-auth-dots"><span></span><span></span><span></span></div>';
+  document.body.appendChild(overlay);
+  var titleEl = overlay.querySelector('#zed-auth-loader-text');
+  var subEl = overlay.querySelector('#zed-auth-loader-sub');
+  var emojiEl = overlay.querySelector('#zed-auth-ring-emoji');
+  var hideTimer = null;
+  var firstShowTime = 0;
+  var HARD_MAX = 1200;
+
+  // Map each auth action to quiz-style decorated text + emoji (yellow + white + green)
+  function getDecorated(label, fallbackSub){
+    var l = (label || '').toLowerCase();
+    var Y = '<span style="color:#FFD93D;font-size:19px;">PLEASE WAIT...</span>';
+    var W = '<span style="color:#fff;">';
+    var G = '<span style="color:#8CFF8A;font-weight:900;">';
+    var E = '</span>';
+    if(l.indexOf('opening create account') !== -1 || l.indexOf('opening sign up') !== -1)
+      return { emoji:'\ud83d\udcdd', html:'\u23f3 ' + Y + '<br>\ud83c\udf73 ' + W + 'Zed Scholar is getting' + E + ' ' + G + 'Create Account ready just for you...' + E + ' \ud83d\udd25\u2728', sub: fallbackSub || 'Please keep this screen open' };
+    if(l.indexOf('creating account') !== -1)
+      return { emoji:'\ud83c\udf89', html:'\u23f3 ' + Y + '<br>\ud83c\udf73 ' + W + 'Zed Scholar is cooking' + E + ' ' + G + 'your account just for you...' + E + ' \ud83d\udd25\u2728', sub: fallbackSub || 'Setting up your account...' };
+    if(l.indexOf('logging in') !== -1 || l.indexOf('loading login') !== -1)
+      return { emoji:'\ud83d\udc4b', html:'\u23f3 ' + Y + '<br>\ud83c\udf73 ' + W + 'Zed Scholar is checking' + E + ' ' + G + 'your details...' + E + ' \ud83d\udd25\u2728', sub: fallbackSub || 'Please keep this screen open' };
+    if(l.indexOf('forgot password') !== -1)
+      return { emoji:'\ud83d\udd11', html:'\u23f3 ' + Y + '<br>\ud83d\udd11 ' + W + 'Zed Scholar is getting' + E + ' ' + G + 'recovery ready for you...' + E + ' \u2728', sub: fallbackSub || 'Please keep this screen open' };
+    if(l.indexOf('sending otp') !== -1 || l.indexOf('sending') !== -1)
+      return { emoji:'\ud83d\udcf1', html:'\u23f3 ' + Y + '<br>\ud83d\udcf1 ' + W + 'Zed Scholar is sending' + E + ' ' + G + 'your code to your phone...' + E + ' \u2728', sub: fallbackSub || 'Please keep this screen open' };
+    if(l.indexOf('verifying') !== -1)
+      return { emoji:'\u2705', html:'\u23f3 ' + Y + '<br>\u2705 ' + W + 'Zed Scholar is checking' + E + ' ' + G + 'your code...' + E + ' \u2728', sub: fallbackSub || 'Please keep this screen open' };
+    if(l.indexOf('resetting') !== -1)
+      return { emoji:'\ud83d\udd10', html:'\u23f3 ' + Y + '<br>\ud83d\udd10 ' + W + 'Zed Scholar is saving' + E + ' ' + G + 'your new password...' + E + ' \u2728', sub: fallbackSub || 'Please keep this screen open' };
+    if(l.indexOf('checking phone') !== -1)
+      return { emoji:'\ud83d\udcf1', html:'\u23f3 ' + Y + '<br>\ud83d\udcf1 ' + W + 'Zed Scholar is looking for' + E + ' ' + G + 'your account...' + E + ' \u2728', sub: fallbackSub || 'Please keep this screen open' };
+    return { emoji:'\ud83e\udd16', html:'\u23f3 ' + Y + '<br>\ud83c\udf73 ' + W + 'Zed Scholar is cooking' + E + ' ' + G + 'something just for you...' + E + ' \ud83d\udd25\u2728', sub: fallbackSub || 'Please keep this screen open' };
+  }
+
+  function show(label, sub, duration){
+    try{
+      killToastsLight(); anchorForgotToBottom();
+      var d = getDecorated(label, sub);
+      if(emojiEl) emojiEl.textContent = d.emoji;
+      if(titleEl) titleEl.innerHTML = d.html;
+      if(subEl) subEl.textContent = d.sub;
+      var now = Date.now();
+      if(!overlay.classList.contains('show')){ firstShowTime = now; overlay.classList.add('show'); }
+      var elapsed = now - firstShowTime;
+      var remaining = Math.min(duration || 900, HARD_MAX - elapsed);
+      if(remaining <= 0){ hide(); return; }
+      if(hideTimer) clearTimeout(hideTimer);
+      hideTimer = setTimeout(hide, remaining);
+      setTimeout(function(){ if(Date.now() - firstShowTime >= HARD_MAX) hide(); }, HARD_MAX + 50);
+    }catch(e){}
+  }
+  function hide(){ try{ if(hideTimer) clearTimeout(hideTimer); overlay.classList.remove('show'); firstShowTime = 0; }catch(e){} }
+  window.zedShowAuthLoader = show;
+  window.zedHideAuthLoader = hide;
+  window.zedAuthLoader = { show: show, hide: hide };
+
+  // --- Stuck rescue bar for Create Account ---
+  var stuckBar = document.createElement('div');
+  stuckBar.id = 'zed-signup-stuck-bar';
+  stuckBar.innerHTML = '<div class="zed-stuck-title">Still creating your account... taking too long</div>'
+    + '<div class="zed-stuck-sub">Network is slow or signup got stuck. Tap Retry to try again, or Cancel to go back and check your details.</div>'
+    + '<div class="zed-stuck-row"><button id="zed-stuck-retry" type="button">RETRY</button><button id="zed-stuck-cancel" type="button">CANCEL</button></div>';
+  document.body.appendChild(stuckBar);
+  function showStuckBar(){ try{ stuckBar.classList.add('show'); }catch(e){} }
+  function hideStuckBar(){ try{ stuckBar.classList.remove('show'); }catch(e){} }
+  function forceUnlockSignup(){
+    try{
+      hide(); hideStuckBar();
+      var sb = document.getElementById('zed-signup-btn');
+      if(sb){ sb.disabled = false; if((sb.textContent||'').trim() === 'Signing up...') sb.textContent = 'Create account'; sb._zedDisabledSince = 0; signupStuckSince = 0; }
+      var link = document.getElementById('zed-signup-open');
+      if(link && (link.textContent||'').indexOf('Opening signup') !== -1){ link.textContent = 'Create account'; link.removeAttribute('data-opened'); }
+    }catch(e){}
+  }
+  stuckBar.querySelector('#zed-stuck-retry').addEventListener('click', function(e){ e.preventDefault(); e.stopPropagation(); forceUnlockSignup(); setTimeout(function(){ try{ var sb=document.getElementById('zed-signup-btn'); if(sb) sb.click(); }catch(err){} }, 200); });
+  stuckBar.querySelector('#zed-stuck-cancel').addEventListener('click', function(e){ e.preventDefault(); e.stopPropagation(); forceUnlockSignup(); });
+
+  // --- Light toast killer ---
+  function killToastsLight(){
+    try{
+      var a = document.getElementById('zed-native-feedback'); if(a) a.remove();
+      var b = document.getElementById('zed-signup-feedback-live'); if(b) b.remove();
+      var toast = document.querySelector('div.fixed.bottom-4');
+      if(toast && (toast.textContent||'').trim().indexOf('Opening signup') === 0) toast.style.display = 'none';
+    }catch(e){}
+  }
+  try{
+    var obs = new MutationObserver(function(muts){
+      var needAnchor = false;
+      for(var i=0;i<muts.length;i++){
+        var added = muts[i].addedNodes;
+        for(var j=0;j<added.length;j++){
+          var n = added[j];
+          if(n && n.nodeType === 1 && (n.id === 'zed-native-feedback' || n.id === 'zed-signup-feedback-live')) n.remove();
+          if(n && n.nodeType === 1 && (n.id === 'zed-forgot-link' || n.id === 'zed-login-forgot-link')) needAnchor = true;
+        }
+        if(muts[i].target && muts[i].target.id === 'signup-trigger') needAnchor = true;
+      }
+      if(needAnchor) anchorForgotToBottom();
+    });
+    obs.observe(document.body, { childList:true, subtree:true });
+  }catch(e){}
+  setInterval(killToastsLight, 1000);
+
+  // --- FORGOT PASSWORD: ALWAYS BELOW EVERYTHING ---
+  function isOnSignupPage(){
+    try{
+      if(document.documentElement.getAttribute('data-signup') === 'open') return true;
+      if(((location.hash || '').toLowerCase().indexOf('signup') !== -1)) return true;
+      if(document.getElementById('signup')) return true;
+      var bt = (document.body.innerText || '');
+      if(bt.indexOf('Choose province') !== -1 && bt.indexOf('Create account') !== -1) return true;
+    }catch(e){}
+    return false;
+  }
+  function isOnLoginPage(){
+    try{
+      if(document.getElementById('zed-login-btn')) return true;
+      var bt = (document.body.innerText || '');
+      if(bt.indexOf('Welcome back') !== -1) return true;
+    }catch(e){}
+    return false;
+  }
+  function anchorForgotToBottom(){
+    try{
+      if(isOnSignupPage()){
+        var a1 = document.getElementById('zed-forgot-link'); if(a1) a1.remove();
+        var b1 = document.getElementById('zed-login-forgot-link'); if(b1) b1.remove();
+        return;
+      }
+      if(!isOnLoginPage()) return;
+      var oldLink = document.getElementById('zed-forgot-link');
+      var mainLink = document.getElementById('zed-login-forgot-link');
+      if(oldLink && mainLink){ oldLink.remove(); oldLink = null; }
+      var link = mainLink || oldLink;
+      if(!link) return;
+      var loginBtn = document.getElementById('zed-login-btn');
+      var container = null;
+      if(loginBtn && loginBtn.parentNode) container = loginBtn.parentNode;
+      else if(link.parentNode) container = link.parentNode;
+      if(!container) return;
+      var last = container.lastElementChild;
+      var isToast = last && (last.className||'').indexOf('fixed') !== -1;
+      if(isToast){
+        if(link.nextElementSibling !== last) container.insertBefore(link, last);
+      } else {
+        if(last !== link) container.appendChild(link);
+      }
+      try{ link.style.setProperty('display','block','important'); link.style.setProperty('text-align','center','important'); link.style.setProperty('margin-top','14px','important'); }catch(e){}
+    }catch(e){}
+  }
+  setInterval(anchorForgotToBottom, 300);
+  document.addEventListener('click', function(e){
+    try{
+      var t = (e.target && e.target.textContent || '').trim();
+      if(t === 'PASSWORD' || t === 'SMS OTP' || t.indexOf('SMS') !== -1){
+        setTimeout(anchorForgotToBottom, 50);
+        setTimeout(anchorForgotToBottom, 300);
+        setTimeout(anchorForgotToBottom, 800);
+      }
+    }catch(err){}
+  }, true);
+
+  // --- Watchdogs ---
+  var signupStuckSince = 0;
+  var linkStuckSince = 0;
+  setInterval(function(){
+    try{
+      var sb = document.getElementById('zed-signup-btn');
+      if(sb){
+        var isSigning = ((sb.textContent||'').trim() === 'Signing up...' || sb.disabled);
+        if(isSigning){
+          if(!signupStuckSince) signupStuckSince = Date.now();
+          else if(Date.now() - signupStuckSince > 8000) showStuckBar();
+          if(Date.now() - signupStuckSince > 4000 && sb.disabled) sb.disabled = false;
+        } else { signupStuckSince = 0; hideStuckBar(); }
+      } else { signupStuckSince = 0; hideStuckBar(); }
+      var link = document.getElementById('zed-signup-open');
+      if(link){
+        var txt = (link.textContent||'');
+        if(txt.indexOf('Opening signup') !== -1){
+          if(!linkStuckSince) linkStuckSince = Date.now();
+          else if(Date.now() - linkStuckSince > 3000){
+            if(!document.getElementById('signup')){ link.textContent = 'Create account'; link.removeAttribute('data-opened'); linkStuckSince = 0; hide(); }
+          }
+        } else linkStuckSince = 0;
+      } else linkStuckSince = 0;
+      var lb = document.getElementById('zed-login-btn');
+      if(lb && lb.disabled){
+        if(!lb._zedDisabledSince) lb._zedDisabledSince = Date.now();
+        else if(Date.now() - lb._zedDisabledSince > 4000){
+          var bt = (document.body.innerText || '');
+          if(bt.indexOf('Welcome back') !== -1){ lb.disabled = false; lb._zedDisabledSince = 0; if((lb.textContent||'').trim() === 'Logging in...') lb.textContent = 'Login'; }
+        }
+      } else if(lb) lb._zedDisabledSince = 0;
+      anchorForgotToBottom();
+    }catch(e){}
+  }, 1000);
+
+  // --- Loader triggers ---
+  function bodyTextLower(){ try{ return (document.body.innerText || '').toLowerCase(); }catch(e){ return ''; } }
+  function getAuthAction(btn){
+    if(!btn) return null;
+    var id = btn.id || '';
+    var txt = (btn.textContent || '').trim().toLowerCase().replace(/\s+/g,' ').trim();
+    var bodyTxt = bodyTextLower();
+    var onSignup = bodyTxt.indexOf('choose province') !== -1 || bodyTxt.indexOf('already have an account') !== -1;
+    if(id === 'zed-signup-btn') return { label:'Creating account...', sub:'Setting up your account', duration:900 };
+    if(id === 'zed-login-btn') return { label:'Logging in...', sub:'Checking your details', duration:900 };
+    if(id === 'zed-forgot-link' || id === 'zed-login-forgot-link') return { label:'Opening Forgot Password...', sub:'Loading recovery', duration:900 };
+    if(id === 'zed-go-forgot') return { label:'Opening Forgot Password...', sub:'Loading recovery', duration:900 };
+    if(id === 'zed-rec-go-signup') return { label:'Opening Create Account...', sub:'Loading sign up', duration:900 };
+    if(txt.indexOf('check phone') !== -1) return { label:'Checking phone...', sub:'Looking for your account', duration:900 };
+    if(txt.indexOf('verify') !== -1 && txt.indexOf('code') !== -1) return { label:'Verifying code...', sub:'Please wait', duration:900 };
+    if(txt.indexOf('reset password') !== -1) return { label:'Resetting password...', sub:'Saving new password', duration:900 };
+    if(txt.indexOf('send otp') !== -1 || txt.indexOf('send code') !== -1) return { label:'Sending OTP...', sub:'Sending code to your phone', duration:900 };
+    if(txt === 'create account' || txt.indexOf('create account') !== -1){
+      if(onSignup) return { label:'Creating account...', sub:'Please wait', duration:900 };
+      return { label:'Opening Create Account...', sub:'Loading sign up', duration:900 };
+    }
+    if(txt === 'sign up' || txt === 'signup' || txt.indexOf('sign up') !== -1){
+      if(onSignup) return { label:'Creating account...', sub:'Please wait', duration:900 };
+      return { label:'Opening Sign Up...', sub:'Loading sign up', duration:900 };
+    }
+    if(txt.indexOf('forgot password') !== -1) return { label:'Opening Forgot Password...', sub:'Loading recovery', duration:900 };
+    if(txt === 'log in' || txt === 'login' || txt === 'log in →') return { label:'Logging in...', sub:'Checking your details', duration:900 };
+    if(txt.indexOf('back to login') !== -1) return { label:'Loading Login...', sub:'Please wait', duration:900 };
+    return null;
+  }
+  document.addEventListener('click', function(e){
+    try{
+      var btn = (e.target && e.target.closest) ? e.target.closest('button, a, [role="button"]') : null;
+      if(!btn) return;
+      var action = getAuthAction(btn);
+      if(!action) return;
+      killToastsLight(); anchorForgotToBottom();
+      show(action.label, action.sub, action.duration);
+    }catch(err){}
+  }, true);
+
+  var patchedRecovery = false;
+  setInterval(function(){
+    if(patchedRecovery) return;
+    if(typeof window.zedOpenRecovery === 'function' && !window.zedOpenRecovery._zedLoaderPatched){
+      var orig = window.zedOpenRecovery;
+      var wrapped = function(){
+        show('Opening Forgot Password...', 'Loading recovery', 900);
+        var args = arguments;
+        setTimeout(function(){ try{ orig.apply(window, args); }catch(e){} }, 300);
+      };
+      wrapped._zedLoaderPatched = true;
+      window.zedOpenRecovery = wrapped;
+      patchedRecovery = true;
+    }
+  }, 500);
+  killToastsLight(); anchorForgotToBottom();
+})();
+</script>
 </body>
 </html>
