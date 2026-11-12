@@ -12551,5 +12551,479 @@ window._zedV15Filter = 'search';
 })();
 </script>
 
+
+<script>
+/* ZED FIX - LEADERBOARD V3: Correct ranking + Weekly reset + Clear history + 100% Certificate */
+(function(){
+  var SUPA_URL='https://biastmylavwhlsccvpyu.supabase.co';
+  var SUPA_KEY='sb_publishable_74vo5_RlNXb0U0TrNLCdCQ_8zjDwFni';
+  function headers(){ return {apikey:SUPA_KEY, Authorization:'Bearer '+SUPA_KEY}; }
+  function getMe(){ try{ var u=JSON.parse(localStorage.getItem('zed_user')||'null'); return u||null; }catch(e){ return null; } }
+  function pad(n){ return (n<10?'0':'')+n; }
+  function fmtDay(d){ var m=['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec']; return d.getDate()+' '+m[d.getMonth()]+' '+d.getFullYear(); }
+  function mondayOf(d){
+    var x=new Date(d.getFullYear(), d.getMonth(), d.getDate());
+    var day=x.getDay(); // 0 Sun .. 6 Sat
+    var diff = (day===0 ? -6 : 1-day); // to Monday
+    x.setDate(x.getDate()+diff); x.setHours(0,0,0,0); return x;
+  }
+  function weekIdOf(d){ var m=mondayOf(d); return m.getFullYear()+'-'+pad(m.getMonth()+1)+'-'+pad(m.getDate()); }
+  function getClearedAt(uid){
+    try{
+      var v=localStorage.getItem('zed_cleared_history_'+uid);
+      if(v) return new Date(v).getTime();
+      var v2=localStorage.getItem('zed_cleared_history');
+      if(v2) return new Date(v2).getTime();
+    }catch(e){}
+    return 0;
+  }
+  // ---------- CERTIFICATES ----------
+  function certKey(){ var me=getMe(); return me ? 'zed_certificates_'+me.id : 'zed_certificates'; }
+  function getCerts(){ try{ return JSON.parse(localStorage.getItem(certKey())||'[]'); }catch(e){ return []; } }
+  function saveCerts(a){ try{ localStorage.setItem(certKey(), JSON.stringify(a)); }catch(e){} }
+  function shownKey(){ var me=getMe(); return me ? 'zed_cert_shown_'+me.id : 'zed_cert_shown'; }
+  function getShown(){ try{ return JSON.parse(localStorage.getItem(shownKey())||'[]'); }catch(e){ return []; } }
+  function markShown(id){ try{ var a=getShown(); if(a.indexOf(id)===-1){ a.push(id); localStorage.setItem(shownKey(), JSON.stringify(a)); } }catch(e){} }
+  function makeCert(attempt, me){
+    var d=new Date(attempt.created_at||Date.now());
+    var cid='ZED-'+(d.getFullYear())+'-'+Math.random().toString(36).slice(2,7).toUpperCase();
+    return { id: cid, certId: cid, name: (me&&me.name)||'Student', subject: attempt.subject||'General', score: attempt.score||0, total: attempt.total||0, pct: 100, date: d.toISOString(), dateStr: fmtDay(d)+' '+pad(d.getHours())+':'+pad(d.getMinutes()) };
+  }
+  function showCertificate(cert, auto){
+    var old=document.getElementById('zed-cert-modal'); if(old) old.remove();
+    var ov=document.createElement('div'); ov.id='zed-cert-modal';
+    ov.style.cssText='position:fixed;inset:0;z-index:99999;background:rgba(0,0,0,0.85);display:flex;align-items:center;justify-content:center;padding:14px;overflow:auto;';
+    var card=document.createElement('div'); card.id='zed-cert-card';
+    card.style.cssText='background:#fff;color:#111;width:100%;max-width:520px;border-radius:16px;padding:22px;text-align:center;border:6px solid #FFD700;position:relative;';
+    card.innerHTML =
+      '<div style="font-size:11px;letter-spacing:3px;color:#888;font-weight:900;">ZED SCHOLAR • ZAMBIA</div>' +
+      '<div style="font-size:42px;margin:6px 0;">🏆</div>' +
+      '<div style="font-family:Georgia,serif;font-size:30px;font-weight:900;line-height:1;">Certificate of Excellence</div>' +
+      '<div style="color:#666;font-size:13px;margin-top:8px;">This certifies that</div>' +
+      '<div style="font-size:24px;font-weight:900;margin:6px 0;border-bottom:2px solid #111;display:inline-block;padding:0 12px;">'+(cert.name||'Student')+'</div>' +
+      '<div style="color:#333;font-size:14px;line-height:1.6;margin-top:8px;">scored <b>100%</b> — <b>'+cert.score+'/'+cert.total+'</b><br/>in <b>'+(cert.subject||'General')+'</b> Quiz<br/>on '+cert.dateStr+'</div>' +
+      '<div style="margin:14px auto 0;background:#111;color:#8CFF8A;display:inline-block;padding:8px 14px;border-radius:999px;font-size:12px;font-weight:900;">PERFECT SCORE • 100%</div>' +
+      '<div style="display:flex;justify-content:space-between;align-items:flex-end;margin-top:20px;text-align:left;">' +
+        '<div><div style="font-family:cursive;font-size:22px;">Hope Chaka</div><div style="font-size:11px;color:#666;border-top:1px solid #999;padding-top:4px;">Founder, ZED SCHOLAR</div></div>' +
+        '<div style="text-align:right;font-size:11px;color:#666;">Certificate ID<br/><b style="color:#111;">'+cert.certId+'</b></div>' +
+      '</div>' +
+      '<div style="margin-top:16px;display:flex;gap:8px;">' +
+        '<button id="zed-cert-print" style="flex:1;height:44px;border-radius:10px;background:#111;color:#fff;font-weight:900;border:none;">PRINT / SAVE AS PDF</button>' +
+        '<button id="zed-cert-close" style="flex:1;height:44px;border-radius:10px;background:#eee;color:#111;font-weight:900;border:1px solid #ccc;">CLOSE</button>' +
+      '</div>' +
+      '<div style="font-size:11px;color:#999;margin-top:8px;">Tip: Print → Save as PDF to keep it. Share it on WhatsApp / TikTok!</div>';
+    ov.appendChild(card); document.body.appendChild(ov);
+    card.querySelector('#zed-cert-close').addEventListener('click', function(){ ov.remove(); });
+    ov.addEventListener('click', function(e){ if(e.target===ov) ov.remove(); });
+    card.querySelector('#zed-cert-print').addEventListener('click', function(){
+      var w=window.open('', '_blank');
+      if(!w){ alert('Allow popups to print the certificate.'); return; }
+      // A4 CENTERED PRINT: full A4 page, flex centers certificate both vertically + horizontally
+      var printHtml = '<!DOCTYPE html><html><head><title>ZED SCHOLAR Certificate - '+(cert.name||'')+'</title>'
+        + '<style>'
+        + '@page{size:A4 portrait;margin:0;}'
+        + 'html,body{width:210mm;height:297mm;margin:0;padding:0;}'
+        + 'body{background:#fff;display:flex;align-items:center;justify-content:center;font-family:Arial,Helvetica,sans-serif;-webkit-print-color-adjust:exact;print-color-adjust:exact;}'
+        + '.a4-wrap{width:210mm;height:297mm;display:flex;align-items:center;justify-content:center;}'
+        + '.a4-cert{width:175mm;background:#fff;color:#111;border:6px solid #FFD700;border-radius:16px;padding:14mm 12mm;text-align:center;}'
+        + '</style></head><body><div class="a4-wrap"><div class="a4-cert">'
+        + '<div style="font-size:11px;letter-spacing:3px;color:#888;font-weight:900;">ZED SCHOLAR • ZAMBIA</div>'
+        + '<div style="font-size:56px;margin:6px 0;">🏆</div>'
+        + '<div style="font-family:Georgia,serif;font-size:32px;font-weight:900;line-height:1;">Certificate of Excellence</div>'
+        + '<div style="color:#666;font-size:14px;margin-top:10px;">This certifies that</div>'
+        + '<div style="font-size:28px;font-weight:900;margin:8px 0;border-bottom:2px solid #111;display:inline-block;padding:0 14px;">'+(cert.name||'Student')+'</div>'
+        + '<div style="color:#333;font-size:15px;line-height:1.6;margin-top:8px;">scored <b>100%</b> — <b>'+cert.score+'/'+cert.total+'</b><br/>in <b>'+(cert.subject||'General')+'</b> Quiz<br/>on '+cert.dateStr+'</div>'
+        + '<div style="margin:16px auto 0;background:#111;color:#8CFF8A;display:inline-block;padding:10px 16px;border-radius:999px;font-size:13px;font-weight:900;">PERFECT SCORE • 100%</div>'
+        + '<div style="display:flex;justify-content:space-between;align-items:flex-end;margin-top:22px;text-align:left;">'
+        + '<div><div style="font-family:cursive;font-size:24px;">Hope Chaka</div><div style="font-size:11px;color:#666;border-top:1px solid #999;padding-top:4px;">Founder, ZED SCHOLAR</div></div>'
+        + '<div style="text-align:right;font-size:11px;color:#666;">Certificate ID<br/><b style="color:#111;">'+cert.certId+'</b></div>'
+        + '</div></div></div></body></html>';
+      w.document.write(printHtml);
+      w.document.close(); setTimeout(function(){ try{ w.focus(); w.print(); }catch(e){} }, 500);
+    });
+    markShown(cert.id);
+  }
+  function checkCertsForMe(allAttempts){
+    try{
+      var me=getMe(); if(!me) return;
+      var mine=(allAttempts||[]).filter(function(a){ return a.user_id===me.id; });
+      var certs=getCerts();
+      var changed=false;
+      mine.forEach(function(a){
+        if(!a.total || a.score!==a.total) return;
+        if(a.total<1) return;
+        var key=(a.subject||'')+'|'+a.score+'|'+a.total+'|'+(a.created_at||'').slice(0,16);
+        var exists=certs.some(function(c){ return c.dedup===key; });
+        if(exists) return;
+        var c=makeCert(a, me); c.dedup=key; certs.push(c); changed=true;
+        // Show popup for the newest one only, once
+        var shown=getShown();
+        if(shown.indexOf(c.id)===-1){
+          setTimeout(function(){ showCertificate(c, true); }, 600);
+        }
+      });
+      if(changed) saveCerts(certs);
+    }catch(e){}
+  }
+  // ---------- LEADERBOARD DATA ----------
+  var lbCache={profiles:null, attempts:null, at:0};
+  var lbFetching=false;
+  async function fetchLB(){
+    var now=Date.now();
+    if(lbCache.profiles && (now-lbCache.at<8000)) return lbCache;
+    if(lbFetching) return lbCache;
+    lbFetching=true;
+    try{
+      var pRes=await fetch(SUPA_URL+'/rest/v1/profiles?select=id,name,province,district,school,coins,streak,grade,avatar,avatar_url&limit=500', {headers:headers()});
+      var profiles=await pRes.json().catch(function(){ return []; });
+      var aRes=await fetch(SUPA_URL+'/rest/v1/quiz_attempts?select=user_id,score,total,subject,created_at&order=created_at.desc&limit=1000', {headers:headers()});
+      var attempts=await aRes.json().catch(function(){ return []; });
+      lbCache={profiles:Array.isArray(profiles)?profiles:[], attempts:Array.isArray(attempts)?attempts:[], at:Date.now()};
+      // Certificates: check my 100% attempts
+      try{ checkCertsForMe(lbCache.attempts); }catch(e){}
+    }catch(e){}
+    lbFetching=false;
+    return lbCache;
+  }
+  function statsFor(attempts, period, nowDate){
+    var mon=mondayOf(nowDate);
+    var out={count:0, totalScore:0, totalPossible:0, avg:0};
+    (attempts||[]).forEach(function(a){
+      var d=new Date(a.created_at||Date.now());
+      if(period==='This Week' && d < mon) return;
+      if(period==='This Month' && (d.getFullYear()!==nowDate.getFullYear() || d.getMonth()!==nowDate.getMonth())) return;
+      out.count++;
+      out.totalScore += (a.score||0);
+      out.totalPossible += (a.total||0);
+    });
+    out.avg = out.totalPossible>0 ? (out.totalScore/out.totalPossible*100) : 0;
+    return out;
+  }
+  function sortRows(rows, sortMode){
+    // Correct ranking: NEVER by coins alone by default.
+    // Default + Total: Total desc, then Avg desc, then Quizzes desc, then Coins desc
+    // Avg: Avg desc, then Total desc, then Quizzes desc
+    // Quizzes: Quizzes desc, then Avg desc, then Total desc
+    // Coins (only if user explicitly picks it): Coins desc, then Total desc, then Avg desc
+    // 0-quiz users naturally fall to bottom for Total/Avg/Quizzes because all 0.
+    return rows.slice().sort(function(a,b){
+      if(sortMode==='avg'){ if(b.avg!==a.avg) return b.avg-a.avg; if(b.totalScore!==a.totalScore) return b.totalScore-a.totalScore; if(b.count!==a.count) return b.count-a.count; }
+      else if(sortMode==='quizzes'){ if(b.count!==a.count) return b.count-a.count; if(b.avg!==a.avg) return b.avg-a.avg; if(b.totalScore!==a.totalScore) return b.totalScore-a.totalScore; }
+      else if(sortMode==='coins'){ var bc=(b.profile.coins||0), ac=(a.profile.coins||0); if(bc!==ac) return bc-ac; if(b.totalScore!==a.totalScore) return b.totalScore-a.totalScore; if(b.avg!==a.avg) return b.avg-a.avg; }
+      else { if(b.totalScore!==a.totalScore) return b.totalScore-a.totalScore; if(b.avg!==a.avg) return b.avg-a.avg; if(b.count!==a.count) return b.count-a.count; }
+      var bc2=(b.profile.coins||0), ac2=(a.profile.coins||0); if(bc2!==ac2) return bc2-ac2;
+      return (b.profile.name||'').localeCompare(a.profile.name||'');
+    });
+  }
+  function getLBContainer(){
+    var heads=Array.from(document.querySelectorAll('h2'));
+    var h=heads.find(function(x){ return (x.textContent||'').indexOf('Whole Zambia Leaderboard')!==-1; });
+    if(!h) return null;
+    return h.closest('div.space-y-6') || h.parentNode.parentNode;
+  }
+  function readFilters(container){
+    var selects=container.querySelectorAll('select');
+    var period='This Week'; // NEW DEFAULT: weekly, resets Monday
+    var sortMode='total'; // NEW DEFAULT: by Total, not Coins
+    var province='All', district='All', subject='All', search='';
+    // Identify selects by their options
+    selects.forEach(function(s){
+      var opts=Array.from(s.options).map(function(o){ return (o.textContent||'').trim(); });
+      if(opts.indexOf('All Time')!==-1){
+        // Period select - respect user choice if they changed it
+        try{
+          var userPeriod=localStorage.getItem('zed_lb_user_period');
+          if(userPeriod){ period=userPeriod; }
+          else { period=s.value||'This Week'; if(period!=='All Time' && period!=='This Month' && period!=='This Week') period='This Week'; }
+        }catch(e){ period=s.value||'This Week'; }
+      } else if(opts.some(function(t){ return t.indexOf('Sort:')===0; })){
+        try{
+          var userSort=localStorage.getItem('zed_lb_user_sort');
+          if(userSort){ sortMode=userSort; }
+          else { sortMode='total'; }
+        }catch(e){ sortMode='total'; }
+      }
+    });
+    // Province / district / subject / search - read by position fallback
+    try{
+      var inputs=container.querySelectorAll('input[placeholder*="Search"]');
+      if(inputs.length) search=(inputs[0].value||'').trim();
+    }catch(e){}
+    // Province/district from first two selects if they exist
+    if(selects.length>=2){
+      province=selects[0].value||'All'; district=selects[1].value||'All';
+      if(selects.length>=4) subject=selects[3].value||'All';
+    }
+    return {period:period, sortMode:sortMode, province:province, district:district, subject:subject, search:search};
+  }
+  // DEDUPE: old avatar script + new leaderboard code both added a pic -> keep only first per row
+  function cleanDuplicateAvatars(container){
+    try{
+      if(!container) return;
+      var rows=container.querySelectorAll('tbody tr');
+      rows.forEach(function(tr){
+        var cells=tr.querySelectorAll('td'); if(cells.length<2) return;
+        var cell=cells[1];
+        // 1) More than 1 .zed-lb-avatar -> keep first, remove rest
+        var wraps=cell.querySelectorAll('.zed-lb-avatar');
+        if(wraps.length>1){ for(var i=1;i<wraps.length;i++){ try{ wraps[i].remove(); }catch(e){} } }
+        // 2) Bare <img> avatar NOT inside .zed-lb-avatar + a .zed-lb-avatar exists -> remove bare img (old leftover)
+        var bareImgs=[];
+        cell.querySelectorAll('img').forEach(function(im){ if(!im.closest('.zed-lb-avatar')) bareImgs.push(im); });
+        if(bareImgs.length>0 && cell.querySelector('.zed-lb-avatar')){
+          bareImgs.forEach(function(im){ try{ im.remove(); }catch(e){} });
+        } else if(bareImgs.length>1){
+          for(var j=1;j<bareImgs.length;j++){ try{ bareImgs[j].remove(); }catch(e){} }
+        }
+        // 3) Bare letter <span> avatars (old new-code style, 32px circle) + a .zed-lb-avatar exists -> remove bare span
+        var spans=cell.querySelectorAll('span');
+        spans.forEach(function(sp){
+          var st=sp.getAttribute('style')||'';
+          if(st.indexOf('32px')!==-1 && st.indexOf('border-radius:50%')!==-1 && !sp.closest('.zed-lb-avatar') && cell.querySelector('.zed-lb-avatar')){
+            try{ sp.remove(); }catch(e){}
+          }
+        });
+      });
+    }catch(e){}
+  }
+  var lastLBHash='';
+  var lastWeekToastShown='';
+  async function fixLeaderboard(){
+    try{
+      var container=getLBContainer(); if(!container) return;
+      try{ cleanDuplicateAvatars(container); }catch(e){}
+      var data=await fetchLB();
+      if(!data.profiles) return;
+      var now=new Date();
+      var curWeek=weekIdOf(now);
+      // Weekly reset bookkeeping: when week changes, archive last week's winners once
+      try{
+        var storedWeek=localStorage.getItem('zed_lb_week_id');
+        if(!storedWeek){
+          localStorage.setItem('zed_lb_week_id', curWeek);
+        } else if(storedWeek!==curWeek){
+          // Compute last week's winners from attempts in stored week
+          var lastMon=new Date(storedWeek+'T00:00:00');
+          var thisMon=mondayOf(now);
+          var lastWeekAttempts=(data.attempts||[]).filter(function(a){ var d=new Date(a.created_at||Date.now()); return d>=lastMon && d<thisMon; });
+          var byUser={};
+          lastWeekAttempts.forEach(function(a){ if(!byUser[a.user_id]) byUser[a.user_id]={count:0,totalScore:0,totalPossible:0}; byUser[a.user_id].count++; byUser[a.user_id].totalScore+=(a.score||0); byUser[a.user_id].totalPossible+=(a.total||0); });
+          var winners=Object.keys(byUser).map(function(uid){ var p=(data.profiles||[]).find(function(x){ return x.id===uid; }); var s=byUser[uid]; return {name:p?p.name:'Learner', school:p?p.school:'', totalScore:s.totalScore, avg:s.totalPossible? s.totalScore/s.totalPossible*100:0, count:s.count}; }).sort(function(a,b){ if(b.totalScore!==a.totalScore) return b.totalScore-a.totalScore; return b.avg-a.avg; }).slice(0,3);
+          try{ localStorage.setItem('zed_lb_prev_week', JSON.stringify({weekId:storedWeek, winners:winners, resetAt:now.toISOString()})); }catch(e){}
+          localStorage.setItem('zed_lb_week_id', curWeek);
+        }
+      }catch(e){}
+      var f=readFilters(container);
+      // Build rows
+      var rows=(data.profiles||[]).map(function(p){
+        var mine=(data.attempts||[]).filter(function(a){ return a.user_id===p.id; });
+        // Clear-history filter: ignore attempts before user cleared
+        var cleared=getClearedAt(p.id);
+        if(cleared){ mine=mine.filter(function(a){ return new Date(a.created_at||0).getTime() >= cleared; }); }
+        // Subject filter: if subject != All, only count that subject
+        var filtered=mine;
+        if(f.subject && f.subject!=='All'){
+          filtered=mine.filter(function(a){ return (a.subject||'').toLowerCase()===(f.subject||'').toLowerCase(); });
+        }
+        var s=statsFor(filtered, f.period, now);
+        // For subject filter, avg/total should be for that subject only - statsFor already used filtered
+        // But statsFor re-filters by period only, so pass filtered
+        return {profile:p, count:s.count, totalScore:s.totalScore, totalPossible:s.totalPossible, avg:s.avg};
+      });
+      // Province/district/search filters
+      rows=rows.filter(function(r){
+        if(f.province && f.province!=='All' && r.profile.province!==f.province) return false;
+        if(f.district && f.district!=='All' && r.profile.district!==f.district) return false;
+        if(f.search){
+          var hay=((r.profile.name||'')+' '+(r.profile.school||'')+' '+(r.profile.district||'')).toLowerCase();
+          if(hay.indexOf(f.search.toLowerCase())===-1) return false;
+        }
+        return true;
+      });
+      var sorted=sortRows(rows, f.sortMode);
+      var hash=sorted.map(function(r){ return r.profile.id+':'+r.totalScore+':'+r.avg.toFixed(1)+':'+r.count; }).join('|')+'|'+f.period+'|'+f.sortMode+'|'+f.province+'|'+f.district+'|'+f.subject+'|'+f.search;
+      // Banner + top3 + table - only rewrite table/top3 if hash changed, but always ensure banner exists
+      ensureBanner(container, f, now, curWeek);
+      if(hash===lastLBHash) return;
+      lastLBHash=hash;
+      // --- Top 3 cards ---
+      try{
+        var topGrid=null;
+        var grids=container.querySelectorAll('div.grid');
+        grids.forEach(function(g){ if(g.className && g.className.indexOf('grid-cols-3')!==-1 && !topGrid) topGrid=g; });
+        if(topGrid){
+          var cards=topGrid.children;
+          for(var i=0;i<3 && i<cards.length;i++){
+            var r=sorted[i]; if(!r) continue;
+            var card=cards[i];
+            // Name
+            var nameEl=card.querySelector('.font-serif');
+            if(nameEl) nameEl.textContent=r.profile.name||'Learner';
+            // School - the div after name with opacity
+            var divs=card.querySelectorAll('div');
+            // School is second small div - find by class opacity-70
+            divs.forEach(function(d){ if(d.className && d.className.indexOf('opacity-70')!==-1) d.textContent=(r.profile.school||'').slice(0,22); });
+            // Coins/quizzes line + Avg/Total line - update by text pattern
+            divs.forEach(function(d){
+              var t=d.textContent||'';
+              if(t.indexOf('coins')!==-1 && t.indexOf('quizzes')!==-1) d.textContent=(r.profile.coins||0)+' coins • '+r.count+' quizzes';
+              if(t.indexOf('Avg')===0 || t.indexOf('Avg ')!==-1) d.textContent='Avg '+r.avg.toFixed(1)+'% • Total '+r.totalScore;
+            });
+          }
+        }
+      }catch(e){}
+      // --- Table ---
+      try{
+        var table=container.querySelector('table');
+        if(table){
+          var tbody=table.querySelector('tbody');
+          var me=getMe();
+          var html='';
+          sorted.slice(0,100).forEach(function(r, idx){
+            var p=r.profile;
+            var av=(p.avatar||p.avatar_url||'');
+            var avatarHtml = av ? '<div class="zed-lb-avatar" data-profile-id="'+p.id+'" style="width:32px;height:32px;min-width:32px;min-height:32px;border-radius:999px;overflow:hidden;background:#222;display:flex;align-items:center;justify-content:center;border:2px solid #8CFF8A;"><img src="'+av+'" style="width:100%;height:100%;object-fit:cover;" onerror="this.style.display=\'none\'"/></div>' : '<div class="zed-lb-avatar" data-profile-id="'+p.id+'" style="width:32px;height:32px;min-width:32px;min-height:32px;border-radius:999px;background:#8CFF8A;color:#000;display:flex;align-items:center;justify-content:center;font-weight:900;font-size:14px;border:2px solid #8CFF8A;">'+((p.name||'S').charAt(0).toUpperCase())+'</div>';
+            var you = (me && p.id===me.id) ? ' <span style="margin-left:6px;padding:2px 6px;border-radius:999px;background:#8CFF8A;color:#000;font-size:9px;font-weight:900;">YOU</span>' : '';
+            var medal = idx===0?' 🥇': idx===1?' 🥈': idx===2?' 🥉':'';
+            html += '<tr style="border-top:1px solid var(--border);'+((me && p.id===me.id)?'background:var(--surface-3);':'')+'">'
+              + '<td style="padding:8px 12px;">'+(idx+1)+medal+'</td>'
+              + '<td style="padding:8px 12px;font-weight:500;"><span style="display:flex;align-items:center;gap:8px;">'+avatarHtml+'<span>'+(p.name||'Learner')+you+'</span></span></td>'
+              + '<td style="padding:8px 12px;">'+(p.school||'')+' <span style="color:var(--muted);">('+(p.district||'')+')</span></td>'
+              + '<td style="padding:8px 12px;"><span style="padding:2px 8px;border-radius:999px;background:var(--surface-2);border:1px solid var(--border);font-size:10px;">'+(p.province||'')+'</span></td>'
+              + '<td style="padding:8px 12px;font-weight:700;">'+(p.coins||0)+'</td>'
+              + '<td style="padding:8px 12px;">'+(p.streak||0)+'</td>'
+              + '<td style="padding:8px 12px;">'+r.count+'</td>'
+              + '<td style="padding:8px 12px;">'+r.avg.toFixed(1)+'%</td>'
+              + '<td style="padding:8px 12px;font-weight:700;">'+r.totalScore+'</td>'
+              + '</tr>';
+          });
+          if(html) tbody.innerHTML=html;
+          try{ setTimeout(function(){ cleanDuplicateAvatars(container); }, 300); }catch(e){}
+        }
+      }catch(e){}
+    }catch(e){}
+  }
+  function ensureBanner(container, f, now, curWeek){
+    try{
+      var existing=document.getElementById('zed-lb-v3-banner');
+      var mon=mondayOf(now);
+      var nextMon=new Date(mon); nextMon.setDate(nextMon.getDate()+7);
+      var daysLeft=Math.ceil((nextMon-now)/86400000);
+      var prev=null; try{ prev=JSON.parse(localStorage.getItem('zed_lb_prev_week')||'null'); }catch(e){}
+      var prevHtml='';
+      if(prev && prev.winners && prev.winners.length){
+        prevHtml='<div style="font-size:11px;color:#ccc;margin-top:4px;">🏆 Last week winners: '+prev.winners.map(function(w,i){ return (i+1)+'. '+w.name+' ('+w.totalScore+' pts, '+w.avg.toFixed(1)+'%)'; }).join(' • ')+'</div>';
+      }
+      var sortLabel = f.sortMode==='avg'?'Avg %': f.sortMode==='quizzes'?'Quizzes': f.sortMode==='coins'?'Coins (all-time)':'Total Score';
+      var html='<div style="background:#1e2b1e;border:1px solid #8CFF8A;border-radius:12px;padding:12px 14px;">'
+        + '<div style="font-weight:900;font-size:13px;color:#fff;">📅 Weekly Leaderboard • Week of '+fmtDay(mon)+' • Resets every Monday 00:00</div>'
+        + '<div style="font-size:12px;color:#ccc;margin-top:4px;">Showing: <b style="color:#8CFF8A;">'+f.period+'</b> • Ranked by <b style="color:#8CFF8A;">'+sortLabel+'</b>'+(f.sortMode==='total'?' (then Avg %, then Quizzes)':'')+' • 0-quiz learners are at the bottom • Resets in '+daysLeft+' day'+(daysLeft!==1?'s':'')+' (Mon '+fmtDay(nextMon)+')</div>'
+        + prevHtml + '</div>';
+      if(existing){ if(existing.innerHTML!==html) existing.innerHTML=html; return; }
+      var b=document.createElement('div'); b.id='zed-lb-v3-banner'; b.innerHTML=html;
+      // Insert after the heading row (first child) - before filters
+      if(container.children.length>=1) container.insertBefore(b, container.children[1]);
+      else container.prepend(b);
+    }catch(e){}
+  }
+  // Remember user sort/period choices
+  document.addEventListener('change', function(e){
+    try{
+      var s=e.target && e.target.tagName==='SELECT' ? e.target : null; if(!s) return;
+      var container=getLBContainer(); if(!container || !container.contains(s)) return;
+      var opts=Array.from(s.options).map(function(o){ return (o.textContent||'').trim(); });
+      if(opts.indexOf('All Time')!==-1){ localStorage.setItem('zed_lb_user_period', s.value); lastLBHash=''; }
+      else if(opts.some(function(t){ return t.indexOf('Sort:')===0; })){ localStorage.setItem('zed_lb_user_sort', s.value); lastLBHash=''; }
+    }catch(e){}
+  }, true);
+  // ---------- PROFILE: Clear History + Certificates ----------
+  var profileInjectedFor='';
+  function injectProfile(){
+    try{
+      var h3=Array.from(document.querySelectorAll('h3')).find(function(x){ return (x.textContent||'').trim()==='Quiz History'; });
+      if(!h3) return;
+      var me=getMe(); if(!me) return;
+      var key=me.id+'|'+h3.textContent;
+      // Always re-render counts, but don't duplicate buttons
+      var existing=document.getElementById('zed-profile-v3-bar');
+      if(existing && profileInjectedFor===key){
+        // Update cert count
+        var cc=document.getElementById('zed-cert-count');
+        if(cc) cc.textContent='My Certificates ('+getCerts().length+')';
+        return;
+      }
+      profileInjectedFor=key;
+      if(existing) existing.remove();
+      var oldCert=document.getElementById('zed-profile-v3-certs'); if(oldCert) oldCert.remove();
+      var bar=document.createElement('div'); bar.id='zed-profile-v3-bar';
+      bar.style.cssText='display:flex;flex-wrap:wrap;gap:8px;margin:10px 0;';
+      bar.innerHTML=
+        '<button id="zed-clear-history" style="height:38px;padding:0 14px;border-radius:999px;background:transparent;border:1px solid #ff6b6b;color:#ff6b6b;font-size:12px;font-weight:900;letter-spacing:0.08em;">🗑 CLEAR QUIZ HISTORY</button>'
+        + '<button id="zed-view-certs" style="height:38px;padding:0 14px;border-radius:999px;background:#8CFF8A;color:#000;font-size:12px;font-weight:900;letter-spacing:0.08em;">🏆 <span id="zed-cert-count">My Certificates ('+getCerts().length+')</span></button>'
+        + '<span style="font-size:11px;color:#999;align-self:center;">History clears your leaderboard score. Certificates are kept.</span>';
+      h3.parentNode.insertBefore(bar, h3.nextSibling);
+      bar.querySelector('#zed-clear-history').addEventListener('click', async function(){
+        var ok=confirm('Clear your quiz history?\n\nThis will delete ALL your quiz attempts and reset your leaderboard Total / Avg / Quizzes to 0.\nYour certificates will be KEPT.\n\nContinue?');
+        if(!ok) return;
+        var btn=this; btn.textContent='CLEARING...'; btn.disabled=true;
+        try{
+          var res=await fetch(SUPA_URL+'/rest/v1/quiz_attempts?user_id=eq.'+me.id, {method:'DELETE', headers:headers()});
+          // Even if DELETE fails (RLS), local filter hides old attempts
+          try{ localStorage.setItem('zed_cleared_history_'+me.id, new Date().toISOString()); localStorage.setItem('zed_cleared_history', new Date().toISOString()); }catch(e){}
+          lastLBHash='';
+          alert('Quiz history cleared ✓\nYour leaderboard score is now 0. Take a new quiz to climb again!');
+          btn.textContent='CLEARED ✓';
+          // Remove history DOM rows
+          try{
+            var grid=h3.parentNode.querySelector('div.grid');
+            if(grid) grid.innerHTML='<div style="text-align:center;color:var(--muted);padding:24px;font-size:13px;">No attempts yet — take a quiz to earn +5 coins per correct answer.</div>';
+          }catch(e){}
+        }catch(e){ alert('Could not clear. Try again. '+e.message); btn.textContent='🗑 CLEAR QUIZ HISTORY'; btn.disabled=false; }
+      });
+      bar.querySelector('#zed-view-certs').addEventListener('click', function(){ renderCertsList(); });
+      // Certificates list below history
+      renderCertsList(true);
+    }catch(e){}
+  }
+  function renderCertsList(silent){
+    try{
+      var h3=Array.from(document.querySelectorAll('h3')).find(function(x){ return (x.textContent||'').trim()==='Quiz History'; });
+      if(!h3) return;
+      var old=document.getElementById('zed-profile-v3-certs'); if(old) old.remove();
+      var certs=getCerts();
+      var wrap=document.createElement('div'); wrap.id='zed-profile-v3-certs';
+      wrap.style.cssText='margin-top:16px;background:var(--surface);border:1px solid var(--border);border-radius:14px;padding:14px;';
+      var listHtml = certs.length ? certs.slice().reverse().map(function(c){
+        return '<div style="display:flex;justify-content:space-between;align-items:center;gap:10px;background:#111;border:1px solid #FFD700;border-radius:10px;padding:10px 12px;margin-top:8px;">'
+          + '<div><div style="font-weight:900;font-size:13px;">🏆 100% • '+(c.subject||'General')+' • '+c.score+'/'+c.total+'</div><div style="font-size:11px;color:#999;">'+c.dateStr+' • ID '+c.certId+'</div></div>'
+          + '<button data-cert="'+c.id+'" style="height:32px;padding:0 12px;border-radius:999px;background:#FFD700;color:#000;font-weight:900;font-size:11px;border:none;">VIEW</button></div>';
+      }).join('') : '<div style="font-size:12px;color:var(--muted);margin-top:6px;">No certificates yet. Score 100% in any quiz to earn one — it appears here automatically.</div>';
+      wrap.innerHTML='<div style="font-weight:900;font-size:15px;">🏆 My Certificates</div><div style="font-size:11px;color:#999;">Score 100% in a quiz = certificate. Tap VIEW to print / save as PDF.</div>'+listHtml;
+      // Insert after history grid - find history container (parent of h3)
+      var parent=h3.parentNode;
+      parent.appendChild(wrap);
+      wrap.querySelectorAll('button[data-cert]').forEach(function(b){
+        b.addEventListener('click', function(){
+          var c=certs.find(function(x){ return x.id===b.getAttribute('data-cert'); });
+          if(c) showCertificate(c, false);
+        });
+      });
+      if(!silent){
+        wrap.scrollIntoView({behavior:'smooth', block:'nearest'});
+      }
+    }catch(e){}
+  }
+  setInterval(function(){ try{ fixLeaderboard(); }catch(e){} try{ injectProfile(); }catch(e){} }, 1500);
+  // Also check certs on load
+  setTimeout(function(){ fetchLB().then(function(){ try{ injectProfile(); }catch(e){} }); }, 800);
+})();
+</script>
+
+<style>
+/* DEDUPE GUARD: if 2 avatars ever land in same leaderboard row, hide all but first */
+table tbody tr td:nth-child(2) .zed-lb-avatar ~ .zed-lb-avatar,
+table tbody tr td:nth-child(2) img ~ img { display:none !important; }
+</style>
+
 </body>
 </html>
