@@ -2917,7 +2917,7 @@ Zq=async function(_subj,_grade,_count,_saveToDb,_isRetry){
     var _prompt="You are an ECZ exam setter in Zambia for "+_gradeLabel+" Paper 1. Create NEW original questions YOURSELF from your own knowledge of the ECZ syllabus - DO NOT copy, retrieve, or reuse questions from past papers, textbooks, websites, question banks, or any stored questions. Make them fresh. Generate EXACTLY "+_n+" random, different ECZ exam-level multiple-choice questions for "+_s+", "+_gradeLabel+". ONLY Medium and Hard - NO Easy questions. Difficulty mix for these "+_n+" questions: 0 Easy, "+_balance.medium+" Medium, "+_balance.hard+" Hard. MIXED order - do NOT group all Medium first then all Hard, follow this EXACT shuffled order: "+_planText+". Medium = apply knowledge, 1 calculation or interpret a simple scenario, e.g. A learner... What happens if...? Hard = multi-step, 2-step calculation, interpret data or apply to a new situation - ONLY for the Hard questions. You MUST return exactly "+_n+" questions, not fewer. ONLY use these "+_gradeLabel+" ECZ topics: "+_topics+". DO NOT use topics from another grade. LEVEL RULE: "+(window.zedQuizLevelNote?window.zedQuizLevelNote(_g):"")+". For Form 5/6 A-Level, DO use advanced Genetics, advanced Calculus, advanced Organic Mechanisms, etc - those ARE A-Level topics. For Form 1-3 O-Level, DO NOT use A-Level topics. For Form 4 O-Level Final, use the full Forms 1-4 O-Level syllabus at School Certificate exam level. For old Grades 10-12, use only old 2013 Grade topics, DO NOT use A-Level topics. Cover different topics from the list, do not repeat the same topic. FORBIDDEN - DO NOT USE: topics outside "+_gradeLabel+", university level, primary school level, true/false style. All 4 options must be DIFFERENT - never repeat the same option text twice in one question. Options must be SHORT answers only - e.g. \"4.3 km\", \"Mitochondria\" - NEVER put explanations, \"Correct.\", \"Since...\", \"because...\" or sentences inside an option. Explanation goes ONLY in the explanation field. Options must be plausible - use common ECZ mistakes as wrong options, NOT obviously wrong options. Each question must have 4 options A-D, only one correct. VARY the correct answer evenly - use A, B, C and D about equally, do NOT make most answers A. For each question, include topic (short, from the list above) and difficulty (Medium or Hard ONLY - must match the plan for that question number, never Easy). Explanation must be 2-3 sentences: first explain why the correct answer is correct, then explain why each other option is wrong. Write maths in plain text ONLY: use x^2 for x squared, dy/dx, sqrt(), / for fractions, e.g. Find dy/dx if y = 3x^2 + 2x. No backslashes, no LaTeX, no quotes inside questions or options. Return ONLY a JSON array, no other text, no markdown. Format: [{\"question_text\":\"...\",\"topic\":\"...\",\"difficulty\":\"Medium\",\"option_a\":\"...\",\"option_b\":\"...\",\"option_c\":\"...\",\"option_d\":\"...\",\"correct_answer\":\"C\",\"explanation\":\"Why correct is correct. The other options are wrong because ...\"}];"
         var _txt=""; var _lastErr="";
     /* AI-ONLY: Quiz questions come ONLY from AI generation below. NEVER from quiz_questions bank, past_papers, documents, or any stored questions. If AI fails, return null - do NOT fall back to bank. */
-    var _models=["gemini-3.5-flash-lite","gemini-3-flash","gemini-2.5-flash"]; // SAME as ZED AI Tutor - these are the ones that work. 2.0/1.5 were dead.
+    var _models=["gemini-3.5-flash-lite","gemini-3.5-flash","gemini-3.6-flash","gemini-3.8-flash","gemini-3-flash-preview","gemini-2.5-flash"]; // FIX Nov 2026: bare gemini-3-flash 404s (real name is gemini-3-flash-preview) and Google serves gemini-2.5-flash only to old projects (404 for a new school key). 3.5-lite / 3.5 / 3.6 / 3.8 are the current generateContent models.
     for(var _ki=0;_ki<_keys.length&&!_txt;_ki++){
       for(var _mi=0;_mi<_models.length&&!_txt;_mi++){
         try{
@@ -2929,7 +2929,7 @@ Zq=async function(_subj,_grade,_count,_saveToDb,_isRetry){
       }
     }
     if(_cancelled()) return null;
-    if(!_txt){ if(/api key/i.test(_lastErr||"")){ _deferredMsg="School key is wrong. Tell Admin to check the School Key in Admin tab."; } else if(/429|quota|exceed/i.test(_lastErr||"")){ _deferredMsg="Too many students using Zed Scholar right now. Wait 1 minute, then tap Zed Scholar AI Quiz again."; } else { _deferredMsg="Zed Scholar could not generate questions. Tap Zed Scholar AI Quiz again."; } return null; }
+    if(!_txt){ if(/api key/i.test(_lastErr||"")){ try{ localStorage.removeItem("zed_school_gemini_key"); }catch(e){} _deferredMsg="School key is wrong. Tell Admin to check the School Key in Admin tab - then tap Zed Scholar AI Quiz again and the app will fetch the new key."; } else if(/429|quota|exceed/i.test(_lastErr||"")){ _deferredMsg="Too many students using Zed Scholar right now. Wait 1 minute, then tap Zed Scholar AI Quiz again."; } else if(/404|not found/i.test(_lastErr||"")){ _deferredMsg="Zed Scholar could not reach the AI models. Tap Zed Scholar AI Quiz again - if it keeps failing, tell Admin."; } else { _deferredMsg="Zed Scholar could not generate questions. Tap Zed Scholar AI Quiz again."; } return null; }
     /* Questions received - almost done. Show it INSIDE the loader, not as a toast. */
     try{ if(window.zedQuizLoaderSetState) window.zedQuizLoaderSetState('almost'); }catch(e){}
     if(_cancelled()) return null;
@@ -5209,6 +5209,53 @@ const db=await openDB();return new Promise((res,rej)=>{const tx=db.transaction(S
     return urlOrId.slice(0,11);
   }
 
+  // TAKEOVER: only ONE video plays at a time. When the user taps a new video,
+  // stop the video that is already playing first, then the tapped one takes over.
+  // - Loaded YouTube facades revert to their thumbnail (removing the iframe stops it).
+  // - Stray YouTube iframes not inside a facade are blanked.
+  // - Native mp4 <video> elements are paused.
+  function stopAllOtherVideos(exceptFacade, exceptVideo){
+    document.querySelectorAll('.yt-lite.yt-loaded').forEach(function(other){
+      if(other === exceptFacade) return;
+      var vid = other.dataset.vid;
+      var ttl = other.title || '';
+      if(ttl === 'Play video') ttl = '';
+      other.classList.remove('yt-loaded');
+      other.innerHTML = '';
+      if(vid){
+        var img = document.createElement('img');
+        img.className = 'yt-thumb';
+        img.loading = 'lazy';
+        img.decoding = 'async';
+        img.alt = ttl || 'Video thumbnail';
+        img.src = 'https://i.ytimg.com/vi/' + vid + '/hqdefault.jpg';
+        img.onerror = function(){ if(!this.dataset.fallback){ this.dataset.fallback = '1'; this.src = 'https://i.ytimg.com/vi/' + vid + '/mqdefault.jpg'; } };
+        var titleBar = document.createElement('div');
+        titleBar.className = 'yt-title-bar';
+        titleBar.textContent = ttl;
+        var play = document.createElement('div');
+        play.className = 'yt-play-btn';
+        play.setAttribute('aria-label', 'Play');
+        other.appendChild(img);
+        other.appendChild(titleBar);
+        other.appendChild(play);
+      }
+    });
+    document.querySelectorAll('iframe[src*="youtube"], iframe[src*="youtube-nocookie"]').forEach(function(f){
+      if(f.closest('.yt-lite')) return;
+      try{ f.src = 'about:blank'; }catch(e){}
+    });
+    document.querySelectorAll('video').forEach(function(v){
+      if(v === exceptVideo) return;
+      try{ v.pause(); }catch(e){}
+    });
+  }
+  // If a native mp4 video starts playing, it takes over: stop every YouTube video.
+  document.addEventListener('play', function(e){
+    var v = e.target;
+    if(v && v.tagName === 'VIDEO') stopAllOtherVideos(null, v);
+  }, true);
+
   function createFacade(videoId, title){
     let wrap = document.createElement('div');
     wrap.className = 'yt-lite aspect-video bg-black';
@@ -5248,6 +5295,7 @@ const db=await openDB();return new Promise((res,rej)=>{const tx=db.transaction(S
     // Click to load iframe
     wrap.addEventListener('click', function(){
       if(wrap.classList.contains('yt-loaded')) return;
+      stopAllOtherVideos(wrap, null); // TAKEOVER: stop the video already playing, this one takes over
       wrap.classList.add('yt-loaded');
       let iframe = document.createElement('iframe');
       iframe.src = 'https://www.youtube-nocookie.com/embed/' + videoId + '?autoplay=1&modestbranding=1&rel=0&iv_load_policy=3&playsinline=1&controls=1&fs=1;
@@ -8031,7 +8079,7 @@ console.log('[ZED] Welcome popup + fast login active');
     var keys=getAllKeys();
     // FIX: Google retired gemini-2.5-flash-lite (see screenshot). Try models in order - 3.5 first, then fallbacks.
     // If 3.5 fails with NOT FOUND, we try the next model, not the same dead model again (old bug: prompt.replace did nothing).
-    var MODELS=['gemini-3.5-flash-lite','gemini-3-flash','gemini-2.5-flash'];
+    var MODELS=['gemini-3.5-flash-lite','gemini-3.5-flash','gemini-3.6-flash','gemini-3.8-flash','gemini-3-flash-preview','gemini-2.5-flash']; // FIX Nov 2026: bare gemini-3-flash 404s, gemini-2.5-flash only for old projects - use current models
     for(var ki=0; ki<keys.length && !ans; ki++){
       for(var mi=0; mi<MODELS.length && !ans; mi++){
         try{
@@ -8125,7 +8173,7 @@ console.log('[ZED] Welcome popup + fast login active');
       var prompt='You are ZED AI, a helpful assistant. Look at this screenshot / photo. Answer ANYTHING about it - not just school. If it shows a question, solve it step-by-step simply, then give the final answer. If it shows notes, a document, a product, a message, a chat, a price, a farm, anything else, explain it simply and helpfully. Do NOT assume it is schoolwork. Keep it short and clear. Be respectful - do not insult anyone.';
       aiSending=true; sendBtn.disabled=true; sendBtn.textContent='...';
       var loading=document.createElement('div'); loading.className='zed-ai-msg ai'; loading.textContent='Looking at your screenshot...'; msgs.appendChild(loading); msgs.scrollTop=msgs.scrollHeight;
-      var ans=''; var keys=getAllKeys(); var MODELS=['gemini-3.5-flash-lite','gemini-3-flash','gemini-2.5-flash'];
+      var ans=''; var keys=getAllKeys(); var MODELS=['gemini-3.5-flash-lite','gemini-3.5-flash','gemini-3.6-flash','gemini-3.8-flash','gemini-3-flash-preview','gemini-2.5-flash']; // FIX Nov 2026: bare gemini-3-flash 404s, gemini-2.5-flash only for old projects - use current models
       for(var ki=0;ki<keys.length&&!ans;ki++){
         for(var mi=0;mi<MODELS.length&&!ans;mi++){
           try{
