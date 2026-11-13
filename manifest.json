@@ -1,7 +1,7 @@
 {
-  "name": "ZED SCHOLAR - ECZ Past Papers",
-  "short_name": "ZED SCHOLAR",
-  "description": "Free ECZ past papers for Form 1-5 & Grade 10-12. Save papers and open them offline, no data needed.",
+  "name": "Zed Scholar - ECZ exams made easier",
+  "short_name": "Zed Scholar",
+  "description": "Free ECZ Docs for Form 1-6 & Grade 10-12. Save papers and open them offline, no data needed.",
   "start_url": "./",
   "scope": "./",
   "display": "standalone",
