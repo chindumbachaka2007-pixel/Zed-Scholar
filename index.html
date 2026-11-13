@@ -14476,18 +14476,31 @@ function extractVideoInfo(card, fallbackId){
   var title='Video', subject='', rawUrl='', type='mp4', ytId='', thumb='', origSrc='';
   try{
     if(card){
-      var tEl=card.querySelector('.font-semibold'); if(tEl) title=(tEl.textContent||'').trim()||'Video'; title=title.replace(/DOWNLOADED.*/i,'').replace(/🔓.*/,'').replace(/🔒.*/,'').replace(/Unlocked.*/i,'').trim()||'Video';
-      var p4=card.querySelector('div.p-4'); if(p4){ var first=p4.querySelector('div'); if(first) subject=(first.textContent||'').trim(); }
-      if(card.dataset.zedYtId) ytId=card.dataset.zedYtId;
-      var lite=card.querySelector('.yt-lite'); if(!ytId && lite && lite.getAttribute('data-vid')) ytId=lite.getAttribute('data-vid');
-      origSrc=card.dataset.zedOrigSrc||'';
+      /* FIX 13 Nov 2026 - "No video file found": the caller sometimes passes the inner p-4 div
+         (which has the title but NO video element and NO dataset), so the old code found
+         video_url=''. Search the card AND its ancestors for video / iframe / dataset. */
+      var roots=[card]; var _anc=card; for(var _ai=0;_ai<6 && _anc && _anc.parentElement;_ai++){ _anc=_anc.parentElement; roots.push(_anc); }
+      function _ds(name){ for(var _di=0;_di<roots.length;_di++){ try{ if(roots[_di].dataset && roots[_di].dataset[name]) return roots[_di].dataset[name]; }catch(e){} } return ''; }
+      function _q(sel){ for(var _qi=0;_qi<roots.length;_qi++){ try{ if(roots[_qi].querySelector){ var _r=roots[_qi].querySelector(sel); if(_r) return _r; } }catch(e){} } return null; }
+      var tEl=_q('.font-semibold'); if(tEl) title=(tEl.textContent||'').trim()||'Video'; title=title.replace(/DOWNLOADED.*/i,'').replace(/🔓.*/,'').replace(/🔒.*/,'').replace(/Unlocked.*/i,'').trim()||'Video';
+      var p4=null; if(card.classList && card.classList.contains('p-4')) p4=card; else p4=_q('div.p-4'); if(p4){ var first=p4.querySelector('div'); if(first) subject=(first.textContent||'').trim(); }
+      ytId=_ds('zedYtId');
+      var lite=_q('.yt-lite'); if(!ytId && lite && lite.getAttribute('data-vid')) ytId=lite.getAttribute('data-vid');
+      origSrc=_ds('zedOrigSrc');
       if(!ytId && origSrc) ytId=getYTId(origSrc);
-      var iframe=card.querySelector('iframe');
+      var iframe=_q('iframe');
       if(iframe){ var isrc=iframe.getAttribute('src')||iframe.src||''; if(isrc && isrc!=='about:blank' && isrc!==''){ rawUrl=isrc; if(!ytId) ytId=getYTId(rawUrl); } else if(origSrc){ rawUrl=origSrc; if(!ytId) ytId=getYTId(rawUrl); } }
-      if(!ytId){ var vEl=card.querySelector('video'); if(vEl){ var vs=vEl.getAttribute('src')||vEl.src||''; if(!vs && card.dataset.zedOrigVideoSrc) vs=card.dataset.zedOrigVideoSrc; if(vs) rawUrl=vs; } }
-      if(card.dataset.zedVideoUrl && card.dataset.zedVideoUrl!=='about:blank') rawUrl=card.dataset.zedVideoUrl;
-      if(card.dataset.zedVideoType) type=card.dataset.zedVideoType;
-      if(card.dataset.zedOrigVideoSrc && !origSrc) origSrc=card.dataset.zedOrigVideoSrc;
+      if(!ytId){
+        var vEl=null; var vElBlank=null;
+        for(var _vi=0;_vi<roots.length && !vEl;_vi++){ try{ var _vs=roots[_vi].querySelectorAll ? roots[_vi].querySelectorAll('video') : []; for(var _vj=0;_vj<_vs.length;_vj++){ var _cand=_vs[_vj]; var _cs=_cand.getAttribute('src')||_cand.src||''; if(!_cs){ var _srcEl=_cand.querySelector ? _cand.querySelector('source') : null; if(_srcEl) _cs=_srcEl.getAttribute('src')||''; } if(_cs && _cs!=='about:blank' && _cs!==''){ vEl=_cand; break; } if(!vElBlank) vElBlank=_cand; } }catch(e){} }
+        var _use=vEl||vElBlank;
+        if(_use){ var vs=_use.getAttribute('src')||_use.src||''; if(!vs){ var _se=_use.querySelector ? _use.querySelector('source') : null; if(_se) vs=_se.getAttribute('src')||''; } if(!vs) vs=_ds('zedOrigVideoSrc'); if(vs && vs!=='about:blank' && vs!=='') rawUrl=vs; }
+      }
+      var _zvu=_ds('zedVideoUrl'); if(_zvu && _zvu!=='about:blank' && _zvu!=='') rawUrl=_zvu;
+      var _zvt=_ds('zedVideoType'); if(_zvt) type=_zvt;
+      var _zovs=_ds('zedOrigVideoSrc'); if(_zovs && !origSrc) origSrc=_zovs;
+      if((!rawUrl || rawUrl==='about:blank') && origSrc && origSrc!=='about:blank' && origSrc!=='') rawUrl=origSrc;
+      if((!rawUrl || rawUrl==='about:blank') && _zovs && _zovs!=='about:blank' && _zovs!=='') rawUrl=_zovs;
     }
   }catch(e){}
   if(ytId) type='youtube';
@@ -14943,7 +14956,7 @@ window.addEventListener('click', function(e){
       if(jobs[vid2] && jobs[vid2].status==='downloading'){ return; }
       try{ var _vc=vBtn.closest('div'); if(_vc && _vc.dataset.zedJobId && jobs[_vc.dataset.zedJobId] && jobs[_vc.dataset.zedJobId].status==='downloading'){ return; } }catch(eJ2){}
       if(jobs[vid2] && (jobs[vid2].status==='paused' || jobs[vid2].status==='error')){ resumeJob(vid2); return; }
-      var card2=null; (function(){ var cur=vBtn; for(var ci2=0;ci2<10 && cur;ci2++){ if(cur.querySelector && cur.querySelector(':scope > .font-semibold')){ card2=cur; break; } if(cur.classList && (cur.classList.contains('zed-video-card') || cur.classList.contains('zed-dl-card'))){ card2=cur; break; } cur=cur.parentElement; } if(!card2) card2=vBtn.closest('div'); })();
+      var card2=null; (function(){ var cur=vBtn; var best=null; for(var ci2=0;ci2<12 && cur;ci2++){ if(cur.querySelector && cur.querySelector('video, iframe, .yt-lite')){ if(!best) best=cur; } if(cur.classList && (cur.classList.contains('zed-video-card') || cur.classList.contains('zed-dl-card'))){ card2=cur; break; } /* FIX 13 Nov 2026: the old check stopped at div.p-4 (title but NO video), so downloads always got video_url=''. Only stop at a box that has BOTH title AND media. */ if(cur.querySelector && cur.querySelector('.font-semibold') && cur.querySelector('video, iframe, .yt-lite')){ card2=cur; break; } cur=cur.parentElement; } if(!card2) card2=best || vBtn.closest('div'); })();
       var info2=extractVideoInfo(card2, vid2);
       // Unlocked-view / Re-download: prefer stored meta (the card may be blanked)
       if(vBtn.hasAttribute('data-zed-unlocked-dl') || vBtn.hasAttribute('data-zed-dl-redownload')){
@@ -14958,7 +14971,35 @@ window.addEventListener('click', function(e){
       if(info2.video_type==='youtube' || info2.ytId || getYTId(info2.video_url)){ alert('YouTube videos cannot be downloaded.\n\nYou can unlock + watch them online in the app.\nOnly MP4 videos can be saved offline inside the app.'); return; }
       if(!isUnlockedUnified(info2)){ showFixToast('Unlock this video first (25 coins)'); return; }
       var vUrl=info2.video_url || (card2 && card2.dataset ? (card2.dataset.zedVideoUrl||card2.dataset.zedOrigSrc||'') : '');
-      if(!vUrl || vUrl==='about:blank'){ showFixToast('No video file found for this video'); return; }
+      if(!vUrl || vUrl==='about:blank'){ try{ var _anc2=card2; while(_anc2 && (!_anc2.dataset || (!_anc2.dataset.zedVideoUrl && !_anc2.dataset.zedOrigVideoSrc && !_anc2.dataset.zedOrigSrc))){ _anc2=_anc2.parentElement; } if(_anc2 && _anc2.dataset){ vUrl=_anc2.dataset.zedVideoUrl||_anc2.dataset.zedOrigVideoSrc||_anc2.dataset.zedOrigSrc||''; } }catch(e){} }
+      if(!vUrl || vUrl==='about:blank'){
+        /* FIX 13 Nov 2026 - LAST RESORT: DOM + saved meta can BOTH be blank (card was blanked
+           when the unlock was saved, or React re-created the card). The server always has the
+           true URL, so fetch it by title instead of giving up with "No video file found". */
+        showFixToast('Finding video file…');
+        (async function(){
+          try{
+            var _t=(info2.title||'').trim().toLowerCase();
+            var _res=await cleanFetch(SUPA_URL+'/rest/v1/videos?select=video_url,video_type,title,subject&limit=500', {headers:{apikey:SUPA_KEY,Authorization:'Bearer '+SUPA_KEY}});
+            var _arr=await _res.json();
+            var _found=null;
+            if(Array.isArray(_arr)){
+              for(var _i=0;_i<_arr.length;_i++){ if((_arr[_i].title||'').trim().toLowerCase()===_t){ _found=_arr[_i]; break; } }
+              if(!_found && _t){ for(var _j=0;_j<_arr.length;_j++){ if((_arr[_j].title||'').trim().toLowerCase().indexOf(_t)!==-1){ _found=_arr[_j]; break; } } }
+            }
+            if(_found && _found.video_url && _found.video_url!=='about:blank' && _found.video_url!==''){
+              if(_found.video_type==='youtube' || getYTId(_found.video_url)){ alert('YouTube videos cannot be downloaded.\n\nYou can unlock + watch them online in the app.\nOnly MP4 videos can be saved offline inside the app.'); return; }
+              try{ rememberMeta({id:vid2,title:info2.title,subject:info2.subject,video_url:_found.video_url,video_type:'mp4',thumbnail_url:info2.thumbnail_url||''}); }catch(e){}
+              var _job={id:vid2,title:info2.title,url:_found.video_url,type:'video',status:'downloading',received:0,total:0,chunks:[],controller:null,meta:{subject:info2.subject,video_url:_found.video_url,video_type:'mp4',thumbnail_url:info2.thumbnail_url||''},error:'',lastBytesAt:Date.now()};
+              addJob(_job); startJob(_job);
+              try{ if(vBtn){ vBtn.disabled=true; vBtn.style.opacity='0.7'; vBtn.textContent='Downloading…'; } if(card2) card2.dataset.zedJobId=vid2; }catch(e){}
+            } else {
+              showFixToast('No video file found for this video');
+            }
+          }catch(e){ showFixToast('No video file found for this video'); }
+        })();
+        return;
+      }
       var vJob={id:vid2,title:info2.title,url:vUrl,type:'video',status:'downloading',received:0,total:0,chunks:[],controller:null,meta:{subject:info2.subject,video_url:vUrl,video_type:'mp4',thumbnail_url:info2.thumbnail_url||''},error:'',lastBytesAt:Date.now()};
       addJob(vJob); /* FIX: silent */; startJob(vJob);
       /* FIX V2: lock the tapped button + remember the job on the card */
