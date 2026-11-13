@@ -1,5 +1,5 @@
 /* ZED SCHOLAR - Offline Service Worker - SILENT, no offline banner */
-const CACHE = 'zed-scholar-v7';
+const CACHE = 'zed-scholar-v6';
 const PRECACHE = [
   './',
   './index.html',
