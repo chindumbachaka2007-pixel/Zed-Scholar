@@ -1,3 +1,8 @@
 User-agent: *
 Allow: /
+
+# Block admin / internal files from Google - keep them out of search results
+Disallow: /sw.js
+Disallow: /manifest.json
+
 Sitemap: https://zedscholar.vercel.app/sitemap.xml
