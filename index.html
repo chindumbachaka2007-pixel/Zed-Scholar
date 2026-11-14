@@ -1,6 +1,18 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
+<style>
+/* ZED CRITICAL - FIRST IN HEAD. Header + LIVE/OFFLINE pill pinned top-right from the
+   very first paint, before any script runs and before Tailwind CDN loads.
+   Without this, the header is unstyled until Tailwind arrives, so LIVE/OFFLINE sits
+   in the middle and only jumps to top-right after a refresh (when Tailwind is cached).
+   Covers BOTH LIVE and OFFLINE - they are the same pill in the header's right section. */
+header{ display:flex !important; align-items:center !important; justify-content:space-between !important; height:56px !important; min-height:56px !important; padding-left:16px !important; padding-right:16px !important; box-sizing:border-box !important; }
+header > div:first-child{ display:flex !important; align-items:center !important; gap:12px !important; min-width:0 !important; flex:1 1 auto !important; }
+header > div:last-child{ display:flex !important; align-items:center !important; gap:8px !important; margin-left:auto !important; flex-shrink:0 !important; }
+/* Page background dark from first paint, so no white / code flash while loading or updating */
+html, body{ background:#0F0E0B !important; }
+</style>
   <!-- ZED SCHOLAR v4 — 14 Nov 2026 — offline fix: real sw.js + manifest.json + icons shipped with this file; SILENT DOWNLOADS + duplicate SW registration deleted. When you change this file, also bump CACHE_NAME in sw.js (v4 -> v5) so the old version is deleted. -->
 
   <meta charset="UTF-8">
