@@ -1,18 +1,6 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-<style>
-/* ZED CRITICAL - FIRST IN HEAD. Header + LIVE/OFFLINE pill pinned top-right from the
-   very first paint, before any script runs and before Tailwind CDN loads.
-   Without this, the header is unstyled until Tailwind arrives, so LIVE/OFFLINE sits
-   in the middle and only jumps to top-right after a refresh (when Tailwind is cached).
-   Covers BOTH LIVE and OFFLINE - they are the same pill in the header's right section. */
-header{ display:flex !important; align-items:center !important; justify-content:space-between !important; height:56px !important; min-height:56px !important; padding-left:16px !important; padding-right:16px !important; box-sizing:border-box !important; }
-header > div:first-child{ display:flex !important; align-items:center !important; gap:12px !important; min-width:0 !important; flex:1 1 auto !important; }
-header > div:last-child{ display:flex !important; align-items:center !important; gap:8px !important; margin-left:auto !important; flex-shrink:0 !important; }
-/* Page background dark from first paint, so no white / code flash while loading or updating */
-html, body{ background:#0F0E0B !important; }
-</style>
   <!-- ZED SCHOLAR v4 — 14 Nov 2026 — offline fix: real sw.js + manifest.json + icons shipped with this file; SILENT DOWNLOADS + duplicate SW registration deleted. When you change this file, also bump CACHE_NAME in sw.js (v4 -> v5) so the old version is deleted. -->
 
   <meta charset="UTF-8">
@@ -5033,11 +5021,10 @@ const db=await openDB();return new Promise((res,rej)=>{const tx=db.transaction(S
 
 
 <script>
-// ZED V18 - MOBILE GRID ONLY.
-// Card-tap-to-go-big REMOVED: tapping anywhere on a card forced it big, so you could
-// never play/pause inline in the card. Fullscreen is now ONLY the ⤢ expand button.
-// The YouTube controls (play/pause, seek) work inline in the card.
+// ZED V18 - MOBILE GRID + BIG PLAYER ON PLAY
 (function(){
+  let playingCard = null;
+
   function makeGrid(){
     let grids = document.querySelectorAll('.grid.md\:grid-cols-2.gap-4');
     grids.forEach(g=>{
@@ -5048,13 +5035,130 @@ const db=await openDB();return new Promise((res,rej)=>{const tx=db.transaction(S
         if(c.innerHTML && (c.innerHTML.includes('iframe') || c.innerHTML.includes('Watch video') || (c.textContent||'').includes('• G'))){ hasVideo=true; break; }
       }
       if(!hasVideo && g.children.length===0) return;
+      
+      // If a video is playing, don't force grid - show big single
+      if(playingCard && g.contains(playingCard)) return;
+
       g.style.display = 'grid';
       g.style.gridTemplateColumns = 'repeat(2, minmax(0, 1fr))';
       g.style.gap = window.innerWidth < 768 ? '10px' : '16px';
     });
   }
-  setTimeout(()=>{ makeGrid(); }, 800);
-  console.log('✅ V18 - Mobile grid 2 cols (card tap no longer forces big player)');
+
+  function setupPlay(){
+    let grids = document.querySelectorAll('.grid.md\:grid-cols-2.gap-4');
+    grids.forEach(g=>{
+      if(g.className.includes('grid-cols-3')) return;
+      for(let card of g.children){
+        if(card.id && card.id.startsWith('zed')) continue;
+        if(card.dataset.zedPlaySetup) continue;
+        card.dataset.zedPlaySetup = '1';
+        card.style.cursor = 'pointer';
+        
+        card.addEventListener('click', (e)=>{
+          // BLOCK 'Watch video on YouTube' - never leave the app, play in-app instead
+          if(e.target.textContent && e.target.textContent.includes('Watch video on YouTube')){ e.preventDefault(); e.stopPropagation(); return; }
+          if(e.target.textContent && e.target.textContent.includes('Watch on YouTube')){ e.preventDefault(); e.stopPropagation(); return; }
+          if(e.target.closest('a')) return;
+          
+          // If already playing this card, close it
+          if(playingCard === card){
+            closePlayer();
+            return;
+          }
+          
+          // Play this card big
+          playBig(card);
+        });
+      }
+    });
+  }
+
+  function playBig(card){
+    playingCard = card;
+    let grid = card.parentElement;
+    
+    // Hide all other cards
+    for(let c of grid.children){
+      if(c.id && c.id.startsWith('zed')) continue;
+      if(c !== card){
+        c.style.display = 'none';
+      }
+    }
+    
+    // Make playing card full width and big
+    card.style.display = 'block';
+    card.style.gridColumn = '1 / -1';
+    card.style.maxWidth = '100%';
+    
+    // Make iframe/video big
+    let iframe = card.querySelector('iframe');
+    if(iframe){
+      iframe.style.width = '100%';
+      iframe.style.height = window.innerWidth < 768 ? '220px' : '400px';
+      iframe.style.minHeight = '220px';
+    }
+    let videoWrap = card.querySelector('div');
+    if(videoWrap && videoWrap.querySelector('iframe')){
+      videoWrap.style.height = window.innerWidth < 768 ? '220px' : '400px';
+    }
+    
+    // Add close button if not exists
+    if(!card.querySelector('.zed-close-play')){
+      let close = document.createElement('div');
+      close.className = 'zed-close-play';
+      close.textContent = '✕ Show grid';
+      close.style.cssText = 'margin-top:12px;background:transparent;color:white;padding:8px 14px;border-radius:20px;font-size:12px;display:inline-block;cursor:pointer;border:1px solid #444;';
+      close.addEventListener('click', (e)=>{
+        e.stopPropagation();
+        closePlayer();
+      });
+      card.appendChild(close);
+    }
+    
+    // Scroll to card
+    card.scrollIntoView({behavior:'smooth', block:'start'});
+    
+    // Update info
+    let info = document.getElementById('zed-v16-info') || document.getElementById('zed-v14-info') || document.getElementById('zed-v13-info');
+    if(info) info.textContent = 'Playing • Tap ✕ Show grid to return to 4 videos';
+  }
+
+  function closePlayer(){
+    if(!playingCard) return;
+    let grid = playingCard.parentElement;
+    playingCard.style.gridColumn = '';
+    let iframe = playingCard.querySelector('iframe');
+    if(iframe){
+      iframe.style.height = '';
+      iframe.style.minHeight = '';
+    }
+    let closeBtn = playingCard.querySelector('.zed-close-play');
+    if(closeBtn) closeBtn.remove();
+    playingCard = null;
+    
+    // Restore 4 random grid
+    let allCards = [];
+    for(let c of grid.children){
+      if(c.id && c.id.startsWith('zed')) continue;
+      if(!c.querySelector || !c.querySelector('.font-semibold')) continue;
+      allCards.push(c);
+    }
+    allCards.forEach(c=>c.style.display='none');
+    let shuf = [...allCards].sort(()=>0.5-Math.random()).slice(0,4);
+    shuf.forEach(c=>{ c.style.display=''; c.style.gridColumn=''; });
+    
+    makeGrid();
+  }
+
+  /* V15 owns grid - V18 interval disabled */;
+  
+  setTimeout(()=>{
+    makeGrid();
+    setupPlay();
+  }, 800);
+  
+  console.log('✅ V18 - Mobile grid 2 cols + big player on tap');
 })();
 </script>
 
@@ -5116,19 +5220,11 @@ const db=await openDB();return new Promise((res,rej)=>{const tx=db.transaction(S
     wrap.appendChild(play);
 
     // Click to load iframe
-    wrap.addEventListener('click', function(e){
-      // Do NOT bubble to the card: tapping the video must play/pause INLINE, not go big.
-      if(e) e.stopPropagation();
+    wrap.addEventListener('click', function(){
       if(wrap.classList.contains('yt-loaded')) return;
-      // ONE VIDEO AT A TIME: pause every other playing YouTube video before this one starts.
-      try{
-        document.querySelectorAll('iframe[src*="youtube"], iframe[src*="youtube-nocookie"]').forEach(function(f){
-          try{ if(f.contentWindow) f.contentWindow.postMessage(JSON.stringify({event:'command', func:'pause', args:''}), '*'); }catch(_){}
-        });
-      }catch(_){}
       wrap.classList.add('yt-loaded');
       let iframe = document.createElement('iframe');
-      iframe.src = 'https://www.youtube-nocookie.com/embed/' + videoId + '?autoplay=1&modestbranding=1&rel=0&iv_load_policy=3&playsinline=1&controls=1&fs=1&enablejsapi=1';
+      iframe.src = 'https://www.youtube-nocookie.com/embed/' + videoId + '?autoplay=1&modestbranding=1&rel=0&iv_load_policy=3&playsinline=1&controls=1&fs=1;
       iframe.setAttribute('allow', 'accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; fullscreen');
       // Sandbox WITH allow-presentation: blocks top-navigation / popups (NO redirect) but ALLOWS fullscreen when allowfullscreen is set
       iframe.setAttribute('sandbox', 'allow-scripts allow-same-origin allow-presentation');
@@ -5160,16 +5256,6 @@ const db=await openDB();return new Promise((res,rej)=>{const tx=db.transaction(S
       shieldLogo.addEventListener('click', function(e){ e.preventDefault(); e.stopPropagation(); }, true);
       shieldLogo.addEventListener('touchstart', function(e){ e.stopPropagation(); }, {passive:true});
       wrap.appendChild(shieldLogo);
-      // OPAQUE shield over the "More videos" + recommended-videos strip (bottom, above
-      // the seek bar). The old shields were TRANSPARENT, so the "More videos" text and
-      // the recommended thumbnail next to it still SHOWED. Opaque black actually HIDES
-      // them. The seek bar + play/pause sit below this strip, so they still work.
-      var shieldMore = document.createElement('div');
-      shieldMore.className = 'zed-yt-shield-more';
-      shieldMore.setAttribute('aria-hidden', 'true');
-      shieldMore.addEventListener('click', function(e){ e.preventDefault(); e.stopPropagation(); }, true);
-      shieldMore.addEventListener('touchstart', function(e){ e.stopPropagation(); }, {passive:true});
-      wrap.appendChild(shieldMore);
     }, {once: false});
 
     return wrap;
@@ -5610,7 +5696,85 @@ input[placeholder="search a topic"], input[placeholder="Search here"] {
   pointer-events: auto !important;
 }
 </style>
+<script>
+// V25 - Fix pause/seek controls
+(function(){
+  function enhanceIframes(){
+    document.querySelectorAll('.yt-lite.yt-loaded iframe').forEach(iframe=>{
+      if(iframe.dataset.controlsFixed) return;
+      iframe.dataset.controlsFixed = '1';
+      // Ensure iframe allows all needed
+      iframe.setAttribute('allow', 'accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; fullscreen');
+      // Sandbox WITH allow-presentation: blocks top-navigation / popups (NO redirect) but ALLOWS fullscreen when allowfullscreen is set
+      iframe.setAttribute('sandbox', 'allow-scripts allow-same-origin allow-presentation');
+      iframe.setAttribute('allowfullscreen', '');
+      // Stop parent click handlers from closing player when interacting with video
+      iframe.addEventListener('click', (e)=>{
+        e.stopPropagation();
+      });
+      // Also the wrapper should not close on click when video is loaded
+      let lite = iframe.closest('.yt-lite');
+      if(lite){
+        lite.addEventListener('click', (e)=>{
+          // If already loaded, don't re-trigger play, let iframe handle it
+          if(lite.classList.contains('yt-loaded')){
+            e.stopPropagation();
+          }
+        }, true);
+        // Remove any card-level close behavior
+        let card = lite.closest('div[class*="bg-"][class*="border"]') || lite.parentElement?.parentElement;
+        if(card){
+          // Clone to remove old listeners? Instead override onclick
+          card.style.cursor = 'default';
+        }
+      }
+    });
+  }
 
+  // Patch createFacade to add controls=1 and better params
+  const origCreateFacade = window.createFacade;
+  // Override our earlier facade creation by patching the global function if exists, else patch via mutation
+  function patchFacadeCreation(){
+    document.querySelectorAll('.yt-lite:not(.yt-loaded)').forEach(lite=>{
+      if(lite.dataset.patchedControls) return;
+      lite.dataset.patchedControls = '1';
+      // Re-bind click to use better iframe url
+      lite.addEventListener('click', function handler(e){
+        if(lite.classList.contains('yt-loaded')) return;
+        // This will be handled by the original facade click, but we ensure our CSS fix runs after
+        setTimeout(enhanceIframes, 100);
+        setTimeout(enhanceIframes, 500);
+      });
+    });
+  }
+
+  // Override the iframe src creation in the V19 script by monkey patching the wrapper's click
+  // Find all yt-lite and ensure they create iframe with controls=1
+  document.addEventListener('click', (e)=>{
+    let lite = e.target.closest('.yt-lite');
+    if(lite && !lite.classList.contains('yt-loaded')){
+      // Let original handler run first, then fix
+      setTimeout(()=>{
+        let iframe = lite.querySelector('iframe');
+        if(iframe && !iframe.src.includes('controls=1')){
+          let src = iframe.src;
+          if(!src.includes('controls=')){
+            iframe.src = src + '&controls=1&fs=1&playsinline=1';
+          }
+          enhanceIframes();
+        }
+      }, 200);
+    }
+  }, true);
+
+  setInterval(()=>{
+    enhanceIframes();
+    patchFacadeCreation();
+  }, 800);
+
+  console.log('✅ V25 Controls fix - overlay removed, pause/seek now works');
+})();
+</script>
 
 
 <script>
@@ -5900,7 +6064,185 @@ document.addEventListener('click', function(e){
 console.log('[ZED] Welcome popup + fast login active');
 </script>
 
-
+<script>
+// === ZED - Hide More videos + YouTube expand, load 4 videos at a time ===
+(function(){
+  var VISIBLE = 4;
+  var lastSearch = '';
+  function getVideosGrid(){
+    var grids = document.querySelectorAll('.grid.md\\:grid-cols-2.gap-4');
+    for(var i=0;i<grids.length;i++){
+      var g = grids[i];
+      if(g.className.includes('grid-cols-3')) continue;
+      // Videos grid has iframes or • G text
+      if(g.children.length>0 && (g.innerHTML.includes('iframe') || g.innerHTML.includes('• G'))){
+        return g;
+      }
+    }
+    return grids[0] || null;
+  }
+  function getSearchQuery(){
+    var inp = document.getElementById('zed-v16-input') || document.querySelector('input[placeholder*="Search a topic"]') || document.querySelector('input[placeholder*="Search here"]');
+    return inp ? (inp.value||'').trim().toLowerCase() : '';
+  }
+  function addShields(){
+    // Add shields to each video wrapper to block YouTube More videos + YouTube own expand
+    document.querySelectorAll('.aspect-video').forEach(function(wrap){
+      if(!wrap) return;
+      if(wrap.style.position !== 'relative') wrap.style.position = 'relative';
+      if(!wrap.querySelector('.zed-more-shield')){
+        var s = document.createElement('div');
+        s.className = 'zed-more-shield';
+        s.title = '';
+        // Block clicks - More videos does nothing
+        s.addEventListener('click', function(e){ e.preventDefault(); e.stopPropagation(); });
+        s.addEventListener('pointerdown', function(e){ e.preventDefault(); e.stopPropagation(); });
+        wrap.appendChild(s);
+      }
+      if(!wrap.querySelector('.zed-yt-expand-shield')){
+        var s2 = document.createElement('div');
+        s2.className = 'zed-yt-expand-shield';
+        s2.title = '';
+        s2.addEventListener('click', function(e){ e.preventDefault(); e.stopPropagation(); });
+        s2.addEventListener('pointerdown', function(e){ e.preventDefault(); e.stopPropagation(); });
+        wrap.appendChild(s2);
+      }
+    });
+  }
+  function applyPagination(){ if(window._zedV7OwnsVideos || window._zedV8OwnsVideos || window._zedV9OwnsVideos || window._zedV10OwnsVideos || window._zedV11OwnsVideos || window._zedV12OwnsVideos || window._zedV13OwnsVideos || window._zedV14OwnsVideos || window._zedV15OwnsVideos) return; // V15 owns pagination
+    var grid = getVideosGrid();
+    if(!grid) return;
+    var q = getSearchQuery();
+    if(q !== lastSearch){
+      VISIBLE = 4;
+      lastSearch = q;
+    }
+    // Collect cards (exclude our Load More button if inside grid)
+    var cards = Array.from(grid.children).filter(function(c){
+      return c.id !== 'zed-load-more-videos' && !c.classList.contains('zed-load-more-wrap');
+    });
+    if(cards.length===0) return;
+    // Filter by search: cards already hidden by existing search code have display:none and no pag flag
+    // We treat cards with display:none and NO pag flag as search-hidden, keep them hidden
+    // Cards with pag flag are pagination-hidden
+    var searchVisible = cards.filter(function(c){
+      if(c.dataset.zedPagHidden === '1') return false; // pagination hidden, but may become visible if in first 4
+      // If search is active, existing search code may have hidden it - respect that
+      if(q && c.style.display === 'none' && !c.dataset.zedSearchMatch) return false;
+      return true;
+    });
+    // For search, we need to consider all cards that match search, not just currently visible
+    // So build list of matching cards: if q, check dataset.zedSearch or text
+    var matching = cards;
+    if(q){
+      matching = cards.filter(function(c){
+        var hay = (c.dataset.zedSearch || (c.textContent||'').toLowerCase());
+        return hay.includes(q);
+      });
+    }
+    // Show first VISIBLE matching, hide rest (lazy unload iframe)
+    matching.forEach(function(card, idx){
+      var iframe = card.querySelector('iframe');
+      if(idx < VISIBLE){
+        card.style.display = '';
+        card.dataset.zedPagHidden = '';
+        // Restore iframe if it was unloaded
+        if(iframe && (!iframe.src || iframe.src === 'about:blank' || iframe.src === '')){
+          if(card.dataset.zedSrc){
+            iframe.src = card.dataset.zedSrc;
+          }
+        }
+      } else {
+        card.style.display = 'none';
+        card.dataset.zedPagHidden = '1';
+        // Unload iframe to make page fast - store src
+        if(iframe && iframe.src && iframe.src !== 'about:blank' && iframe.src !== ''){
+          card.dataset.zedSrc = iframe.src;
+          iframe.src = 'about:blank';
+        }
+      }
+    });
+    // Hide non-matching when searching
+    if(q){
+      cards.forEach(function(card){
+        if(!matching.includes(card)){
+          card.style.display = 'none';
+        }
+      });
+    }
+    // Load More button - outside grid, after grid
+    var existing = document.getElementById('zed-load-more-videos');
+    var remaining = matching.length - VISIBLE;
+    if(remaining > 0){
+      if(!existing){
+        var wrap = document.createElement('div');
+        wrap.className = 'zed-load-more-wrap';
+        wrap.style.cssText = 'grid-column:1/-1;';
+        var btn = document.createElement('button');
+        btn.id = 'zed-load-more-videos';
+        btn.type = 'button';
+        btn.textContent = 'Load 4 more videos (' + remaining + ' left)';
+        btn.addEventListener('click', function(){
+          VISIBLE += 4;
+          applyPagination();
+          // Scroll to first newly shown
+          var grid2 = getVideosGrid();
+          if(grid2){
+            var shown = Array.from(grid2.children).filter(function(c){ return c.style.display !== 'none' && c.id !== 'zed-load-more-videos'; });
+            var target = shown[VISIBLE-4];
+            if(target) target.scrollIntoView({behavior:'smooth', block:'start'});
+          }
+        });
+        wrap.appendChild(btn);
+        grid.parentNode.insertBefore(wrap, grid.nextSibling);
+      } else {
+        existing.textContent = 'Load 4 more videos (' + remaining + ' left)';
+        // Move it after grid if needed
+        if(existing.parentNode !== grid.parentNode || existing.parentNode.querySelector('.zed-load-more-wrap') !== existing.parentNode){
+          // keep as is
+        }
+      }
+    } else {
+      if(existing){
+        var w = existing.closest('.zed-load-more-wrap');
+        if(w) w.remove(); else existing.remove();
+      }
+    }
+  }
+  // Run pagination + shields on interval (React re-renders)
+  /* V15 owns pagination - interval disabled */ setInterval(function(){ try{ addShields(); }catch(e){}  }catch(e){}
+  }, 800);
+  // Auto-load more on scroll near bottom
+  var scrollTick = false;
+  window.addEventListener('scroll', function(){
+    if(scrollTick) return;
+    scrollTick = true;
+    setTimeout(function(){
+      scrollTick = false;
+      try{
+        var grid = getVideosGrid();
+        if(!grid) return;
+        var rect = grid.getBoundingClientRect();
+        if(rect.bottom < window.innerHeight + 400){
+          var btn = document.getElementById('zed-load-more-videos');
+          if(btn){
+            VISIBLE += 4;
+            applyPagination();
+          }
+        }
+      }catch(e){}
+    }, 300);
+  }, {passive:true});
+  // Reset pagination when search changes
+  document.addEventListener('input', function(e){
+    if(e.target && e.target.id === 'zed-v16-input'){
+      VISIBLE = 4;
+      setTimeout(applyPagination, 100);
+    }
+  });
+  console.log('[ZED] 4-at-a-time + More videos blocked active');
+})();
+</script>
 
 <script>
 // === ZED - Settings (Logout moved here), Edit Profile, Change/Recover Password, Show/Hide password, Colourful logo ===
@@ -7774,10 +8116,92 @@ console.log('[ZED] Welcome popup + fast login active');
 </script>
 
 
+<script>
+// ZED - LIVE pill, no gradients
+(function(){
+  function fixLive(){
+    document.querySelectorAll('span,div,button').forEach(function(el){
+      var t=(el.textContent||'').trim();
+      // Only the pill itself (short text, no children with extra text)
+      if((t==='ONLINE' || t==='online' || t==='● LIVE') && el.children.length===0){
+        el.textContent='● LIVE';
+        el.style.background='#1a1a1a';
+        el.style.backgroundImage='none';
+        el.style.color='#fff';
+        el.style.border='1px solid #333';
+        el.style.boxShadow='none';
+        el.style.textShadow='none';
+      }
+      if(t==='OFFLINE' && el.children.length===0){
+        el.textContent='● OFFLINE';
+        el.style.background='#1a1a1a';
+        el.style.backgroundImage='none';
+        el.style.color='#fff';
+        el.style.border='1px solid #333';
+        el.style.boxShadow='none';
+      }
+      // Also handle "● ONLINE" variants
+      if((t==='● ONLINE' || t==='• ONLINE') && el.children.length===0){
+        el.textContent='● LIVE';
+        el.style.background='#1a1a1a';
+        el.style.backgroundImage='none';
+      }
+    });
+    // Kill any remaining gradient on header pill container
+    document.querySelectorAll('header div').forEach(function(d){
+      if((d.textContent||'').trim().startsWith('● LIVE') || (d.textContent||'').trim()==='LIVE'){
+        d.style.background='#1a1a1a'; d.style.backgroundImage='none'; d.style.boxShadow='none';
+      }
+    });
+  }
+  setInterval(fixLive, 500);
+  document.addEventListener('DOMContentLoaded', fixLive);
+  // Also fix on load
+  setTimeout(fixLive, 300);
+  setTimeout(fixLive, 1000);
+  setTimeout(fixLive, 2000);
+})();
+</script>
 
 
-
-
+<script>
+// ZED - LIVE = GREEN, OFFLINE = RED, solid, no gradient, no dark
+(function(){
+  function fixLiveColor(){
+    document.querySelectorAll('span,div').forEach(function(el){
+      var t=(el.textContent||'').trim();
+      if(el.children.length>0) return; // only the text node itself
+      if(t==='● LIVE' || t==='LIVE' || t==='online' || t==='ONLINE'){
+        el.textContent='● LIVE';
+        el.setAttribute('data-live','true');
+        el.style.background='#22C55E'; el.style.backgroundImage='none'; el.style.color='#000'; el.style.border='none'; el.style.boxShadow='none';
+        // Also colour the parent pill
+        var p=el.parentElement; if(p){ p.setAttribute('data-live','true'); p.style.background='#22C55E'; p.style.backgroundImage='none'; p.style.border='none'; p.style.boxShadow='none'; }
+      }
+      if(t==='● OFFLINE' || t==='OFFLINE' || t==='offline' || t==='OFFLINE'){
+        el.textContent='● OFFLINE';
+        el.setAttribute('data-live','false');
+        el.style.background='#FF3B30'; el.style.backgroundImage='none'; el.style.color='#fff'; el.style.border='none'; el.style.boxShadow='none';
+        var p2=el.parentElement; if(p2){ p2.setAttribute('data-live','false'); p2.style.background='#FF3B30'; p2.style.backgroundImage='none'; p2.style.border='none'; p2.style.boxShadow='none'; }
+      }
+    });
+    // Also fix header pill container directly - if it contains LIVE, make it green
+    document.querySelectorAll('header div').forEach(function(d){
+      var txt=(d.textContent||'').trim();
+      if(txt==='● LIVE' || txt==='LIVE'){
+        d.setAttribute('data-live','true'); d.style.background='#22C55E'; d.style.backgroundImage='none'; d.style.border='none'; d.style.boxShadow='none';
+      }
+      if(txt==='● OFFLINE' || txt==='OFFLINE'){
+        d.setAttribute('data-live','false'); d.style.background='#FF3B30'; d.style.backgroundImage='none'; d.style.border='none'; d.style.boxShadow='none';
+      }
+    });
+  }
+  setInterval(fixLiveColor, 400);
+  setTimeout(fixLiveColor, 200);
+  setTimeout(fixLiveColor, 1000);
+  document.addEventListener('DOMContentLoaded', fixLiveColor);
+})();
+</script>
 
 
 <div id="zed-fab-hint">✋ Drag to move • Release to drop</div>
@@ -9554,7 +9978,57 @@ header div[class*="bg-"][class*="border"][class*="rounded"] span:first-child{
   width: 8px !important; height: 8px !important; border-radius: 999px !important;
 }
 </style>
-
+<script>
+// FIX v12: LIVE / OFFLINE - no box, just on its own. Runs LAST, every 500ms, beats old box scripts.
+(function(){
+  function fixLiveNoBox(){
+    try{
+      // Find the LIVE / OFFLINE pill: header div that contains LIVE or OFFLINE text
+      document.querySelectorAll('header div').forEach(function(d){
+        var txt = (d.textContent||'').trim();
+        if(txt.indexOf('LIVE')!==-1 || txt.indexOf('OFFLINE')!==-1 || txt.indexOf('ONLINE')!==-1){
+          // Only the pill itself (the one with rounded-full / bg / border classes, or direct parent of the text)
+          if(d.className && (d.className.indexOf('rounded-full')!==-1 || d.className.indexOf('bg-')!==-1)){
+            d.style.setProperty('background','transparent','important');
+            d.style.setProperty('background-color','transparent','important');
+            d.style.setProperty('background-image','none','important');
+            d.style.setProperty('border','none','important');
+            d.style.setProperty('box-shadow','none','important');
+            d.style.setProperty('border-radius','0','important');
+            // FIX v13: DO NOT set padding/height - that moves LIVE
+          }
+        }
+      });
+      // The text span itself - no background, white/green text
+      document.querySelectorAll('header span').forEach(function(s){
+        var txt=(s.textContent||'').trim();
+        if(txt==='● LIVE' || txt==='● OFFLINE' || txt==='LIVE' || txt==='OFFLINE' || txt==='● ONLINE'){
+          s.style.setProperty('background','transparent','important');
+          s.style.setProperty('background-image','none','important');
+          s.style.setProperty('border','none','important');
+          s.style.setProperty('box-shadow','none','important');
+          s.style.setProperty('color', txt.indexOf('OFFLINE')!==-1 ? '#FF3B30' : '#8CFF8A','important');
+        }
+        // The dot: keep it coloured, no box
+        if(s.className && s.className.indexOf('rounded-full')!==-1 && s.textContent.trim()===''){
+          // This is the dot span (empty, rounded-full) - keep green/red, no box
+          s.style.setProperty('background', '#8CFF8A','important');
+        }
+      });
+      // Header right container - no box
+      var hdr=document.querySelector('header');
+      if(hdr){
+        var right=hdr.querySelector(':scope > div:last-child');
+        if(right){ right.style.setProperty('background','transparent','important'); right.style.setProperty('border','none','important'); right.style.setProperty('box-shadow','none','important'); }
+      }
+    }catch(e){}
+  }
+  setInterval(fixLiveNoBox, 500);
+  setTimeout(fixLiveNoBox, 500);
+  setTimeout(fixLiveNoBox, 1500);
+  document.addEventListener('DOMContentLoaded', fixLiveNoBox);
+})();
+</script>
 
 
 <style>
@@ -10370,7 +10844,10 @@ body.zed-v15-no-results #zed-v15-no-results{display:block !important}
 .zed-badge{display:inline-flex;align-items:center;gap:4px;font-size:10px;font-weight:800;padding:3px 8px;border-radius:999px;margin-top:6px}
 .zed-badge.locked{background:#3a2a00;color:#FFD600;border:1px solid #FFD600}
 .zed-badge.unlocked{background:#0f2a12;color:#8CFF8A;border:1px solid #8CFF8A}
-.zed-lock-cover{position:absolute !important;top:0 !important;left:0 !important;right:0 !important;aspect-ratio:16/9 !important;z-index:60 !important;display:flex !important;flex-direction:column !important;align-items:center !important;justify-content:center !important;gap:6px !important;text-align:center !important;padding:14px !important;background-size:cover !important;background-position:center !important;background-color:#111 !important;cursor:pointer !important;border-radius:14px 14px 0 0 !important;overflow:hidden !important;transform:translateZ(0);backface-visibility:hidden}
+.zed-lock-cover{position:absolute !important;top:0 !important;left:0 !important;right:0 !important;aspect-ratio:16/9 !important;z-index:60 !important;display:flex !important;flex-direction:column !important;align-items:center !important;justify-content:center !important;gap:6px !important;text-align:center !important;padding:14px !important;background-size:cover !important;background-position:center !important;background-color:transparent !important;cursor:pointer !important;border-radius:14px 14px 0 0 !important;overflow:hidden !important;transform:translateZ(0);backface-visibility:hidden}
+/* FIX 14 Nov 2026 - locked thumbnails were invisible: the old solid #111 was a darkshield that buried the thumbnail. Now the thumbnail shows through, with only a light 35% scrim so the lock icon still reads. */
+.zed-lock-cover::before{content:'' !important;position:absolute !important;inset:0 !important;background:rgba(0,0,0,0.35) !important;z-index:0 !important;pointer-events:none !important}
+.zed-lock-cover > *{position:relative !important;z-index:1 !important}
 .zed-lock-cover::after{content:"";position:absolute;inset:0;background:rgba(0,0,0,.82);z-index:0}
 .zed-lock-cover>*{position:relative;z-index:1}
 .zed-lock-icon{font-size:32px}
@@ -10411,22 +10888,6 @@ body.zed-v15-no-results #zed-v15-no-results{display:block !important}
 // - Stable IDs: YouTube uses ytId only (not full iframe URL which changes when we blank it). Unlocked now includes YouTube + MP4.
 // - Chat button = normal tap, no long-press drag. Movable is disabled for chat in the file build + V7 resets it to the stack.
 window._zedV5OwnsVideos = true;
-
-/* Locked-video thumbnail: the cover used info.thumbnail_url, which is EMPTY for most
-   YouTube videos, so locked cards showed a black box. Fall back to the YouTube
-   thumbnail from the video ID (info.ytId, or extracted from info.video_url). */
-function zedLockedThumb(info){
-  try{
-    if(info && info.thumbnail_url) return info.thumbnail_url;
-    var id = (info && info.ytId) || '';
-    if(!id && info && info.video_url){
-      var m = String(info.video_url).match(/(?:youtube\.com\/(?:watch\?v=|embed\/|v\/)|youtu\.be\/)([A-Za-z0-9_-]{11})/);
-      if(m) id = m[1];
-      if(!id){ var t = String(info.video_url).trim(); if(/^[A-Za-z0-9_-]{11}$/.test(t)) id = t; }
-    }
-    return id ? 'https://i.ytimg.com/vi/' + id + '/hqdefault.jpg' : '';
-  }catch(e){ return ''; }
-}
 window._zedV6OwnsVideos = true;
 window._zedV7OwnsVideos = true;
 window._zedV8OwnsVideos = true;
@@ -11197,7 +11658,23 @@ window._zedV15Filter = 'search';
       var html='';
       filtered.forEach(function(it){
         var isYT = it.video_type==='youtube' || !!it.ytId;
-        var thumb = it.thumbnail_url ? '<img src="'+escapeHtml(it.thumbnail_url)+'" style="width:100%;aspect-ratio:16/9;object-fit:cover;background:#000" />' : '<div style="width:100%;aspect-ratio:16/9;background:#111;display:flex;align-items:center;justify-content:center;font-size:32px">🎬</div>';
+        var thumb = (function(){
+          /* FIX 14 Nov 2026 - thumbnail on EVERY video (Downloads / Unlocked): fall back to YouTube thumb from ytId or video_url, then to the downloaded blob's first frame. No more dark 🎬 placeholder when a thumbnail exists somewhere. */
+          var t = it.thumbnail_url || '';
+          if(!t && it.ytId) t = 'https://i.ytimg.com/vi/'+it.ytId+'/hqdefault.jpg';
+          if(!t && it.video_url){
+            try{ var _m = String(it.video_url).match(/(?:youtube(?:-nocookie)?\.com\/(?:embed\/|watch\?v=|v\/)|youtu\.be\/)([A-Za-z0-9_-]{11})/); if(_m) t = 'https://i.ytimg.com/vi/'+_m[1]+'/hqdefault.jpg'; }catch(e){}
+          }
+          if(t) return '<img src="'+escapeHtml(t)+'" style="width:100%;aspect-ratio:16/9;object-fit:cover;background:#000" />';
+          if(it.isDownload && it.blob){
+            try{
+              window._zedDlThumbUrls = window._zedDlThumbUrls || {};
+              if(!window._zedDlThumbUrls[it.id]) window._zedDlThumbUrls[it.id] = URL.createObjectURL(it.blob);
+              return '<video src="'+window._zedDlThumbUrls[it.id]+'" preload="metadata" muted playsinline style="width:100%;aspect-ratio:16/9;object-fit:cover;background:#000;display:block;pointer-events:none"></video>';
+            }catch(e){}
+          }
+          return '<div style="width:100%;aspect-ratio:16/9;background:#111;display:flex;align-items:center;justify-content:center;font-size:32px">🎬</div>';
+        })();
         var action='';
         if(it.isDownload) action='<button class="primary" data-zed-dl-play="'+it.id+'">▶ Play Offline</button>';
         else if(isYT) action='<button class="primary" data-zed-unlocked-yt="'+it.id+'">▶ Play (needs data)</button>';
@@ -11353,14 +11830,28 @@ window._zedV15Filter = 'search';
       if(!cover){
         cover=document.createElement('div'); cover.className='zed-lock-cover';
         cover.setAttribute('data-zed-unlock', info.id); // V12: tapping cover unlocks, but NO duplicate button/title
-        var _lt=zedLockedThumb(info); if(_lt) cover.style.backgroundImage='url("'+_lt+'")';
+        /* FIX 14 Nov 2026 - thumbnail: fall back to the card's own <img> / video poster / YouTube thumb, so MP4 videos (no thumbnail_url) still show a thumbnail behind the lock. */
+        var _lt = info.thumbnail_url || '';
+        try{
+          if(!_lt){ var _im = card.querySelector('img'); if(_im && _im.src) _lt = _im.src; }
+          if(!_lt){ var _vv = card.querySelector('video'); if(_vv && _vv.getAttribute('poster')) _lt = _vv.getAttribute('poster'); }
+          if(!_lt && info.ytId) _lt = 'https://i.ytimg.com/vi/'+info.ytId+'/hqdefault.jpg';
+        }catch(e){}
+        if(_lt) cover.style.backgroundImage='url("'+_lt+'")';
         // V12: ONE Unlock button only - the one in the card below. Cover shows only lock icon, no title, no second Unlock.
         cover.innerHTML='<div class="zed-lock-icon">🔒</div><div class="zed-lock-sub">Locked • Tap Unlock below</div>';
         card.insertBefore(cover, card.firstChild);
       } else {
         cover.style.display='flex';
         cover.setAttribute('data-zed-unlock', info.id);
-        var _lt2=zedLockedThumb(info); if(_lt2 && cover.style.backgroundImage.indexOf(_lt2)===-1) cover.style.backgroundImage='url("'+_lt2+'")';
+        /* FIX 14 Nov 2026 - same thumbnail fallback as creation, so a re-rendered cover still gets a thumbnail. */
+        var _lt2 = info.thumbnail_url || '';
+        try{
+          if(!_lt2){ var _im2 = card.querySelector('img'); if(_im2 && _im2.src) _lt2 = _im2.src; }
+          if(!_lt2){ var _vv2 = card.querySelector('video'); if(_vv2 && _vv2.getAttribute('poster')) _lt2 = _vv2.getAttribute('poster'); }
+          if(!_lt2 && info.ytId) _lt2 = 'https://i.ytimg.com/vi/'+info.ytId+'/hqdefault.jpg';
+        }catch(e){}
+        if(_lt2 && cover.style.backgroundImage.indexOf(_lt2)===-1) cover.style.backgroundImage='url("'+_lt2+'")';
         // V12: keep cover minimal - remove any old title/button left from earlier version
         var oldTitle=cover.querySelector('.zed-lock-title'); if(oldTitle) oldTitle.remove();
         var oldBtn=cover.querySelector('.zed-unlock-btn'); if(oldBtn) oldBtn.remove();
@@ -12666,88 +13157,6 @@ header span, header div{ animation:none !important; transition:none !important; 
 div[class*="backdrop-blur"]{ backdrop-filter:none !important; -webkit-backdrop-filter:none !important; }
 </style>
 
-
-<style>
-/* ZED YT PLAYER FIX - opaque shields hide "More videos" + recommended thumbnails + "YouTube" button.
-   The old shields were transparent, so the text/thumbnail still showed. Opaque black hides them.
-   The seek bar + play/pause sit BELOW this strip (bottom 0-44px), so they still work. */
-.zed-yt-shield-logo{ background:#000 !important; }
-.zed-yt-shield-more{ position:absolute !important; left:0 !important; right:0 !important; bottom:40px !important; height:80px !important; background:#000 !important; z-index:21 !important; pointer-events:auto !important; }
-.zed-video-fullscreen .zed-yt-shield-more{ bottom:48px !important; height:96px !important; }
-.zed-video-fullscreen .zed-yt-shield-logo{ bottom:56px !important; right:12px !important; width:140px !important; height:48px !important; }
-.zed-yt-shield-top{ background:transparent !important; }
-</style>
-
-<script>
-// ZED - LIVE pill: ONE dot, NO blink. Replaces old Scripts 40, 41, 52.
-// Those three fought each other: 40/41 rewrote the text span to "● LIVE" (but the pill
-// already has a real dot <span>, so that made TWO dots), and all three re-set the
-// background every 400-500ms (dark <-> green <-> transparent) = the blink.
-// This one: strips the extra "●" from the text, keeps exactly one dot span, sets stable
-// styles ONCE per state (guarded by a marker, so it never re-writes = no blink), and
-// only re-runs when React actually re-renders (MutationObserver, NOT an interval).
-(function(){
-  function cleanLiveText(t){ return (t||'').replace(/^[\u25CF\u2022\u00B7\s]+/, '').trim(); }
-  function isLiveText(t){ return /^[\u25CF\u2022\u00B7]?\s*(LIVE|OFFLINE|ONLINE)$/i.test((t||'').trim()); }
-  function fixPill(pill, textSpan){
-    if(!pill || !textSpan) return;
-    var clean = cleanLiveText(textSpan.textContent);
-    if(!/^(LIVE|OFFLINE|ONLINE)$/i.test(clean)) return;
-    var isOff = /OFFLINE/i.test(clean);
-    var dotColor = isOff ? '#FF3B30' : '#22C55E';
-    var marker = clean + '|' + dotColor;
-    // Find dot spans (empty spans inside the pill, not the text span)
-    var dots = [];
-    pill.querySelectorAll('span').forEach(function(s){ if(s!==textSpan && s.children.length===0 && (s.textContent||'').trim()==='') dots.push(s); });
-    // Already fixed for this state? Don't touch it again (no blink).
-    if(pill.dataset.zedLiveFixed === marker && textSpan.textContent === clean && dots.length === 1) return;
-    // 1) Strip the extra "●" -> text is just "LIVE"/"OFFLINE" (the dot span is the ONE dot)
-    if(textSpan.textContent !== clean) textSpan.textContent = clean;
-    // 2) Exactly ONE dot span. Remove extras, add one if missing.
-    var dot = dots[0];
-    if(!dot){
-      dot = document.createElement('span');
-      dot.setAttribute('aria-hidden','true');
-      pill.insertBefore(dot, pill.firstChild);
-    }
-    for(var i=1;i<dots.length;i++){ dots[i].remove(); }
-    // 3) Stable styles, once per state.
-    dot.style.cssText = 'display:inline-block !important;width:8px !important;height:8px !important;border-radius:9999px !important;background:'+dotColor+' !important;flex:none !important;animation:none !important;';
-    textSpan.style.cssText = 'background:transparent !important;background-image:none !important;color:#fff !important;animation:none !important;';
-    pill.style.cssText = 'background:#1a1a1a !important;background-image:none !important;border:1px solid #333 !important;color:#fff !important;box-shadow:none !important;animation:none !important;display:inline-flex !important;align-items:center !important;gap:6px !important;';
-    pill.setAttribute('data-live', isOff ? 'false' : 'true');
-    pill.dataset.zedLiveFixed = marker;
-  }
-  function scan(){
-    document.querySelectorAll('header span').forEach(function(s){
-      if(s.children.length>0) return;
-      var t = (s.textContent||'').trim();
-      if(!isLiveText(t)) return;
-      var pill = s.parentElement;
-      if(pill) fixPill(pill, s);
-    });
-  }
-  var obs = new MutationObserver(function(){ scan(); });
-  if(document.body) obs.observe(document.body, {childList:true, subtree:true, characterData:true});
-  scan();
-  setTimeout(scan, 300);
-  setTimeout(scan, 1200);
-  console.log('[ZED] LIVE pill - 1 dot, no blink');
-})();
-</script>
-
-
-<style>
-/* ZED FIX - Locked video: the black shield was 82% opaque, so the thumbnail behind it
-   was invisible. Make it 20% (mostly transparent) so the thumbnail shows through.
-   Lock icon + text sit on top (z-index 1), text-shadow keeps them readable. */
-.zed-lock-cover::after{ background:rgba(0,0,0,.20) !important; }
-.zed-lock-sub{ text-shadow:0 1px 4px rgba(0,0,0,.9) !important; color:#fff !important; }
-.zed-lock-icon{ text-shadow:0 1px 6px rgba(0,0,0,.9) !important; }
-/* ZED FIX - LIVE pill: kill ANY animation/pulse on the pill and its dot (React's
-   animate-pulse on the dot was part of the blink). The JS sets the dot colour. */
-header [data-live], header [data-live] *{ animation:none !important; transition:none !important; }
-</style>
 </body></html>';
       w.document.write(printHtml);
       w.document.close(); setTimeout(function(){ try{ w.focus(); w.print(); }catch(e){} }, 500);
@@ -14479,6 +14888,19 @@ function updateFixUI(job){
           }
           /* Tell the user once, in words the silent-toast filter does not hide. */
           if(!job._errToastShown){ job._errToastShown=true; showFixToast('Download stopped at '+(job.total>0?Math.floor(job.received*100/job.total):0)+'% — tap Retry Download to continue'); }
+        } else if(job.status==='done'){
+          /* FIX 14 Nov 2026 - button was stuck on "Downloading… 100%" after completion because sync only handled downloading/error. Now it flips to DOWNLOADED the moment the job finishes. */
+          var dBtns=syncCard.querySelectorAll('button');
+          for(var di=0; di<dBtns.length; di++){
+            var db=dBtns[di];
+            if(job.type==='video'){
+              var _did=db.getAttribute('data-zed-download')||db.getAttribute('data-zed-unlocked-dl')||db.getAttribute('data-zed-dl-redownload')||'';
+              if(_did===job.id){ db.disabled=false; db.style.opacity='1'; db.textContent='Downloaded ✓'; }
+            } else if(job.type==='paper'){
+              var _dt=(db.textContent||'').trim();
+              if(_dt.indexOf('Downloading')!==-1 || _dt.indexOf('Download to Phone')!==-1 || _dt.indexOf('Save to Phone')!==-1){ db.disabled=false; db.style.opacity='1'; db.style.background='#8CFF8A'; db.style.color='#000'; db.textContent='DOWNLOADED ✓ • No Data Needed'; }
+            }
+          }
         }
       }
     }catch(eSync){}
