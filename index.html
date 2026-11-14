@@ -6,7 +6,7 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, viewport-fit=cover">
   <title>ZED SCHOLAR - ECZ Past Papers | Form 1-6, Grade 10-12</title>
-  <meta name="google-site-verification" content="AfXGi9NvgRZGu98q3_rJKH72JRe4ioPgm9bOu2vYzCw">
+  <meta name="google-site-verification" content="cawMAmcgDD18xCH8Kn4eof_LJKgGeOEuiLX-m7caheY">
 
   <meta name="description" content="Free ECZ past papers for Senior Secondary in Zambia - Form 1-6 & Grade 10-12 with marking schemes, quizzes & videos. Works offline.">
   <meta name="keywords" content="zed, zed scholar, zedscholar, zed past papers, ecz past papers, ecz past papers Zambia, senior secondary past papers, form 1 past papers, form 5 past papers, grade 10 past papers, grade 11 past papers, grade 12 past papers, ECZ, Zambia past papers, ecz marking scheme, zed scholar app">
@@ -1925,7 +1925,7 @@ if (typeof pdfjsLib !== 'undefined') {
   content: '';
   position: absolute;
   inset: 0;
-  background: #12294D;
+  background: transparent;
   z-index: 1;
 }
 .yt-play-btn {
@@ -1969,7 +1969,7 @@ if (typeof pdfjsLib !== 'undefined') {
   font-size: 12px;
   font-weight: 600;
   line-height: 1.3;
-  background: #12294D;
+  background: linear-gradient(180deg, rgba(0,0,0,0.55), transparent);
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
@@ -10601,8 +10601,8 @@ body.zed-v15-no-results #zed-v15-no-results{display:block !important}
 .zed-badge{display:inline-flex;align-items:center;gap:4px;font-size:10px;font-weight:800;padding:3px 8px;border-radius:999px;margin-top:6px}
 .zed-badge.locked{background:#3a2a00;color:#FFD600;border:1px solid #FFD600}
 .zed-badge.unlocked{background:#0f2a12;color:#93C5FD;border:1px solid #3B82F6}
-.zed-lock-cover{position:absolute !important;top:0 !important;left:0 !important;right:0 !important;aspect-ratio:16/9 !important;z-index:60 !important;display:flex !important;flex-direction:column !important;align-items:center !important;justify-content:center !important;gap:6px !important;text-align:center !important;padding:14px !important;background-size:cover !important;background-position:center !important;background-color:#12294D !important;cursor:pointer !important;border-radius:14px 14px 0 0 !important;overflow:hidden !important;transform:translateZ(0);backface-visibility:hidden}
-.zed-lock-cover::after{content:"";position:absolute;inset:0;background:rgba(0,0,0,.82);z-index:0}
+.zed-lock-cover{position:absolute !important;top:0 !important;left:0 !important;right:0 !important;aspect-ratio:16/9 !important;z-index:60 !important;display:flex !important;flex-direction:column !important;align-items:center !important;justify-content:center !important;gap:6px !important;text-align:center !important;padding:14px !important;background-size:cover !important;background-position:center !important;background-color:transparent !important;cursor:pointer !important;border-radius:14px 14px 0 0 !important;overflow:hidden !important;transform:translateZ(0);backface-visibility:hidden}
+.zed-lock-cover::after{background:transparent !important; display:none !important; content:none !important;}
 .zed-lock-cover>*{position:relative;z-index:1}
 .zed-lock-icon{font-size:32px}
 .zed-lock-title{color:#fff;font-weight:700;font-size:13px;line-height:1.3}
@@ -12879,6 +12879,115 @@ header > div:last-child{ flex-shrink:0 !important; flex-wrap:nowrap !important; 
 header span, header div{ animation:none !important; transition:none !important; }
 .animate-pulse{ animation:none !important; opacity:1 !important; }
 div[class*="backdrop-blur"]{ backdrop-filter:none !important; -webkit-backdrop-filter:none !important; }
+</style>
+
+
+<!-- ZED FIX 14 Nov 2026 — TRANSPARENT LOCK SHIELD: thumbnail stays visible -->
+<style>
+/* The lock cover had TWO opaque layers hiding the thumbnail:
+   1) background-color:#12294D (the BLUE shield)
+   2) ::after background:rgba(0,0,0,.82) (the BLACK shield)
+   Both must be transparent at the same time, otherwise one still hides the thumbnail. */
+.zed-lock-cover{
+  background-color: transparent !important;
+  background-size: cover !important;
+  background-position: center !important;
+  background-repeat: no-repeat !important;
+  /* keep the thumbnail as the cover's own background, no solid fill */
+}
+.zed-lock-cover::after{
+  content:"" !important;
+  position:absolute !important;
+  inset:0 !important;
+  /* Very light scrim only — just enough to read the lock, thumbnail shows through clearly */
+  background: transparent !important;
+  z-index:0 !important;
+}
+.zed-lock-cover > *{ position:relative !important; z-index:1 !important; }
+/* Lock + text become small floating pills, NOT a full shield */
+.zed-lock-icon{
+  font-size:30px !important;
+  line-height:1 !important;
+  background: transparent !important;
+  backdrop-filter: blur(2px);
+  padding: 10px 12px !important;
+  border-radius: 999px !important;
+  box-shadow: 0 4px 14px rgba(0,0,0,0.35) !important;
+  text-shadow: 0 1px 3px rgba(0,0,0,0.6) !important;
+}
+.zed-lock-sub{
+  color:#fff !important;
+  background: transparent !important;
+  padding: 5px 10px !important;
+  border-radius: 999px !important;
+  font-size:11px !important;
+  font-weight:700 !important;
+  text-shadow: 0 1px 2px rgba(0,0,0,0.6) !important;
+}
+/* Underlying YouTube facade had the SAME problem: a solid blue ::before covering its <img> thumbnail */
+.yt-lite{
+  background-color: transparent !important;
+  background-size: cover !important;
+  background-position: center !important;
+}
+.yt-lite::before{
+  background: transparent !important;
+  content: none !important;
+  display:none !important;
+}
+.yt-lite img.yt-thumb{
+  display:block !important;
+  opacity:1 !important;
+  position:relative !important;
+  z-index:0 !important;
+}
+.yt-lite .yt-title-bar{
+  background: linear-gradient(180deg, rgba(0,0,0,0.55), transparent) !important;
+}
+/* YouTube click-block shields stay transparent — they were already correct, keep them that way */
+.zed-yt-shield-top, .zed-yt-shield-logo, .zed-more-shield, .zed-yt-expand-shield{
+  background: transparent !important;
+}
+</style>
+
+
+<!-- ZED FIX 14 Nov 2026 — FULLY TRANSPARENT LOCK SHIELD v2: zero gradient, zero dark pill -->
+<style>
+.zed-lock-cover{
+  background-color: transparent !important;
+}
+.zed-lock-cover::after{
+  background: transparent !important;
+  background-image: none !important;
+  display:none !important;
+  content:none !important;
+}
+.zed-lock-cover::before{
+  background: transparent !important;
+  display:none !important;
+  content:none !important;
+}
+.zed-lock-icon{
+  background: transparent !important;
+  background-color: transparent !important;
+  box-shadow: none !important;
+  backdrop-filter: none !important;
+  /* keep lock visible on bright thumbnails without a dark box */
+  text-shadow: 0 2px 6px rgba(0,0,0,0.85), 0 0 2px rgba(0,0,0,0.9) !important;
+  filter: drop-shadow(0 2px 4px rgba(0,0,0,0.8)) !important;
+  padding: 0 !important;
+}
+.zed-lock-sub{
+  background: transparent !important;
+  background-color: transparent !important;
+  box-shadow: none !important;
+  backdrop-filter: none !important;
+  color:#fff !important;
+  text-shadow: 0 2px 6px rgba(0,0,0,0.9), 0 0 2px rgba(0,0,0,0.9) !important;
+  padding: 0 !important;
+}
+.yt-lite::before{ background: transparent !important; display:none !important; content:none !important; }
+.yt-lite{ background-color: transparent !important; }
 </style>
 
 </body></html>';
@@ -15402,6 +15511,121 @@ document.addEventListener('visibilitychange', function(){ if(!document.hidden){ 
   };
 
   console.log('[ZED FIX] Admin upload fix active: fetch -> XHR with progress + retry');
+})();
+</script>
+
+
+<!-- ZED FIX v2 FINAL — 100% transparent, placed last so it wins -->
+<style>
+.zed-lock-cover{ background-color: transparent !important; background-size: cover !important; background-position: center !important; }
+.zed-lock-cover::after, .zed-lock-cover::before{ background-color: transparent !important; }
+.zed-lock-cover::after, .zed-lock-cover::before{ display:none !important; content:none !important; }
+.zed-lock-icon, .zed-lock-sub{ background: transparent !important; box-shadow:none !important; backdrop-filter:none !important; }
+.yt-lite .yt-title-bar{ background: transparent !important; background-image:none !important; text-shadow: 0 1px 4px rgba(0,0,0,0.8) !important; }
+.yt-lite::before{ background: transparent !important; display:none !important; content:none !important; }
+</style>
+
+
+<!-- ZED FIX — REMOVE BLACK SHIELD COMPLETELY — 14 Nov 2026 -->
+<style>
+/* BLACK SHIELD = 3 layers. All must go at once:
+   1) .zed-lock-cover::after black overlay
+   2) .aspect-video / .yt-lite / video background:#000
+   3) .zed-expand-btn black oval */
+.zed-lock-cover{ background-color: transparent !important; }
+.zed-lock-cover::after, .zed-lock-cover::before{ background: transparent !important; background-color: transparent !important; display:none !important; content:none !important; }
+.zed-lock-cover img.zed-cover-thumb{ position:absolute !important; inset:0 !important; width:100% !important; height:100% !important; object-fit:cover !important; z-index:0 !important; display:block !important; border-radius:14px 14px 0 0 !important; }
+.zed-lock-cover > .zed-lock-icon, .zed-lock-cover > .zed-lock-sub{ position:relative !important; z-index:2 !important; }
+.zed-lock-icon, .zed-lock-sub{ background: transparent !important; box-shadow:none !important; text-shadow: 0 2px 6px rgba(0,0,0,0.9) !important; }
+.aspect-video, .video-wrapper, .yt-lite, .zed-dl-card video{ background: transparent !important; background-color: transparent !important; }
+.yt-lite img.yt-thumb{ display:block !important; opacity:1 !important; }
+.zed-expand-btn{ background: transparent !important; background-color: transparent !important; border:none !important; box-shadow:none !important; text-shadow: 0 2px 6px rgba(0,0,0,0.9) !important; }
+</style>
+<script>
+(function(){
+  function getThumbForCover(cover, card){
+    // 1) cover's own backgroundImage (set by old code)
+    try{
+      var bg = cover.style.backgroundImage || "";
+      var m = bg.match(/url\(["']?([^"')]+)["']?\)/);
+      if(m && m[1]) return m[1];
+    }catch(e){}
+    // 2) card dataset
+    if(card){
+      if(card.dataset.zedThumb) return card.dataset.zedThumb;
+      if(card.dataset.zedYtId) return "https://i.ytimg.com/vi/"+card.dataset.zedYtId+"/hqdefault.jpg";
+      if(card.dataset.zedVideoId && card.dataset.zedYtId) return "https://i.ytimg.com/vi/"+card.dataset.zedYtId+"/hqdefault.jpg";
+    }
+    // 3) sibling thumbnail img inside same card
+    if(card){
+      var img = card.querySelector(".yt-lite img.yt-thumb, img.yt-thumb, img[src*='ytimg.com'], img[src*='youtube.com']");
+      if(img && img.src) return img.src;
+      var anyImg = card.querySelector("img");
+      if(anyImg && anyImg.src && anyImg.src.indexOf("data:")!==0) return anyImg.src;
+    }
+    return "";
+  }
+  function fixBlackShield(){
+    // Kill black backgrounds on wrappers
+    document.querySelectorAll(".aspect-video, .video-wrapper, .yt-lite").forEach(function(el){
+      el.style.backgroundColor = "transparent";
+      el.style.background = "transparent";
+    });
+    document.querySelectorAll(".zed-expand-btn").forEach(function(b){
+      b.style.background = "transparent";
+      b.style.backgroundColor = "transparent";
+      b.style.border = "none";
+      b.style.boxShadow = "none";
+    });
+    // Fix every lock cover
+    document.querySelectorAll(".zed-lock-cover").forEach(function(cover){
+      cover.style.backgroundColor = "transparent";
+      // Do NOT keep a black backgroundImage - we use a real <img> instead so it always shows
+      var card = cover.closest(".zed-video-card") || cover.parentElement;
+      var thumb = getThumbForCover(cover, card);
+      // If cover had a backgroundImage, clear it after we have the URL - img will show it
+      if(cover.style.backgroundImage && cover.style.backgroundImage!=="none"){
+        cover.style.backgroundImage = "none";
+      }
+      var existing = cover.querySelector("img.zed-cover-thumb");
+      if(thumb && !existing){
+        var im = document.createElement("img");
+        im.className = "zed-cover-thumb";
+        im.src = thumb;
+        im.alt = "";
+        im.loading = "lazy";
+        im.onerror = function(){
+          // Try mqdefault if hq fails
+          if(this.src.indexOf("/hqdefault.jpg")!==-1){
+            this.src = this.src.replace("/hqdefault.jpg","/mqdefault.jpg");
+          } else {
+            // If thumbnail truly missing, remove img so underlying thumbnail shows through transparent cover
+            this.remove();
+          }
+        };
+        cover.insertBefore(im, cover.firstChild);
+      } else if(existing && thumb && existing.src !== thumb){
+        existing.src = thumb;
+      }
+      // Ensure lock text stays above img
+      cover.querySelectorAll(".zed-lock-icon, .zed-lock-sub").forEach(function(n){
+        n.style.position = "relative";
+        n.style.zIndex = "2";
+        n.style.background = "transparent";
+        n.style.backgroundColor = "transparent";
+        n.style.boxShadow = "none";
+      });
+    });
+  }
+  // Run now, on load, and keep watching because videos load dynamically
+  fixBlackShield();
+  document.addEventListener("DOMContentLoaded", fixBlackShield);
+  window.addEventListener("load", fixBlackShield);
+  setInterval(fixBlackShield, 800);
+  if(document.body){
+    new MutationObserver(function(){ fixBlackShield(); }).observe(document.body, {childList:true, subtree:true});
+  }
+  console.log("[ZED] Black shield removed - lock cover is fully transparent, thumbnail is a real <img>");
 })();
 </script>
 
