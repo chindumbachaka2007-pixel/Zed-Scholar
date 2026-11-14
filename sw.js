@@ -1,5 +1,16 @@
-/* ZED SCHOLAR - Offline Service Worker - SILENT, no offline banner */
-const CACHE = 'zed-scholar-v8';
+/* ZED SCHOLAR - Service Worker - PUSH UPDATES TO USERS
+   HOW IT WORKS:
+   1. You upload a new HTML + this sw.js together.
+   2. The app checks for a new sw.js every hour + on every open.
+   3. When it finds a new version, it shows the green "NEW UPDATE AVAILABLE - Tap to Update Now" banner.
+   4. User taps -> app sends SKIP_WAITING -> this SW takes over -> app reloads with the new version.
+   5. User stays on the OLD version until they tap. Nothing auto-reloads.
+
+   TO PUSH YOUR NEXT UPDATE:
+   - Change CACHE below from 'zed-scholar-v27' to 'zed-scholar-v28' (then v29, v30...)
+   - Upload the new HTML + this sw.js together. If you only upload HTML and forget sw.js, users will NOT get the update.
+*/
+const CACHE = 'zed-scholar-v27';
 const PRECACHE = [
   './',
   './index.html',
@@ -9,23 +20,37 @@ const PRECACHE = [
   './icon-512.png'
 ];
 
+// INSTALL - cache the app shell, but DO NOT skipWaiting yet.
+// We wait for the user to tap "Tap to Update Now" in the app.
 self.addEventListener('install', (e) => {
   e.waitUntil(
     caches.open(CACHE).then(async (cache) => {
-      // Cache each file that exists - if one 404s, don't fail the whole install
       for (const url of PRECACHE) {
         try { await cache.add(url); } catch (err) {}
       }
-    }).then(() => self.skipWaiting())
+    })
+    // NO self.skipWaiting() here on purpose - user must tap Update first
   );
 });
 
+// ACTIVATE - delete ALL old caches, then take control
 self.addEventListener('activate', (e) => {
   e.waitUntil(
     caches.keys().then((keys) =>
       Promise.all(keys.filter((k) => k !== CACHE).map((k) => caches.delete(k)))
     ).then(() => self.clients.claim())
   );
+});
+
+// MESSAGE FROM THE APP - "Tap to Update Now" button sends this
+self.addEventListener('message', (e) => {
+  if (e.data && e.data.type === 'SKIP_WAITING') {
+    self.skipWaiting();
+  }
+  // App can also ask "is there an update?" - reply with our version
+  if (e.data && e.data.type === 'GET_VERSION') {
+    e.source && e.source.postMessage({ type: 'VERSION', version: CACHE });
+  }
 });
 
 function isApi(url) {
@@ -42,19 +67,17 @@ self.addEventListener('fetch', (e) => {
   if (req.method !== 'GET') return;
   const url = new URL(req.url);
 
-  // API calls - network only, never cache. If offline they fail silently,
-  // the app already shows its normal empty state / saved papers.
+  // API calls - network only, never cache
   if (isApi(url)) return;
 
-  // Navigation - open the app itself: network first, fall back to cached app shell
+  // Navigation - opening the app itself: NETWORK FIRST so users always get the newest HTML when they have data.
+  // If offline, fall back to cached app shell.
   if (req.mode === 'navigate' || (req.headers.get('accept') || '').includes('text/html')) {
     e.respondWith(
       fetch(req).then((res) => {
-        // Save a fresh copy for next offline open
         try {
           const copy = res.clone();
           caches.open(CACHE).then((c) => c.put('./index.html', copy)).catch(() => {});
-          // Also keep the fixed filename in sync if this IS that file
           if (req.url.includes('ZED-SCHOLAR')) {
             caches.open(CACHE).then((c) => c.put(req, res.clone())).catch(() => {});
           }
@@ -67,14 +90,13 @@ self.addEventListener('fetch', (e) => {
           || await cache.match('./ZED-SCHOLAR-fixed.html')
           || await cache.match('./');
         if (cached) return cached;
-        // Last resort - still return something, never a blank browser error page
         return new Response('<h1 style="font-family:sans-serif;padding:20px">ZED SCHOLAR</h1><p style="font-family:sans-serif;padding:0 20px">Open once with data, then it works offline.</p>', { headers: { 'Content-Type': 'text/html' } });
       })
     );
     return;
   }
 
-  // Everything else (CSS, JS, images, fonts, PDF.js, Tailwind CDN) - show cached copy instantly, update in background
+  // Everything else (CSS, JS, images, fonts, PDF.js, Tailwind) - show cached copy instantly, update in background
   e.respondWith(
     caches.match(req, { ignoreSearch: true }).then((cached) => {
       const network = fetch(req).then((res) => {
@@ -86,7 +108,6 @@ self.addEventListener('fetch', (e) => {
         }
         return res;
       }).catch(() => null);
-      // If we have a cached copy, return it now and update in background. If not, wait for network.
       return cached || network.then((r) => r || new Response('', { status: 504 }));
     })
   );
