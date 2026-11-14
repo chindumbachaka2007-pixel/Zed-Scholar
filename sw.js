@@ -1,4 +1,4 @@
-/* ZED SCHOLAR Service Worker — v6 (14 Nov 2026)
+/* ZED SCHOLAR Service Worker — v7 (14 Nov 2026)
    WHY THIS FILE EXISTS: the app is a single page served from Vercel. Without a
    service worker, going offline means Chrome has nothing to show — "This site
    can't be reached" (ERR_CONNECTION_ABORTED) — because the page itself never
@@ -6,11 +6,11 @@
    the app shell on the first ONLINE visit, then serves it when offline.
 
    RULE FOR FUTURE CHANGES (the "old must be removed" rule): when you change
-   index.html, bump CACHE_NAME below (v6 -> v7) and redeploy BOTH files.
+   index.html, bump CACHE_NAME below (v7 -> v8) and redeploy BOTH files.
    On activate, this worker deletes EVERY cache that is not the current one,
    so the old version is gone — it can never come back and fight the new one. */
 
-const CACHE_NAME = 'zed-scholar-v5';
+const CACHE_NAME = 'zed-scholar-v7';
 const APP_SHELL = ['/', '/index.html', '/manifest.json', '/icon-192.png', '/icon-512.png'];
 
 function addAllSafe(cache, urls) {
