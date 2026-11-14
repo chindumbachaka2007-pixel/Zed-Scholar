@@ -1,6 +1,8 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
+  <!-- ZED SCHOLAR v4 — 14 Nov 2026 — offline fix: real sw.js + manifest.json + icons shipped with this file; SILENT DOWNLOADS + duplicate SW registration deleted. When you change this file, also bump CACHE_NAME in sw.js (v4 -> v5) so the old version is deleted. -->
+
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, viewport-fit=cover">
   <title>ZED SCHOLAR - ECZ Past Papers | Form 1-6, Grade 10-12</title>
@@ -3342,35 +3344,7 @@ if(h)throw Error(h.message);F(vidFile?"Video uploaded from phone ✓":"Video add
 </script>
 
 
-<script>
-// PWA Perfect - Manifest + Service Worker Linked - BY HOPECHAKA - Fixes all PWABuilder items
-if ('serviceWorker' in navigator) {
-  window.addEventListener('load', async () => {
-    try {
-      const reg = await navigator.serviceWorker.register('./sw.js', {scope: './'});
-      console.log('✅ SW registered:', reg.scope, '- Offline caching enabled');
-      // Periodic sync registration
-      if ('periodicSync' in reg) {
-        try { await reg.periodicSync.register('content-sync', {minInterval: 24*60*60*1000}); } catch(e){}
-      }
-    } catch(e){ console.log('❌ SW failed', e); }
-  });
-}
-// Install prompt
-window.addEventListener('beforeinstallprompt', e => {
-  console.log('✅ PWA is 100% installable!');
-  e.preventDefault();
-  window.deferredPrompt = e;
-  let hint = document.createElement('div');
-  hint.style.cssText='position:fixed;bottom:20px;left:16px;right:16px;background:#8CFF8A;color:#000;padding:14px;border-radius:12px;z-index:999999;font-weight:700;text-align:center;box-shadow:0 8px 32px rgba(0,0,0,0.4);cursor:pointer;font-family:sans-serif;';
-  hint.innerHTML='📲 Tap to Install ZED SCHOLAR<br><small style="font-weight:400">Install as app - works offline!</small>';
-  hint.onclick = async () => {
-    if(window.deferredPrompt){ window.deferredPrompt.prompt(); const c = await window.deferredPrompt.userChoice; console.log(c.outcome); hint.remove(); }
-  };
-  document.body.appendChild(hint);
-  setTimeout(()=>{ try{hint.remove()}catch{} }, 15000);
-});
-</script>
+<!-- REMOVED 14 Nov 2026: duplicate service-worker registration + fake 'works offline' install hint. The ONE registration lives in the V26 PWA block below, and the real sw.js + manifest.json are now shipped with this file. -->
 
 <script>
 // Prevent YouTube embeds from redirecting to youtube.com - stay in ZED SCHOLAR app
@@ -5862,13 +5836,9 @@ function showZedUpdateToast(){
     }
     setTimeout(()=>{ window.location.reload(); }, 800);
   };
-  // Auto update after 6 sec if user doesn't tap
-  setTimeout(()=>{
-    if(document.body.contains(toast)){
-      toast.querySelector('#zed-update-btn').textContent = 'Updating...';
-      setTimeout(()=>window.location.reload(), 600);
-    }
-  }, 6000);
+  /* FIX 14 Nov 2026: NO auto-reload after 6s. The old code reloaded even if the user was
+     mid-download. The toast stays until the user taps "Tap to Update Now" — that is the
+     only thing that swaps in the new version (old version is then deleted by the SW). */
 }
 </script>
 
@@ -10969,32 +10939,37 @@ window._zedV15Filter = 'search';
   function getUnlockedVideoIds(){ try{ return JSON.parse(localStorage.getItem(unlockKey()+'_videos')||'[]'); }catch(e){ return []; } }
   function saveUnlockedVideoIds(list){ try{ localStorage.setItem(unlockKey()+'_videos', JSON.stringify(list)); }catch(e){} }
   function getUnlockedCount(){
-    // V16: OFFLINE FIRST - coins/unlocks live in localStorage, not in the online grid.
-    // When offline or the React grid hasn't loaded (0 cards), the canonical list IS the truth.
-    // Old code counted from cards and returned 0 offline even though unlocks existed.
+    // FIX 14 Nov 2026 — "sometimes 25, sometimes 8": offline it returned canonical.length
+    // (polluted with candidate-hash duplicates -> 25), online it counted grid cards (-> 8).
+    // Now it ALWAYS counts DISTINCT videos from meta + true orphans, deduped by video
+    // identity (URL / YouTube ID / title+subject), so the number is the same in every state.
     try{
-      if(isOffline()) return getUnlockedVideoIds().length;
-      var cards=findVideoCards();
-      if(!cards || cards.length===0) return getUnlockedVideoIds().length;
-      if(cards.length>0){
-        var seen={}; var n=0;
-        for(var i=0;i<cards.length;i++){
-          try{
-            var inf=extractInfo(cards[i]);
-            if(!inf || !inf.id) continue;
-            if(seen[inf.id]) continue;
-            if(isUnlockedInfo(inf)){ seen[inf.id]=1; n++; }
-          }catch(e){}
-        }
-        // If cards show 0 but canonical list has entries (grid not yet loaded with those videos), use canonical
-        if(n===0){
-          var vids0=getUnlockedVideoIds();
-          if(vids0.length>0) return vids0.length;
-        }
-        return n;
+      var metas=[]; try{ metas=getUnlockedMeta()||[]; }catch(e){ metas=[]; }
+      var seenURL={}, seenTS={}, seenID={}, n=0;
+      function _keys(m){
+        var out={url:null,ts:null};
+        if(m.ytId) out.url='yt:'+String(m.ytId).trim();
+        else if(m.video_url && m.video_url!=='about:blank' && m.video_url!=='') out.url='url:'+String(m.video_url).trim();
+        var t=String(m.title||'').trim().toLowerCase();
+        if(t && t!=='video' && t!=='unlocked video') out.ts='ts:'+t+'|'+String(m.subject||'').trim().toLowerCase();
+        return out;
       }
-    }catch(e){}
-    try{ return getUnlockedVideoIds().length; }catch(e){ return 0; }
+      for(var i=0;i<metas.length;i++){
+        var k=_keys(metas[i]);
+        if(k.url && seenURL[k.url]) continue;
+        if(k.ts && seenTS[k.ts]) continue;
+        if(k.url) seenURL[k.url]=1;
+        if(k.ts) seenTS[k.ts]=1;
+        seenID[metas[i].id]=1;
+        n++;
+      }
+      // FIX 14 Nov 2026 (correction): canonical / server ids are NOT counted. A bare id is
+      // just a hash — it has no title/URL and cannot be displayed. Counting it is what turned
+      // 8 real unlocks into 25. Only meta entries (which carry title/URL) count. Server-only
+      // unlocks are materialised into meta by repairUnlockMeta() once the grid loads.
+      return n;
+      
+    }catch(e){ try{ return getUnlockedVideoIds().length; }catch(e2){ return 0; } }
   }
   function saveUnlocked(list){ try{ localStorage.setItem(unlockKey(), JSON.stringify(list)); }catch(e){} }
   function hashId(str){ var h=5381; for(var i=0;i<str.length;i++){ h=((h<<5)+h)+str.charCodeAt(i); h=h&h; } return 'vid_' + Math.abs(h).toString(36); }
@@ -11621,16 +11596,54 @@ window._zedV15Filter = 'search';
       var meta=getUnlockedMeta();
       var vids=getUnlockedVideoIds();
       var seen={}; var items=[];
-      allDl.forEach(function(r){ seen[r.id]=1; items.push({id:r.id,title:r.title,subject:r.subject,video_type:r.video_type,thumbnail_url:r.thumbnail_url,video_url:r.video_url,ytId:'',isDownload:true,blob:r.blob}); });
-      meta.forEach(function(m){ if(seen[m.id]) return; seen[m.id]=1; items.push({id:m.id,title:m.title,subject:m.subject,video_type:m.video_type,thumbnail_url:m.thumbnail_url,video_url:m.video_url,ytId:m.ytId||'',isDownload:false,blob:null}); });
-      vids.forEach(function(id){ if(seen[id]) return; seen[id]=1; items.push({id:id,title:'Unlocked video',subject:'',video_type:'mp4',thumbnail_url:'',video_url:'',ytId:'',isDownload:false,blob:null}); });
+      /* FIX 14 Nov 2026 — 25 cards instead of 8: one video was stored under 3 different IDs
+         (unlock id + candidate hashes + server id). Deduping by exact id string never merged
+         them, so one video became 3 "Unlocked video" cards. Dedupe by video identity instead,
+         and merge blanks (a download has the blob, meta may have the thumbnail, etc.). */
+      var _seenKey={}, _seenTS={};
+      function _zedKeys(it){
+        var out={url:null,ts:null};
+        if(it.ytId) out.url='yt:'+String(it.ytId).trim();
+        else if(it.video_url && it.video_url!=='about:blank' && it.video_url!=='') out.url='url:'+String(it.video_url).trim();
+        var _t=String(it.title||'').trim().toLowerCase();
+        if(_t && _t!=='video' && _t!=='unlocked video') out.ts='ts:'+_t+'|'+String(it.subject||'').trim().toLowerCase();
+        return out;
+      }
+      function _zedMergeInto(existing, incoming){
+        if(!existing.title || existing.title==='Unlocked video' || existing.title==='Video'){ if(incoming.title) existing.title=incoming.title; }
+        if(!existing.subject && incoming.subject) existing.subject=incoming.subject;
+        if((!existing.video_url || existing.video_url==='about:blank') && incoming.video_url) existing.video_url=incoming.video_url;
+        if(!existing.thumbnail_url && incoming.thumbnail_url) existing.thumbnail_url=incoming.thumbnail_url;
+        if(!existing.ytId && incoming.ytId) existing.ytId=incoming.ytId;
+        if(incoming.isDownload){ existing.isDownload=true; if(incoming.blob) existing.blob=incoming.blob; }
+        if(!existing.video_type && incoming.video_type) existing.video_type=incoming.video_type;
+      }
+      function _zedPush(it){
+        var k=_zedKeys(it);
+        var target=null;
+        if(k.url && _seenKey[k.url]) target=_seenKey[k.url];
+        else if(k.ts && _seenTS[k.ts]) target=_seenTS[k.ts];
+        if(target){ _zedMergeInto(target, it); if(k.url) _seenKey[k.url]=target; if(k.ts) _seenTS[k.ts]=target; seen[it.id]=1; return; }
+        if(seen[it.id]) return;
+        seen[it.id]=1;
+        if(k.url) _seenKey[k.url]=it;
+        if(k.ts) _seenTS[k.ts]=it;
+        items.push(it);
+      }
+      allDl.forEach(function(r){ _zedPush({id:r.id,title:r.title,subject:r.subject,video_type:r.video_type,thumbnail_url:r.thumbnail_url,video_url:r.video_url,ytId:'',isDownload:true,blob:r.blob}); });
+      meta.forEach(function(m){ _zedPush({id:m.id,title:m.title,subject:m.subject,video_type:m.video_type,thumbnail_url:m.thumbnail_url,video_url:m.video_url,ytId:m.ytId||'',isDownload:false,blob:null}); });
+      /* FIX 14 Nov 2026 (correction) — NO placeholder cards at all: a canonical id with no
+        meta/download has no title, no thumbnail, no URL, so it cannot be played or downloaded.
+        Rendering it as "Unlocked video" is what inflated 8 -> 25. The unlock itself is NOT
+        deleted: it stays in storage + on the server, the grid card still shows as Unlocked,
+        and repairUnlockMeta() materialises it into meta (with real title/URL) once the grid loads. */
       // V16.1: filter by search query if present
       var filtered=items;
       if(q){
         filtered=items.filter(function(it){ return matchesSearch({title:it.title,subject:it.subject}, q); });
       }
       if(items.length===0){
-        view.innerHTML='<div style="grid-column:1/-1;padding:20px;text-align:center;color:#ccc;font-size:13px">No unlocked videos yet.<br><span style="color:#aaa;font-size:12px">Unlock a video with 25 coins when online, then it stays unlocked offline.</span><br><button class="zed-vt-filter active" data-zed-back-search3 style="margin-top:12px">🔍 Search Videos →</button></div>';
+        view.innerHTML=(vids.length>0 ? '<div style="grid-column:1/-1;padding:20px;text-align:center;color:#ccc;font-size:13px">Syncing your unlocked videos…<br><span style="color:#aaa;font-size:12px">Open Search once while online to load their titles, then come back here.</span><br><button class="zed-vt-filter active" data-zed-back-search3 style="margin-top:12px">🔍 Search Videos →</button></div>' : '<div style="grid-column:1/-1;padding:20px;text-align:center;color:#ccc;font-size:13px">No unlocked videos yet.<br><span style="color:#aaa;font-size:12px">Unlock a video with 25 coins when online, then it stays unlocked offline.</span><br><button class="zed-vt-filter active" data-zed-back-search3 style="margin-top:12px">🔍 Search Videos →</button></div>');
         var b=view.querySelector('[data-zed-back-search3]'); if(b) b.addEventListener('click', function(){ setFilter('search'); });
         return;
       }
@@ -12401,16 +12414,12 @@ window._zedV15Filter = 'search';
     }catch(e){}
   }
 
-  // Service Worker for notification clicks (works when tab is in background)
-  try{
-    if('serviceWorker' in navigator && 'Notification' in window){
-      var swCode="self.addEventListener('notificationclick', function(e){ e.notification.close(); e.waitUntil(clients.matchAll({type:'window', includeUncontrolled:true}).then(function(cs){ if(cs.length){ return cs[0].focus(); } return clients.openWindow('./'); })); });";
-      var blob=new Blob([swCode], {type:'application/javascript'});
-      navigator.serviceWorker.register(URL.createObjectURL(blob)).catch(function(){});
-    }
-  }catch(e){}
-
-  setInterval(function(){ try{ zedAdminDocs(); }catch(e){} try{ zedInjectReminderCard(); }catch(e){} try{ zedCheckDaily(); }catch(e){} }, 1000);
+  /* REMOVED 14 Nov 2026: blob-registered service worker. Chrome rejects
+     serviceWorker.register(blob:...) — a worker must be a real same-origin
+     file. This snippet only handled notification clicks, which now live in
+     the real sw.js (shipped with this file). Leaving it here meant a
+     second, broken worker registration fighting the real one. */
+   setInterval(function(){ try{ zedAdminDocs(); }catch(e){} try{ zedInjectReminderCard(); }catch(e){} try{ zedCheckDaily(); }catch(e){} }, 1000);
   setTimeout(function(){ try{ zedAdminDocs(); }catch(e){} try{ zedInjectReminderCard(); }catch(e){} }, 1500);
 })();
 </script>
@@ -14205,20 +14214,34 @@ function updateDownloadUI(){
     jobOrder.forEach(function(id){ var j = jobs[id]; if(j && j.status === 'done'){ var el = document.querySelector('[data-zed-dl-progress-for="' + CSS.escape(id) + '"]'); if(el){ try{ el.remove(); }catch(e){} } } });
   }catch(e){}
 }
-function findCardForJob(job){
-  try{
+function findCardForJob(job){   try{
+    /* FIX 14 Nov 2026 — same rule as the final fixer: never return a container holding many
+       cards. A card is the SMALLEST box for this job's id (see findVideoCards). */
     if(job.type === 'video'){
-      var el = document.querySelector('[data-zed-download="' + CSS.escape(job.id) + '"]'); if(el){ var c = el.closest('div'); while(c){ if(c.querySelector && c.querySelector('.font-semibold')) return c; c = c.parentElement; } return el.closest('div'); }
-      var dl = document.querySelector('[data-dl-id="' + CSS.escape(job.id) + '"]'); if(dl) return dl;
+      var dlCard = document.querySelector('[data-dl-id="' + CSS.escape(job.id) + '"]');
+      if(dlCard && (dlCard.classList.contains('zed-dl-card') || dlCard.querySelector('button'))) return dlCard;
+      var el = document.querySelector('[data-zed-download="' + CSS.escape(job.id) + '"]');
+      if(el){
+        var c = el;
+        for(var _ci=0;_ci<8 && c;_ci++){
+          if(c.classList && (c.classList.contains('zed-dl-card') || c.classList.contains('zed-video-card'))) return c;
+          if(c.getAttribute && c.getAttribute('data-dl-id')===job.id) return c;
+          c = c.parentElement;
+        }
+        return null;
+      }
     }
     var links = document.querySelectorAll('a[href]');
-    for(var i=0;i<links.length;i++){ if(links[i].href === job.url){ var cur = links[i]; while(cur && cur !== document.body){ if(cur.querySelector && cur.querySelector('.font-semibold')) return cur; cur = cur.parentElement; } return links[i].closest('div'); } }
-    var all = document.querySelectorAll('div');
-    for(var k=0;k<all.length;k++){ var d = all[k]; var tEl = d.querySelector(':scope > .font-semibold'); if(tEl && (tEl.textContent || '').trim() === job.title) return d; }
-  }catch(e){}
-  return null;
-}
-function injectInlineProgress(job){
+    for(var i=0;i<links.length;i++){ if(links[i].href === job.url){ var cur = links[i]; for(var _cj=0;_cj<8 && cur;_cj++){ if(cur.classList && (cur.classList.contains('zed-dl-card') || cur.classList.contains('zed-video-card'))) return cur; cur = cur.parentElement; } return links[i].closest('div'); } }
+    var _t = String(job.title || '').trim();
+    if(_t && _t !== 'Video' && _t !== 'Unlocked video' && _t !== 'Download'){
+      var _m = [];
+      var all = document.querySelectorAll('div');
+      for(var k=0;k<all.length;k++){ var d = all[k]; var tEl = d.querySelector(':scope > .font-semibold'); if(tEl && (tEl.textContent || '').trim() === _t) _m.push(d); }
+      if(_m.length === 1) return _m[0];
+    }
+  }catch(e){}   return null; }
+  function injectInlineProgress(job){
   try{
     var card = findCardForJob(job); if(!card) return;
     var sel = '[data-zed-dl-progress-for="' + CSS.escape(job.id) + '"]';
@@ -14578,6 +14601,31 @@ function repairUnlockMeta(){
         }
       }
     }
+    /* FIX 14 Nov 2026 — materialise server-only unlocks: if a live grid card is unlocked
+       (via the legacy list, which now holds the server ids) but has NO meta entry for its
+       video (by URL / YouTube ID / title+subject), create one from the live card. This turns
+       a bare server id (a hash with no title) into a displayable unlocked video, so the
+       Unlocked view and the count can show it without fake "Unlocked video" placeholders. */
+    try{
+      var _cards2=document.querySelectorAll('.zed-video-card, [data-zed-video-id]');
+      for(var _ci=0;_ci<_cards2.length;_ci++){
+        var _info=extractVideoInfo(_cards2[_ci], '');
+        if(!_info || !_info.video_url || _info.video_url==='about:blank') continue;
+        if(!isUnlockedUnified(_info)) continue;
+        var _has=false;
+        for(var _mi=0;_mi<metas.length;_mi++){
+          var _mm=metas[_mi];
+          if(_mm.ytId && _info.ytId && _mm.ytId===_info.ytId){ _has=true; break; }
+          if(_mm.video_url && _mm.video_url!=='about:blank' && _mm.video_url===_info.video_url){ _has=true; break; }
+          var _t1=String(_mm.title||'').trim().toLowerCase(), _t2=String(_info.title||'').trim().toLowerCase();
+          if(_t1 && _t1!=='video' && _t1!=='unlocked video' && _t1===_t2 && String(_mm.subject||'').trim().toLowerCase()===String(_info.subject||'').trim().toLowerCase()){ _has=true; break; }
+        }
+        if(!_has){
+          metas.push({id:_info.id,title:_info.title||'Video',subject:_info.subject||'',video_url:_info.video_url,video_type:_info.video_type||'mp4',thumbnail_url:_info.thumbnail_url||'',ytId:_info.ytId||'',savedAt:Date.now()});
+          changed=true;
+        }
+      }
+    }catch(e){}
     if(changed) saveMeta(metas);
   }catch(e){}
 }
@@ -14596,15 +14644,17 @@ function restoreUnlocksFromServer(){
       .then(function(arr){
         _lastRestore=Date.now();
         if(!arr || !arr.length) return;
-        var list=getUnlockedList(); var canon=getCanonical(); var changed=false, changed2=false;
+        var list=getUnlockedList(); var changed=false;
         for(var i=0;i<arr.length;i++){
           var vid=arr[i] && arr[i].video_id; if(!vid) continue;
           if(list.indexOf(vid)===-1){ list.push(vid); changed=true; }
-          if(canon.indexOf(vid)===-1){ canon.push(vid); changed2=true; }
         }
+        // FIX 14 Nov 2026: do NOT add server ids to canonical. Canonical is for displayable
+        // videos (those with meta/downloads). A server id is only an unlock PROOF for grid
+        // matching (legacy list). Adding it to canonical created "Unlocked video" placeholders
+        // and inflated 8 -> 25. repairUnlockMeta() will materialise it into meta once the grid loads.
         if(changed) saveUnlockedList(list);
-        if(changed2) saveCanonical(canon);
-        if(changed||changed2) repairUnlockMeta();
+        if(changed) repairUnlockMeta();
       })
       .catch(function(){})
       .then(function(){ _restoreInFlight=false; });
@@ -14702,21 +14752,47 @@ function saveCompleted(job, blob){
 }
 
 /* ---------- single inline UI (no tray, no green bar) ---------- */
-function findCardForJob(job){
-  try{
+function findCardForJob(job){   try{
+    /* FIX 14 Nov 2026 — "Downloading… 52%" on EVERY card: the old code walked up from the
+       button until it found ANY ancestor containing .font-semibold. Unlocked cards have NO
+       .font-semibold (their title is inline-styled), so it walked up to the page container
+       holding ALL cards, and updateFixUI then painted 52% onto every button in it.
+       Now: return ONLY the single card for this job's id, never a container. */
     if(job.type==='video'){
-      var el=document.querySelector('[data-zed-download="'+cssEsc(job.id)+'"]') || document.querySelector('[data-zed-video-id="'+cssEsc(job.id)+'"]') || document.querySelector('[data-dl-id="'+cssEsc(job.id)+'"]');
-      if(el){ var c=el.closest('div'); while(c){ if(c.querySelector && c.querySelector('.font-semibold')) return c; c=c.parentElement; } return el.closest('div'); }
-      var dl=document.querySelector('[data-zed-unlocked-dl="'+cssEsc(job.id)+'"]'); if(dl){ var c2=dl.closest('div'); while(c2){ if(c2.querySelector && c2.querySelector('.font-semibold')) return c2; c2=c2.parentElement; } }
+      var dlCard=document.querySelector('[data-dl-id="'+cssEsc(job.id)+'"]');
+      if(dlCard && (dlCard.classList.contains('zed-dl-card') || dlCard.querySelector('button'))) return dlCard;
+      var btn=document.querySelector('[data-zed-download="'+cssEsc(job.id)+'"], [data-zed-unlocked-dl="'+cssEsc(job.id)+'"], [data-zed-dl-redownload="'+cssEsc(job.id)+'"]');
+      if(btn){
+        var cur=btn;
+        for(var _ci=0;_ci<8 && cur;_ci++){
+          if(cur.classList && (cur.classList.contains('zed-dl-card') || cur.classList.contains('zed-video-card'))) return cur;
+          if(cur.getAttribute && cur.getAttribute('data-dl-id')===job.id) return cur;
+          if(cur.getAttribute && cur.getAttribute('data-zed-video-id')===job.id) return cur;
+          cur=cur.parentElement;
+        }
+        var anc=btn.closest('div');
+        if(anc){
+          var _btns=anc.querySelectorAll('[data-zed-download], [data-zed-unlocked-dl], [data-zed-dl-redownload]');
+          var _own=0; for(var _bi=0;_bi<_btns.length;_bi++){ var _v=_btns[_bi].getAttribute('data-zed-download')||_btns[_bi].getAttribute('data-zed-unlocked-dl')||_btns[_bi].getAttribute('data-zed-dl-redownload')||''; if(_v===job.id) _own++; }
+          if(_own>0 && _btns.length===_own) return anc;
+        }
+        return null;
+      }
+      var vidEl=document.querySelector('[data-zed-video-id="'+cssEsc(job.id)+'"]');
+      if(vidEl) return vidEl;
     }
     var links=document.querySelectorAll('a[href]');
-    for(var i=0;i<links.length;i++){ if(links[i].href===job.url){ var cur=links[i]; while(cur && cur!==document.body){ if(cur.querySelector && cur.querySelector('.font-semibold')) return cur; cur=cur.parentElement; } return links[i].closest('div'); } }
-    var all=document.querySelectorAll('div');
-    for(var k=0;k<all.length;k++){ var d=all[k]; var tEl=d.querySelector(':scope > .font-semibold'); if(tEl && (tEl.textContent||'').trim()===job.title) return d; }
-  }catch(e){}
-  return null;
-}
-function ensureFixUI(job){
+    for(var i=0;i<links.length;i++){ if(links[i].href===job.url){ var cur2=links[i]; for(var _cj=0;_cj<8 && cur2;_cj++){ if(cur2.classList && (cur2.classList.contains('zed-dl-card') || cur2.classList.contains('zed-video-card'))) return cur2; cur2=cur2.parentElement; } return links[i].closest('div'); } }
+    // Title fallback: ONLY for specific, unique titles — never for generic "Video" / "Unlocked video"
+    var _t=String(job.title||'').trim();
+    if(_t && _t!=='Video' && _t!=='Unlocked video' && _t!=='Download'){
+      var _matches=[];
+      var all=document.querySelectorAll('div');
+      for(var k=0;k<all.length;k++){ var d=all[k]; var tEl=d.querySelector(':scope > .font-semibold'); if(tEl && (tEl.textContent||'').trim()===_t) _matches.push(d); }
+      if(_matches.length===1) return _matches[0];
+    }
+  }catch(e){}   return null; }
+  function ensureFixUI(job){
   try{
     var card=findCardForJob(job); if(!card) return null;
     var ex=card.querySelector(':scope > .zed-fix-progress, .zed-fix-progress[data-zed-fix-for="'+cssEsc(job.id)+'"]');
@@ -14745,20 +14821,40 @@ function updateFixUI(job){
     var metaEl=el.querySelector('.zed-fix-meta'); if(metaEl) metaEl.textContent=meta;
     var fill=el.querySelector('.zed-fix-bar-fill'); if(fill){ if(job.total>0){ fill.classList.remove('zed-fix-unknown'); fill.style.width=p+'%'; } else { fill.classList.add('zed-fix-unknown'); fill.style.width='40%'; } }
     var btns=el.querySelector('.zed-fix-btns'); if(btns){ btns.style.display='none'; btns.innerHTML=''; } /* FIX: no buttons */
-    /* FIX V2: keep the card's own Download button in sync — disable it + show % so a 2nd tap can't start a 2nd download */
+    /* FIX 14 Nov 2026 — only this job's button, and un-stick it on error.
+       The old code painted "Downloading… 52%" onto EVERY button in the container
+       findCardForJob returned, and left it frozen there after the job errored. */
     try{
       var syncCard=findCardForJob(job);
-      if(syncCard && job.status==='downloading'){
-        var pctSync=job.total>0 ? Math.floor(job.received*100/job.total) : 0;
-        var allBtns=syncCard.querySelectorAll('button');
-        for(var bi=0; bi<allBtns.length; bi++){
-          var bt=allBtns[bi]; var btxt=(bt.textContent||'').trim();
-          if(job.type==='paper' && (btxt.indexOf('Download to Phone')!==-1 || btxt.indexOf('Save to Phone')!==-1 || btxt.indexOf('Downloading')!==-1)){
-            bt.disabled=true; bt.style.opacity='0.7'; bt.textContent='Downloading… '+pctSync+'%';
+      if(syncCard){
+        if(job.status==='downloading'){
+          job._errToastShown=false;
+          var pctSync=job.total>0 ? Math.floor(job.received*100/job.total) : 0;
+          var allBtns=syncCard.querySelectorAll('button');
+          for(var bi=0; bi<allBtns.length; bi++){
+            var bt=allBtns[bi]; var btxt=(bt.textContent||'').trim();
+            if(job.type==='paper' && (btxt.indexOf('Download to Phone')!==-1 || btxt.indexOf('Save to Phone')!==-1 || btxt.indexOf('Downloading')!==-1)){
+              bt.disabled=true; bt.style.opacity='0.7'; bt.textContent='Downloading… '+pctSync+'%';
+            }
+            if(job.type==='video'){
+              var _bid=bt.getAttribute('data-zed-download')||bt.getAttribute('data-zed-unlocked-dl')||bt.getAttribute('data-zed-dl-redownload')||'';
+              if(_bid===job.id){ bt.disabled=true; bt.style.opacity='0.7'; bt.textContent='Downloading… '+pctSync+'%'; }
+            }
           }
-          if(job.type==='video' && (bt.hasAttribute('data-zed-download') || bt.hasAttribute('data-zed-unlocked-dl'))){
-            bt.disabled=true; bt.style.opacity='0.7'; bt.textContent='Downloading… '+pctSync+'%';
+        } else if(job.status==='error'){
+          var eBtns=syncCard.querySelectorAll('button');
+          for(var ei=0; ei<eBtns.length; ei++){
+            var eb=eBtns[ei];
+            if(job.type==='video'){
+              var _eid=eb.getAttribute('data-zed-download')||eb.getAttribute('data-zed-unlocked-dl')||eb.getAttribute('data-zed-dl-redownload')||'';
+              if(_eid===job.id){ eb.disabled=false; eb.style.opacity='1'; eb.textContent='↻ Retry Download'; }
+            } else if(job.type==='paper'){
+              var _et=(eb.textContent||'').trim();
+              if(_et.indexOf('Downloading')!==-1){ eb.disabled=false; eb.style.opacity='1'; eb.textContent='↻ Retry Download'; }
+            }
           }
+          /* Tell the user once, in words the silent-toast filter does not hide. */
+          if(!job._errToastShown){ job._errToastShown=true; showFixToast('Download stopped at '+(job.total>0?Math.floor(job.received*100/job.total):0)+'% — tap Retry Download to continue'); }
         }
       }
     }catch(eSync){}
@@ -14865,7 +14961,7 @@ async function finishJob(job){
             var tb2=document.createElement('span'); tb2.className='zed-badge-top'; tb2.style.cssText='background:#8CFF8A;color:#000;font-size:8px;font-weight:800;padding:2px 8px;border-radius:999px;margin-left:8px;vertical-align:middle;'; tb2.textContent='DOWNLOADED'; titleEl2.appendChild(tb2);
           }
         } else {
-          var vb=fCard.querySelector('[data-zed-download], [data-zed-unlocked-dl]');
+          var vb=fCard.querySelector('[data-zed-download="'+cssEsc(job.id)+'"], [data-zed-unlocked-dl="'+cssEsc(job.id)+'"], [data-zed-dl-redownload="'+cssEsc(job.id)+'"]') || fCard.querySelector('[data-zed-download], [data-zed-unlocked-dl]');
           if(vb){ vb.textContent='Downloaded ✓'; vb.disabled=true; vb.style.opacity='0.7'; }
         }
       }
@@ -15070,47 +15166,7 @@ document.addEventListener('visibilitychange', function(){ if(!document.hidden){ 
 </script>
 
 
-<script>
-/* ZED FIX — SILENT DOWNLOADS */
-(function(){
-  var BAD = /paused\s*—\s*tap resume|failed\s*—\s*tap resume|tap resume to|already downloading|download stuck|download failed|download paused|you can pause|downloading…\s*you can pause|downloading paper/i;
-  function cleanNode(el){
-    try{
-      if(!el || el.nodeType!==1) return;
-      if(el.classList && (el.classList.contains('zed-fix-progress') || el.classList.contains('zed-dl-progress') || el.classList.contains('zed-dl-tray'))){
-        el.querySelectorAll('button').forEach(function(b){
-          var t=(b.textContent||'').trim().toLowerCase();
-          if(t==='pause' || t==='resume' || t==='cancel') b.remove();
-        });
-      }
-      if(el.tagName==='BUTTON'){
-        var bt=(el.textContent||'').trim().toLowerCase();
-        if((bt==='pause' || bt==='resume') && el.closest && el.closest('.zed-fix-progress, .zed-dl-progress, .zed-dl-tray')) el.remove();
-      }
-      var txt=el.textContent||'';
-      if(BAD.test(txt) && (el.id==='zed-fix-toast' || el.id==='zed-gs-dl-toast' || el.id==='zed-video-toast' || el.id==='zed-offline-toast' || (el.className||'').indexOf('toast')!==-1)){
-        el.style.display='none'; el.classList.remove('show');
-      }
-    }catch(e){}
-  }
-  var obs=new MutationObserver(function(muts){
-    muts.forEach(function(m){
-      m.addedNodes.forEach(function(n){ cleanNode(n); if(n.querySelectorAll) n.querySelectorAll('*').forEach(cleanNode); });
-      if(m.target && m.target.nodeType===1) cleanNode(m.target);
-    });
-  });
-  try{ obs.observe(document.body, {childList:true, subtree:true, characterData:true}); }catch(e){}
-  setInterval(function(){
-    try{
-      document.querySelectorAll('.zed-fix-btns, .zed-dl-btns').forEach(function(b){ b.style.display='none'; });
-      ['zed-fix-toast','zed-gs-dl-toast','zed-video-toast'].forEach(function(id){
-        var el=document.getElementById(id);
-        if(el && BAD.test(el.textContent)) { el.style.display='none'; el.classList.remove('show'); }
-      });
-    }catch(e){}
-  }, 800);
-})();
-</script>
+<!-- REMOVED 14 Nov 2026: SILENT DOWNLOADS. It hid every 'download failed / paused / tap resume' message with a MutationObserver + 800ms interval, so a stuck download looked like nothing was wrong. Error messages now show. -->
 
 
 <script>
