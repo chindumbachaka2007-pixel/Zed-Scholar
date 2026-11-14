@@ -2284,56 +2284,7 @@ input[placeholder="Search school..."] + div.zed-school-hidden{ display: none !im
 .zed-pw-wrap-rel input{ padding-right: 42px !important; }
 </style>
 
-<style>
-/* ZED - Clean ONLINE, no dimming, no rainbow, no glow */
-/* Header ONLINE / OFFLINE / Live pill - simple solid, always readable */
-header div{ animation: none !important; }
-header span{ animation: none !important; }
-/* Any pill that contains ONLINE / OFFLINE / Live - force solid */
-header [class*="rounded-full"]{
-  background: #1a1a1a !important;
-  background-image: none !important;
-  box-shadow: none !important;
-  animation: none !important;
-}
-/* The ONLINE pill itself - find by its position: top-right in header */
-header > div:last-child{
-  background: transparent !important;
-  box-shadow: none !important;
-}
-/* Remove pulse / dimming animation everywhere */
-.animate-pulse{ animation: none !important; opacity: 1 !important; }
-@keyframes pulse{ 0%,100%{opacity:1} 50%{opacity:1} }
-/* No dimming overlay on cards */
-.zed-dim, .dim, [class*="dim"]{ opacity: 1 !important; }
-/* Paper cards: bottom action bar - solid, not dimmed */
-.zed-save-btn, .zed-card-actions{
-  opacity: 1 !important;
-  background: #FFD93D !important;
-  color: #000 !important;
-}
-/* Floating Offline Papers button 📚 - don't cover Download, don't dim */
-#zed-offline-fab, .zed-offline-fab, button[title*="Offline"]{
-  position: fixed !important;
-  bottom: 88px !important;
-  right: 12px !important;
-  z-index: 40 !important;
-  background: #111 !important;
-  border: 2px solid #8CFF8A !important;
-  box-shadow: 0 4px 14px rgba(0,0,0,0.5) !important;
-  opacity: 1 !important;
-}
-/* Remove any translucent bottom bar that dims content */
-div[class*="backdrop-blur"]{
-  backdrop-filter: none !important;
-  -webkit-backdrop-filter: none !important;
-}
-/* Header: no rainbow gradient on ONLINE pill - force solid dark */
-header div[style*="gradient"]{
-  background: #1a1a1a !important;
-  background-image: none !important;
-}
-</style>
+
 
 <style>
 /* ZED - LOCK header: ONLINE stays top-right, never moves */
@@ -2408,14 +2359,7 @@ header > div:first-child > div:first-child{
 }
 </style>
 
-<style>
-/* ZED - ONLINE must be solid dark, never rainbow */
-header span:last-child, header div:last-child span{
-  background: #1a1a1a !important;
-  background-image: none !important;
-  color: #fff !important;
-}
-</style>
+
 
 <style>
 /* ZED - NO GRADIENTS ANYWHERE - they were covering profile pic */
@@ -2431,11 +2375,7 @@ header span:last-child, header div:last-child span{
 header, header div, .zed-avatar-circle, .zed-avatar-small{
   background-image: none !important;
 }
-/* ONLINE pill - solid dark, green dot, no rainbow */
-header div:last-child{
-  background: #1a1a1a !important;
-  background-image: none !important;
-}
+/* OLD ONLINE pill colour rule DELETED 14 Nov 2026 - new LIVE/OFFLINE rule (before </head>) owns the pill. */
 </style>
 
 <style>
@@ -2446,7 +2386,7 @@ body{margin:0}
 /* Kill ALL gradients, glows, shadows that were causing orange/green rings */
 *{background-image:none !important;box-shadow:none !important;text-shadow:none !important}
 #zed-profile-only{background-image:var(--zed-profile-photo, none) !important}
-/* LIVE pill - solid dark, no gradient, green dot */
+/* (OLD LIVE pill colour comment removed 14 Nov 2026) */
 header div{flex-wrap:wrap}
 @media (max-width: 480px){
   /* Header fits */
@@ -2478,44 +2418,12 @@ main, div[class*="min-h"]{padding-bottom:180px !important}
 #zed-ai-btn{left:auto !important;right:auto !important;bottom:auto !important;z-index:9999 !important;min-width:110px;min-height:44px}
 #zed-offline-library-btn{right:12px !important;left:auto !important;bottom:88px !important;z-index:9999 !important;width:56px !important;height:56px !important;min-width:56px;min-height:56px}
 #zed-ai-btn, #zed-offline-library-btn{box-shadow:0 4px 12px rgba(0,0,0,.5) !important}
-/* LIVE pill - solid dark, no gradient, no glow */
-header div:last-child, header span:last-child{ background:transparent !important; background-image:none !important; box-shadow:none !important; border:1px solid #333 !important; }
-header div:last-child span{ background:transparent !important; border:none !important; }
+/* OLD LIVE pill colour rules DELETED 14 Nov 2026 - new LIVE/OFFLINE rule (before </head>) owns the pill. */
 </style>
 
-<style>
-/* ZED - LIVE = solid GREEN, OFFLINE = solid RED, NO gradient, NO glow, NO dark */
-header div:last-child, header span:last-child{
-  background-image:none !important; box-shadow:none !important; text-shadow:none !important; animation:none !important;
-}
-/* Pill itself - JS sets data-live attribute */
-header [data-live="true"]{
-  background:#22C55E !important; background-image:none !important; color:#000 !important; border:none !important;
-}
-header [data-live="false"]{
-  background:#FF3B30 !important; background-image:none !important; color:#fff !important; border:none !important;
-}
-/* The dot inside LIVE pill */
-header [data-live="true"] span:first-child{ background:#000 !important; }
-header [data-live="false"] span:first-child{ background:#fff !important; }
-</style>
 
-<style>
-/* ZED FINAL - LIVE green / OFFLINE red, wins over all old dark rules */
-header [data-live="true"], header div[data-live="true"], header span[data-live="true"]{
-  background:#22C55E !important; background-image:none !important; color:#000 !important; border:none !important; box-shadow:none !important;
-}
-header [data-live="false"], header div[data-live="false"], header span[data-live="false"]{
-  background:#FF3B30 !important; background-image:none !important; color:#fff !important; border:none !important; box-shadow:none !important;
-}
-/* ZED - Floating buttons stack, same side (right), draggable */
-#zed-fab-stack{position:fixed;right:12px;bottom:88px;z-index:9999;display:flex;flex-direction:column;gap:10px;align-items:flex-end;touch-action:none}
-#zed-fab-stack.dragging{opacity:0.9;transform:scale(1.05)}
-#zed-fab-stack #zed-ai-btn{position:static !important;left:auto !important;right:auto !important;bottom:auto !important}
-#zed-fab-stack #zed-offline-library-btn{position:static !important;left:auto !important;right:auto !important;bottom:auto !important}
-#zed-fab-hint{position:fixed;left:50%;transform:translateX(-50%);bottom:170px;background:#1a1a1a;color:#fff;padding:8px 14px;border-radius:999px;font-size:12px;z-index:10000;display:none;pointer-events:none}
-#zed-fab-hint.show{display:block}
-</style>
+
+
 
 <style>
 /* ZED - NEVER show FABs on Login/Signup, even if JS is late */
@@ -2609,9 +2517,7 @@ input, select, textarea{ background:#1E1E1E !important; border:1px solid #333 !i
 *{ background-image:none !important; }
 #zed-splash-bg{ background:#0F0E0B !important; }
 
-/* LIVE pill - keep green/red */
-header [data-live="true"]{ background:#22C55E !important; color:#000 !important; }
-header [data-live="false"]{ background:#FF3B30 !important; color:#fff !important; }
+/* OLD LIVE pill data-live colour rules DELETED 14 Nov 2026 - new LIVE/OFFLINE rule (before </head>) owns the pill. */
 
 /* Login / Signup - clean, no FABs (handled by JS) */
 body.zed-on-auth #zed-fab-stack{ display:none !important; }
@@ -2709,6 +2615,15 @@ html, body { overflow-x: hidden !important; }
 header button[class*="tracking-[0.08em]"]{ display:none !important; }
 header div[class*="px-3"][class*="h-7"][class*="rounded-full"]{ min-width:110px !important; justify-content:center !important; flex-shrink:0 !important; white-space:nowrap !important; }
 header, header *{ animation:none !important; transition:none !important; }
+</style>
+<style>
+/* FIX 14 Nov 2026 - LIVE/OFFLINE stops changing colours.
+   Root cause: fixLiveColor ran every 400ms re-setting inline colours + data-live, while three CSS blocks fought over [data-live] (one said green pill, one transparent, one dark). The pill flipped green ↔ transparent ↔ dark ↔ white 2-3x/sec.
+   Fix: fixLiveColor is disabled. ONE final rule now owns the pill: pill stays dark, text stays white, ONLY the dot carries the status (green = LIVE, red = OFFLINE). No animation, no transition, no colour flipping. Higher specificity than all earlier pill rules, so it wins. */
+header div[class*="px-3"][class*="h-7"][class*="rounded-full"][class*="gap-2"]{ background:#1a1a1a !important; background-image:none !important; color:#fff !important; border:1px solid #333 !important; box-shadow:none !important; animation:none !important; transition:none !important; }
+header div[class*="px-3"][class*="h-7"][class*="rounded-full"][class*="gap-2"] span:last-child{ background:transparent !important; background-image:none !important; color:#fff !important; animation:none !important; transition:none !important; }
+header div[class*="px-3"][class*="h-7"][class*="rounded-full"][class*="gap-2"] span[class*="bg-[var(--green)]"]{ background:#22C55E !important; background-image:none !important; animation:none !important; transition:none !important; }
+header div[class*="px-3"][class*="h-7"][class*="rounded-full"][class*="gap-2"] span[class*="bg-[#ff9a9a]"]{ background:#FF3B30 !important; background-image:none !important; animation:none !important; transition:none !important; }
 </style>
 </head>
 <body>
@@ -7506,141 +7421,9 @@ console.log('[ZED] Welcome popup + fast login active');
 })();
 </script>
 
-<script>
-// === ZED - Clean ONLINE, no dimming, no rainbow ===
-(function(){
-  function fixOnlinePill(){
-    try{
-      // Find header
-      var header = document.querySelector('header');
-      if(!header) return;
-      // Find any element that says ONLINE / OFFLINE / Live / Connecting
-      var all = header.querySelectorAll('*');
-      all.forEach(function(el){
-        var t = (el.textContent||'').trim();
-        if(t === 'ONLINE' || t === 'OFFLINE' || t === 'Live' || t === 'Connecting' || t === 'Offline'){
-          // FIX v13: NO BOX - transparent, don't set background/border/padding (that was re-creating the box + causing jump)
-          el.style.background = 'transparent';
-          el.style.backgroundImage = 'none';
-          el.style.color = '#8CFF8A';
-          el.style.boxShadow = 'none';
-          el.style.animation = 'none';
-          el.style.opacity = '1';
-          // Parent pill container - transparent, keep its original size/position (don't touch padding/height/position)
-          var parent = el.parentNode;
-          if(parent){
-            parent.style.background = 'transparent';
-            parent.style.backgroundImage = 'none';
-            parent.style.boxShadow = 'none';
-            parent.style.animation = 'none';
-            parent.style.opacity = '1';
-            parent.style.border = 'none';
-            parent.style.borderRadius = '0px';
-            // DO NOT touch parent.style.padding / position - that moves LIVE from centre to top-right
-          }
-          // Green dot before it
-          var dot = el.previousElementSibling;
-          if(dot && dot.tagName === 'SPAN'){
-            dot.style.background = '#8CFF8A';
-            dot.style.animation = 'none';
-            dot.style.opacity = '1';
-          }
-        }
-      });
-      // Also fix any rainbow gradient pill in header (the one in screenshot)
-      header.querySelectorAll('div').forEach(function(d){
-        var cs = window.getComputedStyle ? getComputedStyle(d) : null;
-        if(cs && cs.backgroundImage && cs.backgroundImage.indexOf('gradient') !== -1){
-          // Only fix if it's the ONLINE pill (contains ONLINE text)
-          if((d.textContent||'').indexOf('ONLINE') !== -1){
-            d.style.background = 'transparent';
-            d.style.backgroundImage = 'none';
-            d.style.boxShadow = 'none';
-            d.style.animation = 'none';
-          }
-        }
-      });
-      // Remove dimming: any overlay that dims the page
-      document.querySelectorAll('div').forEach(function(d){
-        if(d.style && d.style.background && d.style.background.indexOf('rgba(0,0,0,0.5)') !== -1 && d.id !== 'zed-settings-modal' && d.id !== 'zed-recovery-modal' && d.id !== 'zed-pic-viewer'){
-          // Don't remove modals, but make dimming lighter
-          // Leave it
-        }
-      });
-      // Floating 📚 button: move it so it doesn't cover Download
-      var fabs = document.querySelectorAll('button');
-      fabs.forEach(function(b){
-        if((b.textContent||'').indexOf('📚') !== -1){
-          b.style.bottom = '88px';
-          b.style.right = '16px';
-          b.style.opacity = '1';
-          b.style.background = '#111';
-        }
-      });
-    }catch(e){}
-  }
-  // FIX: Run ONCE only - interval was moving ONLINE every 800ms
-  setTimeout(fixOnlinePill, 800);
-  console.log('[ZED] Clean ONLINE, no dimming active');
-})();
-</script>
 
-<script>
-// === ZED - Stabilize ONLINE: keep only ONE, top-right, never move ===
-(function(){
-  function stabilize(){
-    try{
-      // Find all ONLINE pills on page
-      var pills = [];
-      document.querySelectorAll('*').forEach(function(el){
-        if(el.children.length===0 && (el.textContent||'').trim() === 'ONLINE'){
-          pills.push(el);
-        }
-      });
-      // If more than one, hide all except the one inside header (top-right)
-      if(pills.length > 1){
-        var headerPill = null;
-        pills.forEach(function(p){
-          if(p.closest && p.closest('header')) headerPill = p;
-        });
-        pills.forEach(function(p){
-          if(p !== headerPill){
-            var container = p.closest ? p.closest('div') : null;
-            if(container) container.style.display = 'none';
-            p.style.display = 'none';
-          }
-        });
-      }
-      // Ensure header ONLINE pill is solid, not rainbow, and in header right
-      var header = document.querySelector('header');
-      if(header){
-        var onlineEl = Array.from(header.querySelectorAll('*')).find(function(e){ return (e.textContent||'').trim() === 'ONLINE'; });
-        if(onlineEl){
-          // FIX v13: NO BOX, NO MOVE - transparent, don't touch position (position:static was moving it)
-          onlineEl.style.background = 'transparent';
-          onlineEl.style.backgroundImage = 'none';
-          onlineEl.style.color = '#8CFF8A';
-          onlineEl.style.boxShadow = 'none';
-          onlineEl.style.animation = 'none';
-          var pill = onlineEl.parentNode;
-          if(pill){
-            pill.style.background = 'transparent';
-            pill.style.backgroundImage = 'none';
-            pill.style.boxShadow = 'none';
-            pill.style.animation = 'none';
-            pill.style.border = 'none';
-            // DO NOT set pill.style.position - that was jumping LIVE from centre to top-right
-          }
-        }
-      }
-    }catch(e){}
-  }
-  // Run once after load, not every second
-  setTimeout(stabilize, 1000);
-  setTimeout(stabilize, 2000);
-  console.log('[ZED] ONLINE stabilized - one pill, top-right, no moving');
-})();
-</script>
+
+
 
 <script>// REMOVED: old rainbow fix - replaced by clean profile-only below.
 </script>
@@ -8133,92 +7916,10 @@ console.log('[ZED] Welcome popup + fast login active');
 </script>
 
 
-<script>
-// ZED - LIVE pill, no gradients
-(function(){
-  function fixLive(){
-    document.querySelectorAll('span,div,button').forEach(function(el){
-      var t=(el.textContent||'').trim();
-      // Only the pill itself (short text, no children with extra text)
-      if((t==='ONLINE' || t==='online' || t==='● LIVE') && el.children.length===0){
-        el.textContent='● LIVE';
-        el.style.background='#1a1a1a';
-        el.style.backgroundImage='none';
-        el.style.color='#fff';
-        el.style.border='1px solid #333';
-        el.style.boxShadow='none';
-        el.style.textShadow='none';
-      }
-      if(t==='OFFLINE' && el.children.length===0){
-        el.textContent='● OFFLINE';
-        el.style.background='#1a1a1a';
-        el.style.backgroundImage='none';
-        el.style.color='#fff';
-        el.style.border='1px solid #333';
-        el.style.boxShadow='none';
-      }
-      // Also handle "● ONLINE" variants
-      if((t==='● ONLINE' || t==='• ONLINE') && el.children.length===0){
-        el.textContent='● LIVE';
-        el.style.background='#1a1a1a';
-        el.style.backgroundImage='none';
-      }
-    });
-    // Kill any remaining gradient on header pill container
-    document.querySelectorAll('header div').forEach(function(d){
-      if((d.textContent||'').trim().startsWith('● LIVE') || (d.textContent||'').trim()==='LIVE'){
-        d.style.background='#1a1a1a'; d.style.backgroundImage='none'; d.style.boxShadow='none';
-      }
-    });
-  }
-  setInterval(fixLive, 500);
-  document.addEventListener('DOMContentLoaded', fixLive);
-  // Also fix on load
-  setTimeout(fixLive, 300);
-  setTimeout(fixLive, 1000);
-  setTimeout(fixLive, 2000);
-})();
-</script>
 
 
-<script>
-// ZED - LIVE = GREEN, OFFLINE = RED, solid, no gradient, no dark
-(function(){
-  function fixLiveColor(){
-    document.querySelectorAll('span,div').forEach(function(el){
-      var t=(el.textContent||'').trim();
-      if(el.children.length>0) return; // only the text node itself
-      if(t==='● LIVE' || t==='LIVE' || t==='online' || t==='ONLINE'){
-        el.textContent='● LIVE';
-        el.setAttribute('data-live','true');
-        el.style.background='#22C55E'; el.style.backgroundImage='none'; el.style.color='#000'; el.style.border='none'; el.style.boxShadow='none';
-        // Also colour the parent pill
-        var p=el.parentElement; if(p){ p.setAttribute('data-live','true'); p.style.background='#22C55E'; p.style.backgroundImage='none'; p.style.border='none'; p.style.boxShadow='none'; }
-      }
-      if(t==='● OFFLINE' || t==='OFFLINE' || t==='offline' || t==='OFFLINE'){
-        el.textContent='● OFFLINE';
-        el.setAttribute('data-live','false');
-        el.style.background='#FF3B30'; el.style.backgroundImage='none'; el.style.color='#fff'; el.style.border='none'; el.style.boxShadow='none';
-        var p2=el.parentElement; if(p2){ p2.setAttribute('data-live','false'); p2.style.background='#FF3B30'; p2.style.backgroundImage='none'; p2.style.border='none'; p2.style.boxShadow='none'; }
-      }
-    });
-    // Also fix header pill container directly - if it contains LIVE, make it green
-    document.querySelectorAll('header div').forEach(function(d){
-      var txt=(d.textContent||'').trim();
-      if(txt==='● LIVE' || txt==='LIVE'){
-        d.setAttribute('data-live','true'); d.style.background='#22C55E'; d.style.backgroundImage='none'; d.style.border='none'; d.style.boxShadow='none';
-      }
-      if(txt==='● OFFLINE' || txt==='OFFLINE'){
-        d.setAttribute('data-live','false'); d.style.background='#FF3B30'; d.style.backgroundImage='none'; d.style.border='none'; d.style.boxShadow='none';
-      }
-    });
-  }
-  setInterval(fixLiveColor, 400);
-  setTimeout(fixLiveColor, 200);
-  setTimeout(fixLiveColor, 1000);
-  document.addEventListener('DOMContentLoaded', fixLiveColor);
-})();
-</script>
+
+
 
 
 <div id="zed-fab-hint">✋ Drag to move • Release to drop</div>
@@ -9948,104 +9649,8 @@ input[placeholder="Search school..."]{ position: relative !important; z-index: 3
 </style>
 
 
-<style>
-/* ===== ZED FIX v12 - LIVE / OFFLINE: NO BOX, JUST TEXT + DOT ===== */
-/* The LIVE pill in header - strip ALL box styles: no background, no border, no padding box, no shadow */
-header div[class*="bg-"][class*="border"][class*="rounded"],
-header > div:last-child > div:first-child,
-header div:has(> span[class*="rounded-full"]){
-  background: transparent !important;
-  background-image: none !important;
-  background-color: transparent !important;
-  border: none !important;
-  border-radius: 0 !important;
-  box-shadow: none !important;
-  text-shadow: none !important;
-  /* FIX v13: DO NOT touch padding/height/margin - that shrinks the pill and makes LIVE jump from centre to top-right. Keep its original size, just no box. */
-}
-/* The header right container itself - also no box */
-header > div:last-child{
-  background: transparent !important;
-  background-image: none !important;
-  border: none !important;
-  box-shadow: none !important;
-}
-/* LIVE text - green, no box */
-header [data-live="true"], header div[data-live="true"]{
-  background: transparent !important;
-  color: #8CFF8A !important;
-  border: none !important;
-}
-/* OFFLINE text - red, no box */
-header [data-live="false"], header div[data-live="false"]{
-  background: transparent !important;
-  color: #FF3B30 !important;
-  border: none !important;
-}
-/* The LIVE / OFFLINE text span itself - no background, keep colour */
-header div[class*="bg-"][class*="border"][class*="rounded"] span{
-  background: transparent !important;
-  border: none !important;
-  box-shadow: none !important;
-  color: #fff !important;
-}
-/* The dot stays coloured: green for LIVE, red for OFFLINE */
-header div[class*="bg-"][class*="border"][class*="rounded"] span:first-child{
-  background: #8CFF8A !important;
-  width: 8px !important; height: 8px !important; border-radius: 999px !important;
-}
-</style>
-<script>
-// FIX v12: LIVE / OFFLINE - no box, just on its own. Runs LAST, every 500ms, beats old box scripts.
-(function(){
-  function fixLiveNoBox(){
-    try{
-      // Find the LIVE / OFFLINE pill: header div that contains LIVE or OFFLINE text
-      document.querySelectorAll('header div').forEach(function(d){
-        var txt = (d.textContent||'').trim();
-        if(txt.indexOf('LIVE')!==-1 || txt.indexOf('OFFLINE')!==-1 || txt.indexOf('ONLINE')!==-1){
-          // Only the pill itself (the one with rounded-full / bg / border classes, or direct parent of the text)
-          if(d.className && (d.className.indexOf('rounded-full')!==-1 || d.className.indexOf('bg-')!==-1)){
-            d.style.setProperty('background','transparent','important');
-            d.style.setProperty('background-color','transparent','important');
-            d.style.setProperty('background-image','none','important');
-            d.style.setProperty('border','none','important');
-            d.style.setProperty('box-shadow','none','important');
-            d.style.setProperty('border-radius','0','important');
-            // FIX v13: DO NOT set padding/height - that moves LIVE
-          }
-        }
-      });
-      // The text span itself - no background, white/green text
-      document.querySelectorAll('header span').forEach(function(s){
-        var txt=(s.textContent||'').trim();
-        if(txt==='● LIVE' || txt==='● OFFLINE' || txt==='LIVE' || txt==='OFFLINE' || txt==='● ONLINE'){
-          s.style.setProperty('background','transparent','important');
-          s.style.setProperty('background-image','none','important');
-          s.style.setProperty('border','none','important');
-          s.style.setProperty('box-shadow','none','important');
-          s.style.setProperty('color', txt.indexOf('OFFLINE')!==-1 ? '#FF3B30' : '#8CFF8A','important');
-        }
-        // The dot: keep it coloured, no box
-        if(s.className && s.className.indexOf('rounded-full')!==-1 && s.textContent.trim()===''){
-          // This is the dot span (empty, rounded-full) - keep green/red, no box
-          s.style.setProperty('background', '#8CFF8A','important');
-        }
-      });
-      // Header right container - no box
-      var hdr=document.querySelector('header');
-      if(hdr){
-        var right=hdr.querySelector(':scope > div:last-child');
-        if(right){ right.style.setProperty('background','transparent','important'); right.style.setProperty('border','none','important'); right.style.setProperty('box-shadow','none','important'); }
-      }
-    }catch(e){}
-  }
-  setInterval(fixLiveNoBox, 500);
-  setTimeout(fixLiveNoBox, 500);
-  setTimeout(fixLiveNoBox, 1500);
-  document.addEventListener('DOMContentLoaded', fixLiveNoBox);
-})();
-</script>
+
+
 
 
 <style>
@@ -13132,10 +12737,7 @@ header > div:first-child > div:first-child{ flex-shrink:0 !important; width:36px
 header > div:first-child > div:last-child{ min-width:0 !important; flex:1 1 auto !important; white-space:nowrap !important; overflow:hidden !important; }
 header > div:first-child > div:last-child > div:first-child{ white-space:nowrap !important; overflow:hidden !important; text-overflow:ellipsis !important; font-size:15px !important; }
 header > div:last-child{ flex-shrink:0 !important; flex-wrap:nowrap !important; margin-left:auto !important; }
-/* LIVE pill - STAY dark, only the dot changes colour. No whole-pill white/green flicker */
-header [data-live="true"], header [data-live="false"], header [data-live]{ background:#1a1a1a !important; background-image:none !important; color:#fff !important; border:1px solid #333 !important; box-shadow:none !important; animation:none !important; transition:none !important; }
-header [data-live="true"] span:first-child{ background:#22C55E !important; background-image:none !important; }
-header [data-live="false"] span:first-child{ background:#FF3B30 !important; background-image:none !important; }
+/* OLD LIVE pill data-live colour rules DELETED 14 Nov 2026 - new LIVE/OFFLINE rule (before </head>) owns the pill. */
 header span, header div{ animation:none !important; transition:none !important; }
 .animate-pulse{ animation:none !important; opacity:1 !important; }
 div[class*="backdrop-blur"]{ backdrop-filter:none !important; -webkit-backdrop-filter:none !important; }
@@ -13906,10 +13508,7 @@ header > div:first-child > div:first-child{ flex-shrink:0 !important; width:36px
 header > div:first-child > div:last-child{ min-width:0 !important; flex:1 1 auto !important; white-space:nowrap !important; overflow:hidden !important; }
 header > div:first-child > div:last-child > div:first-child{ white-space:nowrap !important; overflow:hidden !important; text-overflow:ellipsis !important; font-size:15px !important; }
 header > div:last-child{ flex-shrink:0 !important; flex-wrap:nowrap !important; margin-left:auto !important; }
-/* LIVE pill - STAY dark, only the dot changes colour. No whole-pill white/green flicker */
-header [data-live="true"], header [data-live="false"], header [data-live]{ background:#1a1a1a !important; background-image:none !important; color:#fff !important; border:1px solid #333 !important; box-shadow:none !important; animation:none !important; transition:none !important; }
-header [data-live="true"] span:first-child{ background:#22C55E !important; background-image:none !important; }
-header [data-live="false"] span:first-child{ background:#FF3B30 !important; background-image:none !important; }
+/* OLD LIVE pill data-live colour rules DELETED 14 Nov 2026 - new LIVE/OFFLINE rule (before </head>) owns the pill. */
 header span, header div{ animation:none !important; transition:none !important; }
 .animate-pulse{ animation:none !important; opacity:1 !important; }
 div[class*="backdrop-blur"]{ backdrop-filter:none !important; -webkit-backdrop-filter:none !important; }
