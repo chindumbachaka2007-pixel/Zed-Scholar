@@ -1,7 +1,7 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <!-- ZED SCHOLAR v6 — 14 Nov 2026 — LIVE/OFFLINE pill: ONE pill, ONE dot, no colour flicker, never moves (deleted 5 LIVE fix blocks + 8 CSS LIVE rule sets, bundle text dot-char removed). When you change this file, also bump CACHE_NAME in sw.js (v6 -> v7) so the old version is deleted. -->
+  <!-- ZED SCHOLAR v4 — 14 Nov 2026 — offline fix: real sw.js + manifest.json + icons shipped with this file; SILENT DOWNLOADS + duplicate SW registration deleted. When you change this file, also bump CACHE_NAME in sw.js (v4 -> v5) so the old version is deleted. -->
 
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, viewport-fit=cover">
@@ -2286,6 +2286,21 @@ input[placeholder="Search school..."] + div.zed-school-hidden{ display: none !im
 
 <style>
 /* ZED - Clean ONLINE, no dimming, no rainbow, no glow */
+/* Header ONLINE / OFFLINE / Live pill - simple solid, always readable */
+header div{ animation: none !important; }
+header span{ animation: none !important; }
+/* Any pill that contains ONLINE / OFFLINE / Live - force solid */
+header [class*="rounded-full"]{
+  background: #1a1a1a !important;
+  background-image: none !important;
+  box-shadow: none !important;
+  animation: none !important;
+}
+/* The ONLINE pill itself - find by its position: top-right in header */
+header > div:last-child{
+  background: transparent !important;
+  box-shadow: none !important;
+}
 /* Remove pulse / dimming animation everywhere */
 .animate-pulse{ animation: none !important; opacity: 1 !important; }
 @keyframes pulse{ 0%,100%{opacity:1} 50%{opacity:1} }
@@ -2312,6 +2327,11 @@ input[placeholder="Search school..."] + div.zed-school-hidden{ display: none !im
 div[class*="backdrop-blur"]{
   backdrop-filter: none !important;
   -webkit-backdrop-filter: none !important;
+}
+/* Header: no rainbow gradient on ONLINE pill - force solid dark */
+header div[style*="gradient"]{
+  background: #1a1a1a !important;
+  background-image: none !important;
 }
 </style>
 
@@ -2426,6 +2446,8 @@ body{margin:0}
 /* Kill ALL gradients, glows, shadows that were causing orange/green rings */
 *{background-image:none !important;box-shadow:none !important;text-shadow:none !important}
 #zed-profile-only{background-image:var(--zed-profile-photo, none) !important}
+/* LIVE pill - solid dark, no gradient, green dot */
+header div{flex-wrap:wrap}
 @media (max-width: 480px){
   /* Header fits */
   header{padding:8px 10px !important;gap:8px !important}
@@ -2456,11 +2478,36 @@ main, div[class*="min-h"]{padding-bottom:180px !important}
 #zed-ai-btn{left:auto !important;right:auto !important;bottom:auto !important;z-index:9999 !important;min-width:110px;min-height:44px}
 #zed-offline-library-btn{right:12px !important;left:auto !important;bottom:88px !important;z-index:9999 !important;width:56px !important;height:56px !important;min-width:56px;min-height:56px}
 #zed-ai-btn, #zed-offline-library-btn{box-shadow:0 4px 12px rgba(0,0,0,.5) !important}
+/* LIVE pill - solid dark, no gradient, no glow */
+header div:last-child, header span:last-child{ background:transparent !important; background-image:none !important; box-shadow:none !important; border:1px solid #333 !important; }
+header div:last-child span{ background:transparent !important; border:none !important; }
 </style>
 
-
+<style>
+/* ZED - LIVE = solid GREEN, OFFLINE = solid RED, NO gradient, NO glow, NO dark */
+header div:last-child, header span:last-child{
+  background-image:none !important; box-shadow:none !important; text-shadow:none !important; animation:none !important;
+}
+/* Pill itself - JS sets data-live attribute */
+header [data-live="true"]{
+  background:#22C55E !important; background-image:none !important; color:#000 !important; border:none !important;
+}
+header [data-live="false"]{
+  background:#FF3B30 !important; background-image:none !important; color:#fff !important; border:none !important;
+}
+/* The dot inside LIVE pill */
+header [data-live="true"] span:first-child{ background:#000 !important; }
+header [data-live="false"] span:first-child{ background:#fff !important; }
+</style>
 
 <style>
+/* ZED FINAL - LIVE green / OFFLINE red, wins over all old dark rules */
+header [data-live="true"], header div[data-live="true"], header span[data-live="true"]{
+  background:#22C55E !important; background-image:none !important; color:#000 !important; border:none !important; box-shadow:none !important;
+}
+header [data-live="false"], header div[data-live="false"], header span[data-live="false"]{
+  background:#FF3B30 !important; background-image:none !important; color:#fff !important; border:none !important; box-shadow:none !important;
+}
 /* ZED - Floating buttons stack, same side (right), draggable */
 #zed-fab-stack{position:fixed;right:12px;bottom:88px;z-index:9999;display:flex;flex-direction:column;gap:10px;align-items:flex-end;touch-action:none}
 #zed-fab-stack.dragging{opacity:0.9;transform:scale(1.05)}
@@ -2562,6 +2609,9 @@ input, select, textarea{ background:#1E1E1E !important; border:1px solid #333 !i
 *{ background-image:none !important; }
 #zed-splash-bg{ background:#0F0E0B !important; }
 
+/* LIVE pill - keep green/red */
+header [data-live="true"]{ background:#22C55E !important; color:#000 !important; }
+header [data-live="false"]{ background:#FF3B30 !important; color:#fff !important; }
 
 /* Login / Signup - clean, no FABs (handled by JS) */
 body.zed-on-auth #zed-fab-stack{ display:none !important; }
@@ -2933,7 +2983,7 @@ if(!h && _zedTopicVal && _zedTopicVal.toLowerCase()!=="general"){
     if(!ex || ex.length===0){ await e.from("topics").insert({subject_name:Ja, grade:Ga, name:_zedTopicVal}); }
   }catch(_e){ console.log("topic auto-create error", _e); }
 }
-if(h)throw Error(h.message);F(vidFile?"Video uploaded from phone ✓":"Video added live!"),Za(""),Qa(""),setVidFile(null),zp(""),Rp("");let _tEl=document.getElementById("zed-topic-input");if(_tEl)_tEl.value="";let{data:P}=await e.from("videos").select("*").order("created_at",{ascending:!1}).limit(200);ga(P||[])}catch(o){F(o.message)}finally{setVidUp(!1)}},Vp=(o)=>{var _sh=(window.zedBalanceAnswers?window.zedBalanceAnswers(o||[]):(o||[]));Su(_sh),Ca({}),Sa(0),QiSet(0)},Hp=async()=>{if(!Te)return;if(window.__zedQuizSubmitting)return;window.__zedQuizSubmitting=!0;let o=0;Te.forEach((y,h)=>{if(_a[h]===y.correct_answer)o++});try{let y={user_id:r.id,subject:Te[0]?.subject||"General",grade:Te[0]?.grade||r.grade||"",score:o,total:Te.length,time_spent:Nu},{error:h}=await e.from("quiz_attempts").insert(y);if(h&&/grade/i.test(h.message||"")){let _f={user_id:r.id,subject:y.subject,score:o,total:Te.length,time_spent:Nu},_fr=await e.from("quiz_attempts").insert(_f);if(_fr.error)throw Error(_fr.error.message);}else if(h)throw Error(h.message);let P=(r.coins||0)+o*5;await e.from("profiles").update({coins:P}).eq("id",r.id);let W={...r,coins:P};l(W),localStorage.setItem("zed_user",JSON.stringify(W)),F(`Quiz submitted: ${o}/${Te.length} • +${o*5} coins`),Su(null),QiSet(0),window.__zedQuizSubmitting=!1;let{data:V}=await e.from("quiz_attempts").select("user_id,score,total,subject,created_at").order("created_at",{ascending:!1}).limit(500);ka(V||[])}catch(y){window.__zedQuizSubmitting=!1,F(y.message)}},xa=S.useMemo(()=>{let o=ku.toLowerCase();return gv.filter((y)=>y.province===je&&y.name.toLowerCase().includes(o)).slice(0,20)},[je,ku]);if(!r)return v("div",{className:"min-h-screen bg-[var(--bg)] text-[var(--text)] flex flex-col",style:{paddingTop:"var(--safe-area-inset-top)",boxSizing:"border-box"},children:[v("header",{className:"sticky top-[var(--safe-area-inset-top)] z-30 bg-[var(--bg)]/95 backdrop-blur-xl border-b border-[var(--border)] px-4 md:px-6 h-[60px] flex items-center justify-between",children:[v("div",{className:"flex items-center gap-3",children:[c("div",{className:"w-9 h-9 rounded-full bg-[var(--green)] flex items-center justify-center text-black font-extrabold text-[15px]",children:"Z"}),v("div",{children:[c("div",{className:"font-serif text-[18px] leading-none tracking-[-0.02em]",children:"ZED SCHOLAR"}),c("div",{className:"text-[10px] uppercase tracking-[0.18em] text-[var(--muted)]",children:"ZAMBIA • GRADE 10-12 • FORM 1-6"})]})]}),v("div",{className:"flex items-center gap-2 text-[11px]",children:[c("span",{className:`w-2 h-2 rounded-full ${n.ok?"bg-[var(--green)]":n.ok===!1?"bg-[#ff9a9a]":"bg-[var(--yellow)] animate-pulse"}`}),c("span",{className:"text-[10px] uppercase tracking-[0.12em] text-[var(--muted)]",children:n.ok?"Live":n.ok===!1?"Offline":"Connecting"})]})]}),c("div",{className:"flex-1 flex justify-center px-4 py-6 md:py-10",children:c("div",{className:"w-full max-w-[460px]",children:!$?v("div",{className:"bg-[var(--surface)] border border-[var(--border)] rounded-[22px] p-6 md:p-8 shadow-[0_16px_40px_rgba(0,0,0,0.35)]",children:[v("div",{className:"flex gap-2 mb-6 p-1 bg-[var(--bg)] rounded-full w-fit border border-[var(--border)]",children:[c("button",{onClick:()=>i("password"),className:`px-5 h-9 rounded-full text-[11px] uppercase tracking-[0.14em] font-bold transition ${u==="password"?"bg-[var(--text)] text-[var(--bg)]":"text-[var(--muted)]"}`,children:"Password"}),c("button",{onClick:()=>i("otp"),className:`px-5 h-9 rounded-full text-[11px] uppercase tracking-[0.14em] font-bold transition ${u==="otp"?"bg-[var(--text)] text-[var(--bg)]":"text-[var(--muted)]"}`,children:"SMS OTP"})]}),u==="password"?v("div",{className:"space-y-4",children:[v("div",{children:[c("h2",{className:"font-serif text-[30px] leading-[0.95] tracking-[-0.02em]",children:"Welcome back"}),c("p",{className:"text-[13px] text-[var(--muted)] mt-2 leading-snug",children:"Log in to access past papers, quizzes and your school leaderboard."})]}),v("div",{children:[c("label",{className:"text-[11px] uppercase tracking-[0.12em] text-[var(--muted)]",children:"Phone — 10 digits (09 / 07)"}),c("input",{value:a,onChange:(o)=>f(o.target.value.replace(/\D/g,"").slice(0,10)),placeholder:"0971234567",className:"mt-1.5 w-full h-11 px-4 rounded-[12px] bg-[var(--bg)] border border-[var(--border)] outline-none focus:border-[var(--green)] text-[14px]"})]}),v("div",{children:[c("label",{className:"text-[11px] uppercase tracking-[0.12em] text-[var(--muted)]",children:"Password"}),c("input",{type:"password",value:m,onChange:(o)=>g(o.target.value),placeholder:"••••••",className:"mt-1.5 w-full h-11 px-4 rounded-[12px] bg-[var(--bg)] border border-[var(--border)] outline-none focus:border-[var(--green)] text-[14px]"})]}),c("button",{id:"zed-login-btn",disabled:k,onPointerDown:(o)=>{try{if(o.currentTarget.setAttribute("data-clicked","1"),o.currentTarget.textContent="Logging in...",!document.getElementById("login-click-feedback")){void 0 /* duplicate Login banner removed */}}catch{}},onClick:(o)=>{try{if(o.currentTarget.setAttribute("data-clicked","1"),o.currentTarget.textContent="Logging in...",!document.getElementById("login-click-feedback")){void 0 /* duplicate Login banner removed */}}catch{}Pp()},className:"w-full h-11 rounded-[12px] bg-[var(--green)] text-black font-bold uppercase tracking-[0.12em] text-[12px] hover:brightness-110 disabled:opacity-60",children:k?"Logging in...":"Login"}),v("div",{className:"text-[13px] text-[var(--muted)] text-center pt-2",id:"signup-trigger",children:["No account? ",c("button",{id:"zed-signup-open",type:"button","data-testid":"signup-zambia-btn",onClick:(o)=>{try{let y=o.currentTarget;y.textContent="Opening signup... ✓",y.setAttribute("data-opened","1"),y.setAttribute("aria-expanded","true"),y.style.color="var(--green)";let h="zed-signup-feedback-live",P=document.getElementById(h);if(!P)P=document.createElement("div"),P.id=h,P.textContent="Opening signup — create your profile",P.style.position="fixed",P.style.bottom="90px",P.style.left="16px",P.style.right="16px",P.style.background="#F5F1E8",P.style.color="#0F0E0B",P.style.padding="10px 14px",P.style.borderRadius="10px",P.style.zIndex="9999",P.style.fontSize="12px",P.style.fontWeight="600",document.body.appendChild(P),setTimeout(()=>{try{P.remove()}catch{}},3000);location.hash="#signup",document.documentElement.setAttribute("data-signup","open"),window.scrollTo(0,0),console.log("[ZED] Signup trigger clicked - clean auth v31")}catch(y){console.log("[ZED] signup open error",y)}Ce(!0),F("Opening signup — choose province → district → school")},className:"underline text-[var(--text)] font-semibold",children:"Create account"})]})]}):v("div",{className:"space-y-4",children:[v("div",{children:[c("h2",{className:"font-serif text-[30px] leading-[0.95] tracking-[-0.02em]",children:"Phone OTP"}),c("p",{className:"text-[13px] text-[var(--muted)] mt-2 leading-snug",children:"We'll send a 6-digit code to your Zambian number."})]}),v("div",{children:[c("label",{className:"text-[11px] uppercase tracking-[0.12em] text-[var(--muted)]",children:"Phone — 10 digits"}),c("input",{value:_,onChange:(o)=>z(o.target.value.replace(/\D/g,"").slice(0,10)),placeholder:"0971234567",className:"mt-1.5 w-full h-11 px-4 rounded-[12px] bg-[var(--bg)] border border-[var(--border)] outline-none focus:border-[var(--green)] text-[14px]"})]}),!N?c("button",{disabled:p,onClick:Mp,className:"w-full h-11 rounded-[12px] bg-[var(--yellow)] text-black font-bold uppercase tracking-[0.12em] text-[12px] disabled:opacity-60",children:p?"Sending...":"Send OTP"}):v(wu,{children:[v("div",{children:[c("label",{className:"text-[11px] uppercase tracking-[0.12em] text-[var(--muted)]",children:"6-digit code"}),c("input",{value:d,onChange:(o)=>s(o.target.value.replace(/\D/g,"").slice(0,6)),placeholder:"123456",className:"mt-1.5 w-full h-11 px-4 rounded-[12px] bg-[var(--bg)] border border-[var(--border)] outline-none focus:border-[var(--green)] text-[14px] tracking-[0.2em]"})]}),c("button",{disabled:p,onClick:Lp,className:"w-full h-11 rounded-[12px] bg-[var(--green)] text-black font-bold uppercase tracking-[0.12em] text-[12px] disabled:opacity-60",children:p?"Verifying...":"Verify & Login"}),c("button",{onClick:()=>{D(!1),s("")},className:"w-full h-9 text-[11px] uppercase tracking-[0.12em] text-[var(--muted)]",children:"Resend code"})]}),v("div",{className:"text-[13px] text-[var(--muted)] text-center",children:["Have password? ",c("button",{type:"button",onClick:()=>i("password"),className:"underline text-[var(--text)]",children:"Use password"})," • ",c("button",{type:"button",onClick:()=>{Ce(!0),F("Opening signup")},className:"underline text-[var(--text)]",children:"Sign up"})]})]})]}):v("div",{className:"bg-[var(--surface)] border border-[var(--border)] rounded-[22px] p-6 md:p-8 shadow-[0_16px_40px_rgba(0,0,0,0.35)] space-y-4",id:"signup",children:[c("button",{type:"button",onClick:()=>{Ce(!1);try{location.hash="",document.documentElement.removeAttribute("data-signup")}catch{}},className:"text-[11px] uppercase tracking-[0.12em] text-[var(--muted)] hover:text-[var(--text)]",children:"← Back to login"}),v("div",{children:[c("h2",{className:"font-serif text-[30px] leading-[0.95] tracking-[-0.02em]",children:"Create account"}),c("p",{className:"text-[13px] text-[var(--muted)] mt-2",children:"Choose province → district → school. Can't find yours? Add a custom school."})]}),v("div",{className:"grid gap-3.5",children:[v("div",{children:[c("label",{className:"text-[11px] uppercase tracking-[0.12em] text-[var(--muted)]",children:"Full Name"}),c("input",{value:xe,onChange:(o)=>Yd(o.target.value),placeholder:"Bwalya Mwansa",className:"mt-1.5 w-full h-11 px-4 rounded-[12px] bg-[var(--bg)] border border-[var(--border)] outline-none focus:border-[var(--green)] text-[14px]"})]}),v("div",{children:[c("label",{className:"text-[11px] uppercase tracking-[0.12em] text-[var(--muted)]",children:"Phone — 10 digits (09 / 07)"}),c("input",{value:sn,onChange:(o)=>Zd(o.target.value.replace(/\D/g,"").slice(0,10)),placeholder:"097...",className:"mt-1.5 w-full h-11 px-4 rounded-[12px] bg-[var(--bg)] border border-[var(--border)] outline-none focus:border-[var(--green)] text-[14px]"})]}),v("div",{className:"grid grid-cols-2 gap-3",children:[v("div",{children:[c("label",{className:"text-[11px] uppercase tracking-[0.12em] text-[var(--muted)]",children:"Province"}),c("select",{value:je,onChange:(o)=>Qd(o.target.value),className:"mt-1.5 w-full h-11 px-3 rounded-[12px] bg-[var(--bg)] border border-[var(--border)] text-[13px]",children:Hd.map((o)=>c("option",{children:o},o))})]}),v("div",{children:[c("label",{className:"text-[11px] uppercase tracking-[0.12em] text-[var(--muted)]",children:"District"}),c("select",{value:Fr,onChange:(o)=>fa(o.target.value),className:"mt-1.5 w-full h-11 px-3 rounded-[12px] bg-[var(--bg)] border border-[var(--border)] text-[13px]",children:Or[je]?.map((o)=>c("option",{children:o},o))})]})]}),v("div",{children:[c("label",{className:"text-[11px] uppercase tracking-[0.12em] text-[var(--muted)]",children:"School — searchable (150+)"}),c("input",{value:ku,onChange:(o)=>Jd(o.target.value),placeholder:"Search school...",className:"mt-1.5 w-full h-10 px-3 rounded-[12px] bg-[var(--bg)] border border-[var(--border)] text-[13px]"}),v("div",{className:"mt-2 max-h-[160px] overflow-auto rounded-[12px] border border-[var(--border)] bg-[var(--bg)]",children:[xa.map((o)=>c("button",{onClick:()=>{Gd(o.name),sa(!1)},className:`w-full text-left px-3 py-2.5 text-[12px] hover:bg-[var(--surface)] transition ${Ot===o.name?"bg-[var(--surface-2)] text-[var(--green)] font-semibold":""}`,children:o.name},o.name)),xa.length===0&&c("div",{className:"px-3 py-3 text-[11px] text-[var(--muted)]",children:"No match — tick custom below to add a custom school."})]}),v("div",{className:"mt-3 flex items-center gap-2",children:[c("input",{type:"checkbox",checked:Fn,onChange:(o)=>sa(o.target.checked),className:"w-4 h-4 rounded"}),c("span",{className:"text-[11px] uppercase tracking-[0.08em] text-[var(--muted)]",children:"Add custom school"})]}),Fn&&c("input",{value:Ft,onChange:(o)=>qd(o.target.value),placeholder:"e.g. Your school name",className:"mt-2 w-full h-11 px-3 rounded-[12px] bg-[var(--bg)] border border-[var(--border)] text-[13px] outline-none focus:border-[var(--green)]"}),Ot&&!Fn&&v("div",{className:"mt-2 text-[11px] text-[var(--green)]",children:["Selected: ",Ot]}),Fn&&Ft&&v("div",{className:"mt-2 text-[11px] text-[var(--green)]",children:["Custom: ",Ft]})]}),v("div",{className:"grid grid-cols-2 gap-3",children:[v("div",{children:[c("label",{className:"text-[11px] uppercase tracking-[0.12em] text-[var(--muted)]",children:"Grade"}),c("select",{value:Dr,onChange:(o)=>xd(o.target.value),className:"mt-1.5 w-full h-11 px-3 rounded-[12px] bg-[var(--bg)] border border-[var(--border)] text-[13px]",children:["10","11","12","Form 1","Form 2","Form 3","Form 4","Form 5","Form 6"].map(o=>c("option",{children:o},o))})]}),v("div",{children:[c("label",{className:"text-[11px] uppercase tracking-[0.12em] text-[var(--muted)]",children:"Account Code"}),v("div",{className:"mt-1.5 h-11 px-3 rounded-[12px] bg-[var(--bg)] border border-[var(--border)] flex items-center text-[11px] font-mono text-[var(--muted)]",children:["ZED-",Date.now().toString().slice(-6)]})]})]}),v("div",{className:"grid grid-cols-2 gap-3",children:[v("div",{children:[c("label",{className:"text-[11px] uppercase tracking-[0.12em] text-[var(--muted)]",children:"Password"}),c("input",{type:"password",value:Eu,onChange:(o)=>jd(o.target.value),placeholder:"Create",className:"mt-1.5 w-full h-11 px-3 rounded-[12px] bg-[var(--bg)] border border-[var(--border)] text-[13px] outline-none focus:border-[var(--green)]"})]}),v("div",{children:[c("label",{className:"text-[11px] uppercase tracking-[0.12em] text-[var(--muted)]",children:"Confirm"}),c("input",{type:"password",value:da,onChange:(o)=>bd(o.target.value),placeholder:"Confirm",className:"mt-1.5 w-full h-11 px-3 rounded-[12px] bg-[var(--bg)] border border-[var(--border)] text-[13px] outline-none focus:border-[var(--green)]"})]})]}),c("button",{id:"zed-signup-btn",disabled:pa,onClick:()=>{console.log("[ZED] zed-signup-btn clean -> signup"),Ip()},className:"w-full h-11 rounded-[12px] bg-[var(--green)] text-black font-bold uppercase tracking-[0.12em] text-[12px] disabled:opacity-60 disabled:cursor-not-allowed hover:brightness-110",children:pa?"Signing up...":"Create account"})]})]})})}),I&&c("div",{className:"fixed bottom-4 left-4 right-4 md:left-auto md:right-4 md:w-[380px] z-50 bg-[var(--text)] text-[var(--bg)] px-4 py-3 rounded-[12px] text-[13px] font-medium shadow-xl border-2 border-[var(--green)]",children:I})]});return v("div",{className:"min-h-screen bg-[var(--bg)] text-[var(--text)]",style:{paddingTop:"var(--safe-area-inset-top)",boxSizing:"border-box"},children:[v("header",{className:"sticky top-[var(--safe-area-inset-top)] z-30 bg-[var(--bg)]/90 backdrop-blur-xl border-b border-[var(--border)] px-4 md:px-6 h-[56px] flex items-center justify-between",children:[v("div",{className:"flex items-center gap-3",children:[c("div",{className:"w-9 h-9 rounded-full bg-[var(--green)] flex items-center justify-center text-black font-extrabold",children:"Z"}),v("div",{children:[c("div",{className:"font-serif text-[16px] leading-none tracking-[-0.02em]",children:"ZED SCHOLAR v1"}),c("div",{className:"text-[10px] uppercase tracking-[0.16em] text-[var(--muted)] hidden md:block",children:"Zambia • ECZ Past Papers"})]})]}),v("div",{className:"flex items-center gap-3",children:[v("div",{className:"flex items-center gap-2 px-3 h-7 rounded-full bg-[var(--surface)] border border-[var(--border)] text-[10px]",children:[c("span",{className:`w-1.5 h-1.5 rounded-full ${n.ok?"bg-[var(--green)]":"bg-[#ff9a9a]"}`}),c("span",{className:"text-[11px] uppercase tracking-[0.12em] text-[var(--muted)]",children:n.ok?"LIVE":"OFFLINE"})]}),v("div",{className:"hidden md:flex items-center gap-2",children:[c("span",{className:"text-[11px] text-[var(--muted)]",children:r.name}),v("span",{className:"px-2 py-0.5 rounded-full bg-[var(--yellow)] text-black text-[10px] font-bold",children:[r.coins||0," coins"]})]}),c("button",{onClick:()=>{localStorage.removeItem("zed_user"),l(null)},className:"h-8 px-3 rounded-full bg-[var(--surface)] border border-[var(--border)] text-[11px] uppercase tracking-[0.08em]",children:"Logout"})]})]}),v("div",{className:"border-b border-[var(--border)] bg-[var(--surface)] px-2 md:px-6 h-[37px] flex items-center gap-1 overflow-x-auto",children:[[{id:"papers",label:"Papers"},{id:"quizzes",label:"Quizzes"},{id:"documents",label:"Docs"},{id:"videos",label:"Videos"},{id:"leaderboard",label:"Leaderboard"},{id:"admin",label:"Admin"},{id:"profile",label:"Profile"}].map((o)=>c("button",{onClick:()=>x(o.id),className:`h-7 px-3 rounded-full text-[11px] uppercase tracking-[0.12em] font-semibold border whitespace-nowrap ${M===o.id?"bg-[var(--text)] text-[var(--bg)] border-[var(--text)]":"bg-transparent border-[var(--border)] text-[var(--muted)]"}`,children:o.label},o.id)),v("div",{className:"ml-auto hidden md:flex items-center gap-2 text-[10px] text-[var(--muted)]",children:[v("span",{children:[r.province," • ",r.district]}),c("span",{className:"px-2 py-0.5 rounded-full bg-[var(--surface-2)]",children:r.school})]})]}),v("main",{className:"max-w-[1200px] mx-auto px-4 md:px-6 py-6",children:[M==="papers"&&v("div",{className:"space-y-4",children:[v("div",{className:"flex flex-wrap gap-2 items-center",children:[c("input",{value:$r,onChange:(o)=>ip(o.target.value),placeholder:"Search papers...",className:"h-9 px-3 rounded-[10px] bg-[var(--surface)] border border-[var(--border)] text-[13px] w-[200px]"}),v("select",{value:Vr,onChange:(o)=>op(o.target.value),className:"h-9 px-2 rounded-[10px] bg-[var(--surface)] border border-[var(--border)] text-[11px]",children:[c("option",{children:"All"}),It.map((o)=>c("option",{children:o},o))]}),v("select",{value:Hr,onChange:(o)=>ap(o.target.value),className:"h-9 px-2 rounded-[10px] bg-[var(--surface)] border border-[var(--border)] text-[11px]",children:[c("option",{children:"All"}),["10","11","12","Form 1","Form 2","Form 3","Form 4","Form 5","Form 6"].map(o=>c("option",{children:o},o))]}),v("select",{value:Ur,onChange:(o)=>cp(o.target.value),className:"h-9 px-2 rounded-[10px] bg-[var(--surface)] border border-[var(--border)] text-[11px]",children:[c("option",{children:"All"}),c("option",{children:"ECZ"}),c("option",{children:"Mock"}),c("option",{children:"Test"})]}),v("select",{value:Br,onChange:(o)=>fp(o.target.value),className:"h-9 px-2 rounded-[10px] bg-[var(--surface)] border border-[var(--border)] text-[11px]",children:[c("option",{children:"All"}),c("option",{children:"2024"}),c("option",{children:"2023"}),c("option",{children:"2022"}),c("option",{children:"2021"}),c("option",{children:"2020"})]}),v("span",{className:"ml-auto text-[11px] text-[var(--muted)]",children:[Tu.length," papers"]})]}),ep?c("div",{className:"grid md:grid-cols-3 gap-3",children:Array.from({length:6}).map((o,y)=>c("div",{className:"h-[140px] rounded-[14px] bg-[var(--surface)] animate-pulse"},y))}):v(wu,{children:[c("div",{className:"grid md:grid-cols-2 lg:grid-cols-3 gap-3",children:Tu.slice(0,20).map((o)=>v("div",{className:"bg-[var(--surface)] border border-[var(--border)] rounded-[14px] p-4 flex flex-col",children:[v("div",{className:"flex items-start justify-between gap-2",children:[v("div",{children:[v("div",{className:"text-[11px] uppercase tracking-[0.12em] text-[var(--yellow)]",children:[o.subject," • G",o.grade," • ",o.year]}),c("div",{className:"font-semibold text-[14px] leading-tight mt-1 line-clamp-2",children:o.title}),v("div",{className:"text-[11px] text-[var(--muted)] mt-1",children:[o.paper_type," • ",o.province||""," ",o.district||""]})]}),c("span",{className:"text-[10px] px-2 py-0.5 rounded-full bg-[var(--surface-2)] border border-[var(--border)]",children:o.file_name?.slice(-3).toUpperCase()||"PDF"})]}),c("div",{className:"text-[12px] text-[var(--muted)] mt-2 line-clamp-2",children:o.description}),v("div",{className:"mt-auto pt-3 flex gap-2",children:[c("a",{href:o.file_url,target:"_blank",rel:"noopener",className:"flex-1 h-8 rounded-[8px] bg-[var(--text)] text-[var(--bg)] flex items-center justify-center text-[11px] font-semibold uppercase tracking-[0.08em]",children:"Download"}),o.uploaded_by===r.id&&c("button",{onClick:()=>Du(o),className:"h-8 px-3 rounded-[8px] bg-[var(--surface-2)] border border-[var(--border)] text-[11px]",children:"Delete"})]}),v("div",{className:"mt-2 text-[10px] text-[var(--muted-2)]",children:["by ",o.uploaded_by?.slice(0,8)||"—"," • ",new Date(o.created_at).toLocaleDateString()]})]},o.id))}),Tu.length===0&&c("div",{className:"text-center py-8 text-[var(--muted)] text-[13px]",children:"No papers yet."})]})]}),M==="quizzes"&&v("div",{className:"space-y-4",children:[v("div",{className:"flex flex-wrap gap-2 items-center",children:[v("select",{value:Ar,onChange:(o)=>sp(o.target.value),className:"h-9 px-2 rounded-[10px] bg-[var(--surface)] border border-[var(--border)] text-[11px]",children:[c("option",{children:"All"}),It.map((o)=>c("option",{children:o},o))]}),v("select",{value:Kr,onChange:(o)=>dp(o.target.value),className:"h-9 px-2 rounded-[10px] bg-[var(--surface)] border border-[var(--border)] text-[11px]",children:[c("option",{children:"All"}),["10","11","12","Form 1","Form 2","Form 3","Form 4","Form 5","Form 6"].map(o=>c("option",{children:o},o))]}),null,c("button",{onClick:async function(){ if(Ar==="All"){ F("Pick a subject first, then tap Zed Scholar AI Quiz"); return; } var _q=await Zq(Ar,Kr==="All"?"":Kr,20,false); if(_q&&_q.length) Vp(_q); },className:"h-9 px-4 rounded-[10px] bg-[var(--yellow)] text-black font-bold text-[11px] uppercase tracking-[0.12em]",children:"🤖 Zed Scholar AI Quiz - Fresh AI Only"}),c("span",{className:"ml-auto text-[11px] text-[var(--muted)]",children:"AI makes every quiz fresh • +5 coins per correct"})]}),null,Te&&c("div",{className:"fixed inset-0 z-50 bg-black/60 backdrop-blur-sm p-4 flex items-center justify-center",children:v("div",{className:"bg-[var(--surface)] border border-[var(--border)] rounded-[16px] w-full max-w-[720px] max-h-[90vh] overflow-auto p-6",children:[v("div",{className:"flex items-center justify-between",children:[v("h3",{className:"font-serif text-[22px]",children:["Quiz — Question ",Qi+1," of ",Te.length]}),v("div",{className:"text-[12px] text-[var(--muted)]",children:["Time: ",Math.floor(Nu/60),":",String(Nu%60).padStart(2,"0")]})]}),c("div",{className:"mt-2 text-[11px] text-[var(--muted)]",children:["Score so far: ",Te.filter(function(q,_i){return _a[_i]===q.correct_answer}).length," / ",Te.length," correct"]}),c("div",{className:"mt-2 h-2 rounded-full bg-[var(--bg)] overflow-hidden",children:c("div",{className:"h-full bg-[var(--green)]",style:{width:Math.round(((Qi+1)/Te.length)*100)+"%"}})}),c("div",{className:"mt-4",children:[v("div",{className:"text-[15px] font-semibold leading-snug",children:[Qi+1,". ",Te[Qi].question_text]}),c("div",{className:"mt-3 grid grid-cols-1 md:grid-cols-2 gap-2",children:["A","B","C","D"].filter(function(h){return Te[Qi][`option_${h.toLowerCase()}`]&&String(Te[Qi][`option_${h.toLowerCase()}`]).trim()}).map(function(h){var _picked=_a[Qi];var _isCorrect=h===Te[Qi].correct_answer;var _isPicked=h===_picked;var _answered=_picked!==undefined;var _cls=_answered?(_isCorrect?"bg-[var(--green)] text-black border-[var(--green)]":_isPicked?"bg-red-500 text-white border-red-500":"bg-[var(--bg)] border-[var(--border)] opacity-60"):"bg-[var(--bg)] border-[var(--border)]";return v("button",{onClick:function(){ if(_a[Qi]!==undefined) return; Ca(function(P){return {...P,[Qi]:h};}); },className:"text-left px-3 py-3 rounded-[10px] border text-[13px] "+_cls,children:[v("span",{className:"font-bold mr-1",children:[h,"."]}),Te[Qi][`option_${h.toLowerCase()}`],_answered&&_isCorrect?c("span",{className:"ml-2 font-bold",children:"✓"}):null,_answered&&_isPicked&&!_isCorrect?c("span",{className:"ml-2 font-bold",children:"✗"}):null]},h)})}),_a[Qi]!==undefined&&v("div",{className:"mt-4 space-y-2",children:[v("div",{className:"text-[13px] font-bold px-3 py-2 rounded-[10px] "+(_a[Qi]===Te[Qi].correct_answer?"bg-[var(--green)] text-black":"bg-red-500 text-white"),children:_a[Qi]===Te[Qi].correct_answer?["✓ Correct! Well done."]:["✗ Wrong. Correct answer is ",Te[Qi].correct_answer," — ",Te[Qi][`option_${(Te[Qi].correct_answer||"A").toLowerCase()}`]]}),v("div",{className:"bg-[var(--bg)] border border-[var(--border)] rounded-[12px] p-3",children:[v("div",{className:"text-[11px] uppercase tracking-[0.12em] text-[var(--green)] font-bold",children:"Explanation — why this is correct and why the others are wrong"}),c("div",{className:"mt-1 text-[13px] leading-snug",children:Te[Qi].explanation&&String(Te[Qi].explanation).trim()?Te[Qi].explanation:["Correct answer is ",Te[Qi].correct_answer," — ",Te[Qi][`option_${(Te[Qi].correct_answer||"A").toLowerCase()}`],". The other options are incorrect for this question."]})]})]}),_a[Qi]===undefined&&c("div",{className:"mt-3 text-[11px] text-[var(--muted)]",children:"Tap one answer to see if you are right."})]}),v("div",{className:"mt-6 flex gap-2",children:[c("button",{onClick:function(){Su(null);QiSet(0);},className:"h-10 px-4 rounded-[10px] bg-[var(--surface-2)] border border-[var(--border)] text-[12px]",children:"Cancel"}),_a[Qi]===undefined?c("button",{disabled:!0,className:"flex-1 h-10 rounded-[10px] bg-[var(--surface-2)] border border-[var(--border)] text-[12px] opacity-50",children:"Pick an answer first"}):Qi<Te.length-1?c("button",{onClick:function(){QiSet(Qi+1);},className:"flex-1 h-10 rounded-[10px] bg-[var(--green)] text-black font-bold uppercase tracking-[0.12em] text-[12px]",children:"Next →"}):c("button",{onClick:Hp,className:"flex-1 h-10 rounded-[10px] bg-[var(--green)] text-black font-bold uppercase tracking-[0.12em] text-[12px]",children:"Finish • See Score"})]})]})})]}),M==="documents"&&v("div",{className:"space-y-4",children:[v("div",{className:"text-[11px] uppercase tracking-[0.12em] text-[var(--muted)]",children:[Cu.length," docs"]}),c("div",{className:"grid md:grid-cols-3 gap-3",children:Cu.map((o)=>v("div",{className:"bg-[var(--surface)] border border-[var(--border)] rounded-[14px] p-4",children:[v("div",{className:"text-[11px] uppercase text-[var(--yellow)]",children:[o.subject," • ",o.grade]}),c("div",{className:"font-semibold text-[14px] mt-1",children:o.title}),c("div",{className:"text-[12px] text-[var(--muted)] mt-1 line-clamp-2",children:o.description}),c("a",{href:o.file_url,target:"_blank",rel:"noopener",className:"mt-3 inline-flex h-8 px-3 rounded-[8px] bg-[var(--text)] text-[var(--bg)] text-[11px] font-semibold items-center",children:"Open Document"})]},o.id))}),Cu.length===0&&c("div",{className:"text-center py-8 text-[var(--muted)] text-[13px]",children:"No documents yet."})]}),M==="videos"&&v("div",{className:"space-y-4",children:[c("div",{className:"text-[11px] uppercase tracking-[0.12em] text-[var(--muted)]",children:[ha.length," videos"]}),c("div",{className:"grid md:grid-cols-2 gap-4",children:ha.map((o)=>{let y=Ad(o.video_url);return v("div",{className:"bg-[var(--surface)] border border-[var(--border)] rounded-[14px] overflow-hidden",children:[y?c("div",{className:"aspect-video bg-black",children:c("iframe",{src:`https://www.youtube-nocookie.com/embed/${y}?modestbranding=1&rel=0&iv_load_policy=3&controls=1&fs=1&playsinline=1&disablekb=0&showinfo=0&cc_load_policy=0`,className:"w-full h-full",loading:"lazy",allowFullScreen:!0,sandbox:"allow-scripts allow-same-origin allow-presentation",allow:"accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; fullscreen",title:o.title})}):c("video",{src:o.video_url,controls:!0,className:"w-full aspect-video bg-black"}),v("div",{className:"p-4",children:[v("div",{className:"text-[11px] uppercase text-[var(--green)]",children:[o.subject," • G",o.grade]}),c("div",{className:"font-semibold text-[14px] mt-1",children:o.title}),c("div",{className:"text-[12px] text-[var(--muted)] mt-1",children:o.description})]})]},o.id)})}),ha.length===0&&c("div",{className:"text-center py-8 text-[var(--muted)] text-[13px]",children:"No videos — add YouTube links in Admin."})]}),M==="leaderboard"&&v("div",{className:"space-y-6",children:[v("div",{className:"flex flex-wrap gap-2 items-center",children:[c("h2",{className:"font-serif text-[32px] tracking-[-0.02em]",children:"Whole Zambia Leaderboard"}),c("span",{className:"ml-auto px-3 py-1 rounded-full bg-[var(--green)] text-black text-[11px] font-bold uppercase tracking-[0.12em]",children:"Real-time +5 coins after quiz correct"})]}),v("div",{className:"flex flex-wrap gap-2",children:[v("select",{value:xn,onChange:(o)=>{pp(o.target.value),Na("All")},className:"h-9 px-2 rounded-[10px] bg-[var(--surface)] border border-[var(--border)] text-[11px]",children:[c("option",{children:"All"}),Hd.map((o)=>c("option",{children:o},o))]}),v("select",{value:Xr,onChange:(o)=>Na(o.target.value),className:"h-9 px-2 rounded-[10px] bg-[var(--surface)] border border-[var(--border)] text-[11px]",children:[c("option",{children:"All"}),(xn!=="All"?Or[xn]:Object.values(Or).flat()).map((o)=>c("option",{children:o},o))]}),v("select",{value:zu,onChange:(o)=>mp(o.target.value),className:"h-9 px-2 rounded-[10px] bg-[var(--surface)] border border-[var(--border)] text-[11px]",children:[c("option",{children:"All Time"}),c("option",{children:"This Month"}),c("option",{children:"This Week"})]}),v("select",{value:Yr,onChange:(o)=>vp(o.target.value),className:"h-9 px-2 rounded-[10px] bg-[var(--surface)] border border-[var(--border)] text-[11px]",children:[c("option",{children:"All"}),It.map((o)=>c("option",{children:o},o))]}),v("select",{value:jn,onChange:(o)=>hp(o.target.value),className:"h-9 px-2 rounded-[10px] bg-[var(--surface)] border border-[var(--border)] text-[11px]",children:[c("option",{value:"coins",children:"Sort: Coins"}),c("option",{value:"avg",children:"Avg"}),c("option",{value:"quizzes",children:"Quizzes"}),c("option",{value:"total",children:"Total"})]}),c("input",{value:Zr,onChange:(o)=>yp(o.target.value),placeholder:"Search name/school...",className:"h-9 px-3 rounded-[10px] bg-[var(--surface)] border border-[var(--border)] text-[12px] w-[180px]"}),v("label",{className:"flex items-center gap-2 text-[11px]",children:[c("input",{type:"checkbox",checked:Qr,onChange:(o)=>gp(o.target.checked)})," District top 3"]})]}),c("div",{className:"grid grid-cols-3 gap-3",children:qr.slice(0,3).map((o,y)=>v("div",{className:`rounded-[16px] p-4 border text-center ${y===0?"bg-[var(--yellow)] text-black border-[var(--yellow)] order-2":y===1?"bg-[var(--surface)] border-[var(--border)] order-1":"bg-[var(--surface)] border-[var(--border)] order-3"}`,children:[c("div",{className:"text-[20px]",children:y===0?"\uD83D\uDC51":y===1?"\uD83E\uDD48":"\uD83E\uDD49"}),c("div",{className:"font-serif text-[16px] mt-1 leading-tight",children:o.profile.name}),c("div",{className:"text-[10px] uppercase tracking-[0.08em] mt-1 opacity-70",children:o.profile.school?.slice(0,22)}),v("div",{className:"mt-2 text-[12px] font-bold",children:[o.profile.coins||0," coins • ",o.count," quizzes"]}),v("div",{className:"text-[11px]",children:["Avg ",o.avg.toFixed(1),"% • Total ",o.totalScore]})]},o.profile.id))}),c("div",{className:"grid md:grid-cols-3 lg:grid-cols-5 gap-3",children:Op.map((o)=>v("div",{className:"bg-[var(--surface)] border border-[var(--border)] rounded-[14px] p-3",children:[c("div",{className:"text-[11px] uppercase tracking-[0.12em] text-[var(--muted)]",children:o.province}),v("div",{className:"font-bold text-[14px] mt-1",children:[o.total," learners"]}),v("div",{className:"text-[10px] text-[var(--muted)] mt-1 line-clamp-2",children:["Top: ",o.topSchool]})]},o.province))}),Qr&&c("div",{className:"grid md:grid-cols-2 gap-3",children:Fp.map((o)=>v("div",{className:"bg-[var(--surface)] border border-[var(--border)] rounded-[14px] p-3",children:[c("div",{className:"text-[11px] uppercase tracking-[0.12em] text-[var(--green)]",children:o.district}),c("div",{className:"mt-2 space-y-1",children:o.top.map((y,h)=>v("div",{className:"flex justify-between text-[12px]",children:[v("span",{children:[h+1,". ",y.profile.name]}),v("span",{children:[y.profile.coins,"c"]})]},y.profile.id))})]},o.district))}),c("div",{className:"overflow-auto rounded-[14px] border border-[var(--border)]",children:v("table",{className:"w-full text-[12px]",children:[c("thead",{className:"bg-[var(--surface)] text-[11px] uppercase tracking-[0.12em] text-[var(--muted)]",children:v("tr",{children:[c("th",{className:"text-left px-3 py-2",children:"Rank"}),c("th",{className:"text-left px-3 py-2",children:"Name"}),c("th",{className:"text-left px-3 py-2",children:"School (District)"}),c("th",{className:"text-left px-3 py-2",children:"Province"}),c("th",{className:"text-left px-3 py-2",children:"Coins"}),c("th",{className:"text-left px-3 py-2",children:"Streak"}),c("th",{className:"text-left px-3 py-2",children:"Quizzes"}),c("th",{className:"text-left px-3 py-2",children:"Avg"}),c("th",{className:"text-left px-3 py-2",children:"Total"})]})}),c("tbody",{children:qr.slice(0,100).map((o,y)=>v("tr",{className:`border-t border-[var(--border)] ${o.profile.id===r.id?"bg-[var(--surface-3)]":""}`,children:[c("td",{className:"px-3 py-2",children:y+1}),v("td",{className:"px-3 py-2 font-medium",children:[o.profile.name," ",o.profile.id===r.id&&c("span",{className:"ml-1 px-1.5 py-0.5 rounded-full bg-[var(--green)] text-black text-[9px]",children:"YOU"})]}),v("td",{className:"px-3 py-2",children:[o.profile.school," ",v("span",{className:"text-[var(--muted)]",children:["(",o.profile.district,")"]})]}),c("td",{className:"px-3 py-2",children:c("span",{className:"px-2 py-0.5 rounded-full bg-[var(--surface-2)] border border-[var(--border)] text-[10px]",children:o.profile.province})}),c("td",{className:"px-3 py-2 font-bold",children:o.profile.coins||0}),c("td",{className:"px-3 py-2",children:o.profile.streak||0}),c("td",{className:"px-3 py-2",children:o.count}),v("td",{className:"px-3 py-2",children:[o.avg.toFixed(1),"%"]}),c("td",{className:"px-3 py-2",children:o.totalScore})]},o.profile.id))})]})})]}),M==="admin"&&(admOk?v("div",{className:"space-y-6",children:[v("div",{className:"flex flex-wrap gap-2",children:[c("h2",{className:"font-serif text-[28px]",children:"Admin — Uploads"}),c("div",{className:"ml-auto flex gap-2 text-[11px] flex-wrap",children:Object.entries(lp).map(([o,y])=>v("span",{className:"px-2 py-1 rounded-full bg-[var(--surface)] border border-[var(--border)]",children:[o,": ",y]},o))})]}),v("div",{className:"grid grid-cols-1 lg:grid-cols-2 gap-4 md:gap-6 w-full max-w-full",children:[v("div",{className:"bg-[var(--surface)] border border-[var(--border)] rounded-[14px] p-5",children:[c("div",{className:"text-[11px] uppercase tracking-[0.12em] text-[var(--yellow)]",children:"Upload Past Paper — PDF • Max 10MB"}),v("div",{className:"mt-3 grid grid-cols-2 gap-2",children:[c("input",{value:za,onChange:(o)=>wp(o.target.value),placeholder:"Subject e.g. Maths",className:"h-9 px-2 rounded-[10px] bg-[var(--bg)] border border-[var(--border)] text-[11px]"}),c("input",{value:Ra,onChange:(o)=>kp(o.target.value),placeholder:"Grade e.g. 12",className:"h-9 px-2 rounded-[10px] bg-[var(--bg)] border border-[var(--border)] text-[11px]"}),c("input",{value:Pa,onChange:(o)=>Ep(o.target.value),placeholder:"Year e.g. 2023",className:"h-9 px-2 rounded-[10px] bg-[var(--bg)] border border-[var(--border)] text-[11px]"}),c("input",{value:Ma,onChange:(o)=>_p(o.target.value),placeholder:"Type e.g. ECZ",className:"h-9 px-2 rounded-[10px] bg-[var(--bg)] border border-[var(--border)] text-[11px]"})]}),c("input",{value:Ru,onChange:(o)=>La(o.target.value),placeholder:"Title e.g. Maths Paper 1",className:"mt-3 w-full h-10 px-3 rounded-[10px] bg-[var(--bg)] border border-[var(--border)] text-[12px]"}),c("textarea",{value:Ia,onChange:(o)=>Oa(o.target.value),placeholder:"Description",className:"mt-2 w-full h-20 px-3 py-2 rounded-[10px] bg-[var(--bg)] border border-[var(--border)] text-[12px]"}),c("input",{type:"file",accept:"application/pdf",onChange:(o)=>Fa(o.target.files?.[0]||null),className:"mt-3 w-full text-[11px] file:mr-3 file:h-7 file:rounded-[8px] file:border-0 file:bg-[var(--text)] file:text-[var(--bg)] file:text-[11px] file:font-semibold file:uppercase"}),c("button",{disabled:Da,onClick:Dp,className:"mt-3 w-full h-10 rounded-[10px] bg-[var(--green)] text-black font-bold uppercase tracking-[0.12em] text-[11px] disabled:opacity-60",children:Da?"Uploading live...":"Upload Past Paper"})]}),v("div",{className:"bg-[var(--surface)] border border-[var(--border)] rounded-[14px] p-5 w-full max-w-full",children:[c("div",{className:"text-[11px] uppercase tracking-[0.12em] text-[var(--yellow)]",children:"Add Video — YouTube or Phone Upload"}),c("input",{value:Fu,onChange:(o)=>Za(o.target.value),placeholder:"Video title",className:"mt-3 w-full h-10 px-3 rounded-[10px] bg-[var(--bg)] border border-[var(--border)] text-[12px]"}),c("input",{id:"zed-topic-input",placeholder:"Topic e.g. Mole Concept",className:"mt-2 w-full h-10 px-3 rounded-[10px] bg-[var(--bg)] border border-[var(--border)] text-[12px] outline-none focus:border-[var(--green)]",defaultValue:""}),c("input",{value:Jr,onChange:(o)=>Qa(o.target.value),placeholder:"YouTube URL (optional)",className:"mt-2 w-full h-10 px-3 rounded-[10px] bg-[var(--bg)] border border-[var(--border)] text-[12px]"}),c("div",{className:"mt-2 p-2 rounded-[10px] bg-[var(--bg)] border border-dashed border-[var(--border)]",children:[c("div",{className:"text-[10px] uppercase tracking-[0.12em] text-[var(--muted)]",children:"Or upload video from phone"}),c("input",{type:"file",accept:"video/*",onChange:(o)=>setVidFile(o.target.files?.[0]||null),className:"mt-2 w-full text-[11px] file:mr-3 file:h-8 file:rounded-[8px] file:border-0 file:bg-[var(--text)] file:text-[var(--bg)] file:text-[11px] file:font-semibold file:uppercase"}),vidFile?c("div",{className:"mt-1 text-[11px] text-[var(--green)]",children:"Selected: "+vidFile.name+" ("+(vidFile.size/1024/1024).toFixed(1)+" MB)"}):null]}),v("div",{className:"mt-3 grid grid-cols-2 gap-2",children:[c("input",{value:Ja,onChange:(o)=>zp(o.target.value),placeholder:"Subject e.g. Maths",className:"h-9 px-2 rounded-[10px] bg-[var(--bg)] border border-[var(--border)] text-[11px]"}),c("input",{value:Ga,onChange:(o)=>Rp(o.target.value),placeholder:"Grade e.g. 12",className:"h-9 px-2 rounded-[10px] bg-[var(--bg)] border border-[var(--border)] text-[11px]"})]}),c("button",{disabled:vidUp,onClick:$p,className:"mt-3 w-full h-10 rounded-[10px] bg-[var(--yellow)] text-black font-bold uppercase tracking-[0.12em] text-[11px] disabled:opacity-60",children:vidUp?"Uploading video...":"Insert Video Live"}),c("div",{className:"mt-2 text-[10px] text-[var(--muted)]",children:"YouTube or MP4 / WebM from phone."})]})]})]}):v("div",{className:"min-h-[60vh] flex flex-col items-center justify-center p-6",children:[v("div",{className:"w-full max-w-[400px] bg-[var(--surface)] border border-[var(--border)] rounded-[16px] p-6",children:[c("h2",{className:"font-serif text-[22px]",children:"Admin Access — Locked"}),c("p",{className:"text-[12px] text-[var(--muted)] mt-2",children:"Enter admin key to unlock admin panel"}),c("input",{type:"password",value:admKey,onChange:e=>setAdmKey(e.target.value),placeholder:"sb_publishable_...",className:"mt-4 w-full h-11 px-4 rounded-[12px] bg-[var(--bg)] border border-[var(--border)] outline-none text-[13px]"}),c("button",{onClick:()=>{if(admKey==="sb_publishable_74vo5_RlNXb0U0TrNLCdCQ_8zjDwFni"){setAdmOk(!0),F("Admin unlocked ✓")}else{F("Invalid admin key — access denied")}},className:"mt-3 w-full h-11 rounded-[12px] bg-[var(--green)] text-black font-bold text-[12px] uppercase tracking-[0.12em]",children:"Unlock Admin"})]})]})),M==="profile"&&v("div",{className:"grid grid-cols-1 lg:grid-cols-[320px_1fr] gap-4 md:gap-6 w-full",children:[v("div",{className:"bg-[var(--surface)] border border-[var(--border)] rounded-[14px] p-5 h-fit lg:sticky lg:top-[calc(56px+var(--safe-area-inset-top)+37px)]",children:[c("div",{className:"w-16 h-16 rounded-full bg-[var(--green)] flex items-center justify-center text-black font-extrabold text-[24px]",children:r.name[0]}),c("div",{className:"font-serif text-[22px] mt-3",children:r.name}),v("div",{className:"text-[12px] text-[var(--muted)]",children:[r.phone," • ",r.account_code]}),v("div",{className:"mt-3 flex flex-wrap gap-2",children:[v("span",{className:"px-2 py-1 rounded-full bg-[var(--yellow)] text-black text-[11px] font-bold",children:[r.coins||0," coins"]}),v("span",{className:"px-2 py-1 rounded-full bg-[var(--surface-2)] border border-[var(--border)] text-[11px]",children:["Streak ",r.streak||0]}),v("span",{className:"px-2 py-1 rounded-full bg-[var(--surface-2)] border border-[var(--border)] text-[11px]",children:["Grade ",r.grade]})]}),v("div",{className:"mt-4 text-[12px] space-y-1",children:[v("div",{children:[c("span",{className:"text-[var(--muted)]",children:"Province:"})," ",r.province]}),v("div",{children:[c("span",{className:"text-[var(--muted)]",children:"District:"})," ",r.district]}),v("div",{children:[c("span",{className:"text-[var(--muted)]",children:"School:"})," ",r.school]})]})]}),v("div",{className:"space-y-4",children:[c("h3",{className:"font-serif text-[20px]",children:"Quiz History"}),v("div",{className:"grid gap-2",children:[(()=>{var _d=[],_seen={};Ea.forEach(function(o){var _k=(o.subject||"")+"|"+(o.score||0)+"|"+(o.total||0),_t=new Date(o.created_at||0).getTime();if(_seen[_k]!==undefined&&Math.abs(_t-_seen[_k])<10000)return;_seen[_k]=_t;_d.push(o)});var _g={},_order=[];_d.forEach(function(o){var _gr=String(o.grade||"").trim()||"Other";if(!_g[_gr]){_g[_gr]=[];_order.push(_gr)}_g[_gr].push(o)});var _go=function(g){if(g==="Other")return 99;var _m=String(g).match(/Form\s*(\d)/i);if(_m)return parseInt(_m[1],10);var _n=parseInt(g,10);if(!isNaN(_n))return 20+_n;return 50};_order.sort(function(a,b){return _go(a)-_go(b)});var _fmt=function(g){if(g==="Other")return "Other";if(/^Form/i.test(g))return g;return "Grade "+g};var _out=[];_order.forEach(function(_gr){_out.push(v("div",{className:"mt-1 flex items-center gap-2",children:[v("span",{className:"px-2 py-1 rounded-full bg-[var(--yellow)] text-black text-[11px] font-bold",children:_fmt(_gr)}),v("span",{className:"text-[11px] text-[var(--muted)]",children:[_g[_gr].length," quiz",_g[_gr].length===1?"":"zes"]})]},"h-"+_gr));_g[_gr].forEach(function(o){_out.push(v("div",{className:"bg-[var(--surface)] border border-[var(--border)] rounded-[12px] p-3 flex items-center justify-between",children:[v("div",{children:[v("div",{className:"text-[12px] font-semibold",children:[o.subject]}),v("div",{className:"text-[11px] text-[var(--muted)]",children:[new Date(o.created_at).toLocaleString()," • ",o.time_spent,"s"]})]}),v("div",{className:"text-right",children:[v("div",{className:"text-[14px] font-bold",children:[o.score,"/",o.total]}),v("div",{className:"text-[11px] text-[var(--green)]",children:[(o.score/o.total*100).toFixed(1),"%"]})]})]},o.id))})});return _out})(),Ea.length===0&&c("div",{className:"text-[13px] text-[var(--muted)] py-8 text-center",children:"No attempts yet — take a quiz to earn +5 coins per correct answer."})]})]})]})]}),c("footer",{className:"border-t border-[var(--border)] px-6 py-4 text-[11px] text-[var(--muted)] text-center",children:"ZED SCHOLAR • GRADE 10-12 • FORM 1-6 • Zambia • Online"}),I&&c("div",{className:"fixed bottom-4 left-4 right-4 md:left-auto md:right-4 md:w-[380px] z-50 bg-[var(--text)] text-[var(--bg)] px-4 py-3 rounded-[12px] text-[13px] font-medium shadow-xl border-2 border-[var(--green)]",children:I}),qa&&c("div",{className:"fixed inset-0 z-50 bg-black/60 backdrop-blur-sm flex items-center justify-center p-4",children:v("div",{className:"bg-[var(--surface)] border border-[var(--border)] rounded-[16px] p-6 w-full max-w-[400px]",children:[c("h4",{className:"font-serif text-[18px]",children:"Delete paper?"}),c("p",{className:"text-[12px] text-[var(--muted)] mt-2",children:"This will delete this item permanently."}),v("div",{className:"mt-4 flex gap-2",children:[c("button",{onClick:()=>Du(null),className:"flex-1 h-10 rounded-[10px] bg-[var(--surface-2)] border border-[var(--border)] text-[12px]",children:"Cancel"}),c("button",{onClick:()=>Tp(qa),className:"flex-1 h-10 rounded-[10px] bg-[#ff9a9a] text-black font-bold text-[12px]",children:"Delete"})]})]})})]})}Xd.createRoot(document.getElementById("root")).render(c(Kd.default.StrictMode,{children:c(ca,{})}));
+if(h)throw Error(h.message);F(vidFile?"Video uploaded from phone ✓":"Video added live!"),Za(""),Qa(""),setVidFile(null),zp(""),Rp("");let _tEl=document.getElementById("zed-topic-input");if(_tEl)_tEl.value="";let{data:P}=await e.from("videos").select("*").order("created_at",{ascending:!1}).limit(200);ga(P||[])}catch(o){F(o.message)}finally{setVidUp(!1)}},Vp=(o)=>{var _sh=(window.zedBalanceAnswers?window.zedBalanceAnswers(o||[]):(o||[]));Su(_sh),Ca({}),Sa(0),QiSet(0)},Hp=async()=>{if(!Te)return;if(window.__zedQuizSubmitting)return;window.__zedQuizSubmitting=!0;let o=0;Te.forEach((y,h)=>{if(_a[h]===y.correct_answer)o++});try{let y={user_id:r.id,subject:Te[0]?.subject||"General",grade:Te[0]?.grade||r.grade||"",score:o,total:Te.length,time_spent:Nu},{error:h}=await e.from("quiz_attempts").insert(y);if(h&&/grade/i.test(h.message||"")){let _f={user_id:r.id,subject:y.subject,score:o,total:Te.length,time_spent:Nu},_fr=await e.from("quiz_attempts").insert(_f);if(_fr.error)throw Error(_fr.error.message);}else if(h)throw Error(h.message);let P=(r.coins||0)+o*5;await e.from("profiles").update({coins:P}).eq("id",r.id);let W={...r,coins:P};l(W),localStorage.setItem("zed_user",JSON.stringify(W)),F(`Quiz submitted: ${o}/${Te.length} • +${o*5} coins`),Su(null),QiSet(0),window.__zedQuizSubmitting=!1;let{data:V}=await e.from("quiz_attempts").select("user_id,score,total,subject,created_at").order("created_at",{ascending:!1}).limit(500);ka(V||[])}catch(y){window.__zedQuizSubmitting=!1,F(y.message)}},xa=S.useMemo(()=>{let o=ku.toLowerCase();return gv.filter((y)=>y.province===je&&y.name.toLowerCase().includes(o)).slice(0,20)},[je,ku]);if(!r)return v("div",{className:"min-h-screen bg-[var(--bg)] text-[var(--text)] flex flex-col",style:{paddingTop:"var(--safe-area-inset-top)",boxSizing:"border-box"},children:[v("header",{className:"sticky top-[var(--safe-area-inset-top)] z-30 bg-[var(--bg)]/95 backdrop-blur-xl border-b border-[var(--border)] px-4 md:px-6 h-[60px] flex items-center justify-between",children:[v("div",{className:"flex items-center gap-3",children:[c("div",{className:"w-9 h-9 rounded-full bg-[var(--green)] flex items-center justify-center text-black font-extrabold text-[15px]",children:"Z"}),v("div",{children:[c("div",{className:"font-serif text-[18px] leading-none tracking-[-0.02em]",children:"ZED SCHOLAR"}),c("div",{className:"text-[10px] uppercase tracking-[0.18em] text-[var(--muted)]",children:"ZAMBIA • GRADE 10-12 • FORM 1-6"})]})]}),v("div",{className:"flex items-center gap-2 text-[11px]",children:[c("span",{className:`w-2 h-2 rounded-full ${n.ok?"bg-[var(--green)]":n.ok===!1?"bg-[#ff9a9a]":"bg-[var(--yellow)] animate-pulse"}`}),c("span",{className:"text-[10px] uppercase tracking-[0.12em] text-[var(--muted)]",children:n.ok?"Live":n.ok===!1?"Offline":"Connecting"})]})]}),c("div",{className:"flex-1 flex justify-center px-4 py-6 md:py-10",children:c("div",{className:"w-full max-w-[460px]",children:!$?v("div",{className:"bg-[var(--surface)] border border-[var(--border)] rounded-[22px] p-6 md:p-8 shadow-[0_16px_40px_rgba(0,0,0,0.35)]",children:[v("div",{className:"flex gap-2 mb-6 p-1 bg-[var(--bg)] rounded-full w-fit border border-[var(--border)]",children:[c("button",{onClick:()=>i("password"),className:`px-5 h-9 rounded-full text-[11px] uppercase tracking-[0.14em] font-bold transition ${u==="password"?"bg-[var(--text)] text-[var(--bg)]":"text-[var(--muted)]"}`,children:"Password"}),c("button",{onClick:()=>i("otp"),className:`px-5 h-9 rounded-full text-[11px] uppercase tracking-[0.14em] font-bold transition ${u==="otp"?"bg-[var(--text)] text-[var(--bg)]":"text-[var(--muted)]"}`,children:"SMS OTP"})]}),u==="password"?v("div",{className:"space-y-4",children:[v("div",{children:[c("h2",{className:"font-serif text-[30px] leading-[0.95] tracking-[-0.02em]",children:"Welcome back"}),c("p",{className:"text-[13px] text-[var(--muted)] mt-2 leading-snug",children:"Log in to access past papers, quizzes and your school leaderboard."})]}),v("div",{children:[c("label",{className:"text-[11px] uppercase tracking-[0.12em] text-[var(--muted)]",children:"Phone — 10 digits (09 / 07)"}),c("input",{value:a,onChange:(o)=>f(o.target.value.replace(/\D/g,"").slice(0,10)),placeholder:"0971234567",className:"mt-1.5 w-full h-11 px-4 rounded-[12px] bg-[var(--bg)] border border-[var(--border)] outline-none focus:border-[var(--green)] text-[14px]"})]}),v("div",{children:[c("label",{className:"text-[11px] uppercase tracking-[0.12em] text-[var(--muted)]",children:"Password"}),c("input",{type:"password",value:m,onChange:(o)=>g(o.target.value),placeholder:"••••••",className:"mt-1.5 w-full h-11 px-4 rounded-[12px] bg-[var(--bg)] border border-[var(--border)] outline-none focus:border-[var(--green)] text-[14px]"})]}),c("button",{id:"zed-login-btn",disabled:k,onPointerDown:(o)=>{try{if(o.currentTarget.setAttribute("data-clicked","1"),o.currentTarget.textContent="Logging in...",!document.getElementById("login-click-feedback")){void 0 /* duplicate Login banner removed */}}catch{}},onClick:(o)=>{try{if(o.currentTarget.setAttribute("data-clicked","1"),o.currentTarget.textContent="Logging in...",!document.getElementById("login-click-feedback")){void 0 /* duplicate Login banner removed */}}catch{}Pp()},className:"w-full h-11 rounded-[12px] bg-[var(--green)] text-black font-bold uppercase tracking-[0.12em] text-[12px] hover:brightness-110 disabled:opacity-60",children:k?"Logging in...":"Login"}),v("div",{className:"text-[13px] text-[var(--muted)] text-center pt-2",id:"signup-trigger",children:["No account? ",c("button",{id:"zed-signup-open",type:"button","data-testid":"signup-zambia-btn",onClick:(o)=>{try{let y=o.currentTarget;y.textContent="Opening signup... ✓",y.setAttribute("data-opened","1"),y.setAttribute("aria-expanded","true"),y.style.color="var(--green)";let h="zed-signup-feedback-live",P=document.getElementById(h);if(!P)P=document.createElement("div"),P.id=h,P.textContent="Opening signup — create your profile",P.style.position="fixed",P.style.bottom="90px",P.style.left="16px",P.style.right="16px",P.style.background="#F5F1E8",P.style.color="#0F0E0B",P.style.padding="10px 14px",P.style.borderRadius="10px",P.style.zIndex="9999",P.style.fontSize="12px",P.style.fontWeight="600",document.body.appendChild(P),setTimeout(()=>{try{P.remove()}catch{}},3000);location.hash="#signup",document.documentElement.setAttribute("data-signup","open"),window.scrollTo(0,0),console.log("[ZED] Signup trigger clicked - clean auth v31")}catch(y){console.log("[ZED] signup open error",y)}Ce(!0),F("Opening signup — choose province → district → school")},className:"underline text-[var(--text)] font-semibold",children:"Create account"})]})]}):v("div",{className:"space-y-4",children:[v("div",{children:[c("h2",{className:"font-serif text-[30px] leading-[0.95] tracking-[-0.02em]",children:"Phone OTP"}),c("p",{className:"text-[13px] text-[var(--muted)] mt-2 leading-snug",children:"We'll send a 6-digit code to your Zambian number."})]}),v("div",{children:[c("label",{className:"text-[11px] uppercase tracking-[0.12em] text-[var(--muted)]",children:"Phone — 10 digits"}),c("input",{value:_,onChange:(o)=>z(o.target.value.replace(/\D/g,"").slice(0,10)),placeholder:"0971234567",className:"mt-1.5 w-full h-11 px-4 rounded-[12px] bg-[var(--bg)] border border-[var(--border)] outline-none focus:border-[var(--green)] text-[14px]"})]}),!N?c("button",{disabled:p,onClick:Mp,className:"w-full h-11 rounded-[12px] bg-[var(--yellow)] text-black font-bold uppercase tracking-[0.12em] text-[12px] disabled:opacity-60",children:p?"Sending...":"Send OTP"}):v(wu,{children:[v("div",{children:[c("label",{className:"text-[11px] uppercase tracking-[0.12em] text-[var(--muted)]",children:"6-digit code"}),c("input",{value:d,onChange:(o)=>s(o.target.value.replace(/\D/g,"").slice(0,6)),placeholder:"123456",className:"mt-1.5 w-full h-11 px-4 rounded-[12px] bg-[var(--bg)] border border-[var(--border)] outline-none focus:border-[var(--green)] text-[14px] tracking-[0.2em]"})]}),c("button",{disabled:p,onClick:Lp,className:"w-full h-11 rounded-[12px] bg-[var(--green)] text-black font-bold uppercase tracking-[0.12em] text-[12px] disabled:opacity-60",children:p?"Verifying...":"Verify & Login"}),c("button",{onClick:()=>{D(!1),s("")},className:"w-full h-9 text-[11px] uppercase tracking-[0.12em] text-[var(--muted)]",children:"Resend code"})]}),v("div",{className:"text-[13px] text-[var(--muted)] text-center",children:["Have password? ",c("button",{type:"button",onClick:()=>i("password"),className:"underline text-[var(--text)]",children:"Use password"})," • ",c("button",{type:"button",onClick:()=>{Ce(!0),F("Opening signup")},className:"underline text-[var(--text)]",children:"Sign up"})]})]})]}):v("div",{className:"bg-[var(--surface)] border border-[var(--border)] rounded-[22px] p-6 md:p-8 shadow-[0_16px_40px_rgba(0,0,0,0.35)] space-y-4",id:"signup",children:[c("button",{type:"button",onClick:()=>{Ce(!1);try{location.hash="",document.documentElement.removeAttribute("data-signup")}catch{}},className:"text-[11px] uppercase tracking-[0.12em] text-[var(--muted)] hover:text-[var(--text)]",children:"← Back to login"}),v("div",{children:[c("h2",{className:"font-serif text-[30px] leading-[0.95] tracking-[-0.02em]",children:"Create account"}),c("p",{className:"text-[13px] text-[var(--muted)] mt-2",children:"Choose province → district → school. Can't find yours? Add a custom school."})]}),v("div",{className:"grid gap-3.5",children:[v("div",{children:[c("label",{className:"text-[11px] uppercase tracking-[0.12em] text-[var(--muted)]",children:"Full Name"}),c("input",{value:xe,onChange:(o)=>Yd(o.target.value),placeholder:"Bwalya Mwansa",className:"mt-1.5 w-full h-11 px-4 rounded-[12px] bg-[var(--bg)] border border-[var(--border)] outline-none focus:border-[var(--green)] text-[14px]"})]}),v("div",{children:[c("label",{className:"text-[11px] uppercase tracking-[0.12em] text-[var(--muted)]",children:"Phone — 10 digits (09 / 07)"}),c("input",{value:sn,onChange:(o)=>Zd(o.target.value.replace(/\D/g,"").slice(0,10)),placeholder:"097...",className:"mt-1.5 w-full h-11 px-4 rounded-[12px] bg-[var(--bg)] border border-[var(--border)] outline-none focus:border-[var(--green)] text-[14px]"})]}),v("div",{className:"grid grid-cols-2 gap-3",children:[v("div",{children:[c("label",{className:"text-[11px] uppercase tracking-[0.12em] text-[var(--muted)]",children:"Province"}),c("select",{value:je,onChange:(o)=>Qd(o.target.value),className:"mt-1.5 w-full h-11 px-3 rounded-[12px] bg-[var(--bg)] border border-[var(--border)] text-[13px]",children:Hd.map((o)=>c("option",{children:o},o))})]}),v("div",{children:[c("label",{className:"text-[11px] uppercase tracking-[0.12em] text-[var(--muted)]",children:"District"}),c("select",{value:Fr,onChange:(o)=>fa(o.target.value),className:"mt-1.5 w-full h-11 px-3 rounded-[12px] bg-[var(--bg)] border border-[var(--border)] text-[13px]",children:Or[je]?.map((o)=>c("option",{children:o},o))})]})]}),v("div",{children:[c("label",{className:"text-[11px] uppercase tracking-[0.12em] text-[var(--muted)]",children:"School — searchable (150+)"}),c("input",{value:ku,onChange:(o)=>Jd(o.target.value),placeholder:"Search school...",className:"mt-1.5 w-full h-10 px-3 rounded-[12px] bg-[var(--bg)] border border-[var(--border)] text-[13px]"}),v("div",{className:"mt-2 max-h-[160px] overflow-auto rounded-[12px] border border-[var(--border)] bg-[var(--bg)]",children:[xa.map((o)=>c("button",{onClick:()=>{Gd(o.name),sa(!1)},className:`w-full text-left px-3 py-2.5 text-[12px] hover:bg-[var(--surface)] transition ${Ot===o.name?"bg-[var(--surface-2)] text-[var(--green)] font-semibold":""}`,children:o.name},o.name)),xa.length===0&&c("div",{className:"px-3 py-3 text-[11px] text-[var(--muted)]",children:"No match — tick custom below to add a custom school."})]}),v("div",{className:"mt-3 flex items-center gap-2",children:[c("input",{type:"checkbox",checked:Fn,onChange:(o)=>sa(o.target.checked),className:"w-4 h-4 rounded"}),c("span",{className:"text-[11px] uppercase tracking-[0.08em] text-[var(--muted)]",children:"Add custom school"})]}),Fn&&c("input",{value:Ft,onChange:(o)=>qd(o.target.value),placeholder:"e.g. Your school name",className:"mt-2 w-full h-11 px-3 rounded-[12px] bg-[var(--bg)] border border-[var(--border)] text-[13px] outline-none focus:border-[var(--green)]"}),Ot&&!Fn&&v("div",{className:"mt-2 text-[11px] text-[var(--green)]",children:["Selected: ",Ot]}),Fn&&Ft&&v("div",{className:"mt-2 text-[11px] text-[var(--green)]",children:["Custom: ",Ft]})]}),v("div",{className:"grid grid-cols-2 gap-3",children:[v("div",{children:[c("label",{className:"text-[11px] uppercase tracking-[0.12em] text-[var(--muted)]",children:"Grade"}),c("select",{value:Dr,onChange:(o)=>xd(o.target.value),className:"mt-1.5 w-full h-11 px-3 rounded-[12px] bg-[var(--bg)] border border-[var(--border)] text-[13px]",children:["10","11","12","Form 1","Form 2","Form 3","Form 4","Form 5","Form 6"].map(o=>c("option",{children:o},o))})]}),v("div",{children:[c("label",{className:"text-[11px] uppercase tracking-[0.12em] text-[var(--muted)]",children:"Account Code"}),v("div",{className:"mt-1.5 h-11 px-3 rounded-[12px] bg-[var(--bg)] border border-[var(--border)] flex items-center text-[11px] font-mono text-[var(--muted)]",children:["ZED-",Date.now().toString().slice(-6)]})]})]}),v("div",{className:"grid grid-cols-2 gap-3",children:[v("div",{children:[c("label",{className:"text-[11px] uppercase tracking-[0.12em] text-[var(--muted)]",children:"Password"}),c("input",{type:"password",value:Eu,onChange:(o)=>jd(o.target.value),placeholder:"Create",className:"mt-1.5 w-full h-11 px-3 rounded-[12px] bg-[var(--bg)] border border-[var(--border)] text-[13px] outline-none focus:border-[var(--green)]"})]}),v("div",{children:[c("label",{className:"text-[11px] uppercase tracking-[0.12em] text-[var(--muted)]",children:"Confirm"}),c("input",{type:"password",value:da,onChange:(o)=>bd(o.target.value),placeholder:"Confirm",className:"mt-1.5 w-full h-11 px-3 rounded-[12px] bg-[var(--bg)] border border-[var(--border)] text-[13px] outline-none focus:border-[var(--green)]"})]})]}),c("button",{id:"zed-signup-btn",disabled:pa,onClick:()=>{console.log("[ZED] zed-signup-btn clean -> signup"),Ip()},className:"w-full h-11 rounded-[12px] bg-[var(--green)] text-black font-bold uppercase tracking-[0.12em] text-[12px] disabled:opacity-60 disabled:cursor-not-allowed hover:brightness-110",children:pa?"Signing up...":"Create account"})]})]})})}),I&&c("div",{className:"fixed bottom-4 left-4 right-4 md:left-auto md:right-4 md:w-[380px] z-50 bg-[var(--text)] text-[var(--bg)] px-4 py-3 rounded-[12px] text-[13px] font-medium shadow-xl border-2 border-[var(--green)]",children:I})]});return v("div",{className:"min-h-screen bg-[var(--bg)] text-[var(--text)]",style:{paddingTop:"var(--safe-area-inset-top)",boxSizing:"border-box"},children:[v("header",{className:"sticky top-[var(--safe-area-inset-top)] z-30 bg-[var(--bg)]/90 backdrop-blur-xl border-b border-[var(--border)] px-4 md:px-6 h-[56px] flex items-center justify-between",children:[v("div",{className:"flex items-center gap-3",children:[c("div",{className:"w-9 h-9 rounded-full bg-[var(--green)] flex items-center justify-center text-black font-extrabold",children:"Z"}),v("div",{children:[c("div",{className:"font-serif text-[16px] leading-none tracking-[-0.02em]",children:"ZED SCHOLAR v1"}),c("div",{className:"text-[10px] uppercase tracking-[0.16em] text-[var(--muted)] hidden md:block",children:"Zambia • ECZ Past Papers"})]})]}),v("div",{className:"flex items-center gap-3",children:[v("div",{className:"flex items-center gap-2 px-3 h-7 rounded-full bg-[var(--surface)] border border-[var(--border)] text-[10px]",children:[c("span",{className:`w-1.5 h-1.5 rounded-full ${n.ok?"bg-[var(--green)]":"bg-[#ff9a9a]"}`}),c("span",{className:"text-[11px] uppercase tracking-[0.12em] text-[var(--muted)]",children:n.ok?"● LIVE":"● OFFLINE"})]}),v("div",{className:"hidden md:flex items-center gap-2",children:[c("span",{className:"text-[11px] text-[var(--muted)]",children:r.name}),v("span",{className:"px-2 py-0.5 rounded-full bg-[var(--yellow)] text-black text-[10px] font-bold",children:[r.coins||0," coins"]})]}),c("button",{onClick:()=>{localStorage.removeItem("zed_user"),l(null)},className:"h-8 px-3 rounded-full bg-[var(--surface)] border border-[var(--border)] text-[11px] uppercase tracking-[0.08em]",children:"Logout"})]})]}),v("div",{className:"border-b border-[var(--border)] bg-[var(--surface)] px-2 md:px-6 h-[37px] flex items-center gap-1 overflow-x-auto",children:[[{id:"papers",label:"Papers"},{id:"quizzes",label:"Quizzes"},{id:"documents",label:"Docs"},{id:"videos",label:"Videos"},{id:"leaderboard",label:"Leaderboard"},{id:"admin",label:"Admin"},{id:"profile",label:"Profile"}].map((o)=>c("button",{onClick:()=>x(o.id),className:`h-7 px-3 rounded-full text-[11px] uppercase tracking-[0.12em] font-semibold border whitespace-nowrap ${M===o.id?"bg-[var(--text)] text-[var(--bg)] border-[var(--text)]":"bg-transparent border-[var(--border)] text-[var(--muted)]"}`,children:o.label},o.id)),v("div",{className:"ml-auto hidden md:flex items-center gap-2 text-[10px] text-[var(--muted)]",children:[v("span",{children:[r.province," • ",r.district]}),c("span",{className:"px-2 py-0.5 rounded-full bg-[var(--surface-2)]",children:r.school})]})]}),v("main",{className:"max-w-[1200px] mx-auto px-4 md:px-6 py-6",children:[M==="papers"&&v("div",{className:"space-y-4",children:[v("div",{className:"flex flex-wrap gap-2 items-center",children:[c("input",{value:$r,onChange:(o)=>ip(o.target.value),placeholder:"Search papers...",className:"h-9 px-3 rounded-[10px] bg-[var(--surface)] border border-[var(--border)] text-[13px] w-[200px]"}),v("select",{value:Vr,onChange:(o)=>op(o.target.value),className:"h-9 px-2 rounded-[10px] bg-[var(--surface)] border border-[var(--border)] text-[11px]",children:[c("option",{children:"All"}),It.map((o)=>c("option",{children:o},o))]}),v("select",{value:Hr,onChange:(o)=>ap(o.target.value),className:"h-9 px-2 rounded-[10px] bg-[var(--surface)] border border-[var(--border)] text-[11px]",children:[c("option",{children:"All"}),["10","11","12","Form 1","Form 2","Form 3","Form 4","Form 5","Form 6"].map(o=>c("option",{children:o},o))]}),v("select",{value:Ur,onChange:(o)=>cp(o.target.value),className:"h-9 px-2 rounded-[10px] bg-[var(--surface)] border border-[var(--border)] text-[11px]",children:[c("option",{children:"All"}),c("option",{children:"ECZ"}),c("option",{children:"Mock"}),c("option",{children:"Test"})]}),v("select",{value:Br,onChange:(o)=>fp(o.target.value),className:"h-9 px-2 rounded-[10px] bg-[var(--surface)] border border-[var(--border)] text-[11px]",children:[c("option",{children:"All"}),c("option",{children:"2024"}),c("option",{children:"2023"}),c("option",{children:"2022"}),c("option",{children:"2021"}),c("option",{children:"2020"})]}),v("span",{className:"ml-auto text-[11px] text-[var(--muted)]",children:[Tu.length," papers"]})]}),ep?c("div",{className:"grid md:grid-cols-3 gap-3",children:Array.from({length:6}).map((o,y)=>c("div",{className:"h-[140px] rounded-[14px] bg-[var(--surface)] animate-pulse"},y))}):v(wu,{children:[c("div",{className:"grid md:grid-cols-2 lg:grid-cols-3 gap-3",children:Tu.slice(0,20).map((o)=>v("div",{className:"bg-[var(--surface)] border border-[var(--border)] rounded-[14px] p-4 flex flex-col",children:[v("div",{className:"flex items-start justify-between gap-2",children:[v("div",{children:[v("div",{className:"text-[11px] uppercase tracking-[0.12em] text-[var(--yellow)]",children:[o.subject," • G",o.grade," • ",o.year]}),c("div",{className:"font-semibold text-[14px] leading-tight mt-1 line-clamp-2",children:o.title}),v("div",{className:"text-[11px] text-[var(--muted)] mt-1",children:[o.paper_type," • ",o.province||""," ",o.district||""]})]}),c("span",{className:"text-[10px] px-2 py-0.5 rounded-full bg-[var(--surface-2)] border border-[var(--border)]",children:o.file_name?.slice(-3).toUpperCase()||"PDF"})]}),c("div",{className:"text-[12px] text-[var(--muted)] mt-2 line-clamp-2",children:o.description}),v("div",{className:"mt-auto pt-3 flex gap-2",children:[c("a",{href:o.file_url,target:"_blank",rel:"noopener",className:"flex-1 h-8 rounded-[8px] bg-[var(--text)] text-[var(--bg)] flex items-center justify-center text-[11px] font-semibold uppercase tracking-[0.08em]",children:"Download"}),o.uploaded_by===r.id&&c("button",{onClick:()=>Du(o),className:"h-8 px-3 rounded-[8px] bg-[var(--surface-2)] border border-[var(--border)] text-[11px]",children:"Delete"})]}),v("div",{className:"mt-2 text-[10px] text-[var(--muted-2)]",children:["by ",o.uploaded_by?.slice(0,8)||"—"," • ",new Date(o.created_at).toLocaleDateString()]})]},o.id))}),Tu.length===0&&c("div",{className:"text-center py-8 text-[var(--muted)] text-[13px]",children:"No papers yet."})]})]}),M==="quizzes"&&v("div",{className:"space-y-4",children:[v("div",{className:"flex flex-wrap gap-2 items-center",children:[v("select",{value:Ar,onChange:(o)=>sp(o.target.value),className:"h-9 px-2 rounded-[10px] bg-[var(--surface)] border border-[var(--border)] text-[11px]",children:[c("option",{children:"All"}),It.map((o)=>c("option",{children:o},o))]}),v("select",{value:Kr,onChange:(o)=>dp(o.target.value),className:"h-9 px-2 rounded-[10px] bg-[var(--surface)] border border-[var(--border)] text-[11px]",children:[c("option",{children:"All"}),["10","11","12","Form 1","Form 2","Form 3","Form 4","Form 5","Form 6"].map(o=>c("option",{children:o},o))]}),null,c("button",{onClick:async function(){ if(Ar==="All"){ F("Pick a subject first, then tap Zed Scholar AI Quiz"); return; } var _q=await Zq(Ar,Kr==="All"?"":Kr,20,false); if(_q&&_q.length) Vp(_q); },className:"h-9 px-4 rounded-[10px] bg-[var(--yellow)] text-black font-bold text-[11px] uppercase tracking-[0.12em]",children:"🤖 Zed Scholar AI Quiz - Fresh AI Only"}),c("span",{className:"ml-auto text-[11px] text-[var(--muted)]",children:"AI makes every quiz fresh • +5 coins per correct"})]}),null,Te&&c("div",{className:"fixed inset-0 z-50 bg-black/60 backdrop-blur-sm p-4 flex items-center justify-center",children:v("div",{className:"bg-[var(--surface)] border border-[var(--border)] rounded-[16px] w-full max-w-[720px] max-h-[90vh] overflow-auto p-6",children:[v("div",{className:"flex items-center justify-between",children:[v("h3",{className:"font-serif text-[22px]",children:["Quiz — Question ",Qi+1," of ",Te.length]}),v("div",{className:"text-[12px] text-[var(--muted)]",children:["Time: ",Math.floor(Nu/60),":",String(Nu%60).padStart(2,"0")]})]}),c("div",{className:"mt-2 text-[11px] text-[var(--muted)]",children:["Score so far: ",Te.filter(function(q,_i){return _a[_i]===q.correct_answer}).length," / ",Te.length," correct"]}),c("div",{className:"mt-2 h-2 rounded-full bg-[var(--bg)] overflow-hidden",children:c("div",{className:"h-full bg-[var(--green)]",style:{width:Math.round(((Qi+1)/Te.length)*100)+"%"}})}),c("div",{className:"mt-4",children:[v("div",{className:"text-[15px] font-semibold leading-snug",children:[Qi+1,". ",Te[Qi].question_text]}),c("div",{className:"mt-3 grid grid-cols-1 md:grid-cols-2 gap-2",children:["A","B","C","D"].filter(function(h){return Te[Qi][`option_${h.toLowerCase()}`]&&String(Te[Qi][`option_${h.toLowerCase()}`]).trim()}).map(function(h){var _picked=_a[Qi];var _isCorrect=h===Te[Qi].correct_answer;var _isPicked=h===_picked;var _answered=_picked!==undefined;var _cls=_answered?(_isCorrect?"bg-[var(--green)] text-black border-[var(--green)]":_isPicked?"bg-red-500 text-white border-red-500":"bg-[var(--bg)] border-[var(--border)] opacity-60"):"bg-[var(--bg)] border-[var(--border)]";return v("button",{onClick:function(){ if(_a[Qi]!==undefined) return; Ca(function(P){return {...P,[Qi]:h};}); },className:"text-left px-3 py-3 rounded-[10px] border text-[13px] "+_cls,children:[v("span",{className:"font-bold mr-1",children:[h,"."]}),Te[Qi][`option_${h.toLowerCase()}`],_answered&&_isCorrect?c("span",{className:"ml-2 font-bold",children:"✓"}):null,_answered&&_isPicked&&!_isCorrect?c("span",{className:"ml-2 font-bold",children:"✗"}):null]},h)})}),_a[Qi]!==undefined&&v("div",{className:"mt-4 space-y-2",children:[v("div",{className:"text-[13px] font-bold px-3 py-2 rounded-[10px] "+(_a[Qi]===Te[Qi].correct_answer?"bg-[var(--green)] text-black":"bg-red-500 text-white"),children:_a[Qi]===Te[Qi].correct_answer?["✓ Correct! Well done."]:["✗ Wrong. Correct answer is ",Te[Qi].correct_answer," — ",Te[Qi][`option_${(Te[Qi].correct_answer||"A").toLowerCase()}`]]}),v("div",{className:"bg-[var(--bg)] border border-[var(--border)] rounded-[12px] p-3",children:[v("div",{className:"text-[11px] uppercase tracking-[0.12em] text-[var(--green)] font-bold",children:"Explanation — why this is correct and why the others are wrong"}),c("div",{className:"mt-1 text-[13px] leading-snug",children:Te[Qi].explanation&&String(Te[Qi].explanation).trim()?Te[Qi].explanation:["Correct answer is ",Te[Qi].correct_answer," — ",Te[Qi][`option_${(Te[Qi].correct_answer||"A").toLowerCase()}`],". The other options are incorrect for this question."]})]})]}),_a[Qi]===undefined&&c("div",{className:"mt-3 text-[11px] text-[var(--muted)]",children:"Tap one answer to see if you are right."})]}),v("div",{className:"mt-6 flex gap-2",children:[c("button",{onClick:function(){Su(null);QiSet(0);},className:"h-10 px-4 rounded-[10px] bg-[var(--surface-2)] border border-[var(--border)] text-[12px]",children:"Cancel"}),_a[Qi]===undefined?c("button",{disabled:!0,className:"flex-1 h-10 rounded-[10px] bg-[var(--surface-2)] border border-[var(--border)] text-[12px] opacity-50",children:"Pick an answer first"}):Qi<Te.length-1?c("button",{onClick:function(){QiSet(Qi+1);},className:"flex-1 h-10 rounded-[10px] bg-[var(--green)] text-black font-bold uppercase tracking-[0.12em] text-[12px]",children:"Next →"}):c("button",{onClick:Hp,className:"flex-1 h-10 rounded-[10px] bg-[var(--green)] text-black font-bold uppercase tracking-[0.12em] text-[12px]",children:"Finish • See Score"})]})]})})]}),M==="documents"&&v("div",{className:"space-y-4",children:[v("div",{className:"text-[11px] uppercase tracking-[0.12em] text-[var(--muted)]",children:[Cu.length," docs"]}),c("div",{className:"grid md:grid-cols-3 gap-3",children:Cu.map((o)=>v("div",{className:"bg-[var(--surface)] border border-[var(--border)] rounded-[14px] p-4",children:[v("div",{className:"text-[11px] uppercase text-[var(--yellow)]",children:[o.subject," • ",o.grade]}),c("div",{className:"font-semibold text-[14px] mt-1",children:o.title}),c("div",{className:"text-[12px] text-[var(--muted)] mt-1 line-clamp-2",children:o.description}),c("a",{href:o.file_url,target:"_blank",rel:"noopener",className:"mt-3 inline-flex h-8 px-3 rounded-[8px] bg-[var(--text)] text-[var(--bg)] text-[11px] font-semibold items-center",children:"Open Document"})]},o.id))}),Cu.length===0&&c("div",{className:"text-center py-8 text-[var(--muted)] text-[13px]",children:"No documents yet."})]}),M==="videos"&&v("div",{className:"space-y-4",children:[c("div",{className:"text-[11px] uppercase tracking-[0.12em] text-[var(--muted)]",children:[ha.length," videos"]}),c("div",{className:"grid md:grid-cols-2 gap-4",children:ha.map((o)=>{let y=Ad(o.video_url);return v("div",{className:"bg-[var(--surface)] border border-[var(--border)] rounded-[14px] overflow-hidden",children:[y?c("div",{className:"aspect-video bg-black",children:c("iframe",{src:`https://www.youtube-nocookie.com/embed/${y}?modestbranding=1&rel=0&iv_load_policy=3&controls=1&fs=1&playsinline=1&disablekb=0&showinfo=0&cc_load_policy=0`,className:"w-full h-full",loading:"lazy",allowFullScreen:!0,sandbox:"allow-scripts allow-same-origin allow-presentation",allow:"accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; fullscreen",title:o.title})}):c("video",{src:o.video_url,controls:!0,className:"w-full aspect-video bg-black"}),v("div",{className:"p-4",children:[v("div",{className:"text-[11px] uppercase text-[var(--green)]",children:[o.subject," • G",o.grade]}),c("div",{className:"font-semibold text-[14px] mt-1",children:o.title}),c("div",{className:"text-[12px] text-[var(--muted)] mt-1",children:o.description})]})]},o.id)})}),ha.length===0&&c("div",{className:"text-center py-8 text-[var(--muted)] text-[13px]",children:"No videos — add YouTube links in Admin."})]}),M==="leaderboard"&&v("div",{className:"space-y-6",children:[v("div",{className:"flex flex-wrap gap-2 items-center",children:[c("h2",{className:"font-serif text-[32px] tracking-[-0.02em]",children:"Whole Zambia Leaderboard"}),c("span",{className:"ml-auto px-3 py-1 rounded-full bg-[var(--green)] text-black text-[11px] font-bold uppercase tracking-[0.12em]",children:"Real-time +5 coins after quiz correct"})]}),v("div",{className:"flex flex-wrap gap-2",children:[v("select",{value:xn,onChange:(o)=>{pp(o.target.value),Na("All")},className:"h-9 px-2 rounded-[10px] bg-[var(--surface)] border border-[var(--border)] text-[11px]",children:[c("option",{children:"All"}),Hd.map((o)=>c("option",{children:o},o))]}),v("select",{value:Xr,onChange:(o)=>Na(o.target.value),className:"h-9 px-2 rounded-[10px] bg-[var(--surface)] border border-[var(--border)] text-[11px]",children:[c("option",{children:"All"}),(xn!=="All"?Or[xn]:Object.values(Or).flat()).map((o)=>c("option",{children:o},o))]}),v("select",{value:zu,onChange:(o)=>mp(o.target.value),className:"h-9 px-2 rounded-[10px] bg-[var(--surface)] border border-[var(--border)] text-[11px]",children:[c("option",{children:"All Time"}),c("option",{children:"This Month"}),c("option",{children:"This Week"})]}),v("select",{value:Yr,onChange:(o)=>vp(o.target.value),className:"h-9 px-2 rounded-[10px] bg-[var(--surface)] border border-[var(--border)] text-[11px]",children:[c("option",{children:"All"}),It.map((o)=>c("option",{children:o},o))]}),v("select",{value:jn,onChange:(o)=>hp(o.target.value),className:"h-9 px-2 rounded-[10px] bg-[var(--surface)] border border-[var(--border)] text-[11px]",children:[c("option",{value:"coins",children:"Sort: Coins"}),c("option",{value:"avg",children:"Avg"}),c("option",{value:"quizzes",children:"Quizzes"}),c("option",{value:"total",children:"Total"})]}),c("input",{value:Zr,onChange:(o)=>yp(o.target.value),placeholder:"Search name/school...",className:"h-9 px-3 rounded-[10px] bg-[var(--surface)] border border-[var(--border)] text-[12px] w-[180px]"}),v("label",{className:"flex items-center gap-2 text-[11px]",children:[c("input",{type:"checkbox",checked:Qr,onChange:(o)=>gp(o.target.checked)})," District top 3"]})]}),c("div",{className:"grid grid-cols-3 gap-3",children:qr.slice(0,3).map((o,y)=>v("div",{className:`rounded-[16px] p-4 border text-center ${y===0?"bg-[var(--yellow)] text-black border-[var(--yellow)] order-2":y===1?"bg-[var(--surface)] border-[var(--border)] order-1":"bg-[var(--surface)] border-[var(--border)] order-3"}`,children:[c("div",{className:"text-[20px]",children:y===0?"\uD83D\uDC51":y===1?"\uD83E\uDD48":"\uD83E\uDD49"}),c("div",{className:"font-serif text-[16px] mt-1 leading-tight",children:o.profile.name}),c("div",{className:"text-[10px] uppercase tracking-[0.08em] mt-1 opacity-70",children:o.profile.school?.slice(0,22)}),v("div",{className:"mt-2 text-[12px] font-bold",children:[o.profile.coins||0," coins • ",o.count," quizzes"]}),v("div",{className:"text-[11px]",children:["Avg ",o.avg.toFixed(1),"% • Total ",o.totalScore]})]},o.profile.id))}),c("div",{className:"grid md:grid-cols-3 lg:grid-cols-5 gap-3",children:Op.map((o)=>v("div",{className:"bg-[var(--surface)] border border-[var(--border)] rounded-[14px] p-3",children:[c("div",{className:"text-[11px] uppercase tracking-[0.12em] text-[var(--muted)]",children:o.province}),v("div",{className:"font-bold text-[14px] mt-1",children:[o.total," learners"]}),v("div",{className:"text-[10px] text-[var(--muted)] mt-1 line-clamp-2",children:["Top: ",o.topSchool]})]},o.province))}),Qr&&c("div",{className:"grid md:grid-cols-2 gap-3",children:Fp.map((o)=>v("div",{className:"bg-[var(--surface)] border border-[var(--border)] rounded-[14px] p-3",children:[c("div",{className:"text-[11px] uppercase tracking-[0.12em] text-[var(--green)]",children:o.district}),c("div",{className:"mt-2 space-y-1",children:o.top.map((y,h)=>v("div",{className:"flex justify-between text-[12px]",children:[v("span",{children:[h+1,". ",y.profile.name]}),v("span",{children:[y.profile.coins,"c"]})]},y.profile.id))})]},o.district))}),c("div",{className:"overflow-auto rounded-[14px] border border-[var(--border)]",children:v("table",{className:"w-full text-[12px]",children:[c("thead",{className:"bg-[var(--surface)] text-[11px] uppercase tracking-[0.12em] text-[var(--muted)]",children:v("tr",{children:[c("th",{className:"text-left px-3 py-2",children:"Rank"}),c("th",{className:"text-left px-3 py-2",children:"Name"}),c("th",{className:"text-left px-3 py-2",children:"School (District)"}),c("th",{className:"text-left px-3 py-2",children:"Province"}),c("th",{className:"text-left px-3 py-2",children:"Coins"}),c("th",{className:"text-left px-3 py-2",children:"Streak"}),c("th",{className:"text-left px-3 py-2",children:"Quizzes"}),c("th",{className:"text-left px-3 py-2",children:"Avg"}),c("th",{className:"text-left px-3 py-2",children:"Total"})]})}),c("tbody",{children:qr.slice(0,100).map((o,y)=>v("tr",{className:`border-t border-[var(--border)] ${o.profile.id===r.id?"bg-[var(--surface-3)]":""}`,children:[c("td",{className:"px-3 py-2",children:y+1}),v("td",{className:"px-3 py-2 font-medium",children:[o.profile.name," ",o.profile.id===r.id&&c("span",{className:"ml-1 px-1.5 py-0.5 rounded-full bg-[var(--green)] text-black text-[9px]",children:"YOU"})]}),v("td",{className:"px-3 py-2",children:[o.profile.school," ",v("span",{className:"text-[var(--muted)]",children:["(",o.profile.district,")"]})]}),c("td",{className:"px-3 py-2",children:c("span",{className:"px-2 py-0.5 rounded-full bg-[var(--surface-2)] border border-[var(--border)] text-[10px]",children:o.profile.province})}),c("td",{className:"px-3 py-2 font-bold",children:o.profile.coins||0}),c("td",{className:"px-3 py-2",children:o.profile.streak||0}),c("td",{className:"px-3 py-2",children:o.count}),v("td",{className:"px-3 py-2",children:[o.avg.toFixed(1),"%"]}),c("td",{className:"px-3 py-2",children:o.totalScore})]},o.profile.id))})]})})]}),M==="admin"&&(admOk?v("div",{className:"space-y-6",children:[v("div",{className:"flex flex-wrap gap-2",children:[c("h2",{className:"font-serif text-[28px]",children:"Admin — Uploads"}),c("div",{className:"ml-auto flex gap-2 text-[11px] flex-wrap",children:Object.entries(lp).map(([o,y])=>v("span",{className:"px-2 py-1 rounded-full bg-[var(--surface)] border border-[var(--border)]",children:[o,": ",y]},o))})]}),v("div",{className:"grid grid-cols-1 lg:grid-cols-2 gap-4 md:gap-6 w-full max-w-full",children:[v("div",{className:"bg-[var(--surface)] border border-[var(--border)] rounded-[14px] p-5",children:[c("div",{className:"text-[11px] uppercase tracking-[0.12em] text-[var(--yellow)]",children:"Upload Past Paper — PDF • Max 10MB"}),v("div",{className:"mt-3 grid grid-cols-2 gap-2",children:[c("input",{value:za,onChange:(o)=>wp(o.target.value),placeholder:"Subject e.g. Maths",className:"h-9 px-2 rounded-[10px] bg-[var(--bg)] border border-[var(--border)] text-[11px]"}),c("input",{value:Ra,onChange:(o)=>kp(o.target.value),placeholder:"Grade e.g. 12",className:"h-9 px-2 rounded-[10px] bg-[var(--bg)] border border-[var(--border)] text-[11px]"}),c("input",{value:Pa,onChange:(o)=>Ep(o.target.value),placeholder:"Year e.g. 2023",className:"h-9 px-2 rounded-[10px] bg-[var(--bg)] border border-[var(--border)] text-[11px]"}),c("input",{value:Ma,onChange:(o)=>_p(o.target.value),placeholder:"Type e.g. ECZ",className:"h-9 px-2 rounded-[10px] bg-[var(--bg)] border border-[var(--border)] text-[11px]"})]}),c("input",{value:Ru,onChange:(o)=>La(o.target.value),placeholder:"Title e.g. Maths Paper 1",className:"mt-3 w-full h-10 px-3 rounded-[10px] bg-[var(--bg)] border border-[var(--border)] text-[12px]"}),c("textarea",{value:Ia,onChange:(o)=>Oa(o.target.value),placeholder:"Description",className:"mt-2 w-full h-20 px-3 py-2 rounded-[10px] bg-[var(--bg)] border border-[var(--border)] text-[12px]"}),c("input",{type:"file",accept:"application/pdf",onChange:(o)=>Fa(o.target.files?.[0]||null),className:"mt-3 w-full text-[11px] file:mr-3 file:h-7 file:rounded-[8px] file:border-0 file:bg-[var(--text)] file:text-[var(--bg)] file:text-[11px] file:font-semibold file:uppercase"}),c("button",{disabled:Da,onClick:Dp,className:"mt-3 w-full h-10 rounded-[10px] bg-[var(--green)] text-black font-bold uppercase tracking-[0.12em] text-[11px] disabled:opacity-60",children:Da?"Uploading live...":"Upload Past Paper"})]}),v("div",{className:"bg-[var(--surface)] border border-[var(--border)] rounded-[14px] p-5 w-full max-w-full",children:[c("div",{className:"text-[11px] uppercase tracking-[0.12em] text-[var(--yellow)]",children:"Add Video — YouTube or Phone Upload"}),c("input",{value:Fu,onChange:(o)=>Za(o.target.value),placeholder:"Video title",className:"mt-3 w-full h-10 px-3 rounded-[10px] bg-[var(--bg)] border border-[var(--border)] text-[12px]"}),c("input",{id:"zed-topic-input",placeholder:"Topic e.g. Mole Concept",className:"mt-2 w-full h-10 px-3 rounded-[10px] bg-[var(--bg)] border border-[var(--border)] text-[12px] outline-none focus:border-[var(--green)]",defaultValue:""}),c("input",{value:Jr,onChange:(o)=>Qa(o.target.value),placeholder:"YouTube URL (optional)",className:"mt-2 w-full h-10 px-3 rounded-[10px] bg-[var(--bg)] border border-[var(--border)] text-[12px]"}),c("div",{className:"mt-2 p-2 rounded-[10px] bg-[var(--bg)] border border-dashed border-[var(--border)]",children:[c("div",{className:"text-[10px] uppercase tracking-[0.12em] text-[var(--muted)]",children:"Or upload video from phone"}),c("input",{type:"file",accept:"video/*",onChange:(o)=>setVidFile(o.target.files?.[0]||null),className:"mt-2 w-full text-[11px] file:mr-3 file:h-8 file:rounded-[8px] file:border-0 file:bg-[var(--text)] file:text-[var(--bg)] file:text-[11px] file:font-semibold file:uppercase"}),vidFile?c("div",{className:"mt-1 text-[11px] text-[var(--green)]",children:"Selected: "+vidFile.name+" ("+(vidFile.size/1024/1024).toFixed(1)+" MB)"}):null]}),v("div",{className:"mt-3 grid grid-cols-2 gap-2",children:[c("input",{value:Ja,onChange:(o)=>zp(o.target.value),placeholder:"Subject e.g. Maths",className:"h-9 px-2 rounded-[10px] bg-[var(--bg)] border border-[var(--border)] text-[11px]"}),c("input",{value:Ga,onChange:(o)=>Rp(o.target.value),placeholder:"Grade e.g. 12",className:"h-9 px-2 rounded-[10px] bg-[var(--bg)] border border-[var(--border)] text-[11px]"})]}),c("button",{disabled:vidUp,onClick:$p,className:"mt-3 w-full h-10 rounded-[10px] bg-[var(--yellow)] text-black font-bold uppercase tracking-[0.12em] text-[11px] disabled:opacity-60",children:vidUp?"Uploading video...":"Insert Video Live"}),c("div",{className:"mt-2 text-[10px] text-[var(--muted)]",children:"YouTube or MP4 / WebM from phone."})]})]})]}):v("div",{className:"min-h-[60vh] flex flex-col items-center justify-center p-6",children:[v("div",{className:"w-full max-w-[400px] bg-[var(--surface)] border border-[var(--border)] rounded-[16px] p-6",children:[c("h2",{className:"font-serif text-[22px]",children:"Admin Access — Locked"}),c("p",{className:"text-[12px] text-[var(--muted)] mt-2",children:"Enter admin key to unlock admin panel"}),c("input",{type:"password",value:admKey,onChange:e=>setAdmKey(e.target.value),placeholder:"sb_publishable_...",className:"mt-4 w-full h-11 px-4 rounded-[12px] bg-[var(--bg)] border border-[var(--border)] outline-none text-[13px]"}),c("button",{onClick:()=>{if(admKey==="sb_publishable_74vo5_RlNXb0U0TrNLCdCQ_8zjDwFni"){setAdmOk(!0),F("Admin unlocked ✓")}else{F("Invalid admin key — access denied")}},className:"mt-3 w-full h-11 rounded-[12px] bg-[var(--green)] text-black font-bold text-[12px] uppercase tracking-[0.12em]",children:"Unlock Admin"})]})]})),M==="profile"&&v("div",{className:"grid grid-cols-1 lg:grid-cols-[320px_1fr] gap-4 md:gap-6 w-full",children:[v("div",{className:"bg-[var(--surface)] border border-[var(--border)] rounded-[14px] p-5 h-fit lg:sticky lg:top-[calc(56px+var(--safe-area-inset-top)+37px)]",children:[c("div",{className:"w-16 h-16 rounded-full bg-[var(--green)] flex items-center justify-center text-black font-extrabold text-[24px]",children:r.name[0]}),c("div",{className:"font-serif text-[22px] mt-3",children:r.name}),v("div",{className:"text-[12px] text-[var(--muted)]",children:[r.phone," • ",r.account_code]}),v("div",{className:"mt-3 flex flex-wrap gap-2",children:[v("span",{className:"px-2 py-1 rounded-full bg-[var(--yellow)] text-black text-[11px] font-bold",children:[r.coins||0," coins"]}),v("span",{className:"px-2 py-1 rounded-full bg-[var(--surface-2)] border border-[var(--border)] text-[11px]",children:["Streak ",r.streak||0]}),v("span",{className:"px-2 py-1 rounded-full bg-[var(--surface-2)] border border-[var(--border)] text-[11px]",children:["Grade ",r.grade]})]}),v("div",{className:"mt-4 text-[12px] space-y-1",children:[v("div",{children:[c("span",{className:"text-[var(--muted)]",children:"Province:"})," ",r.province]}),v("div",{children:[c("span",{className:"text-[var(--muted)]",children:"District:"})," ",r.district]}),v("div",{children:[c("span",{className:"text-[var(--muted)]",children:"School:"})," ",r.school]})]})]}),v("div",{className:"space-y-4",children:[c("h3",{className:"font-serif text-[20px]",children:"Quiz History"}),v("div",{className:"grid gap-2",children:[(()=>{var _d=[],_seen={};Ea.forEach(function(o){var _k=(o.subject||"")+"|"+(o.score||0)+"|"+(o.total||0),_t=new Date(o.created_at||0).getTime();if(_seen[_k]!==undefined&&Math.abs(_t-_seen[_k])<10000)return;_seen[_k]=_t;_d.push(o)});var _g={},_order=[];_d.forEach(function(o){var _gr=String(o.grade||"").trim()||"Other";if(!_g[_gr]){_g[_gr]=[];_order.push(_gr)}_g[_gr].push(o)});var _go=function(g){if(g==="Other")return 99;var _m=String(g).match(/Form\s*(\d)/i);if(_m)return parseInt(_m[1],10);var _n=parseInt(g,10);if(!isNaN(_n))return 20+_n;return 50};_order.sort(function(a,b){return _go(a)-_go(b)});var _fmt=function(g){if(g==="Other")return "Other";if(/^Form/i.test(g))return g;return "Grade "+g};var _out=[];_order.forEach(function(_gr){_out.push(v("div",{className:"mt-1 flex items-center gap-2",children:[v("span",{className:"px-2 py-1 rounded-full bg-[var(--yellow)] text-black text-[11px] font-bold",children:_fmt(_gr)}),v("span",{className:"text-[11px] text-[var(--muted)]",children:[_g[_gr].length," quiz",_g[_gr].length===1?"":"zes"]})]},"h-"+_gr));_g[_gr].forEach(function(o){_out.push(v("div",{className:"bg-[var(--surface)] border border-[var(--border)] rounded-[12px] p-3 flex items-center justify-between",children:[v("div",{children:[v("div",{className:"text-[12px] font-semibold",children:[o.subject]}),v("div",{className:"text-[11px] text-[var(--muted)]",children:[new Date(o.created_at).toLocaleString()," • ",o.time_spent,"s"]})]}),v("div",{className:"text-right",children:[v("div",{className:"text-[14px] font-bold",children:[o.score,"/",o.total]}),v("div",{className:"text-[11px] text-[var(--green)]",children:[(o.score/o.total*100).toFixed(1),"%"]})]})]},o.id))})});return _out})(),Ea.length===0&&c("div",{className:"text-[13px] text-[var(--muted)] py-8 text-center",children:"No attempts yet — take a quiz to earn +5 coins per correct answer."})]})]})]})]}),c("footer",{className:"border-t border-[var(--border)] px-6 py-4 text-[11px] text-[var(--muted)] text-center",children:"ZED SCHOLAR • GRADE 10-12 • FORM 1-6 • Zambia • Online"}),I&&c("div",{className:"fixed bottom-4 left-4 right-4 md:left-auto md:right-4 md:w-[380px] z-50 bg-[var(--text)] text-[var(--bg)] px-4 py-3 rounded-[12px] text-[13px] font-medium shadow-xl border-2 border-[var(--green)]",children:I}),qa&&c("div",{className:"fixed inset-0 z-50 bg-black/60 backdrop-blur-sm flex items-center justify-center p-4",children:v("div",{className:"bg-[var(--surface)] border border-[var(--border)] rounded-[16px] p-6 w-full max-w-[400px]",children:[c("h4",{className:"font-serif text-[18px]",children:"Delete paper?"}),c("p",{className:"text-[12px] text-[var(--muted)] mt-2",children:"This will delete this item permanently."}),v("div",{className:"mt-4 flex gap-2",children:[c("button",{onClick:()=>Du(null),className:"flex-1 h-10 rounded-[10px] bg-[var(--surface-2)] border border-[var(--border)] text-[12px]",children:"Cancel"}),c("button",{onClick:()=>Tp(qa),className:"flex-1 h-10 rounded-[10px] bg-[#ff9a9a] text-black font-bold text-[12px]",children:"Delete"})]})]})})]})}Xd.createRoot(document.getElementById("root")).render(c(Kd.default.StrictMode,{children:c(ca,{})}));
 </script>
   <script>(function(){function m(a){var h=a.getAttribute("href");if(!h)return;try{var u=new URL(h,document.baseURI);if(h.indexOf('youtube.com')!==-1||h.indexOf('youtu.be')!==-1||h.indexOf('youtube-nocookie')!==-1){a.removeAttribute('target');a.setAttribute('data-zed-blocked-youtube','1');return;}if(((u.protocol==="http:"||u.protocol==="https:")&&u.host!==location.host)||u.protocol==="mailto:"||u.protocol==="tel:"||u.protocol==="sms:"){a.target="_blank";a.rel="noopener noreferrer";}}catch(e){}}function s(){document.querySelectorAll("a[href]").forEach(m);}if(document.readyState!=="loading"){s();}else{document.addEventListener("DOMContentLoaded",s);}document.addEventListener("click",function(e){var a=e.target&&e.target.closest&&e.target.closest("a[href]");if(a){if((a.getAttribute('href')||'').indexOf('youtube')!==-1){e.preventDefault();e.stopPropagation();return false;}m(a);}},true);})();</script>
   <script type="application/json" data-clippy-inline-media-manifest="1">{"version":1,"slots":[]}</script>
@@ -4971,10 +5021,11 @@ const db=await openDB();return new Promise((res,rej)=>{const tx=db.transaction(S
 
 
 <script>
-// ZED V18 - MOBILE GRID + BIG PLAYER ON PLAY
+// ZED V18 - MOBILE GRID ONLY.
+// Card-tap-to-go-big REMOVED: tapping anywhere on a card forced it big, so you could
+// never play/pause inline in the card. Fullscreen is now ONLY the ⤢ expand button.
+// The YouTube controls (play/pause, seek) work inline in the card.
 (function(){
-  let playingCard = null;
-
   function makeGrid(){
     let grids = document.querySelectorAll('.grid.md\:grid-cols-2.gap-4');
     grids.forEach(g=>{
@@ -4985,130 +5036,13 @@ const db=await openDB();return new Promise((res,rej)=>{const tx=db.transaction(S
         if(c.innerHTML && (c.innerHTML.includes('iframe') || c.innerHTML.includes('Watch video') || (c.textContent||'').includes('• G'))){ hasVideo=true; break; }
       }
       if(!hasVideo && g.children.length===0) return;
-      
-      // If a video is playing, don't force grid - show big single
-      if(playingCard && g.contains(playingCard)) return;
-
       g.style.display = 'grid';
       g.style.gridTemplateColumns = 'repeat(2, minmax(0, 1fr))';
       g.style.gap = window.innerWidth < 768 ? '10px' : '16px';
     });
   }
-
-  function setupPlay(){
-    let grids = document.querySelectorAll('.grid.md\:grid-cols-2.gap-4');
-    grids.forEach(g=>{
-      if(g.className.includes('grid-cols-3')) return;
-      for(let card of g.children){
-        if(card.id && card.id.startsWith('zed')) continue;
-        if(card.dataset.zedPlaySetup) continue;
-        card.dataset.zedPlaySetup = '1';
-        card.style.cursor = 'pointer';
-        
-        card.addEventListener('click', (e)=>{
-          // BLOCK 'Watch video on YouTube' - never leave the app, play in-app instead
-          if(e.target.textContent && e.target.textContent.includes('Watch video on YouTube')){ e.preventDefault(); e.stopPropagation(); return; }
-          if(e.target.textContent && e.target.textContent.includes('Watch on YouTube')){ e.preventDefault(); e.stopPropagation(); return; }
-          if(e.target.closest('a')) return;
-          
-          // If already playing this card, close it
-          if(playingCard === card){
-            closePlayer();
-            return;
-          }
-          
-          // Play this card big
-          playBig(card);
-        });
-      }
-    });
-  }
-
-  function playBig(card){
-    playingCard = card;
-    let grid = card.parentElement;
-    
-    // Hide all other cards
-    for(let c of grid.children){
-      if(c.id && c.id.startsWith('zed')) continue;
-      if(c !== card){
-        c.style.display = 'none';
-      }
-    }
-    
-    // Make playing card full width and big
-    card.style.display = 'block';
-    card.style.gridColumn = '1 / -1';
-    card.style.maxWidth = '100%';
-    
-    // Make iframe/video big
-    let iframe = card.querySelector('iframe');
-    if(iframe){
-      iframe.style.width = '100%';
-      iframe.style.height = window.innerWidth < 768 ? '220px' : '400px';
-      iframe.style.minHeight = '220px';
-    }
-    let videoWrap = card.querySelector('div');
-    if(videoWrap && videoWrap.querySelector('iframe')){
-      videoWrap.style.height = window.innerWidth < 768 ? '220px' : '400px';
-    }
-    
-    // Add close button if not exists
-    if(!card.querySelector('.zed-close-play')){
-      let close = document.createElement('div');
-      close.className = 'zed-close-play';
-      close.textContent = '✕ Show grid';
-      close.style.cssText = 'margin-top:12px;background:transparent;color:white;padding:8px 14px;border-radius:20px;font-size:12px;display:inline-block;cursor:pointer;border:1px solid #444;';
-      close.addEventListener('click', (e)=>{
-        e.stopPropagation();
-        closePlayer();
-      });
-      card.appendChild(close);
-    }
-    
-    // Scroll to card
-    card.scrollIntoView({behavior:'smooth', block:'start'});
-    
-    // Update info
-    let info = document.getElementById('zed-v16-info') || document.getElementById('zed-v14-info') || document.getElementById('zed-v13-info');
-    if(info) info.textContent = 'Playing • Tap ✕ Show grid to return to 4 videos';
-  }
-
-  function closePlayer(){
-    if(!playingCard) return;
-    let grid = playingCard.parentElement;
-    playingCard.style.gridColumn = '';
-    let iframe = playingCard.querySelector('iframe');
-    if(iframe){
-      iframe.style.height = '';
-      iframe.style.minHeight = '';
-    }
-    let closeBtn = playingCard.querySelector('.zed-close-play');
-    if(closeBtn) closeBtn.remove();
-    playingCard = null;
-    
-    // Restore 4 random grid
-    let allCards = [];
-    for(let c of grid.children){
-      if(c.id && c.id.startsWith('zed')) continue;
-      if(!c.querySelector || !c.querySelector('.font-semibold')) continue;
-      allCards.push(c);
-    }
-    allCards.forEach(c=>c.style.display='none');
-    let shuf = [...allCards].sort(()=>0.5-Math.random()).slice(0,4);
-    shuf.forEach(c=>{ c.style.display=''; c.style.gridColumn=''; });
-    
-    makeGrid();
-  }
-
-  /* V15 owns grid - V18 interval disabled */;
-  
-  setTimeout(()=>{
-    makeGrid();
-    setupPlay();
-  }, 800);
-  
-  console.log('✅ V18 - Mobile grid 2 cols + big player on tap');
+  setTimeout(()=>{ makeGrid(); }, 800);
+  console.log('✅ V18 - Mobile grid 2 cols (card tap no longer forces big player)');
 })();
 </script>
 
@@ -5170,11 +5104,19 @@ const db=await openDB();return new Promise((res,rej)=>{const tx=db.transaction(S
     wrap.appendChild(play);
 
     // Click to load iframe
-    wrap.addEventListener('click', function(){
+    wrap.addEventListener('click', function(e){
+      // Do NOT bubble to the card: tapping the video must play/pause INLINE, not go big.
+      if(e) e.stopPropagation();
       if(wrap.classList.contains('yt-loaded')) return;
+      // ONE VIDEO AT A TIME: pause every other playing YouTube video before this one starts.
+      try{
+        document.querySelectorAll('iframe[src*="youtube"], iframe[src*="youtube-nocookie"]').forEach(function(f){
+          try{ if(f.contentWindow) f.contentWindow.postMessage(JSON.stringify({event:'command', func:'pause', args:''}), '*'); }catch(_){}
+        });
+      }catch(_){}
       wrap.classList.add('yt-loaded');
       let iframe = document.createElement('iframe');
-      iframe.src = 'https://www.youtube-nocookie.com/embed/' + videoId + '?autoplay=1&modestbranding=1&rel=0&iv_load_policy=3&playsinline=1&controls=1&fs=1;
+      iframe.src = 'https://www.youtube-nocookie.com/embed/' + videoId + '?autoplay=1&modestbranding=1&rel=0&iv_load_policy=3&playsinline=1&controls=1&fs=1&enablejsapi=1';
       iframe.setAttribute('allow', 'accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; fullscreen');
       // Sandbox WITH allow-presentation: blocks top-navigation / popups (NO redirect) but ALLOWS fullscreen when allowfullscreen is set
       iframe.setAttribute('sandbox', 'allow-scripts allow-same-origin allow-presentation');
@@ -5206,6 +5148,16 @@ const db=await openDB();return new Promise((res,rej)=>{const tx=db.transaction(S
       shieldLogo.addEventListener('click', function(e){ e.preventDefault(); e.stopPropagation(); }, true);
       shieldLogo.addEventListener('touchstart', function(e){ e.stopPropagation(); }, {passive:true});
       wrap.appendChild(shieldLogo);
+      // OPAQUE shield over the "More videos" + recommended-videos strip (bottom, above
+      // the seek bar). The old shields were TRANSPARENT, so the "More videos" text and
+      // the recommended thumbnail next to it still SHOWED. Opaque black actually HIDES
+      // them. The seek bar + play/pause sit below this strip, so they still work.
+      var shieldMore = document.createElement('div');
+      shieldMore.className = 'zed-yt-shield-more';
+      shieldMore.setAttribute('aria-hidden', 'true');
+      shieldMore.addEventListener('click', function(e){ e.preventDefault(); e.stopPropagation(); }, true);
+      shieldMore.addEventListener('touchstart', function(e){ e.stopPropagation(); }, {passive:true});
+      wrap.appendChild(shieldMore);
     }, {once: false});
 
     return wrap;
@@ -5646,85 +5598,7 @@ input[placeholder="search a topic"], input[placeholder="Search here"] {
   pointer-events: auto !important;
 }
 </style>
-<script>
-// V25 - Fix pause/seek controls
-(function(){
-  function enhanceIframes(){
-    document.querySelectorAll('.yt-lite.yt-loaded iframe').forEach(iframe=>{
-      if(iframe.dataset.controlsFixed) return;
-      iframe.dataset.controlsFixed = '1';
-      // Ensure iframe allows all needed
-      iframe.setAttribute('allow', 'accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; fullscreen');
-      // Sandbox WITH allow-presentation: blocks top-navigation / popups (NO redirect) but ALLOWS fullscreen when allowfullscreen is set
-      iframe.setAttribute('sandbox', 'allow-scripts allow-same-origin allow-presentation');
-      iframe.setAttribute('allowfullscreen', '');
-      // Stop parent click handlers from closing player when interacting with video
-      iframe.addEventListener('click', (e)=>{
-        e.stopPropagation();
-      });
-      // Also the wrapper should not close on click when video is loaded
-      let lite = iframe.closest('.yt-lite');
-      if(lite){
-        lite.addEventListener('click', (e)=>{
-          // If already loaded, don't re-trigger play, let iframe handle it
-          if(lite.classList.contains('yt-loaded')){
-            e.stopPropagation();
-          }
-        }, true);
-        // Remove any card-level close behavior
-        let card = lite.closest('div[class*="bg-"][class*="border"]') || lite.parentElement?.parentElement;
-        if(card){
-          // Clone to remove old listeners? Instead override onclick
-          card.style.cursor = 'default';
-        }
-      }
-    });
-  }
 
-  // Patch createFacade to add controls=1 and better params
-  const origCreateFacade = window.createFacade;
-  // Override our earlier facade creation by patching the global function if exists, else patch via mutation
-  function patchFacadeCreation(){
-    document.querySelectorAll('.yt-lite:not(.yt-loaded)').forEach(lite=>{
-      if(lite.dataset.patchedControls) return;
-      lite.dataset.patchedControls = '1';
-      // Re-bind click to use better iframe url
-      lite.addEventListener('click', function handler(e){
-        if(lite.classList.contains('yt-loaded')) return;
-        // This will be handled by the original facade click, but we ensure our CSS fix runs after
-        setTimeout(enhanceIframes, 100);
-        setTimeout(enhanceIframes, 500);
-      });
-    });
-  }
-
-  // Override the iframe src creation in the V19 script by monkey patching the wrapper's click
-  // Find all yt-lite and ensure they create iframe with controls=1
-  document.addEventListener('click', (e)=>{
-    let lite = e.target.closest('.yt-lite');
-    if(lite && !lite.classList.contains('yt-loaded')){
-      // Let original handler run first, then fix
-      setTimeout(()=>{
-        let iframe = lite.querySelector('iframe');
-        if(iframe && !iframe.src.includes('controls=1')){
-          let src = iframe.src;
-          if(!src.includes('controls=')){
-            iframe.src = src + '&controls=1&fs=1&playsinline=1';
-          }
-          enhanceIframes();
-        }
-      }, 200);
-    }
-  }, true);
-
-  setInterval(()=>{
-    enhanceIframes();
-    patchFacadeCreation();
-  }, 800);
-
-  console.log('✅ V25 Controls fix - overlay removed, pause/seek now works');
-})();
-</script>
 
 
 <script>
@@ -6014,185 +5888,7 @@ document.addEventListener('click', function(e){
 console.log('[ZED] Welcome popup + fast login active');
 </script>
 
-<script>
-// === ZED - Hide More videos + YouTube expand, load 4 videos at a time ===
-(function(){
-  var VISIBLE = 4;
-  var lastSearch = '';
-  function getVideosGrid(){
-    var grids = document.querySelectorAll('.grid.md\\:grid-cols-2.gap-4');
-    for(var i=0;i<grids.length;i++){
-      var g = grids[i];
-      if(g.className.includes('grid-cols-3')) continue;
-      // Videos grid has iframes or • G text
-      if(g.children.length>0 && (g.innerHTML.includes('iframe') || g.innerHTML.includes('• G'))){
-        return g;
-      }
-    }
-    return grids[0] || null;
-  }
-  function getSearchQuery(){
-    var inp = document.getElementById('zed-v16-input') || document.querySelector('input[placeholder*="Search a topic"]') || document.querySelector('input[placeholder*="Search here"]');
-    return inp ? (inp.value||'').trim().toLowerCase() : '';
-  }
-  function addShields(){
-    // Add shields to each video wrapper to block YouTube More videos + YouTube own expand
-    document.querySelectorAll('.aspect-video').forEach(function(wrap){
-      if(!wrap) return;
-      if(wrap.style.position !== 'relative') wrap.style.position = 'relative';
-      if(!wrap.querySelector('.zed-more-shield')){
-        var s = document.createElement('div');
-        s.className = 'zed-more-shield';
-        s.title = '';
-        // Block clicks - More videos does nothing
-        s.addEventListener('click', function(e){ e.preventDefault(); e.stopPropagation(); });
-        s.addEventListener('pointerdown', function(e){ e.preventDefault(); e.stopPropagation(); });
-        wrap.appendChild(s);
-      }
-      if(!wrap.querySelector('.zed-yt-expand-shield')){
-        var s2 = document.createElement('div');
-        s2.className = 'zed-yt-expand-shield';
-        s2.title = '';
-        s2.addEventListener('click', function(e){ e.preventDefault(); e.stopPropagation(); });
-        s2.addEventListener('pointerdown', function(e){ e.preventDefault(); e.stopPropagation(); });
-        wrap.appendChild(s2);
-      }
-    });
-  }
-  function applyPagination(){ if(window._zedV7OwnsVideos || window._zedV8OwnsVideos || window._zedV9OwnsVideos || window._zedV10OwnsVideos || window._zedV11OwnsVideos || window._zedV12OwnsVideos || window._zedV13OwnsVideos || window._zedV14OwnsVideos || window._zedV15OwnsVideos) return; // V15 owns pagination
-    var grid = getVideosGrid();
-    if(!grid) return;
-    var q = getSearchQuery();
-    if(q !== lastSearch){
-      VISIBLE = 4;
-      lastSearch = q;
-    }
-    // Collect cards (exclude our Load More button if inside grid)
-    var cards = Array.from(grid.children).filter(function(c){
-      return c.id !== 'zed-load-more-videos' && !c.classList.contains('zed-load-more-wrap');
-    });
-    if(cards.length===0) return;
-    // Filter by search: cards already hidden by existing search code have display:none and no pag flag
-    // We treat cards with display:none and NO pag flag as search-hidden, keep them hidden
-    // Cards with pag flag are pagination-hidden
-    var searchVisible = cards.filter(function(c){
-      if(c.dataset.zedPagHidden === '1') return false; // pagination hidden, but may become visible if in first 4
-      // If search is active, existing search code may have hidden it - respect that
-      if(q && c.style.display === 'none' && !c.dataset.zedSearchMatch) return false;
-      return true;
-    });
-    // For search, we need to consider all cards that match search, not just currently visible
-    // So build list of matching cards: if q, check dataset.zedSearch or text
-    var matching = cards;
-    if(q){
-      matching = cards.filter(function(c){
-        var hay = (c.dataset.zedSearch || (c.textContent||'').toLowerCase());
-        return hay.includes(q);
-      });
-    }
-    // Show first VISIBLE matching, hide rest (lazy unload iframe)
-    matching.forEach(function(card, idx){
-      var iframe = card.querySelector('iframe');
-      if(idx < VISIBLE){
-        card.style.display = '';
-        card.dataset.zedPagHidden = '';
-        // Restore iframe if it was unloaded
-        if(iframe && (!iframe.src || iframe.src === 'about:blank' || iframe.src === '')){
-          if(card.dataset.zedSrc){
-            iframe.src = card.dataset.zedSrc;
-          }
-        }
-      } else {
-        card.style.display = 'none';
-        card.dataset.zedPagHidden = '1';
-        // Unload iframe to make page fast - store src
-        if(iframe && iframe.src && iframe.src !== 'about:blank' && iframe.src !== ''){
-          card.dataset.zedSrc = iframe.src;
-          iframe.src = 'about:blank';
-        }
-      }
-    });
-    // Hide non-matching when searching
-    if(q){
-      cards.forEach(function(card){
-        if(!matching.includes(card)){
-          card.style.display = 'none';
-        }
-      });
-    }
-    // Load More button - outside grid, after grid
-    var existing = document.getElementById('zed-load-more-videos');
-    var remaining = matching.length - VISIBLE;
-    if(remaining > 0){
-      if(!existing){
-        var wrap = document.createElement('div');
-        wrap.className = 'zed-load-more-wrap';
-        wrap.style.cssText = 'grid-column:1/-1;';
-        var btn = document.createElement('button');
-        btn.id = 'zed-load-more-videos';
-        btn.type = 'button';
-        btn.textContent = 'Load 4 more videos (' + remaining + ' left)';
-        btn.addEventListener('click', function(){
-          VISIBLE += 4;
-          applyPagination();
-          // Scroll to first newly shown
-          var grid2 = getVideosGrid();
-          if(grid2){
-            var shown = Array.from(grid2.children).filter(function(c){ return c.style.display !== 'none' && c.id !== 'zed-load-more-videos'; });
-            var target = shown[VISIBLE-4];
-            if(target) target.scrollIntoView({behavior:'smooth', block:'start'});
-          }
-        });
-        wrap.appendChild(btn);
-        grid.parentNode.insertBefore(wrap, grid.nextSibling);
-      } else {
-        existing.textContent = 'Load 4 more videos (' + remaining + ' left)';
-        // Move it after grid if needed
-        if(existing.parentNode !== grid.parentNode || existing.parentNode.querySelector('.zed-load-more-wrap') !== existing.parentNode){
-          // keep as is
-        }
-      }
-    } else {
-      if(existing){
-        var w = existing.closest('.zed-load-more-wrap');
-        if(w) w.remove(); else existing.remove();
-      }
-    }
-  }
-  // Run pagination + shields on interval (React re-renders)
-  /* V15 owns pagination - interval disabled */ setInterval(function(){ try{ addShields(); }catch(e){}  }catch(e){}
-  }, 800);
-  // Auto-load more on scroll near bottom
-  var scrollTick = false;
-  window.addEventListener('scroll', function(){
-    if(scrollTick) return;
-    scrollTick = true;
-    setTimeout(function(){
-      scrollTick = false;
-      try{
-        var grid = getVideosGrid();
-        if(!grid) return;
-        var rect = grid.getBoundingClientRect();
-        if(rect.bottom < window.innerHeight + 400){
-          var btn = document.getElementById('zed-load-more-videos');
-          if(btn){
-            VISIBLE += 4;
-            applyPagination();
-          }
-        }
-      }catch(e){}
-    }, 300);
-  }, {passive:true});
-  // Reset pagination when search changes
-  document.addEventListener('input', function(e){
-    if(e.target && e.target.id === 'zed-v16-input'){
-      VISIBLE = 4;
-      setTimeout(applyPagination, 100);
-    }
-  });
-  console.log('[ZED] 4-at-a-time + More videos blocked active');
-})();
-</script>
+
 
 <script>
 // === ZED - Settings (Logout moved here), Edit Profile, Change/Recover Password, Show/Hide password, Colourful logo ===
@@ -7439,9 +7135,141 @@ console.log('[ZED] Welcome popup + fast login active');
 })();
 </script>
 
+<script>
+// === ZED - Clean ONLINE, no dimming, no rainbow ===
+(function(){
+  function fixOnlinePill(){
+    try{
+      // Find header
+      var header = document.querySelector('header');
+      if(!header) return;
+      // Find any element that says ONLINE / OFFLINE / Live / Connecting
+      var all = header.querySelectorAll('*');
+      all.forEach(function(el){
+        var t = (el.textContent||'').trim();
+        if(t === 'ONLINE' || t === 'OFFLINE' || t === 'Live' || t === 'Connecting' || t === 'Offline'){
+          // FIX v13: NO BOX - transparent, don't set background/border/padding (that was re-creating the box + causing jump)
+          el.style.background = 'transparent';
+          el.style.backgroundImage = 'none';
+          el.style.color = '#8CFF8A';
+          el.style.boxShadow = 'none';
+          el.style.animation = 'none';
+          el.style.opacity = '1';
+          // Parent pill container - transparent, keep its original size/position (don't touch padding/height/position)
+          var parent = el.parentNode;
+          if(parent){
+            parent.style.background = 'transparent';
+            parent.style.backgroundImage = 'none';
+            parent.style.boxShadow = 'none';
+            parent.style.animation = 'none';
+            parent.style.opacity = '1';
+            parent.style.border = 'none';
+            parent.style.borderRadius = '0px';
+            // DO NOT touch parent.style.padding / position - that moves LIVE from centre to top-right
+          }
+          // Green dot before it
+          var dot = el.previousElementSibling;
+          if(dot && dot.tagName === 'SPAN'){
+            dot.style.background = '#8CFF8A';
+            dot.style.animation = 'none';
+            dot.style.opacity = '1';
+          }
+        }
+      });
+      // Also fix any rainbow gradient pill in header (the one in screenshot)
+      header.querySelectorAll('div').forEach(function(d){
+        var cs = window.getComputedStyle ? getComputedStyle(d) : null;
+        if(cs && cs.backgroundImage && cs.backgroundImage.indexOf('gradient') !== -1){
+          // Only fix if it's the ONLINE pill (contains ONLINE text)
+          if((d.textContent||'').indexOf('ONLINE') !== -1){
+            d.style.background = 'transparent';
+            d.style.backgroundImage = 'none';
+            d.style.boxShadow = 'none';
+            d.style.animation = 'none';
+          }
+        }
+      });
+      // Remove dimming: any overlay that dims the page
+      document.querySelectorAll('div').forEach(function(d){
+        if(d.style && d.style.background && d.style.background.indexOf('rgba(0,0,0,0.5)') !== -1 && d.id !== 'zed-settings-modal' && d.id !== 'zed-recovery-modal' && d.id !== 'zed-pic-viewer'){
+          // Don't remove modals, but make dimming lighter
+          // Leave it
+        }
+      });
+      // Floating 📚 button: move it so it doesn't cover Download
+      var fabs = document.querySelectorAll('button');
+      fabs.forEach(function(b){
+        if((b.textContent||'').indexOf('📚') !== -1){
+          b.style.bottom = '88px';
+          b.style.right = '16px';
+          b.style.opacity = '1';
+          b.style.background = '#111';
+        }
+      });
+    }catch(e){}
+  }
+  // FIX: Run ONCE only - interval was moving ONLINE every 800ms
+  setTimeout(fixOnlinePill, 800);
+  console.log('[ZED] Clean ONLINE, no dimming active');
+})();
+</script>
 
-
-
+<script>
+// === ZED - Stabilize ONLINE: keep only ONE, top-right, never move ===
+(function(){
+  function stabilize(){
+    try{
+      // Find all ONLINE pills on page
+      var pills = [];
+      document.querySelectorAll('*').forEach(function(el){
+        if(el.children.length===0 && (el.textContent||'').trim() === 'ONLINE'){
+          pills.push(el);
+        }
+      });
+      // If more than one, hide all except the one inside header (top-right)
+      if(pills.length > 1){
+        var headerPill = null;
+        pills.forEach(function(p){
+          if(p.closest && p.closest('header')) headerPill = p;
+        });
+        pills.forEach(function(p){
+          if(p !== headerPill){
+            var container = p.closest ? p.closest('div') : null;
+            if(container) container.style.display = 'none';
+            p.style.display = 'none';
+          }
+        });
+      }
+      // Ensure header ONLINE pill is solid, not rainbow, and in header right
+      var header = document.querySelector('header');
+      if(header){
+        var onlineEl = Array.from(header.querySelectorAll('*')).find(function(e){ return (e.textContent||'').trim() === 'ONLINE'; });
+        if(onlineEl){
+          // FIX v13: NO BOX, NO MOVE - transparent, don't touch position (position:static was moving it)
+          onlineEl.style.background = 'transparent';
+          onlineEl.style.backgroundImage = 'none';
+          onlineEl.style.color = '#8CFF8A';
+          onlineEl.style.boxShadow = 'none';
+          onlineEl.style.animation = 'none';
+          var pill = onlineEl.parentNode;
+          if(pill){
+            pill.style.background = 'transparent';
+            pill.style.backgroundImage = 'none';
+            pill.style.boxShadow = 'none';
+            pill.style.animation = 'none';
+            pill.style.border = 'none';
+            // DO NOT set pill.style.position - that was jumping LIVE from centre to top-right
+          }
+        }
+      }
+    }catch(e){}
+  }
+  // Run once after load, not every second
+  setTimeout(stabilize, 1000);
+  setTimeout(stabilize, 2000);
+  console.log('[ZED] ONLINE stabilized - one pill, top-right, no moving');
+})();
+</script>
 
 <script>// REMOVED: old rainbow fix - replaced by clean profile-only below.
 </script>
@@ -9667,7 +9495,53 @@ input[placeholder="Search school..."]{ position: relative !important; z-index: 3
 </style>
 
 
-
+<style>
+/* ===== ZED FIX v12 - LIVE / OFFLINE: NO BOX, JUST TEXT + DOT ===== */
+/* The LIVE pill in header - strip ALL box styles: no background, no border, no padding box, no shadow */
+header div[class*="bg-"][class*="border"][class*="rounded"],
+header > div:last-child > div:first-child,
+header div:has(> span[class*="rounded-full"]){
+  background: transparent !important;
+  background-image: none !important;
+  background-color: transparent !important;
+  border: none !important;
+  border-radius: 0 !important;
+  box-shadow: none !important;
+  text-shadow: none !important;
+  /* FIX v13: DO NOT touch padding/height/margin - that shrinks the pill and makes LIVE jump from centre to top-right. Keep its original size, just no box. */
+}
+/* The header right container itself - also no box */
+header > div:last-child{
+  background: transparent !important;
+  background-image: none !important;
+  border: none !important;
+  box-shadow: none !important;
+}
+/* LIVE text - green, no box */
+header [data-live="true"], header div[data-live="true"]{
+  background: transparent !important;
+  color: #8CFF8A !important;
+  border: none !important;
+}
+/* OFFLINE text - red, no box */
+header [data-live="false"], header div[data-live="false"]{
+  background: transparent !important;
+  color: #FF3B30 !important;
+  border: none !important;
+}
+/* The LIVE / OFFLINE text span itself - no background, keep colour */
+header div[class*="bg-"][class*="border"][class*="rounded"] span{
+  background: transparent !important;
+  border: none !important;
+  box-shadow: none !important;
+  color: #fff !important;
+}
+/* The dot stays coloured: green for LIVE, red for OFFLINE */
+header div[class*="bg-"][class*="border"][class*="rounded"] span:first-child{
+  background: #8CFF8A !important;
+  width: 8px !important; height: 8px !important; border-radius: 999px !important;
+}
+</style>
 
 
 
@@ -10525,6 +10399,22 @@ body.zed-v15-no-results #zed-v15-no-results{display:block !important}
 // - Stable IDs: YouTube uses ytId only (not full iframe URL which changes when we blank it). Unlocked now includes YouTube + MP4.
 // - Chat button = normal tap, no long-press drag. Movable is disabled for chat in the file build + V7 resets it to the stack.
 window._zedV5OwnsVideos = true;
+
+/* Locked-video thumbnail: the cover used info.thumbnail_url, which is EMPTY for most
+   YouTube videos, so locked cards showed a black box. Fall back to the YouTube
+   thumbnail from the video ID (info.ytId, or extracted from info.video_url). */
+function zedLockedThumb(info){
+  try{
+    if(info && info.thumbnail_url) return info.thumbnail_url;
+    var id = (info && info.ytId) || '';
+    if(!id && info && info.video_url){
+      var m = String(info.video_url).match(/(?:youtube\.com\/(?:watch\?v=|embed\/|v\/)|youtu\.be\/)([A-Za-z0-9_-]{11})/);
+      if(m) id = m[1];
+      if(!id){ var t = String(info.video_url).trim(); if(/^[A-Za-z0-9_-]{11}$/.test(t)) id = t; }
+    }
+    return id ? 'https://i.ytimg.com/vi/' + id + '/hqdefault.jpg' : '';
+  }catch(e){ return ''; }
+}
 window._zedV6OwnsVideos = true;
 window._zedV7OwnsVideos = true;
 window._zedV8OwnsVideos = true;
@@ -11282,23 +11172,6 @@ window._zedV15Filter = 'search';
       if(q){
         filtered=items.filter(function(it){ return matchesSearch({title:it.title,subject:it.subject}, q); });
       }
-      /* FIX 14 Nov 2026 — FLICKER: this function rebuilt the whole Unlocked view
-         (view.innerHTML = ...) every 600ms via the processVideos interval, even
-         when nothing changed. That destroyed the download progress bar the fixer
-         appends INSIDE the card, and reset its button to "Download for offline".
-         The fixer's 1s interval re-injected both, then the next 600ms rebuild
-         wiped them again — the show/hide flicker, only offline (online it filters
-         cards instead of rebuilding). Now: if the data that determines the HTML
-         is unchanged since the last render, leave the DOM alone. A download in
-         progress does NOT change this data (it is not in IndexedDB until it
-         finishes), so the progress bar and the painted button survive. A
-         completed download flips isDownload, a new unlock adds meta, a new
-         search changes q — all change the signature and trigger a real rebuild. */
-      var _sig = q + '|' + items.length + '|' + vids.length + '|' + filtered.map(function(it){
-        return [it.id, it.title, it.subject, it.isDownload ? 1 : 0, it.video_type, it.thumbnail_url, it.video_url, it.ytId].join('\x1f');
-      }).join('\n');
-      if (view.dataset.zedUnlockedSig === _sig) return;
-      view.dataset.zedUnlockedSig = _sig;
       if(items.length===0){
         view.innerHTML=(vids.length>0 ? '<div style="grid-column:1/-1;padding:20px;text-align:center;color:#ccc;font-size:13px">Syncing your unlocked videos…<br><span style="color:#aaa;font-size:12px">Open Search once while online to load their titles, then come back here.</span><br><button class="zed-vt-filter active" data-zed-back-search3 style="margin-top:12px">🔍 Search Videos →</button></div>' : '<div style="grid-column:1/-1;padding:20px;text-align:center;color:#ccc;font-size:13px">No unlocked videos yet.<br><span style="color:#aaa;font-size:12px">Unlock a video with 25 coins when online, then it stays unlocked offline.</span><br><button class="zed-vt-filter active" data-zed-back-search3 style="margin-top:12px">🔍 Search Videos →</button></div>');
         var b=view.querySelector('[data-zed-back-search3]'); if(b) b.addEventListener('click', function(){ setFilter('search'); });
@@ -11468,14 +11341,14 @@ window._zedV15Filter = 'search';
       if(!cover){
         cover=document.createElement('div'); cover.className='zed-lock-cover';
         cover.setAttribute('data-zed-unlock', info.id); // V12: tapping cover unlocks, but NO duplicate button/title
-        if(info.thumbnail_url) cover.style.backgroundImage='url("'+info.thumbnail_url+'")';
+        var _lt=zedLockedThumb(info); if(_lt) cover.style.backgroundImage='url("'+_lt+'")';
         // V12: ONE Unlock button only - the one in the card below. Cover shows only lock icon, no title, no second Unlock.
         cover.innerHTML='<div class="zed-lock-icon">🔒</div><div class="zed-lock-sub">Locked • Tap Unlock below</div>';
         card.insertBefore(cover, card.firstChild);
       } else {
         cover.style.display='flex';
         cover.setAttribute('data-zed-unlock', info.id);
-        if(info.thumbnail_url && cover.style.backgroundImage.indexOf(info.thumbnail_url)===-1) cover.style.backgroundImage='url("'+info.thumbnail_url+'")';
+        var _lt2=zedLockedThumb(info); if(_lt2 && cover.style.backgroundImage.indexOf(_lt2)===-1) cover.style.backgroundImage='url("'+_lt2+'")';
         // V12: keep cover minimal - remove any old title/button left from earlier version
         var oldTitle=cover.querySelector('.zed-lock-title'); if(oldTitle) oldTitle.remove();
         var oldBtn=cover.querySelector('.zed-unlock-btn'); if(oldBtn) oldBtn.remove();
@@ -12763,8 +12636,106 @@ window._zedV15Filter = 'search';
         + '<div><div style="font-family:cursive;font-size:24px;">Hope Chaka</div><div style="font-size:11px;color:#666;border-top:1px solid #999;padding-top:4px;">Founder, ZED SCHOLAR</div></div>'
         + '<div style="text-align:right;font-size:11px;color:#666;">Certificate ID<br/><b style="color:#111;">'+cert.certId+'</b></div>'
         + '</div></div></div>
+<style id="zed-header-lock-final">
+/* ZED FINAL - Header locked, LIVE no flicker - wins over all older rules */
+header{ flex-wrap:nowrap !important; backdrop-filter:none !important; -webkit-backdrop-filter:none !important; background:#0F0E0B !important; background-image:none !important; height:56px !important; min-height:56px !important; max-height:56px !important; overflow:hidden !important; display:flex !important; align-items:center !important; justify-content:space-between !important; gap:8px !important; }
+header > div{ flex-wrap:nowrap !important; }
+header > div:first-child{ flex:1 1 auto !important; min-width:0 !important; max-width:none !important; flex-wrap:nowrap !important; }
+header > div:first-child > div:first-child{ flex-shrink:0 !important; width:36px !important; height:36px !important; min-width:36px !important; min-height:36px !important; }
+header > div:first-child > div:last-child{ min-width:0 !important; flex:1 1 auto !important; white-space:nowrap !important; overflow:hidden !important; }
+header > div:first-child > div:last-child > div:first-child{ white-space:nowrap !important; overflow:hidden !important; text-overflow:ellipsis !important; font-size:15px !important; }
+header > div:last-child{ flex-shrink:0 !important; flex-wrap:nowrap !important; margin-left:auto !important; }
+/* LIVE pill - STAY dark, only the dot changes colour. No whole-pill white/green flicker */
+header [data-live="true"], header [data-live="false"], header [data-live]{ background:#1a1a1a !important; background-image:none !important; color:#fff !important; border:1px solid #333 !important; box-shadow:none !important; animation:none !important; transition:none !important; }
+header [data-live="true"] span:first-child{ background:#22C55E !important; background-image:none !important; }
+header [data-live="false"] span:first-child{ background:#FF3B30 !important; background-image:none !important; }
+header span, header div{ animation:none !important; transition:none !important; }
+.animate-pulse{ animation:none !important; opacity:1 !important; }
+div[class*="backdrop-blur"]{ backdrop-filter:none !important; -webkit-backdrop-filter:none !important; }
+</style>
 
 
+<style>
+/* ZED YT PLAYER FIX - opaque shields hide "More videos" + recommended thumbnails + "YouTube" button.
+   The old shields were transparent, so the text/thumbnail still showed. Opaque black hides them.
+   The seek bar + play/pause sit BELOW this strip (bottom 0-44px), so they still work. */
+.zed-yt-shield-logo{ background:#000 !important; }
+.zed-yt-shield-more{ position:absolute !important; left:0 !important; right:0 !important; bottom:40px !important; height:80px !important; background:#000 !important; z-index:21 !important; pointer-events:auto !important; }
+.zed-video-fullscreen .zed-yt-shield-more{ bottom:48px !important; height:96px !important; }
+.zed-video-fullscreen .zed-yt-shield-logo{ bottom:56px !important; right:12px !important; width:140px !important; height:48px !important; }
+.zed-yt-shield-top{ background:transparent !important; }
+</style>
+
+<script>
+// ZED - LIVE pill: ONE dot, NO blink. Replaces old Scripts 40, 41, 52.
+// Those three fought each other: 40/41 rewrote the text span to "● LIVE" (but the pill
+// already has a real dot <span>, so that made TWO dots), and all three re-set the
+// background every 400-500ms (dark <-> green <-> transparent) = the blink.
+// This one: strips the extra "●" from the text, keeps exactly one dot span, sets stable
+// styles ONCE per state (guarded by a marker, so it never re-writes = no blink), and
+// only re-runs when React actually re-renders (MutationObserver, NOT an interval).
+(function(){
+  function cleanLiveText(t){ return (t||'').replace(/^[\u25CF\u2022\u00B7\s]+/, '').trim(); }
+  function isLiveText(t){ return /^[\u25CF\u2022\u00B7]?\s*(LIVE|OFFLINE|ONLINE)$/i.test((t||'').trim()); }
+  function fixPill(pill, textSpan){
+    if(!pill || !textSpan) return;
+    var clean = cleanLiveText(textSpan.textContent);
+    if(!/^(LIVE|OFFLINE|ONLINE)$/i.test(clean)) return;
+    var isOff = /OFFLINE/i.test(clean);
+    var dotColor = isOff ? '#FF3B30' : '#22C55E';
+    var marker = clean + '|' + dotColor;
+    // Find dot spans (empty spans inside the pill, not the text span)
+    var dots = [];
+    pill.querySelectorAll('span').forEach(function(s){ if(s!==textSpan && s.children.length===0 && (s.textContent||'').trim()==='') dots.push(s); });
+    // Already fixed for this state? Don't touch it again (no blink).
+    if(pill.dataset.zedLiveFixed === marker && textSpan.textContent === clean && dots.length === 1) return;
+    // 1) Strip the extra "●" -> text is just "LIVE"/"OFFLINE" (the dot span is the ONE dot)
+    if(textSpan.textContent !== clean) textSpan.textContent = clean;
+    // 2) Exactly ONE dot span. Remove extras, add one if missing.
+    var dot = dots[0];
+    if(!dot){
+      dot = document.createElement('span');
+      dot.setAttribute('aria-hidden','true');
+      pill.insertBefore(dot, pill.firstChild);
+    }
+    for(var i=1;i<dots.length;i++){ dots[i].remove(); }
+    // 3) Stable styles, once per state.
+    dot.style.cssText = 'display:inline-block !important;width:8px !important;height:8px !important;border-radius:9999px !important;background:'+dotColor+' !important;flex:none !important;animation:none !important;';
+    textSpan.style.cssText = 'background:transparent !important;background-image:none !important;color:#fff !important;animation:none !important;';
+    pill.style.cssText = 'background:#1a1a1a !important;background-image:none !important;border:1px solid #333 !important;color:#fff !important;box-shadow:none !important;animation:none !important;display:inline-flex !important;align-items:center !important;gap:6px !important;';
+    pill.setAttribute('data-live', isOff ? 'false' : 'true');
+    pill.dataset.zedLiveFixed = marker;
+  }
+  function scan(){
+    document.querySelectorAll('header span').forEach(function(s){
+      if(s.children.length>0) return;
+      var t = (s.textContent||'').trim();
+      if(!isLiveText(t)) return;
+      var pill = s.parentElement;
+      if(pill) fixPill(pill, s);
+    });
+  }
+  var obs = new MutationObserver(function(){ scan(); });
+  if(document.body) obs.observe(document.body, {childList:true, subtree:true, characterData:true});
+  scan();
+  setTimeout(scan, 300);
+  setTimeout(scan, 1200);
+  console.log('[ZED] LIVE pill - 1 dot, no blink');
+})();
+</script>
+
+
+<style>
+/* ZED FIX - Locked video: the black shield was 82% opaque, so the thumbnail behind it
+   was invisible. Make it 20% (mostly transparent) so the thumbnail shows through.
+   Lock icon + text sit on top (z-index 1), text-shadow keeps them readable. */
+.zed-lock-cover::after{ background:rgba(0,0,0,.20) !important; }
+.zed-lock-sub{ text-shadow:0 1px 4px rgba(0,0,0,.9) !important; color:#fff !important; }
+.zed-lock-icon{ text-shadow:0 1px 6px rgba(0,0,0,.9) !important; }
+/* ZED FIX - LIVE pill: kill ANY animation/pulse on the pill and its dot (React's
+   animate-pulse on the dot was part of the blink). The JS sets the dot colour. */
+header [data-live], header [data-live] *{ animation:none !important; transition:none !important; }
+</style>
 </body></html>';
       w.document.write(printHtml);
       w.document.close(); setTimeout(function(){ try{ w.focus(); w.print(); }catch(e){} }, 500);
@@ -13521,7 +13492,23 @@ html[data-signup="open"] #zed-login-forgot-link,
 })();
 </script>
 
-
+<style id="zed-header-lock-final">
+/* ZED FINAL - Header locked, LIVE no flicker - wins over all older rules */
+header{ flex-wrap:nowrap !important; backdrop-filter:none !important; -webkit-backdrop-filter:none !important; background:#0F0E0B !important; background-image:none !important; height:56px !important; min-height:56px !important; max-height:56px !important; overflow:hidden !important; display:flex !important; align-items:center !important; justify-content:space-between !important; gap:8px !important; }
+header > div{ flex-wrap:nowrap !important; }
+header > div:first-child{ flex:1 1 auto !important; min-width:0 !important; max-width:none !important; flex-wrap:nowrap !important; }
+header > div:first-child > div:first-child{ flex-shrink:0 !important; width:36px !important; height:36px !important; min-width:36px !important; min-height:36px !important; }
+header > div:first-child > div:last-child{ min-width:0 !important; flex:1 1 auto !important; white-space:nowrap !important; overflow:hidden !important; }
+header > div:first-child > div:last-child > div:first-child{ white-space:nowrap !important; overflow:hidden !important; text-overflow:ellipsis !important; font-size:15px !important; }
+header > div:last-child{ flex-shrink:0 !important; flex-wrap:nowrap !important; margin-left:auto !important; }
+/* LIVE pill - STAY dark, only the dot changes colour. No whole-pill white/green flicker */
+header [data-live="true"], header [data-live="false"], header [data-live]{ background:#1a1a1a !important; background-image:none !important; color:#fff !important; border:1px solid #333 !important; box-shadow:none !important; animation:none !important; transition:none !important; }
+header [data-live="true"] span:first-child{ background:#22C55E !important; background-image:none !important; }
+header [data-live="false"] span:first-child{ background:#FF3B30 !important; background-image:none !important; }
+header span, header div{ animation:none !important; transition:none !important; }
+.animate-pulse{ animation:none !important; opacity:1 !important; }
+div[class*="backdrop-blur"]{ backdrop-filter:none !important; -webkit-backdrop-filter:none !important; }
+</style>
 
 <!-- ZED GS + DL v1 : Getting Started + Circular Loaders + Tab Restore + Download Progress / Pause-Resume : ONE guarded block, no duplicates -->
 <style id="zed-gs-dl-style">
@@ -14440,7 +14427,6 @@ function updateFixUI(job){
     if(job.status==='downloading') meta+=''; /* FIX: quiet progress */
     else if(job.status==='paused') meta+='Retrying…';
     else if(job.status==='error') meta+='Retrying…';
-    else if(job.status==='waiting') meta+='Waiting for connection…';
     else if(job.status==='done') meta+='Saved ✓';
     var ring=el.querySelector('.zed-fix-ring'); if(ring){ ring.textContent=(job.total>0?p+'%':'•'); ring.classList.toggle('zed-fix-spin', job.status==='downloading' && job.total<=0); }
     var titleEl=el.querySelector('.zed-fix-title'); if(titleEl) titleEl.textContent=job.title||'Download';
@@ -14481,21 +14467,6 @@ function updateFixUI(job){
           }
           /* Tell the user once, in words the silent-toast filter does not hide. */
           if(!job._errToastShown){ job._errToastShown=true; showFixToast('Download stopped at '+(job.total>0?Math.floor(job.received*100/job.total):0)+'% — tap Retry Download to continue'); }
-        } else if(job.status==='waiting'){
-          /* FIX 14 Nov 2026 — offline park: show "Waiting for connection…" on
-             the card button (kept tappable: tapping it while offline shows the
-             offline toast, tapping it once back online resumes the download). */
-          var wBtns=syncCard.querySelectorAll('button');
-          for(var wi=0; wi<wBtns.length; wi++){
-            var wb=wBtns[wi];
-            if(job.type==='video'){
-              var _wid=wb.getAttribute('data-zed-download')||wb.getAttribute('data-zed-unlocked-dl')||wb.getAttribute('data-zed-dl-redownload')||'';
-              if(_wid===job.id){ wb.disabled=false; wb.style.opacity='1'; wb.textContent='⏳ Waiting for connection…'; }
-            } else if(job.type==='paper'){
-              var _wt=(wb.textContent||'').trim();
-              if(_wt.indexOf('Download to Phone')!==-1 || _wt.indexOf('Save to Phone')!==-1 || _wt.indexOf('Downloading')!==-1 || _wt.indexOf('Retry Download')!==-1){ wb.disabled=false; wb.style.opacity='1'; wb.textContent='⏳ Waiting for connection…'; }
-            }
-          }
         }
       }
     }catch(eSync){}
@@ -14514,14 +14485,6 @@ function cancelJob(id){
 async function startJob(job){
   if(job._active) return; /* FIX: never two fetches for same file */
   if(job.status==='downloading' && job._started) return;
-  /* FIX 14 Nov 2026 — offline park: do not even attempt a fetch that cannot
-     succeed. Park the job as 'waiting' (93% progress STAYS visible) instead
-     of failing + auto-retrying in a loop. The 'online' listener below resumes
-     it automatically when the connection returns. */
-  if(isOfflineNow()){
-    job.status='waiting'; job._active=false; job._started=false;
-    saveParts(job); updateFixUI(job); return;
-  }
   job.status='downloading'; job._active=true; job._started=true; job.lastBytesAt=Date.now(); job.error='';
   job._attempt=job._attempt||0;
   updateFixUI(job);
@@ -14562,13 +14525,6 @@ async function startJob(job){
   }catch(err){
     job._active=false; job._started=false;
     if(job.status==='paused' || job.status==='cancelled'){ updateFixUI(job); return; }
-    /* FIX 14 Nov 2026 — offline park: a failed fetch while offline is not a
-       retryable error, it is "no connection". Park as 'waiting' instead of
-       burning the 8 retry attempts on fetches that cannot succeed. */
-    if(isOfflineNow()){
-      job.status='waiting'; job._attempt=0;
-      saveParts(job); updateFixUI(job); return;
-    }
     job._attempt=(job._attempt||0)+1;
     if(job._attempt<=8){
       var delay=Math.min(700*job._attempt, 4000);
@@ -14707,7 +14663,7 @@ window.addEventListener('click', function(e){
       if(isOfflineNow()){ showFixToast('You are offline — downloading needs data once.'); return; }
       if(jobs[vid2] && jobs[vid2].status==='downloading'){ return; }
       try{ var _vc=vBtn.closest('div'); if(_vc && _vc.dataset.zedJobId && jobs[_vc.dataset.zedJobId] && jobs[_vc.dataset.zedJobId].status==='downloading'){ return; } }catch(eJ2){}
-      if(jobs[vid2] && (jobs[vid2].status==='paused' || jobs[vid2].status==='error' || jobs[vid2].status==='waiting')){ resumeJob(vid2); return; }
+      if(jobs[vid2] && (jobs[vid2].status==='paused' || jobs[vid2].status==='error')){ resumeJob(vid2); return; }
       var card2=null; (function(){ var cur=vBtn; var best=null; for(var ci2=0;ci2<12 && cur;ci2++){ if(cur.querySelector && cur.querySelector('video, iframe, .yt-lite')){ if(!best) best=cur; } if(cur.classList && (cur.classList.contains('zed-video-card') || cur.classList.contains('zed-dl-card'))){ card2=cur; break; } /* FIX 13 Nov 2026: the old check stopped at div.p-4 (title but NO video), so downloads always got video_url=''. Only stop at a box that has BOTH title AND media. */ if(cur.querySelector && cur.querySelector('.font-semibold') && cur.querySelector('video, iframe, .yt-lite')){ card2=cur; break; } cur=cur.parentElement; } if(!card2) card2=best || vBtn.closest('div'); })();
       var info2=extractVideoInfo(card2, vid2);
       // Unlocked-view / Re-download: prefer stored meta (the card may be blanked)
@@ -14782,7 +14738,7 @@ window.addEventListener('click', function(e){
       /* FIX V2: if this card already has a running job (even if URL string changed slightly), don't start a 2nd one */
       try{ if(pCard && pCard.dataset.zedJobId && jobs[pCard.dataset.zedJobId] && jobs[pCard.dataset.zedJobId].status==='downloading'){ return; } }catch(eJ){}
       if(jobs[pId] && jobs[pId].status==='downloading'){ return; }
-      if(jobs[pId] && (jobs[pId].status==='paused' || jobs[pId].status==='error' || jobs[pId].status==='waiting')){ resumeJob(pId); return; }
+      if(jobs[pId] && (jobs[pId].status==='paused' || jobs[pId].status==='error')){ resumeJob(pId); return; }
       var pJob={id:pId,title:pTitle,url:pUrl,type:'paper',status:'downloading',received:0,total:0,chunks:[],controller:null,meta:null,error:'',lastBytesAt:Date.now()};
       addJob(pJob); /* FIX: silent */; startJob(pJob);
       /* FIX V2: lock the tapped button + remember the job on the card */
@@ -14808,7 +14764,7 @@ setInterval(function(){
         /* FIX: slow 4G is NOT failure. Abort quietly — startJob auto-retries with Range. Was 10s. */
         try{ if(j.controller) j.controller.abort(); }catch(e){}
         j.lastBytesAt=Date.now();
-      } else if(j && (j.status==='downloading' || j.status==='paused' || j.status==='error' || j.status==='waiting')){
+      } else if(j && (j.status==='downloading' || j.status==='paused' || j.status==='error')){
         updateFixUI(j);
       }
     });
@@ -14818,16 +14774,6 @@ setInterval(function(){ try{ repairUnlockMeta(); }catch(e){} }, 3000);
 setInterval(function(){ try{ restoreUnlocksFromServer(); }catch(e){} }, 60000);
 setTimeout(function(){ try{ repairUnlockMeta(); restoreUnlocksFromServer(); }catch(e){} }, 1500);
 document.addEventListener('visibilitychange', function(){ if(!document.hidden){ try{ restoreUnlocksFromServer(); }catch(e){} } });
-/* FIX 14 Nov 2026 — offline park: when the connection returns, resume every
-   job that was parked as 'waiting' (e.g. the 93% download). No tap needed. */
-window.addEventListener('online', function(){
-  try{
-    Object.keys(jobs).forEach(function(id){
-      var j=jobs[id];
-      if(j && j.status==='waiting'){ j._started=false; j._attempt=0; startJob(j); }
-    });
-  }catch(e){}
-});
 })();
 </script>
 
@@ -15236,81 +15182,5 @@ window.addEventListener('online', function(){
 })();
 </script>
 
-
-<style id="zed-live-pill-only">
-/* ZED — LIVE / OFFLINE pill: THE ONLY LIVE RULES (14 Nov 2026).
-   Replaces ALL older LIVE fixes (deleted: 5 JS fix blocks, 8 CSS LIVE rule sets,
-   and the static header-lock style). The pill itself is rendered by the app:
-   dark pill + ONE dot + text "LIVE" / "OFFLINE". These rules only lock the
-   header layout so the pill never moves, and kill any animation on the pill
-   so its colours never flicker. The dot colour comes from the app (green =
-   live, red = offline) and only changes when the connection state changes. */
-header{ flex-wrap:nowrap !important; }
-header > div:first-child{ min-width:0 !important; flex:1 1 auto !important; }
-header > div:first-child > div:last-child{ min-width:0 !important; }
-header > div:first-child > div:last-child > div:first-child{
-  white-space:nowrap !important; overflow:hidden !important; text-overflow:ellipsis !important;
-}
-header > div:last-child{ flex-shrink:0 !important; flex-wrap:nowrap !important; margin-left:auto !important; }
-/* The pill: fixed width so LIVE and OFFLINE take the same space (no shift
-   when the state flips), centred content, no animation, no transition. */
-header > div:last-child > div:first-child{
-  min-width:98px !important; justify-content:center !important;
-  animation:none !important; transition:none !important;
-}
-header > div:last-child > div:first-child *{
-  animation:none !important; transition:none !important;
-}
-</style>
-
-<script>
-// ZED — LIVE / OFFLINE pill: THE ONLY LIVE FIX (14 Nov 2026).
-// Replaces 5 deleted LIVE fix blocks that fought over the pill every 400-500ms.
-// The app renders the pill as: [dot span] + [text span "LIVE" / "OFFLINE"].
-// Old builds rendered the text with a dot character in front, which put TWO
-// dots on screen (the dot span + the dot character). This guard strips a
-// leading dot character from the pill's text span if it ever appears (e.g.
-// after a future re-export), and does NOTHING else — no colours, no
-// backgrounds, no position. It runs on a MutationObserver (only when the
-// header actually changes), never on an interval, and it is idempotent: if
-// the pill is already correct it writes nothing, so it cannot flicker or
-// move the pill.
-(function(){
-  function fixPill(){
-    try{
-      var header=document.querySelector('header'); if(!header) return;
-      var right=header.querySelector(':scope > div:last-child'); if(!right) return;
-      var pill=right.querySelector(':scope > div:first-child'); if(!pill) return;
-      var spans=pill.querySelectorAll('span');
-      for(var i=0;i<spans.length;i++){
-        var t=spans[i].textContent||'';
-        if(t.indexOf('●')!==-1){
-          var cleaned=t.replace(/●\s*/g,'').trim();
-          if((cleaned==='LIVE'||cleaned==='OFFLINE'||cleaned==='Live'||cleaned==='Offline') && spans[i].textContent!==cleaned){
-            spans[i].textContent=cleaned;
-          }
-        }
-      }
-    }catch(e){}
-  }
-  var started=false;
-  function start(){
-    if(started) return;
-    var header=document.querySelector('header');
-    if(!header) return;
-    started=true;
-    try{
-      var mo=new MutationObserver(function(){ fixPill(); });
-      mo.observe(header, {childList:true, subtree:true, characterData:true});
-    }catch(e){}
-    fixPill();
-  }
-  // Find the header (the app renders it after load), then hand over to the observer.
-  var iv=setInterval(function(){ start(); if(started) clearInterval(iv); }, 300);
-  setTimeout(function(){ clearInterval(iv); }, 10000);
-  document.addEventListener('DOMContentLoaded', start);
-  setTimeout(start, 500);
-})();
-</script>
 </body>
 </html>
