@@ -1,114 +1,109 @@
-/* ZED SCHOLAR - Service Worker - PUSH UPDATES TO USERS
-   HOW IT WORKS:
-   1. You upload a new HTML + this sw.js together.
-   2. The app checks for a new sw.js every hour + on every open.
-   3. When it finds a new version, it shows the green "NEW UPDATE AVAILABLE - Tap to Update Now" banner.
-   4. User taps -> app sends SKIP_WAITING -> this SW takes over -> app reloads with the new version.
-   5. User stays on the OLD version until they tap. Nothing auto-reloads.
+/* ZED SCHOLAR Service Worker — v6 (14 Nov 2026)
+   WHY THIS FILE EXISTS: the app is a single page served from Vercel. Without a
+   service worker, going offline means Chrome has nothing to show — "This site
+   can't be reached" (ERR_CONNECTION_ABORTED) — because the page itself never
+   loads, so none of the app's own offline code ever runs. This worker caches
+   the app shell on the first ONLINE visit, then serves it when offline.
 
-   TO PUSH YOUR NEXT UPDATE:
-   - Change CACHE below from 'zed-scholar-v27' to 'zed-scholar-v28' (then v29, v30...)
-   - Upload the new HTML + this sw.js together. If you only upload HTML and forget sw.js, users will NOT get the update.
-*/
-const CACHE = 'zed-scholar-v27';
-const PRECACHE = [
-  './',
-  './index.html',
-  './ZED-SCHOLAR-fixed.html',
-  './manifest.json',
-  './icon-192.png',
-  './icon-512.png'
-];
+   RULE FOR FUTURE CHANGES (the "old must be removed" rule): when you change
+   index.html, bump CACHE_NAME below (v6 -> v7) and redeploy BOTH files.
+   On activate, this worker deletes EVERY cache that is not the current one,
+   so the old version is gone — it can never come back and fight the new one. */
 
-// INSTALL - cache the app shell, but DO NOT skipWaiting yet.
-// We wait for the user to tap "Tap to Update Now" in the app.
-self.addEventListener('install', (e) => {
-  e.waitUntil(
-    caches.open(CACHE).then(async (cache) => {
-      for (const url of PRECACHE) {
-        try { await cache.add(url); } catch (err) {}
-      }
-    })
-    // NO self.skipWaiting() here on purpose - user must tap Update first
-  );
-});
+const CACHE_NAME = 'zed-scholar-v6';
+const APP_SHELL = ['/', '/index.html', '/manifest.json', '/icon-192.png', '/icon-512.png'];
 
-// ACTIVATE - delete ALL old caches, then take control
-self.addEventListener('activate', (e) => {
-  e.waitUntil(
-    caches.keys().then((keys) =>
-      Promise.all(keys.filter((k) => k !== CACHE).map((k) => caches.delete(k)))
-    ).then(() => self.clients.claim())
-  );
-});
-
-// MESSAGE FROM THE APP - "Tap to Update Now" button sends this
-self.addEventListener('message', (e) => {
-  if (e.data && e.data.type === 'SKIP_WAITING') {
-    self.skipWaiting();
-  }
-  // App can also ask "is there an update?" - reply with our version
-  if (e.data && e.data.type === 'GET_VERSION') {
-    e.source && e.source.postMessage({ type: 'VERSION', version: CACHE });
-  }
-});
-
-function isApi(url) {
-  return url.hostname.includes('supabase.co')
-    || url.hostname.includes('generativelanguage.googleapis.com')
-    || url.hostname.includes('googleapis.com')
-    || url.hostname.includes('firebase')
-    || url.hostname.includes('analytics')
-    || url.hostname.includes('googletagmanager');
+function addAllSafe(cache, urls) {
+  // addAll() fails entirely if ONE file 404s — add one by one so a missing
+  // icon can never kill offline mode.
+  return Promise.all(urls.map(function (u) {
+    return cache.add(u).catch(function () { /* ignore missing file */ });
+  }));
 }
 
-self.addEventListener('fetch', (e) => {
-  const req = e.request;
-  if (req.method !== 'GET') return;
-  const url = new URL(req.url);
+self.addEventListener('install', function (e) {
+  e.waitUntil(
+    caches.open(CACHE_NAME)
+      .then(function (cache) { return addAllSafe(cache, APP_SHELL); })
+      .then(function () { return self.skipWaiting(); })
+  );
+});
 
-  // API calls - network only, never cache
-  if (isApi(url)) return;
+self.addEventListener('activate', function (e) {
+  e.waitUntil(
+    caches.keys().then(function (keys) {
+      return Promise.all(keys.map(function (k) {
+        if (k !== CACHE_NAME) return caches.delete(k); // DELETE OLD VERSIONS
+      }));
+    }).then(function () { return self.clients.claim(); })
+  );
+});
 
-  // Navigation - opening the app itself: NETWORK FIRST so users always get the newest HTML when they have data.
-  // If offline, fall back to cached app shell.
-  if (req.mode === 'navigate' || (req.headers.get('accept') || '').includes('text/html')) {
+self.addEventListener('message', function (e) {
+  if (e.data && e.data.type === 'SKIP_WAITING') self.skipWaiting();
+});
+
+
+// Notification clicks — moved here from a blob-registered worker that Chrome
+// rejects (a service worker must be a real file, which this one is).
+self.addEventListener('notificationclick', function (e) {
+  e.notification.close();
+  e.waitUntil(
+    clients.matchAll({ type: 'window', includeUncontrolled: true }).then(function (cs) {
+      if (cs.length) return cs[0].focus();
+      return clients.openWindow('./');
+    })
+  );
+});
+
+self.addEventListener('fetch', function (e) {
+  var url;
+  try { url = new URL(e.request.url); } catch (err) { return; }
+  if (e.request.method !== 'GET') return;
+
+  // NEVER intercept Supabase / API calls. The app handles offline itself
+  // (IndexedDB + localStorage). Caching API responses would serve stale
+  // coins / unlocks / auth data — worse than no cache.
+  if (url.hostname.indexOf('supabase.co') !== -1) return;
+
+  // NAVIGATION (opening the site, refreshing): network first, then the
+  // cached app shell. This is what makes offline open work.
+  if (e.request.mode === 'navigate') {
     e.respondWith(
-      fetch(req).then((res) => {
-        try {
-          const copy = res.clone();
-          caches.open(CACHE).then((c) => c.put('./index.html', copy)).catch(() => {});
-          if (req.url.includes('ZED-SCHOLAR')) {
-            caches.open(CACHE).then((c) => c.put(req, res.clone())).catch(() => {});
-          }
-        } catch (err) {}
+      fetch(e.request).then(function (res) {
+        var copy = res.clone();
+        caches.open(CACHE_NAME).then(function (c) { c.put('/index.html', copy); });
         return res;
-      }).catch(async () => {
-        const cache = await caches.open(CACHE);
-        const cached = await cache.match(req, { ignoreSearch: true })
-          || await cache.match('./index.html')
-          || await cache.match('./ZED-SCHOLAR-fixed.html')
-          || await cache.match('./');
-        if (cached) return cached;
-        return new Response('<h1 style="font-family:sans-serif;padding:20px">ZED SCHOLAR</h1><p style="font-family:sans-serif;padding:0 20px">Open once with data, then it works offline.</p>', { headers: { 'Content-Type': 'text/html' } });
+      }).catch(function () { return caches.match('/index.html'); })
+    );
+    return;
+  }
+
+  // Same-origin static files: serve cache instantly, refresh in background.
+  if (url.origin === self.location.origin) {
+    e.respondWith(
+      caches.match(e.request).then(function (cached) {
+        var network = fetch(e.request).then(function (res) {
+          if (res && res.ok) {
+            var copy = res.clone();
+            caches.open(CACHE_NAME).then(function (c) { c.put(e.request, copy); });
+          }
+          return res;
+        }).catch(function () { return cached; });
+        return cached || network;
       })
     );
     return;
   }
 
-  // Everything else (CSS, JS, images, fonts, PDF.js, Tailwind) - show cached copy instantly, update in background
+  // CDN files (fonts, Tailwind): network first, fall back to cache.
   e.respondWith(
-    caches.match(req, { ignoreSearch: true }).then((cached) => {
-      const network = fetch(req).then((res) => {
-        if (res && res.status === 200 && (url.origin === self.location.origin || url.hostname.includes('cdnjs') || url.hostname.includes('cdn') || url.hostname.includes('fonts') || url.hostname.includes('tailwind'))) {
-          try {
-            const copy = res.clone();
-            caches.open(CACHE).then((c) => c.put(req, copy)).catch(() => {});
-          } catch (err) {}
-        }
-        return res;
-      }).catch(() => null);
-      return cached || network.then((r) => r || new Response('', { status: 504 }));
-    })
+    fetch(e.request).then(function (res) {
+      if (res && res.ok) {
+        var copy = res.clone();
+        caches.open(CACHE_NAME).then(function (c) { c.put(e.request, copy); });
+      }
+      return res;
+    }).catch(function () { return caches.match(e.request); })
   );
 });
