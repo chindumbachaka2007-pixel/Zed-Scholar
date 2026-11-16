@@ -10,7 +10,7 @@
    On activate, this worker deletes EVERY cache that is not the current one,
    so the old version is gone — it can never come back and fight the new one. */
 
-const CACHE_NAME = 'zed-scholar-v11';
+const CACHE_NAME = 'zed-scholar-v12';
 const APP_SHELL = ['/', '/index.html', '/manifest.json', '/icon-192.png', '/icon-512.png'];
 
 function addAllSafe(cache, urls) {
