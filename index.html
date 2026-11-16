@@ -14439,10 +14439,10 @@ body.zed-search-active #zed-v16-wrap{position:relative !important;z-index:5 !imp
         card.style.display="none";
       }
     });
-    try{
-      var countEl=document.querySelector('[data-zed-count="unlocked"]');
-      if(countEl) countEl.textContent="("+visible+")";
-    }catch(e){}
+    // V4.1: NEVER write the Unlocked pill here. Video Coins owns it (counts meta).
+    // pruneDeleted only counted .zed-dl-card in #zed-v15-unlocked-view - when filter is
+    // Unlocked ONLINE, unlocked videos live in the grid and unlocked-view is empty,
+    // so this wrote (0) over the correct count. Hiding deleted cards stays; counting goes.
   }
   function checkBrokenVideo(videoEl){
     if(!videoEl || videoEl.dataset.zedBrokenChecked) return;
@@ -14463,6 +14463,179 @@ body.zed-search-active #zed-v16-wrap{position:relative !important;z-index:5 !imp
       }).catch(function(){});
     }, true);
   }
+  // ---------- V4.1 COUNTS: pill must count what is actually unlocked / downloaded ----------
+  // Badge (Unlocked check) reads candidate IDs in zed_unlocked_videos_<user>.
+  // Pill (getUnlockedCount) reads meta in zed_unlocked_meta_<user>.
+  // If meta is missing / blank for a video the badge already shows as unlocked, pill = 0 while badge = Unlocked.
+  // Repair: copy meta from every grid card the badge already counts as unlocked, so pill and badge agree.
+  // Downloads pill: Video Coins writes downloadedIds.size (a Set that starts empty and only fills after an async load).
+  // True count is IndexedDB records in zed_videos_vault_v1 / videos - read it directly and write it.
+  function hashIdV4(str){ var h=5381; str=String(str||""); for(var i=0;i<str.length;i++){ h=((h<<5)+h)+str.charCodeAt(i); h=h&h; } return 'vid_'+Math.abs(h).toString(36); }
+  function getMeV4(){ try{ return JSON.parse(localStorage.getItem('zed_user')||'null'); }catch(e){ return null; } }
+  function unlockKeyV4(){ var u=getMeV4(); return 'zed_unlocked_videos_'+(u&&u.id?u.id:(u&&u.phone?u.phone:'guest')); }
+  function metaKeyV4(){ var u=getMeV4(); return 'zed_unlocked_meta_'+(u&&u.id?u.id:(u&&u.phone?u.phone:'guest')); }
+  function getUnlockedListV4(){ try{ var a=JSON.parse(localStorage.getItem(unlockKeyV4())||'[]'); return Array.isArray(a)?a:[]; }catch(e){ return []; } }
+  function saveUnlockedListV4(list){ try{ localStorage.setItem(unlockKeyV4(), JSON.stringify(list||[])); }catch(e){} }
+  function getUnlockedMetaV4(){ try{ var a=JSON.parse(localStorage.getItem(metaKeyV4())||'[]'); return Array.isArray(a)?a:[]; }catch(e){ return []; } }
+  function saveUnlockedMetaV4(list){ try{ localStorage.setItem(metaKeyV4(), JSON.stringify(list||[])); }catch(e){} }
+  function extractInfoV4(card){
+    var ts=getCardTitleSubject(card);
+    var ytId=getYtId(card);
+    var origSrc=(card.dataset&&card.dataset.zedOrigSrc)||'';
+    var videoUrl='';
+    var fr=card.querySelector('iframe');
+    if(fr){ var s=fr.getAttribute('src')||fr.src||''; if(s&&s!=='about:blank') videoUrl=s; }
+    if(!videoUrl && card.dataset && card.dataset.zedVideoUrl && card.dataset.zedVideoUrl!=='about:blank') videoUrl=card.dataset.zedVideoUrl;
+    if(!videoUrl && origSrc) videoUrl=origSrc;
+    if(!videoUrl) videoUrl=getMp4Src(card)||'';
+    var thumb='';
+    if(ytId) thumb='https://i.ytimg.com/vi/'+ytId+'/hqdefault.jpg';
+    if(card.dataset && card.dataset.zedThumb) thumb=card.dataset.zedThumb;
+    var id='';
+    if(ytId) id=hashIdV4('yt|'+ts.title+'|'+ts.subject+'|'+ytId);
+    else { var stable=origSrc||(card.dataset&&card.dataset.zedOrigVideoSrc)||videoUrl||''; id=hashIdV4('mp4|'+ts.title+'|'+ts.subject+'|'+stable); }
+    return {id:id, title:ts.title, subject:ts.subject, video_url:videoUrl, video_type:ytId?'youtube':'mp4', ytId:ytId, thumbnail_url:thumb, origSrc:origSrc};
+  }
+  function getCandidateIdsV4(info){
+    var out=[info.id];
+    if(info.ytId){
+      out.push(hashIdV4(info.title+'|'+info.subject+'|https://www.youtube-nocookie.com/embed/'+info.ytId));
+      out.push(hashIdV4(info.title+'|'+info.subject+'|https://www.youtube.com/embed/'+info.ytId));
+      out.push(hashIdV4(info.title+'|'+info.subject+'|'+info.ytId));
+    }
+    if(info.video_url && info.video_url!=='about:blank') out.push(hashIdV4(info.title+'|'+info.subject+'|'+info.video_url));
+    if(info.origSrc){
+      out.push(hashIdV4(info.title+'|'+info.subject+'|'+info.origSrc));
+      out.push(hashIdV4('mp4|'+info.title+'|'+info.subject+'|'+info.origSrc));
+    }
+    var seen={}, res=[];
+    out.forEach(function(x){ if(!seen[x]){ seen[x]=1; res.push(x); } });
+    return res;
+  }
+  function metaKeysV4(m){
+    var out={url:null, ts:null};
+    if(m.ytId) out.url='yt:'+String(m.ytId).trim();
+    else if(m.video_url && m.video_url!=='about:blank' && m.video_url!=='') out.url='url:'+String(m.video_url).trim();
+    var tt=String(m.title||'').trim().toLowerCase();
+    if(tt && tt!=='video' && tt!=='unlocked video') out.ts='ts:'+tt+'|'+String(m.subject||'').trim().toLowerCase();
+    return out;
+  }
+  function countDistinctMetaV4(meta){
+    var seenURL={}, seenTS={}, n=0;
+    for(var i=0;i<meta.length;i++){
+      var k=metaKeysV4(meta[i]);
+      if(k.url && seenURL[k.url]) continue;
+      if(k.ts && seenTS[k.ts]) continue;
+      if(k.url) seenURL[k.url]=1;
+      if(k.ts) seenTS[k.ts]=1;
+      n++;
+    }
+    return n;
+  }
+  function writeUnlockedPillV4(){
+    try{
+      var n=countDistinctMetaV4(getUnlockedMetaV4());
+      var el=document.querySelector('[data-zed-count="unlocked"]');
+      if(el) el.textContent='('+n+')';
+      return n;
+    }catch(e){ return 0; }
+  }
+  function repairUnlockMetaFromGrid(){
+    try{
+      var unlockList=getUnlockedListV4();
+      if(!unlockList.length) return false;
+      var meta=getUnlockedMetaV4();
+      var changed=false;
+      var cards=document.querySelectorAll('.grid > div');
+      cards.forEach(function(card){
+        if(!card.querySelector || !card.querySelector('.font-semibold')) return;
+        if(card.closest && (card.closest('#zed-v15-unlocked-view')||card.closest('#zed-v15-downloads-view')||card.closest('#zed-chat-panel')||card.closest('#zed-v15-toolbar'))) return;
+        var info=extractInfoV4(card);
+        if(!info.title) return;
+        var cands=getCandidateIdsV4(info);
+        var isUnlocked=false;
+        for(var i=0;i<cands.length;i++){ if(unlockList.indexOf(cands[i])!==-1){ isUnlocked=true; break; } }
+        if(!isUnlocked) return;
+        // Already in meta? Match by id, ytId/url, or title|subject - same dedup as getUnlockedCount.
+        var ik=metaKeysV4(info);
+        var found=false;
+        for(var j=0;j<meta.length;j++){
+          if(meta[j].id===info.id){ found=true; break; }
+          var mk=metaKeysV4(meta[j]);
+          if(ik.url && mk.url && ik.url===mk.url){ found=true; break; }
+          if(ik.ts && mk.ts && ik.ts===mk.ts){ found=true; break; }
+        }
+        if(found) return;
+        meta.push({id:info.id, title:info.title||'Video', subject:info.subject||'', video_url:info.video_url||'', video_type:info.video_type||'mp4', thumbnail_url:info.thumbnail_url||'', ytId:info.ytId||'', savedAt:Date.now()});
+        changed=true;
+      });
+      if(changed) saveUnlockedMetaV4(meta);
+      return changed;
+    }catch(e){ return false; }
+  }
+  var lastDlRepair=0;
+  function repairDownloadsFromDB(){
+    try{
+      var now=Date.now();
+      if(now-lastDlRepair<8000) return; // IndexedDB read max once per 8s - not on every 1.5s tick.
+      lastDlRepair=now;
+      var req=indexedDB.open('zed_videos_vault_v1', 1);
+      req.onsuccess=function(){
+        try{
+          var db=req.result;
+          var tx=db.transaction('videos','readonly');
+          var st=tx.objectStore('videos');
+          var getAll=st.getAll();
+          getAll.onsuccess=function(){
+            try{
+              var all=getAll.result||[];
+              var el=document.querySelector('[data-zed-count="downloads"]');
+              if(el) el.textContent='('+all.length+')';
+              // Download = unlocked. If a download never went through Downloads view, it never got
+              // added to unlock list / meta - so Unlocked pill missed it. Add it here.
+              if(all.length){
+                var ul=getUnlockedListV4();
+                var meta=getUnlockedMetaV4();
+                var changedU=false, changedM=false;
+                all.forEach(function(rec){
+                  if(ul.indexOf(rec.id)===-1){ ul.push(rec.id); changedU=true; }
+                  var hasMeta=false;
+                  for(var i=0;i<meta.length;i++){
+                    if(meta[i].id===rec.id){ hasMeta=true; break; }
+                    var mk=metaKeysV4(meta[i]);
+                    var rk=metaKeysV4({ytId:rec.ytId||'', video_url:rec.video_url||'', title:rec.title||'', subject:rec.subject||''});
+                    if(rk.url && mk.url && rk.url===mk.url){ hasMeta=true; break; }
+                    if(rk.ts && mk.ts && rk.ts===mk.ts){ hasMeta=true; break; }
+                  }
+                  if(!hasMeta){
+                    meta.push({id:rec.id, title:rec.title||'Video', subject:rec.subject||'', video_url:rec.video_url||'', video_type:rec.video_type||'mp4', thumbnail_url:rec.thumbnail_url||'', ytId:rec.ytId||'', savedAt:Date.now()});
+                    changedM=true;
+                  }
+                });
+                if(changedU) saveUnlockedListV4(ul);
+                if(changedM) saveUnlockedMetaV4(meta);
+                if(changedM) writeUnlockedPillV4();
+              }
+            }catch(e){}
+          };
+          getAll.onerror=function(){};
+        }catch(e){}
+      };
+      req.onerror=function(){};
+    }catch(e){}
+  }
+  function repairCountsV4(){
+    try{
+      var changed= repairUnlockMetaFromGrid();
+      if(changed) writeUnlockedPillV4();
+      else {
+        // Even with no new meta, re-write pill from meta so a stale (0) left by an older build corrects itself.
+        // Video Coins writes the same number on its next pass, so this does not flicker.
+        writeUnlockedPillV4();
+      }
+      repairDownloadsFromDB();
+    }catch(e){}
+  }
   // ---------- Throttled, search-aware main loop: NEVER do heavy DOM writes while user is touching / typing in search ----------
   var lastFixAll=0;
   function fixAll(){
@@ -14476,6 +14649,7 @@ body.zed-search-active #zed-v16-wrap{position:relative !important;z-index:5 !imp
     ensureVideoOrderOnce();
     fixLockedThumbs();
     pruneDeleted();
+    repairCountsV4();
     document.querySelectorAll('video').forEach(function(v){ checkBrokenVideo(v); });
   }
   fixAll();
