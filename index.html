@@ -10427,9 +10427,10 @@ window._zedV15Filter = 'search';
       var vsrc=v.getAttribute('src')||v.src||'';
       if(vsrc){
         card.dataset.zedOrigVideoSrc=vsrc;
-        try{ v.pause(); }catch(e){}
-        try{ v.removeAttribute('src'); v.load(); }catch(e){}
       }
+      // DO NOT remove src — src IS the thumbnail (first frame). Just pause, mute, no controls, so locked video shows its frame but cannot play.
+      try{ v.pause(); }catch(e){}
+      try{ v.muted=true; v.controls=false; v.setAttribute('preload','metadata'); v.setAttribute('playsinline',''); }catch(e){}
     }
   }
   function restoreUnlockedMedia(card){
@@ -11778,113 +11779,19 @@ div[class*="backdrop-blur"]{ backdrop-filter:none !important; -webkit-backdrop-f
 
 
 <!-- ZED FIX 14 Nov 2026 — TRANSPARENT LOCK SHIELD: thumbnail stays visible -->
-<style>
-/* The lock cover had TWO opaque layers hiding the thumbnail:
-   1) background-color:#12294D (the BLUE shield)
-   2) ::after background:rgba(0,0,0,.82) (the BLACK shield)
-   Both must be transparent at the same time, otherwise one still hides the thumbnail. */
-.zed-lock-cover{
-  background-color: transparent !important;
-  background-size: cover !important;
-  background-position: center !important;
-  background-repeat: no-repeat !important;
-  /* keep the thumbnail as the cover's own background, no solid fill */
-}
-.zed-lock-cover::after{
-  content:"" !important;
-  position:absolute !important;
-  inset:0 !important;
-  /* Very light scrim only — just enough to read the lock, thumbnail shows through clearly */
-  background: transparent !important;
-  z-index:0 !important;
-}
-.zed-lock-cover > *{ position:relative !important; z-index:1 !important; }
-/* Lock + text become small floating pills, NOT a full shield */
-.zed-lock-icon{
-  font-size:30px !important;
-  line-height:1 !important;
-  background: transparent !important;
-  backdrop-filter: blur(2px);
-  padding: 10px 12px !important;
-  border-radius: 999px !important;
-  box-shadow: 0 4px 14px rgba(0,0,0,0.35) !important;
-  text-shadow: 0 1px 3px rgba(0,0,0,0.6) !important;
-}
-.zed-lock-sub{
-  color:#fff !important;
-  background: transparent !important;
-  padding: 5px 10px !important;
-  border-radius: 999px !important;
-  font-size:11px !important;
-  font-weight:700 !important;
-  text-shadow: 0 1px 2px rgba(0,0,0,0.6) !important;
-}
-/* Underlying YouTube facade had the SAME problem: a solid blue ::before covering its <img> thumbnail */
-.yt-lite{
-  background-color: transparent !important;
-  background-size: cover !important;
-  background-position: center !important;
-}
-.yt-lite::before{
-  background: transparent !important;
-  content: none !important;
-  display:none !important;
-}
-.yt-lite img.yt-thumb{
-  display:block !important;
-  opacity:1 !important;
-  position:relative !important;
-  z-index:0 !important;
-}
-.yt-lite .yt-title-bar{
-  background: linear-gradient(180deg, rgba(0,0,0,0.55), transparent) !important;
-}
-/* YouTube click-block shields stay transparent — they were already correct, keep them that way */
-.zed-yt-shield-top, .zed-yt-shield-logo, .zed-more-shield, .zed-yt-expand-shield{
-  background: transparent !important;
-}
-</style>
+
 
 
 <!-- ZED FIX 14 Nov 2026 — FULLY TRANSPARENT LOCK SHIELD v2: zero gradient, zero dark pill -->
-<style>
-.zed-lock-cover{
-  background-color: transparent !important;
-}
-.zed-lock-cover::after{
-  background: transparent !important;
-  background-image: none !important;
-  display:none !important;
-  content:none !important;
-}
-.zed-lock-cover::before{
-  background: transparent !important;
-  display:none !important;
-  content:none !important;
-}
-.zed-lock-icon{
-  background: transparent !important;
-  background-color: transparent !important;
-  box-shadow: none !important;
-  backdrop-filter: none !important;
-  /* keep lock visible on bright thumbnails without a dark box */
-  text-shadow: 0 2px 6px rgba(0,0,0,0.85), 0 0 2px rgba(0,0,0,0.9) !important;
-  filter: drop-shadow(0 2px 4px rgba(0,0,0,0.8)) !important;
-  padding: 0 !important;
-}
-.zed-lock-sub{
-  background: transparent !important;
-  background-color: transparent !important;
-  box-shadow: none !important;
-  backdrop-filter: none !important;
-  color:#fff !important;
-  text-shadow: 0 2px 6px rgba(0,0,0,0.9), 0 0 2px rgba(0,0,0,0.9) !important;
-  padding: 0 !important;
-}
-.yt-lite::before{ background: transparent !important; display:none !important; content:none !important; }
-.yt-lite{ background-color: transparent !important; }
-</style>
 
+
+<style>/* USER FIX: province cards COMPLETELY REMOVED — never show, even after React re-render */
+div.grid[class*="lg:grid-cols-5"]{display:none !important;visibility:hidden !important;height:0 !important;min-height:0 !important;margin:0 !important;padding:0 !important;overflow:hidden !important;}
+.zed-province-small,.zed-province-row{display:none !important;}
+/* Locked thumbnail: cover stays fully transparent, thumbnail is a real <img> on top of it */
+.zed-lock-cover{background:transparent !important;background-color:transparent !important;background-image:none !important;box-shadow:none !important;}
+.zed-lock-cover::before,.zed-lock-cover::after{background:transparent !important;display:none !important;content:none !important;}
+</style>
 </body></html>';
       w.document.write(printHtml);
       w.document.close(); setTimeout(function(){ try{ w.focus(); w.print(); }catch(e){} }, 500);
@@ -12100,9 +12007,17 @@ div[class*="backdrop-blur"]{ backdrop-filter:none !important; -webkit-backdrop-f
         var grids=container.querySelectorAll('div.grid');
         grids.forEach(function(g){ if(g.className && g.className.indexOf('grid-cols-3')!==-1 && !topGrid) topGrid=g; });
         if(topGrid){
+          // TOP 3 RULE: Only learners who HAVE something - Avg>0, quizzes>0, Total>0.
+          // New accounts with 0% / 0 quizzes go to the BOTTOM of the table, NEVER in Top 3.
+          var topOnly = sorted.filter(function(r){ return r && r.count>0 && r.totalScore>0 && r.avg>0; }).slice(0,3);
+          // Stack Top 3 as small rows, not 3 narrow columns (was breaking names like "DEVELOP ER ACCOUN T")
+          try{ topGrid.style.setProperty('grid-template-columns','1fr','important'); topGrid.style.setProperty('gap','6px','important'); topGrid.classList.add('zed-top3-parent'); }catch(e){}
           var cards=topGrid.children;
-          for(var i=0;i<3 && i<cards.length;i++){
-            var r=sorted[i]; if(!r) continue;
+          for(var i=0;i<cards.length;i++){
+            var card=cards[i];
+            if(i>=topOnly.length){ card.style.display='none'; continue; }
+            card.style.display='';
+            var r=topOnly[i]; if(!r) continue;
             var card=cards[i];
             // Name
             var nameEl=card.querySelector('.font-serif');
@@ -13271,31 +13186,11 @@ header *{ transition:none!important; animation:none!important; }
 
 
 <!-- ZED FIX v2 FINAL — 100% transparent, placed last so it wins -->
-<style>
-.zed-lock-cover{ background-color: transparent !important; background-size: cover !important; background-position: center !important; }
-.zed-lock-cover::after, .zed-lock-cover::before{ background-color: transparent !important; }
-.zed-lock-cover::after, .zed-lock-cover::before{ display:none !important; content:none !important; }
-.zed-lock-icon, .zed-lock-sub{ background: transparent !important; box-shadow:none !important; backdrop-filter:none !important; }
-.yt-lite .yt-title-bar{ background: transparent !important; background-image:none !important; text-shadow: 0 1px 4px rgba(0,0,0,0.8) !important; }
-.yt-lite::before{ background: transparent !important; display:none !important; content:none !important; }
-</style>
+
 
 
 <!-- ZED FIX — REMOVE BLACK SHIELD COMPLETELY — 14 Nov 2026 -->
-<style>
-/* BLACK SHIELD = 3 layers. All must go at once:
-   1) .zed-lock-cover::after black overlay
-   2) .aspect-video / .yt-lite / video background:#000
-   3) .zed-expand-btn black oval */
-.zed-lock-cover{ background-color: transparent !important; }
-.zed-lock-cover::after, .zed-lock-cover::before{ background: transparent !important; background-color: transparent !important; display:none !important; content:none !important; }
-.zed-lock-cover img.zed-cover-thumb{ position:absolute !important; inset:0 !important; width:100% !important; height:100% !important; object-fit:cover !important; z-index:0 !important; display:block !important; border-radius:14px 14px 0 0 !important; }
-.zed-lock-cover > .zed-lock-icon, .zed-lock-cover > .zed-lock-sub{ position:relative !important; z-index:2 !important; }
-.zed-lock-icon, .zed-lock-sub{ background: transparent !important; box-shadow:none !important; text-shadow: 0 2px 6px rgba(0,0,0,0.9) !important; }
-.aspect-video, .video-wrapper, .yt-lite, .zed-dl-card video{ background: transparent !important; background-color: transparent !important; }
-.yt-lite img.yt-thumb{ display:block !important; opacity:1 !important; }
-.zed-expand-btn{ background: transparent !important; background-color: transparent !important; border:none !important; box-shadow:none !important; text-shadow: 0 2px 6px rgba(0,0,0,0.9) !important; }
-</style>
+
 <script>
 (function(){
   function getThumbForCover(cover, card){
@@ -13317,6 +13212,23 @@ header *{ transition:none!important; animation:none!important; }
       if(img && img.src) return img.src;
       var anyImg = card.querySelector("img");
       if(anyImg && anyImg.src && anyImg.src.indexOf("data:")!==0) return anyImg.src;
+      // 4) Parse YouTube ID from iframe src in the same card (embed / watch / youtu.be)
+      var fr = card.querySelector("iframe");
+      if(fr && fr.src){
+        var fm = fr.src.match(/(?:embed\/|watch\?v=|youtu\.be\/)([A-Za-z0-9_-]{11})/);
+        if(fm && fm[1]) return "https://i.ytimg.com/vi/"+fm[1]+"/hqdefault.jpg";
+      }
+      // 5) Any ancestor / card data attribute holding a YouTube ID or URL
+      var el = card;
+      while(el){
+        if(el.dataset){
+          if(el.dataset.zedYtId) return "https://i.ytimg.com/vi/"+el.dataset.zedYtId+"/hqdefault.jpg";
+          if(el.dataset.ytId) return "https://i.ytimg.com/vi/"+el.dataset.ytId+"/hqdefault.jpg";
+          if(el.dataset.videoUrl){ var vm = String(el.dataset.videoUrl).match(/(?:embed\/|watch\?v=|youtu\.be\/)([A-Za-z0-9_-]{11})/); if(vm) return "https://i.ytimg.com/vi/"+vm[1]+"/hqdefault.jpg"; }
+        }
+        el = el.parentElement;
+        if(el && el.tagName==='MAIN') break;
+      }
     }
     return "";
   }
@@ -13590,47 +13502,60 @@ header *{ transition:none!important; animation:none!important; }
 #zed-pdf-open-ext-enhanced, [id*="open-ext"], .zed-pdf-open-ext { display:none !important; visibility:hidden !important; }
 </style>
 
-<!-- ZED CLEAN V2 — ONE SCRIPT ONLY — Small Papers & Docs, correct titles, progress, instant Open -->
+<!-- OLD REMOVED -->
+
+
+<!-- ZED FIX — Papers/Docs ONLY + Leaderboard Top 3 + Provinces SMALL, NO Download on Leaderboard -->
 <style>
-/* Papers + Docs grid -> 1 column, small gap */
-main div[class*="grid"][class*="gap-3"]{ grid-template-columns:1fr !important; gap:6px !important; }
-/* Small row */
-.zed-clean-card{
-  display:flex !important; flex-direction:column !important; gap:6px !important;
-  padding:10px 12px !important; border-radius:12px !important; min-height:56px !important;
-}
-.zed-clean-row{ display:flex !important; align-items:center !important; gap:8px !important; }
-.zed-clean-title{
-  flex:1 !important; min-width:0 !important;
-  font-size:14px !important; font-weight:700 !important; line-height:1.25 !important;
-  color:#111 !important; overflow:hidden !important; display:-webkit-box !important;
-  -webkit-line-clamp:2 !important; -webkit-box-orient:vertical !important;
-}
-.zed-clean-tick{
-  width:22px !important; height:22px !important; min-width:22px !important;
-  border-radius:50% !important; background:#22C55E !important; color:#fff !important;
-  display:inline-flex !important; align-items:center !important; justify-content:center !important;
-  font-size:13px !important; font-weight:900 !important; flex-shrink:0 !important;
-}
+
+/* ===== PAPERS/DOCS — NAMES MUST BE WHITE ON DARK CARD ===== */
+.zed-clean-card{ background:#16294D !important; }
+.zed-clean-ui{ display:flex !important; flex-direction:column !important; gap:6px !important; width:100% !important; }
+.zed-clean-row{ display:flex !important; align-items:center !important; gap:10px !important; width:100% !important; }
+.zed-clean-title{ color:#FFFFFF !important; font-size:14px !important; font-weight:800 !important; line-height:1.35 !important; flex:1 !important; min-width:0 !important; word-break:break-word !important; text-shadow:0 1px 2px rgba(0,0,0,.6) !important; }
+.zed-clean-tick{ background:#22C55E !important; color:#fff !important; width:22px !important; height:22px !important; min-width:22px !important; border-radius:50% !important; display:flex !important; align-items:center !important; justify-content:center !important; font-size:13px !important; font-weight:900 !important; flex-shrink:0 !important; }
 .zed-clean-tick.hidden{ display:none !important; }
-.zed-clean-btn{
-  height:32px !important; min-width:78px !important; padding:0 14px !important;
-  border-radius:999px !important; font-size:12px !important; font-weight:800 !important;
-  border:none !important; cursor:pointer !important; white-space:nowrap !important; flex-shrink:0 !important;
-}
-.zed-clean-btn.download{ background:#FFB400 !important; color:#000 !important; }
+.zed-clean-btn{ flex-shrink:0 !important; border:none !important; height:36px !important; padding:0 14px !important; border-radius:999px !important; font-size:12px !important; font-weight:800 !important; cursor:pointer !important; white-space:nowrap !important; }
+.zed-clean-btn.download{ background:#FBBF24 !important; color:#000 !important; }
 .zed-clean-btn.open{ background:#22C55E !important; color:#fff !important; }
-.zed-clean-btn.downloading{ background:#FDE68A !important; color:#000 !important; }
-.zed-clean-progress{ height:4px !important; background:#E5E7EB !important; border-radius:999px !important; overflow:hidden !important; display:none !important; }
+.zed-clean-btn.downloading{ background:#6B7280 !important; color:#fff !important; }
+.zed-clean-progress{ display:none !important; height:6px !important; background:#2A2A2A !important; border-radius:999px !important; overflow:hidden !important; }
 .zed-clean-progress.show{ display:block !important; }
-.zed-clean-progress > div{ height:100% !important; background:#22C55E !important; width:0% !important; transition:width .2s !important; }
-.zed-clean-progress-text{ font-size:11px !important; color:#666 !important; font-weight:600 !important; display:none !important; }
+.zed-clean-progress div{ height:100% !important; background:#3B82F6 !important; width:0% !important; }
+.zed-clean-progress-text{ display:none !important; font-size:11px !important; color:#93C5FD !important; font-weight:700 !important; }
 .zed-clean-progress-text.show{ display:block !important; }
 .zed-clean-hide{ display:none !important; }
+
+/* ===== DELETE DUPLICATE — never show old + new together ===== */
+/* If a card has our new row, hide EVERYTHING else, even if React re-creates it */
+.zed-leader-small > *:not(.zed-leader-row){ display:none !important; }
+.zed-leader-small > div:not(.zed-leader-row){ display:none !important; }
+.zed-province-small > *:not(.zed-province-row){ display:none !important; }
+.zed-province-small > div:not(.zed-province-row){ display:none !important; }
+.zed-clean-card > *:not(.zed-clean-ui){ display:none !important; }
+.zed-clean-card > div:not(.zed-clean-ui){ display:none !important; }
+/* Top 3 parent: stack rows, not 3 narrow columns */
+.zed-top3-parent{ grid-template-columns:1fr !important; gap:6px !important; }
+main div.grid.grid-cols-3.zed-top3-parent{ grid-template-columns:1fr !important; }
+.zed-leader-small{ display:flex !important; flex-direction:column !important; gap:0 !important; padding:8px 10px !important; border-radius:12px !important; min-height:48px !important; }
+.zed-leader-row{ display:flex !important; align-items:center !important; gap:10px !important; width:100% !important; }
+.zed-leader-avatar{ width:32px !important; height:32px !important; min-width:32px !important; border-radius:50% !important; background:#1E3A5F !important; color:#fff !important; display:flex !important; align-items:center !important; justify-content:center !important; font-size:15px !important; font-weight:800 !important; flex-shrink:0 !important; border:2px solid #3B82F6 !important; overflow:hidden !important; }
+.zed-leader-avatar img{ width:100% !important; height:100% !important; object-fit:cover !important; }
+.zed-leader-main{ flex:1 !important; min-width:0 !important; }
+.zed-leader-name{ font-size:13px !important; font-weight:700 !important; color:#fff !important; white-space:nowrap !important; overflow:hidden !important; text-overflow:ellipsis !important; line-height:1.2 !important; }
+.zed-leader-school{ font-size:11px !important; color:#9CA3AF !important; white-space:nowrap !important; overflow:hidden !important; text-overflow:ellipsis !important; line-height:1.2 !important; }
+.zed-leader-stats{ font-size:11px !important; color:#FBBF24 !important; font-weight:700 !important; white-space:nowrap !important; flex-shrink:0 !important; text-align:right !important; }
+.zed-leader-avg{ font-size:10px !important; color:#9CA3AF !important; font-weight:600 !important; white-space:nowrap !important; }
+.zed-leader-medal{ font-size:16px !important; flex-shrink:0 !important; }
+.zed-province-small{ display:flex !important; flex-direction:column !important; gap:2px !important; padding:10px 12px !important; border-radius:12px !important; min-height:52px !important; }
+.zed-province-row{ display:flex !important; align-items:center !important; justify-content:space-between !important; gap:10px !important; width:100% !important; }
+.zed-province-name{ font-size:12px !important; font-weight:700 !important; letter-spacing:0.08em !important; color:#93C5FD !important; text-transform:uppercase !important; }
+.zed-province-learners{ font-size:13px !important; font-weight:800 !important; color:#fff !important; }
+.zed-province-top{ font-size:11px !important; color:#9CA3AF !important; white-space:nowrap !important; overflow:hidden !important; text-overflow:ellipsis !important; }
 </style>
 <script>
 (function(){
-  // ===== ONE STORAGE SYSTEM ONLY =====
+  // ===== ONE STORAGE SYSTEM ONLY (Papers/Docs only) =====
   var DB='zed_internal_storage_v2', STORE='offline_files';
   function openDB(){ return new Promise(function(res,rej){
     var r=indexedDB.open(DB,2);
@@ -13650,21 +13575,17 @@ main div[class*="grid"][class*="gap-3"]{ grid-template-columns:1fr !important; g
     clearTimeout(el._t); el._t=setTimeout(function(){ el.style.display='none'; },3000);
   }
 
-  // ===== TITLE — capture ONCE, correctly =====
-  // React card: title is div.font-semibold. If that is empty/generic, fallback to the long description div.
+  // ===== TITLE — Papers/Docs only =====
   function getTrueTitle(card){
     if(card.dataset.zedTrueTitle) return card.dataset.zedTrueTitle;
     var titleEl = card.querySelector('div[class*="font-semibold"], div[class*="font-bold"]');
     var t = titleEl ? (titleEl.textContent||'').replace(/DOWNLOADED/g,'').replace(/👁.*$/,'').trim() : '';
-    // If title is empty or generic, look for description that looks like a real title
     if(!t || t==='Paper' || t==='Papers' || t==='Doc' || t==='Docs' || t.length<3){
       var cands = card.querySelectorAll('div');
       var best='';
       cands.forEach(function(d){
         var txt=(d.textContent||'').trim();
-        // Description divs are usually 20-120 chars, contain year or subject words, not ECZ •, not by...
         if(txt.length>10 && txt.length<140 && !txt.includes('ECZ •') && !txt.startsWith('by ') && !txt.includes('No Data Needed') && !txt.includes('DOWNLOADED')){
-          // Prefer one that has a year 2015-2026 or looks like a doc name
           if(/\b20(1[5-9]|2[0-6])\b/.test(txt) || txt.toLowerCase().includes('science') || txt.toLowerCase().includes('civic') || txt.toLowerCase().includes('biology') || txt.toLowerCase().includes('mathematics')){
             if(txt.length>best.length) best=txt;
           }
@@ -13672,7 +13593,6 @@ main div[class*="grid"][class*="gap-3"]{ grid-template-columns:1fr !important; g
       });
       if(best) t=best;
     }
-    // Final fallback: use first long text in card
     if(!t){
       var all = card.textContent||'';
       t = all.split('\n').map(function(s){return s.trim();}).filter(function(s){return s.length>10;})[0] || 'Paper';
@@ -13680,101 +13600,93 @@ main div[class*="grid"][class*="gap-3"]{ grid-template-columns:1fr !important; g
     card.dataset.zedTrueTitle = t;
     return t;
   }
+  // STRICT: only real PDF file links count. No more "any http link = PDF"
   function getFileUrl(card){
-    // PDF link inside card
-    var a = card.querySelector('a[href*=".pdf"], a[href*="supabase"], a[href*="storage"]');
-    if(a && a.href) return a.href;
-    // Button with data-url
-    var btn = card.querySelector('[data-url], [data-file-url], [data-pdf]');
-    if(btn) return btn.getAttribute('data-url')||btn.getAttribute('data-file-url')||btn.getAttribute('data-pdf')||'';
-    // Any link that looks like a file
-    var links = card.querySelectorAll('a[href]');
-    for(var i=0;i<links.length;i++){ var h=links[i].href; if(h && h.includes('http') && !h.includes('youtube') && !h.includes('facebook')) return h; }
+    var a = card.querySelector('a[href*=".pdf"]');
+    if(a && a.href && a.href.toLowerCase().includes('.pdf')) return a.href;
+    // Supabase storage PDF
+    var b = card.querySelector('a[href*="supabase"][href*=".pdf"], a[href*="/storage/"][href*=".pdf"]');
+    if(b && b.href) return b.href;
+    var btn = card.querySelector('[data-pdf]');
+    if(btn){ var v=btn.getAttribute('data-pdf'); if(v && v.toLowerCase().includes('.pdf')) return v; }
     return '';
   }
-
-  // ===== TRANSFORM ONE CARD TO SMALL ROW =====
-  function transformCard(card){
-    if(!card || card.dataset.zedCleanV2==='1') return;
-    // Only papers/docs - skip video cards (have iframe/video/yt-lite)
-    if(card.querySelector('.yt-lite') || card.querySelector('video') || card.querySelector('iframe')) return;
-    if(!card.closest('main')) return;
-    // Must be a paper/doc card: has PDF link OR has Download text OR is in papers/docs grid
+  function isPaperOrDocCard(card){
     var url = getFileUrl(card);
+    if(!url) return false;
+    if(!url.toLowerCase().includes('.pdf')) return false;
+    // Never leaderboard / province / quiz / video
     var txt = card.textContent||'';
-    var isPaperDoc = !!url || txt.includes('Download') || txt.includes('DOWNLOADED') || card.className.includes('rounded-[14px]');
-    if(!isPaperDoc) return;
-    // If card is actually a quiz/video card (has Play, Quiz, etc) skip
-    if(txt.includes('Start Quiz') || txt.includes('Play Video')) return;
+    if(txt.includes('coins •') && txt.includes('quizzes')) return false;
+    if(txt.includes('learners') && txt.includes('Top:')) return false;
+    if(txt.includes('Start Quiz') || txt.includes('Play Video')) return false;
+    if(card.querySelector('.yt-lite') || card.querySelector('video') || card.querySelector('iframe')) return false;
+    return true;
+  }
+  function isTop3Card(card){
+    var txt = card.textContent||'';
+    // Top 3: has "coins • X quizzes" + "Avg" + school + name, and NO pdf, NO learners/Top:
+    // But NEVER 0% cards - new accounts with Avg 0.0% / 0 quizzes are NOT Top 3, they belong at bottom
+    if(txt.includes('coins •') && txt.includes('quizzes') && txt.includes('Avg')){
+      if(txt.includes('Avg 0.0%') && txt.includes('0 quizzes')) return false;
+      if(txt.includes('Avg 0%') && txt.includes('0 quizzes')) return false;
+      return true;
+    }
+    return false;
+  }
+  // Hide 0% cards that are in the Top 3 grid (they will be hidden by Leaderboard V3, but hide here too as backup)
+  function hideZeroTop3(){
+    try{
+      document.querySelectorAll('main div.grid.grid-cols-3 > div').forEach(function(card){
+        var txt = card.textContent||'';
+        if(txt.includes('Avg 0.0%') && txt.includes('0 quizzes') && txt.includes('coins •')){
+          // Only hide if it is in Top 3 grid, not in table
+          card.style.display='none';
+        }
+      });
+    }catch(e){}
+  }
+  function isProvinceCard(card){
+    var txt = card.textContent||'';
+    if(txt.includes('learners') && txt.includes('Top:')) return true;
+    return false;
+  }
 
+  // ===== PAPERS/DOCS — small row, Download/Open ONLY here =====
+  function transformPaperCard(card){
+    if(!card || card.dataset.zedCleanV2==='1') return;
+    if(!card.closest('main')) return;
+    if(!isPaperOrDocCard(card)) return;
+    var url = getFileUrl(card);
     var trueTitle = getTrueTitle(card);
-    // Don't transform if title is still generic and card is not yet loaded
     if(!trueTitle || trueTitle==='Paper') return;
-
     card.dataset.zedCleanV2='1';
     card.classList.add('zed-clean-card');
-
-    // Hide extra elements: subject label, ECZ line, description (if not title), by line, PDF badge, old buttons
-    var titleEl = card.querySelector('div[class*="font-semibold"], div[class*="font-bold"]');
-    // If titleEl text != trueTitle, it means titleEl was empty and trueTitle came from description - use description as title
-    // In that case, we will keep titleEl but set its text to trueTitle
-    card.querySelectorAll('div, span, p').forEach(function(el){
-      if(el===titleEl) return;
-      var t=(el.textContent||'').trim();
-      if(!t) return;
-      // Subject label: "MATHEMATICS • G12 • 2019" - hide
-      if(el.className && el.className.includes('text-[11px]') && el.className.includes('uppercase') && t.includes('•')) el.classList.add('zed-clean-hide');
-      // ECZ line
-      if(t.includes('ECZ •') || t.includes('Copperbelt Ndola')) el.classList.add('zed-clean-hide');
-      // By line
-      if(t.startsWith('by ') && t.includes('/')) el.classList.add('zed-clean-hide');
-      // PDF / DOC badge
-      if(t==='PDF' || t==='DOC') el.classList.add('zed-clean-hide');
-      // Old DOWNLOADED badges
-      if(t==='DOWNLOADED' || el.className.includes('zed-badge-top') || el.className.includes('zed-offline-badge')) el.classList.add('zed-clean-hide');
-      // Description that is NOT the true title - hide if it is long and different from trueTitle
-      if(t.length>20 && t!==trueTitle && (t.includes('Marking Scheme') || t.includes('Grade ') && t.includes('Paper'))){
-        // Only hide if titleEl already has trueTitle
-        if(titleEl && (titleEl.textContent||'').trim()===trueTitle) el.classList.add('zed-clean-hide');
-      }
-    });
-    // Hide all old buttons/links inside card (we will create ONE new button)
+    // Hide ALL original content - only our ONE white title shows. No duplicate description, no dark title.
+    Array.from(card.children).forEach(function(ch){ ch.classList.add('zed-clean-hide'); ch.style.display='none'; });
+    card.querySelectorAll('div, span, p').forEach(function(el){ el.classList.add('zed-clean-hide'); });
     var oldBtns = card.querySelectorAll('button, a');
-    oldBtns.forEach(function(b){
-      // Keep the PDF link hidden for reference, hide all buttons
-      b.classList.add('zed-clean-hide');
-      b.style.display='none';
-    });
-
-    // Build small row: Title + Tick + Button + Progress
-    // Clear card's visible content but keep hidden old buttons for URL reference
-    // We keep oldBtns in DOM (hidden) - they are already hidden, we just need to add new UI on top
-    // Remove any previous clean UI if exists
+    oldBtns.forEach(function(b){ b.classList.add('zed-clean-hide'); b.style.display='none'; });
     var oldClean = card.querySelector('.zed-clean-ui');
     if(oldClean) oldClean.remove();
-
     var ui = document.createElement('div');
     ui.className='zed-clean-ui';
     ui.style.cssText='display:flex;flex-direction:column;gap:6px;width:100%;';
-
     var row = document.createElement('div');
     row.className='zed-clean-row';
-
     var titleSpan = document.createElement('div');
     titleSpan.className='zed-clean-title';
+    titleSpan.style.cssText='color:#FFFFFF !important;font-size:14px !important;font-weight:800 !important;line-height:1.35 !important;flex:1 !important;min-width:0 !important;word-break:break-word !important;';
     titleSpan.textContent = trueTitle;
     row.appendChild(titleSpan);
-
     var tick = document.createElement('span');
     tick.className='zed-clean-tick hidden';
     tick.textContent='✓';
     row.appendChild(tick);
-
     var btn = document.createElement('button');
     btn.className='zed-clean-btn download';
     btn.textContent='⬇ Download';
     row.appendChild(btn);
-
     var prog = document.createElement('div');
     prog.className='zed-clean-progress';
     var progFill = document.createElement('div');
@@ -13782,34 +13694,19 @@ main div[class*="grid"][class*="gap-3"]{ grid-template-columns:1fr !important; g
     var progText = document.createElement('div');
     progText.className='zed-clean-progress-text';
     progText.textContent='Downloading... 0%';
-
-    ui.appendChild(row);
-    ui.appendChild(prog);
-    ui.appendChild(progText);
+    ui.appendChild(row); ui.appendChild(prog); ui.appendChild(progText);
     card.appendChild(ui);
-
-    // Store refs
     card._zedClean = { title:trueTitle, url:url, tick:tick, btn:btn, prog:prog, progFill:progFill, progText:progText };
-
-    // Button action
     btn.onclick = async function(e){
       e.preventDefault(); e.stopPropagation();
       var fileId = fileIdFor(url || trueTitle);
       var rec = await getRec(fileId);
-      if(rec && rec.blob){
-        // OPEN immediately
-        openPaper(rec, trueTitle);
-        return;
-      }
-      // DOWNLOAD with progress
+      if(rec && rec.blob){ openPaper(rec, trueTitle); return; }
       if(btn.dataset.downloading==='1') return;
       downloadPaper(card, url, trueTitle);
     };
-
-    // Initial state check (async)
     updateCardState(card);
   }
-
   async function updateCardState(card){
     if(!card._zedClean) return;
     var url = card._zedClean.url || getFileUrl(card);
@@ -13820,33 +13717,22 @@ main div[class*="grid"][class*="gap-3"]{ grid-template-columns:1fr !important; g
     var tick = card._zedClean.tick;
     if(rec && rec.blob && rec.blob.size>1024){
       tick.classList.remove('hidden');
-      btn.textContent='Open';
-      btn.className='zed-clean-btn open';
-      btn.dataset.downloading='0';
-      card._zedClean.prog.classList.remove('show');
-      card._zedClean.progText.classList.remove('show');
+      btn.textContent='Open'; btn.className='zed-clean-btn open'; btn.dataset.downloading='0';
+      card._zedClean.prog.classList.remove('show'); card._zedClean.progText.classList.remove('show');
     } else {
-      // Not downloaded - only reset if not currently downloading
       if(btn.dataset.downloading!=='1'){
-        tick.classList.add('hidden');
-        btn.textContent='⬇ Download';
-        btn.className='zed-clean-btn download';
+        tick.classList.add('hidden'); btn.textContent='⬇ Download'; btn.className='zed-clean-btn download';
       }
     }
     updateOfflineCount();
   }
-
   async function downloadPaper(card, url, title){
     var clean = card._zedClean;
     if(!clean) return;
     var btn = clean.btn;
     btn.dataset.downloading='1';
-    btn.textContent='Downloading... 0%';
-    btn.className='zed-clean-btn downloading';
-    clean.prog.classList.add('show');
-    clean.progText.classList.add('show');
-    clean.progText.textContent='Downloading... 0%';
-
+    btn.textContent='Downloading... 0%'; btn.className='zed-clean-btn downloading';
+    clean.prog.classList.add('show'); clean.progText.classList.add('show'); clean.progText.textContent='Downloading... 0%';
     try{
       var resp = await fetch(url, { mode:'cors', cache:'no-store' });
       if(!resp.ok) throw new Error('Network '+resp.status);
@@ -13855,8 +13741,7 @@ main div[class*="grid"][class*="gap-3"]{ grid-template-columns:1fr !important; g
         var blob0 = await resp.blob();
         var fileId0 = fileIdFor(url);
         await putRec({ id:fileId0, blob:blob0, url:url, title:title, type:'paper', savedAt:Date.now(), size:blob0.size });
-        finishDownload(card, title);
-        return;
+        finishDownload(card, title); return;
       }
       var reader = resp.body.getReader();
       var chunks=[]; var received=0;
@@ -13865,69 +13750,95 @@ main div[class*="grid"][class*="gap-3"]{ grid-template-columns:1fr !important; g
         if(r.done) break;
         chunks.push(r.value); received += r.value.byteLength;
         var pct = total ? Math.round(received/total*100) : 0;
-        if(total){
-          clean.progFill.style.width = pct+'%';
-          clean.progText.textContent = 'Downloading... '+pct+'% • '+formatSize(received)+' of '+formatSize(total);
-          btn.textContent = 'Downloading... '+pct+'%';
-        } else {
-          clean.progText.textContent = 'Downloading... '+formatSize(received);
-          btn.textContent = 'Downloading... '+formatSize(received);
-        }
+        if(total){ clean.progFill.style.width = pct+'%'; clean.progText.textContent = 'Downloading... '+pct+'% • '+formatSize(received)+' of '+formatSize(total); btn.textContent = 'Downloading... '+pct+'%'; }
+        else { clean.progText.textContent = 'Downloading... '+formatSize(received); btn.textContent = 'Downloading... '+formatSize(received); }
       }
       var blob = new Blob(chunks, {type:'application/pdf'});
       var fileId = fileIdFor(url);
       await putRec({ id:fileId, blob:blob, url:url, title:title, type:'paper', savedAt:Date.now(), size:blob.size });
       finishDownload(card, title);
     }catch(err){
-      btn.dataset.downloading='0';
-      btn.textContent='⬇ Download';
-      btn.className='zed-clean-btn download';
-      clean.prog.classList.remove('show');
-      clean.progText.classList.remove('show');
+      btn.dataset.downloading='0'; btn.textContent='⬇ Download'; btn.className='zed-clean-btn download';
+      clean.prog.classList.remove('show'); clean.progText.classList.remove('show');
       toast('Download failed - tap to retry');
-      console.log('[ZED CLEAN] download failed', err);
     }
   }
-
   function finishDownload(card, title){
     var clean = card._zedClean;
     if(!clean) return;
-    clean.btn.dataset.downloading='0';
-    clean.btn.textContent='Open';
-    clean.btn.className='zed-clean-btn open';
-    clean.tick.classList.remove('hidden');
-    clean.prog.classList.remove('show');
-    clean.progText.classList.remove('show');
-    toast('Saved ✓ • Tap Open to view');
-    updateOfflineCount();
-    // Immediately show Open - already done, no refresh needed
+    clean.btn.dataset.downloading='0'; clean.btn.textContent='Open'; clean.btn.className='zed-clean-btn open';
+    clean.tick.classList.remove('hidden'); clean.prog.classList.remove('show'); clean.progText.classList.remove('show');
+    toast('Saved ✓ • Tap Open to view'); updateOfflineCount();
   }
 
+  // ===== LEADERBOARD TOP 3 — SMALL ROW, NO DOWNLOAD =====
+  function transformTop3(card){
+    // If this card was wrongly turned into a Paper card before, undo it first
+    if(card.dataset.zedCleanV2==='1' && card.querySelector('.zed-clean-ui')){
+      var ui = card.querySelector('.zed-clean-ui'); if(ui) ui.remove();
+      card.querySelectorAll('.zed-clean-hide').forEach(function(el){ el.classList.remove('zed-clean-hide'); el.style.display=''; });
+      card.classList.remove('zed-clean-card');
+      delete card.dataset.zedCleanV2; delete card.dataset.zedTrueTitle; delete card._zedClean;
+    }
+    if(card.dataset.zedLeaderSmall==='1') return;
+    var txt = card.textContent||'';
+    if(!isTop3Card(card)) return;
+    card.dataset.zedLeaderSmall='1';
+    // Capture data BEFORE hiding
+    var lines = txt.split('\n').map(function(s){return s.trim();}).filter(function(s){return s;});
+    // Lines example: ["M", "Moses kalimosho", "MONGU SECONDARY", "0 coins • 0 quizzes", "Avg 0.0% • Total 0"]
+    var avatarLetter = '';
+    var name = '', school = '', stats = '', avg = '', medal = '';
+    // Medal emoji if present in text
+    if(txt.includes('👑')) medal='👑';
+    else if(txt.includes('🥇')) medal='🥇';
+    else if(txt.includes('🥈')) medal='🥈';
+    else if(txt.includes('🥉')) medal='🥉';
+    else if(txt.includes('🏅')) medal='🏅';
+    // Find name: line that is not single letter, not school, not stats, not avg
+    for(var i=0;i<lines.length;i++){
+      var L=lines[i];
+      if(L.length===1 && /[A-Z]/.test(L) && !avatarLetter){ avatarLetter=L; continue; }
+      if(L.includes('coins •')){ stats=L; continue; }
+      if(L.startsWith('Avg')){ avg=L; continue; }
+      if(L.toUpperCase()===L && (L.includes('SECONDARY') || L.includes('SCHOOL') || L.includes('ZED SCHOLAR'))){ school=L; continue; }
+      if(!name && L.length>2 && !L.includes('•')){ name=L; continue; }
+    }
+    if(!name) name = lines[1] || 'Learner';
+    // Avatar image if card has <img>
+    var img = card.querySelector('img');
+    var imgSrc = img ? img.src : '';
+    // Hide original children, keep them in DOM
+    Array.from(card.children).forEach(function(ch){ ch.classList.add('zed-clean-hide'); ch.style.display='none'; });
+    // Also hide any old Download/Open buttons that were added by mistake
+    card.querySelectorAll('button, a').forEach(function(b){ b.style.display='none'; });
+    var row = document.createElement('div');
+    row.className='zed-leader-row';
+    row.innerHTML = '<div class="zed-leader-avatar">'+(imgSrc ? '<img src="'+imgSrc+'">' : (avatarLetter || (name.charAt(0)||'').toUpperCase()))+'</div>'
+      + '<div class="zed-leader-main"><div class="zed-leader-name">'+name+'</div><div class="zed-leader-school">'+school+'</div></div>'
+      + (medal ? '<span class="zed-leader-medal">'+medal+'</span>' : '')
+      + '<div style="text-align:right;flex-shrink:0;"><div class="zed-leader-stats">'+stats+'</div><div class="zed-leader-avg">'+avg+'</div></div>';
+    card.classList.add('zed-leader-small');
+    card.appendChild(row);
+    // Yellow highlight for YOU / Developer stays - keep card background, just small
+  }
+
+  // ===== PROVINCES — SMALL ROW, NO DOWNLOAD =====
+  function transformProvince(card){
+    // USER ASKED: province cards COMPLETELY REMOVED — no rebuild, no small row, no duplicate text.
+    // This is called from cleanAll() for every card where isProvinceCard() is true
+    // (text contains "learners" + "Top:"). Delete it outright.
+    try{ card.remove(); }catch(e){ try{ card.style.display='none'; }catch(e2){} }
+  }
+
+  // ===== VIEWER — app's own viewer only =====
   function openPaper(rec, title){
-    // ALWAYS use the app's OWN PDF viewer - never iframe, never window.open, never <a href=blob>
-    // iframe + window.open is what caused the outside viewer in your screenshot (PDF icon + UUID + blue Open)
     try{
-      if(window._zedOpenViewerEnhanced){
-        window._zedOpenViewerEnhanced(rec.blob, {title:title, id:rec.id});
-        return;
-      }
-      if(window._zedOpenViewer){
-        window._zedOpenViewer(rec.blob, {title:title, id:rec.id});
-        return;
-      }
-    }catch(e){ console.log('[ZED VIEWER] enhanced failed', e); }
-    // Fallback if enhanced viewer not loaded yet: render with PDF.js canvas INSIDE app, never iframe
-    try{
-      if(typeof pdfjsLib !== 'undefined'){
-        openWithPdfJs(rec.blob, title);
-        return;
-      }
+      if(window._zedOpenViewerEnhanced){ window._zedOpenViewerEnhanced(rec.blob, {title:title, id:rec.id}); return; }
+      if(window._zedOpenViewer){ window._zedOpenViewer(rec.blob, {title:title, id:rec.id}); return; }
     }catch(e){}
-    // Last resort: wait a bit for enhanced viewer to load, then retry - still never external
-    setTimeout(function(){
-      if(window._zedOpenViewerEnhanced) window._zedOpenViewerEnhanced(rec.blob, {title:title, id:rec.id});
-      else toast('Viewer loading... tap Open again');
-    }, 300);
+    try{ if(typeof pdfjsLib !== 'undefined'){ openWithPdfJs(rec.blob, title); return; } }catch(e){}
+    setTimeout(function(){ if(window._zedOpenViewerEnhanced) window._zedOpenViewerEnhanced(rec.blob, {title:title, id:rec.id}); else toast('Viewer loading... tap Open again'); }, 300);
   }
   function openWithPdfJs(blob, title){
     var modal=document.createElement('div');
@@ -13952,27 +13863,19 @@ main div[class*="grid"][class*="gap-3"]{ grid-template-columns:1fr !important; g
         modal.querySelector('#zed-pdf-page-fb').textContent=n+' / '+pdfDoc.numPages;
       });
     }
-    blob.arrayBuffer().then(function(buf){
-      return pdfjsLib.getDocument({data:buf}).promise;
-    }).then(function(pdf){ pdfDoc=pdf; renderPage(1); });
+    blob.arrayBuffer().then(function(buf){ return pdfjsLib.getDocument({data:buf}).promise; }).then(function(pdf){ pdfDoc=pdf; renderPage(1); });
     modal.querySelector('#zed-pdf-prev-fb').onclick=function(){ if(pageNum>1){ pageNum--; renderPage(pageNum); } };
     modal.querySelector('#zed-pdf-next-fb').onclick=function(){ if(pdfDoc && pageNum<pdfDoc.numPages){ pageNum++; renderPage(pageNum); } };
   }
-  // Kill the external Open button inside the app viewer - it opens outside the app
-  function killExternalOpen(){
-    document.querySelectorAll('#zed-pdf-open-ext-enhanced, [id*="open-ext"]').forEach(function(b){ b.remove(); });
-  }
-  // Block any click on external Open, and any window.open for blob/pdf
+  function killExternalOpen(){ document.querySelectorAll('#zed-pdf-open-ext-enhanced, [id*="open-ext"]').forEach(function(b){ b.remove(); }); }
   document.addEventListener('click', function(e){
     var ext = e.target && e.target.closest ? e.target.closest('#zed-pdf-open-ext-enhanced, [id*="open-ext"]') : null;
     if(ext){ e.preventDefault(); e.stopPropagation(); if(e.stopImmediatePropagation) e.stopImmediatePropagation(); return false; }
   }, true);
-  // Watch for viewer modal and remove its external button every time it appears
   if(document.body) new MutationObserver(function(){ killExternalOpen(); }).observe(document.body, {childList:true, subtree:true});
   setInterval(killExternalOpen, 800);
 
-
-  // ===== MY OFFLINE — fixed titles =====
+  // ===== MY OFFLINE =====
   async function updateOfflineCount(){
     var all = await getAllRec();
     var btn = document.getElementById('zed-offline-library-btn');
@@ -13984,7 +13887,6 @@ main div[class*="grid"][class*="gap-3"]{ grid-template-columns:1fr !important; g
   }
   function ensureOfflineBtn(){
     if(document.getElementById('zed-offline-library-btn')) return;
-    // Don't show on login/signup
     var bodyText = document.body.innerText||'';
     if(bodyText.includes('Welcome back') || bodyText.includes('Create your account')) return;
     var btn=document.createElement('button');
@@ -13995,28 +13897,20 @@ main div[class*="grid"][class*="gap-3"]{ grid-template-columns:1fr !important; g
     document.body.appendChild(btn);
     updateOfflineCount();
   }
-
   async function showOffline(){
     var all = await getAllRec();
-    // Fix old bad titles: if title is generic, try to find real title from current cards
     for(var i=0;i<all.length;i++){
       var rec=all[i];
       if(!rec.title || rec.title==='Paper' || rec.title==='Papers' || rec.title==='Doc' || rec.title==='Docs'){
-        // Try to find card with same url
         var found=null;
         document.querySelectorAll('main div[class*="rounded-[14px]"]').forEach(function(card){
           var u=getFileUrl(card);
-          if(u && fileIdFor(u)===rec.id){
-            var t=getTrueTitle(card);
-            if(t && t!=='Paper' && t!=='Papers') found=t;
-          }
+          if(u && fileIdFor(u)===rec.id){ var t=getTrueTitle(card); if(t && t!=='Paper' && t!=='Papers') found=t; }
         });
         if(found){ rec.title=found; await putRec(rec); }
       }
     }
-    // Re-fetch after fixes
     all = await getAllRec();
-
     var old=document.getElementById('zed-offline-lib-modal'); if(old) old.remove();
     var modal=document.createElement('div');
     modal.id='zed-offline-lib-modal';
@@ -14030,12 +13924,9 @@ main div[class*="grid"][class*="gap-3"]{ grid-template-columns:1fr !important; g
     var searchInput=modal.querySelector('#zed-lib-search');
     var listWrap=modal.querySelector('#zed-lib-list');
     function renderList(items){
-      if(!items || items.length===0){
-        listWrap.innerHTML='<div style="text-align:center;padding:30px 20px;color:#999;">No offline papers yet<br><small>Tap ⬇ Download on any paper first</small></div>'; return;
-      }
+      if(!items || items.length===0){ listWrap.innerHTML='<div style="text-align:center;padding:30px 20px;color:#999;">No offline papers yet<br><small>Tap ⬇ Download on any paper first</small></div>'; return; }
       listWrap.innerHTML = items.map(function(f){
         var title = f.title || 'Paper';
-        // Show title + year - year is already inside title like "2019 GCE..." - show full title, not "Papers"
         var dateStr=''; try{ dateStr=new Date(f.savedAt).toLocaleDateString(); }catch(e){}
         return '<div style="background:#1A1917;border:1px solid #2A2825;border-radius:12px;padding:12px;margin-bottom:10px;">'
           +'<div style="color:#fff;font-size:13px;font-weight:700;line-height:1.3;margin-bottom:4px;">'+title+'</div>'
@@ -14044,28 +13935,14 @@ main div[class*="grid"][class*="gap-3"]{ grid-template-columns:1fr !important; g
           +'<button data-del="'+f.id+'" style="width:42px;background:transparent;color:#ff9a9a;border:1px solid #ff9a9a;border-radius:10px;font-size:16px;cursor:pointer;">✕</button></div></div>';
       }).join('');
       listWrap.querySelectorAll('[data-open]').forEach(function(b){
-        b.onclick=function(){
-          var id=b.getAttribute('data-open');
-          var rec=all.find(function(r){return r.id===id;});
-          if(rec) openPaper(rec, rec.title||'Paper');
-        };
+        b.onclick=function(){ var id=b.getAttribute('data-open'); var rec=all.find(function(r){return r.id===id;}); if(rec) openPaper(rec, rec.title||'Paper'); };
       });
       listWrap.querySelectorAll('[data-del]').forEach(function(b){
-        b.onclick=async function(){
-          var id=b.getAttribute('data-del');
-          if(confirm('Remove from phone?')){ await delRec(id); toast('Removed'); showOffline(); // refresh
-            // Also update main cards
-            document.querySelectorAll('main div[class*="rounded-[14px]"]').forEach(function(card){ if(card.dataset.zedCleanV2==='1') updateCardState(card); });
-          }
-        };
+        b.onclick=async function(){ var id=b.getAttribute('data-del'); if(confirm('Remove from phone?')){ await delRec(id); toast('Removed'); showOffline(); document.querySelectorAll('main div[class*="rounded-[14px]"]').forEach(function(card){ if(card.dataset.zedCleanV2==='1') updateCardState(card); }); } };
       });
     }
     renderList(all);
-    searchInput.addEventListener('input', function(){
-      var q=searchInput.value.trim().toLowerCase();
-      var filtered = q ? all.filter(function(f){ return (f.title||'').toLowerCase().includes(q); }) : all;
-      renderList(filtered);
-    });
+    searchInput.addEventListener('input', function(){ var q=searchInput.value.trim().toLowerCase(); var filtered = q ? all.filter(function(f){ return (f.title||'').toLowerCase().includes(q); }) : all; renderList(filtered); });
     closeBtn.onclick=function(){ modal.remove(); };
     modal.onclick=function(e){ if(e.target===modal) modal.remove(); };
     setTimeout(function(){ searchInput.focus(); },100);
@@ -14073,17 +13950,174 @@ main div[class*="grid"][class*="gap-3"]{ grid-template-columns:1fr !important; g
   window.showRealOfflineLibrary = showOffline;
 
   // ===== RUN =====
+  // Repair old cards that still show dark duplicate title + description (from previous version)
+  function fixOldPaperCards(){
+    document.querySelectorAll('main .zed-clean-card').forEach(function(card){
+      // Hide any original child that is not our UI
+      Array.from(card.children).forEach(function(ch){
+        if(!ch.classList.contains('zed-clean-ui')){ ch.classList.add('zed-clean-hide'); ch.style.display='none'; }
+      });
+      // Force title white
+      var ts = card.querySelector('.zed-clean-title');
+      if(ts){ ts.style.cssText='color:#FFFFFF !important;font-size:14px !important;font-weight:800 !important;line-height:1.35 !important;flex:1 !important;min-width:0 !important;word-break:break-word !important;'; }
+    });
+  }
   function cleanAll(){
     var cards = document.querySelectorAll('main div[class*="rounded-[14px]"], main div[class*="rounded-[12px]"]');
-    cards.forEach(function(c){ transformCard(c); });
+    fixOldPaperCards();
+    hideZeroTop3();
+    cards.forEach(function(c){
+      // Order matters: check leaderboard / province FIRST, so they never get Paper treatment
+      if(isTop3Card(c)){ transformTop3(c); return; }
+      if(isProvinceCard(c)){ transformProvince(c); return; }
+      if(isPaperOrDocCard(c)){ transformPaperCard(c); return; }
+      // If card was wrongly transformed as Paper before but is actually leaderboard/province, fix it
+      if(c.dataset.zedCleanV2==='1' && (isTop3Card(c) || isProvinceCard(c))){
+        if(isTop3Card(c)) transformTop3(c);
+        else transformProvince(c);
+      }
+    });
+    // After deleting province cards, remove the now-empty province grid itself
+    // (the React Op.map grid: class contains lg:grid-cols-5) so no gap is left.
+    try{
+      document.querySelectorAll('div[class*="lg:grid-cols-5"]').forEach(function(g){
+        if(g.children.length===0) { try{ g.remove(); }catch(e){} }
+      });
+      document.querySelectorAll('.zed-province-small, .zed-province-row').forEach(function(el){
+        try{ el.remove(); }catch(e){}
+      });
+    }catch(e){}
     ensureOfflineBtn();
   }
   cleanAll();
   setInterval(function(){ cleanAll(); }, 1000);
   if(document.body) new MutationObserver(function(){ cleanAll(); }).observe(document.body, {childList:true, subtree:true});
-  console.log('[ZED CLEAN V2] One script only - small rows, correct titles, progress, instant Open');
+  console.log('[ZED FIX] Papers/Docs ONLY - Leaderboard small, no Download on Leaderboard');
 })();
 </script>
+
+<!-- ZED FINAL v2 — LOCKED THUMBNAIL, NO DARK COLOUR (replaces v1 black-area fix, which was deleted above) -->
+<style>
+div.grid[class*="lg:grid-cols-5"]{display:none !important;visibility:hidden !important;height:0 !important;min-height:0 !important;margin:0 !important;padding:0 !important;overflow:hidden !important;}
+.zed-province-small,.zed-province-row{display:none !important;}
+/* NO dark colour around the lock: video area + facade + video element are all transparent. Thumbnail itself fills the area. */
+.zed-video-card .aspect-video,.zed-video-card .yt-lite,.zed-video-card video{background:transparent !important;background-color:transparent !important;}
+.zed-video-card .yt-lite::before{display:none !important;content:none !important;background:transparent !important;}
+.zed-video-card .yt-lite img.yt-thumb{display:block !important;opacity:1 !important;width:100% !important;height:100% !important;object-fit:cover !important;}
+.zed-video-card video{display:block !important;opacity:1 !important;width:100% !important;height:100% !important;object-fit:cover !important;}
+.zed-lock-cover{background:transparent !important;background-color:transparent !important;background-image:none !important;box-shadow:none !important;}
+.zed-lock-cover::before,.zed-lock-cover::after{display:none !important;content:none !important;background:transparent !important;background-image:none !important;}
+.zed-lock-cover img.zed-cover-thumb{position:absolute !important;inset:0 !important;width:100% !important;height:100% !important;object-fit:cover !important;z-index:0 !important;display:block !important;border-radius:14px 14px 0 0 !important;}
+.zed-lock-cover > .zed-lock-icon,.zed-lock-cover > .zed-lock-sub{position:relative !important;z-index:2 !important;background:transparent !important;background-color:transparent !important;box-shadow:none !important;backdrop-filter:none !important;text-shadow:0 2px 6px rgba(0,0,0,0.9),0 0 2px rgba(0,0,0,0.9) !important;}
+.zed-video-card .aspect-video iframe[src="about:blank"]{display:none !important;}
+</style>
+<script>(function(){
+  function ytIdFromUrl(u){
+    if(!u) return "";
+    var m=String(u).match(/(?:youtube\.com\/(?:embed\/|watch\?v=|v\/)|youtu\.be\/|youtube-nocookie\.com\/embed\/)([A-Za-z0-9_-]{11})/);
+    return m?m[1]:"";
+  }
+  function getYtId(card){
+    if(!card) return "";
+    if(card.dataset && card.dataset.zedYtId) return card.dataset.zedYtId;
+    var lite=card.querySelector('.yt-lite[data-vid]');
+    if(lite && lite.getAttribute('data-vid')) return lite.getAttribute('data-vid');
+    if(card.dataset){
+      if(card.dataset.zedThumb) { var tt=ytIdFromUrl(card.dataset.zedThumb); if(tt) return tt; }
+      if(card.dataset.zedOrigSrc) { var a=ytIdFromUrl(card.dataset.zedOrigSrc); if(a) return a; }
+      if(card.dataset.zedVideoUrl) { var b=ytIdFromUrl(card.dataset.zedVideoUrl); if(b) return b; }
+    }
+    var fr=card.querySelector('iframe');
+    if(fr){ var s=fr.getAttribute('src')||fr.src||""; if(s && s!=="about:blank"){ var c=ytIdFromUrl(s); if(c) return c; } }
+    var thumbImg=card.querySelector('img.yt-thumb');
+    if(thumbImg && thumbImg.src){ var d=ytIdFromUrl(thumbImg.src); if(d) return d; }
+    var anyVid=card.querySelector('[data-vid]');
+    if(anyVid && anyVid.getAttribute('data-vid')) return anyVid.getAttribute('data-vid');
+    return "";
+  }
+  function getMp4Src(card){
+    if(!card) return "";
+    var v=card.querySelector('video');
+    if(v){ var s=v.getAttribute('src')||v.src||""; if(s) return s; }
+    if(card.dataset){
+      if(card.dataset.zedOrigVideoSrc) return card.dataset.zedOrigVideoSrc;
+      if(card.dataset.zedVideoUrl && card.dataset.zedVideoUrl!=="about:blank" && card.dataset.zedVideoUrl.indexOf("youtube")==-1 && card.dataset.zedVideoUrl.indexOf("youtu.be")==-1) return card.dataset.zedVideoUrl;
+    }
+    return "";
+  }
+  function fixLockedThumbs(){
+    document.querySelectorAll('.zed-lock-cover').forEach(function(cover){
+      cover.style.backgroundImage="none";
+      cover.style.backgroundColor="transparent";
+      cover.style.background="transparent";
+      var card=cover.closest('.zed-video-card')||cover.parentElement;
+      var ytId=getYtId(card);
+      var existing=cover.querySelector('img.zed-cover-thumb');
+      if(ytId){
+        // YouTube: thumbnail is the YouTube image. Try hq -> mq -> default -> 0, never leave a dark box.
+        var base="https://i.ytimg.com/vi/"+ytId+"/";
+        var tries=[base+"hqdefault.jpg", base+"mqdefault.jpg", base+"default.jpg", base+"0.jpg"];
+        if(!existing){
+          var im=document.createElement("img");
+          im.className="zed-cover-thumb"; im.alt=""; im.loading="lazy";
+          im.dataset.zedTry="0";
+          im.onerror=function(){
+            var n=parseInt(this.dataset.zedTry||"0",10)+1;
+            if(n<tries.length){ this.dataset.zedTry=String(n); this.src=tries[n]; }
+            else { try{ this.remove(); }catch(e){} }
+          };
+          im.src=tries[0];
+          cover.insertBefore(im, cover.firstChild);
+        } else if(existing.src.indexOf(ytId)===-1){
+          existing.dataset.zedTry="0"; existing.src=tries[0];
+        }
+      } else {
+        // MP4 (e.g. HOW TO STUDY MATHS if uploaded from phone): NO YouTube thumb exists.
+        // Thumbnail = the video's own first frame. Remove any cover img so it does not hide the video.
+        if(existing){ try{ existing.remove(); }catch(e){} }
+        var v=card ? card.querySelector('video') : null;
+        var src=getMp4Src(card);
+        if(v && src){
+          if((v.getAttribute('src')||v.src||"")!==src){ try{ v.setAttribute('src', src); v.src=src; }catch(e){} }
+          try{
+            v.muted=true; v.controls=false; v.setAttribute('preload','metadata'); v.setAttribute('playsinline','');
+            v.style.pointerEvents="none"; v.style.display="block"; v.style.opacity="1";
+            v.pause();
+            // Nudge to first frame if browser has not drawn it yet
+            if(v.readyState<2){ try{ v.load(); }catch(e){} }
+            if(!v.dataset.zedFirstFrame && v.currentTime!==0){ try{ v.currentTime=0; }catch(e){} }
+          }catch(e){}
+        }
+      }
+      cover.querySelectorAll('.zed-lock-icon, .zed-lock-sub').forEach(function(n){
+        n.style.position="relative"; n.style.zIndex="2";
+        n.style.background="transparent"; n.style.backgroundColor="transparent"; n.style.boxShadow="none";
+      });
+    });
+    document.querySelectorAll('.zed-video-card').forEach(function(card){
+      var locked=!!card.querySelector('.zed-lock-cover');
+      // Video area: transparent, never dark. The thumbnail / first frame fills it.
+      card.querySelectorAll('.aspect-video, .yt-lite').forEach(function(el){
+        el.style.backgroundColor="transparent"; el.style.background="transparent";
+      });
+      var vid=card.querySelector('video');
+      if(vid){ vid.style.backgroundColor="transparent"; vid.style.background="transparent"; }
+      var thumbImg=card.querySelector('.yt-lite img.yt-thumb');
+      if(thumbImg){ thumbImg.style.display="block"; thumbImg.style.opacity="1"; }
+      card.querySelectorAll('iframe').forEach(function(fr){
+        var s=fr.getAttribute('src')||fr.src||"";
+        if(locked && (s==="about:blank" || s==="")){ fr.style.display="none"; }
+        else if(!locked && s && s!=="about:blank"){ fr.style.display=""; }
+      });
+    });
+  }
+  fixLockedThumbs();
+  document.addEventListener("DOMContentLoaded", fixLockedThumbs);
+  window.addEventListener("load", fixLockedThumbs);
+  setInterval(fixLockedThumbs, 800);
+  if(document.body){ new MutationObserver(function(){ fixLockedThumbs(); }).observe(document.body, {childList:true, subtree:true}); }
+  console.log("[ZED FINAL v2] Locked thumbnail: no dark colour, YouTube img OR MP4 first frame shows through.");
+})();</script>
 
 </body>
 </html>
