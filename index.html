@@ -7,6 +7,9 @@
   <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, viewport-fit=cover">
   <title>ZED SCHOLAR - ECZ Past Papers | Form 1-6, Grade 10-12</title>
   <meta name="google-site-verification" content="cawMAmcgDD18xCH8Kn4eof_LJKgGeOEuiLX-m7caheY">
+   <!-- Google AdSense - base script (Auto Ads + manual ad units). -->
+   <script async src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-2589035267682710"
+     crossorigin="anonymous"></script>
 
   <meta name="description" content="Free ECZ past papers for Senior Secondary in Zambia - Form 1-6 & Grade 10-12 with marking schemes, quizzes & videos. Works offline.">
   <meta name="keywords" content="zed, zed scholar, zedscholar, zed past papers, ecz past papers, ecz past papers Zambia, senior secondary past papers, form 1 past papers, form 5 past papers, grade 10 past papers, grade 11 past papers, grade 12 past papers, ECZ, Zambia past papers, ecz marking scheme, zed scholar app">
@@ -2992,8 +2995,14 @@ if(h)throw Error(h.message);F(vidFile?"Video uploaded from phone ✓":"Video add
     }
     return origOpen.call(window, url, ...args);
   };
-  // DUPLICATE DELETED: the single YouTube click blocker now lives in the FINAL No-YouTube-Redirect script below.
-  // Keeping two capture-phase blockers for the same links meant two stopPropagation() calls competing for every tap.
+  // Block clicks on YouTube links inside cards (title/channel) - stay in app
+  document.addEventListener('click', function(e){
+    var a = e.target && e.target.closest ? e.target.closest('a[href*="youtube.com"], a[href*="youtu.be"]') : null;
+    if(a){
+      e.preventDefault(); e.stopPropagation();
+      return false;
+    }
+  }, true);
   // Safety net: sandbox ANY YouTube iframe that appears without sandbox (e.g. from React)
   function sandboxYouTubeIframes(){
     document.querySelectorAll('iframe[src*="youtube.com"], iframe[src*="youtube-nocookie.com"]').forEach(function(f){
@@ -3943,10 +3952,21 @@ if(h)throw Error(h.message);F(vidFile?"Video uploaded from phone ✓":"Video add
         card.dataset.zedPlaySetup = '1';
         card.style.cursor = 'pointer';
         
-        /* DUPLICATE DELETED (V17 per-card listener): every card had its own click -> playBig(card),
-           which fired on ANY tap inside the card, including Download / Unlock / Play buttons.
-           ONE handler now owns all video-card taps: the Video Coins document click handler below.
-           Play via Play button, Expand via Expand button. */
+        card.addEventListener('click', (e)=>{
+          // BLOCK 'Watch video on YouTube' - never leave the app, play in-app instead
+          if(e.target.textContent && e.target.textContent.includes('Watch video on YouTube')){ e.preventDefault(); e.stopPropagation(); return; }
+          if(e.target.textContent && e.target.textContent.includes('Watch on YouTube')){ e.preventDefault(); e.stopPropagation(); return; }
+          if(e.target.closest('a')) return;
+          
+          // If already playing this card, close it
+          if(playingCard === card){
+            closePlayer();
+            return;
+          }
+          
+          // Play this card big
+          playBig(card);
+        });
       }
     });
   }
@@ -9475,7 +9495,7 @@ body.zed-v15-no-results #zed-v15-no-results{display:block !important}
 .zed-dl-card{background:#12294D;border:1px solid #2563EB;border-radius:14px;overflow:hidden}
 .zed-dl-card video{width:100%;aspect-ratio:16/9;background:#000}
 .zed-dl-body{padding:12px}
-.zed-vid-progress{display:none !important;height:6px !important;background:#2A2A2A !important;border-radius:999px !important;overflow:hidden !important;margin-top:8px} .zed-vid-progress.show{display:block !important} .zed-vid-progress-fill{height:100% !important;background:#3B82F6 !important;width:0% !important;transition:width .15s} .zed-vid-progress-text{display:none !important;font-size:11px !important;color:#93C5FD !important;font-weight:700 !important;margin-top:4px} .zed-vid-progress-text.show{display:block !important} .zed-video-actions{display:flex;flex-wrap:wrap;gap:8px;margin-top:10px}
+.zed-video-actions{display:flex;flex-wrap:wrap;gap:8px;margin-top:10px} .zed-vid-progress{width:100%;margin-top:8px} .zed-vid-progress .zed-vid-progress-track{width:100%;height:8px;background:rgba(255,255,255,.15);border-radius:999px;overflow:hidden} .zed-vid-progress .zed-vid-progress-fill{height:100%;width:0%;background:#3B82F6;border-radius:999px;transition:width .2s} .zed-vid-progress .zed-vid-progress-text{margin-top:4px;font-size:11px;color:#93C5FD}
 .zed-video-actions button{height:32px;padding:0 12px;border-radius:8px;border:1px solid #2563EB;background:#12294D;color:#fff;font-size:11px;font-weight:600;cursor:pointer}
 .zed-video-actions button.primary{background:#fff;color:#000;border-color:#fff;font-weight:700}
 .zed-video-actions button.gold{background:#FFD600;color:#000;border-color:#FFD600;font-weight:700}
@@ -9631,7 +9651,7 @@ window._zedV15Filter = 'search';
     }catch(e){ return 0; }
   }
   async function ensureDownloadsLoaded(){ if(downloadedLoaded) return; var all=await getAllDownloads(); downloadedIds=new Set(all.map(function(x){return x.id;})); downloadedLoaded=true; }
-  async function saveDownload(meta, blob){ var db=await openDB(); return new Promise(function(resolve,reject){ var tx=db.transaction(STORE,'readwrite'); var rec={ id: meta.id, title: meta.title, subject: meta.subject, video_url: meta.video_url, video_type: meta.video_type, thumbnail_url: meta.thumbnail_url||((window.zedGetCachedThumb&&window.zedGetCachedThumb(meta))||''), savedAt: Date.now(), size: blob.size||0, blob: blob }; tx.objectStore(STORE).put(rec); tx.oncomplete=function(){ resolve(rec); }; tx.onerror=function(){ reject(tx.error); }; }); }
+  async function saveDownload(meta, blob){ var db=await openDB(); return new Promise(function(resolve,reject){ var tx=db.transaction(STORE,'readwrite'); var rec={ id: meta.id, title: meta.title, subject: meta.subject, video_url: meta.video_url, video_type: meta.video_type, thumbnail_url: meta.thumbnail_url||'', savedAt: Date.now(), size: blob.size||0, blob: blob }; tx.objectStore(STORE).put(rec); tx.oncomplete=function(){ resolve(rec); }; tx.onerror=function(){ reject(tx.error); }; }); }
   async function deleteDownload(id){ var db=await openDB(); return new Promise(function(resolve){ var tx=db.transaction(STORE,'readwrite'); tx.objectStore(STORE).delete(id); tx.oncomplete=function(){ resolve(); }; tx.onerror=function(){ resolve(); }; }); }
   async function fetchFreshCoins(){
     var me=getMe(); if(!me || !me.id) return getCoins();
@@ -10593,120 +10613,90 @@ window._zedV15Filter = 'search';
       ov.addEventListener('click', function(e){ if(e.target===ov) ov.querySelector('[data-zed-close-dl-player]').click(); });
     }catch(e){ toast('Could not play download'); }
   }
-    // ---- Video download progress bar (same as papers) ----
-  function zedFmtSize(b){ if(!b) return '0 B'; if(b<1024) return b+' B'; if(b<1024*1024) return (b/1024).toFixed(1)+' KB'; return (b/1024/1024).toFixed(1)+' MB'; }
-  function zedShowVideoProgress(videoId){
+  // === ZED - Video download progress (same pattern as papers) ===
+  function zedVideoDlButtons(videoId){
     try{
-      var btns=document.querySelectorAll('[data-zed-download="'+videoId+'"], [data-zed-unlocked-dl="'+videoId+'"], [data-zed-dl-redownload="'+videoId+'"]');
-      for(var i=0;i<btns.length;i++){
-        var btn=btns[i];
-        if(!btn.dataset.zedOrigText) btn.dataset.zedOrigText=btn.textContent;
-        btn.textContent='Downloading... 0%';
-        var card=btn.closest ? (btn.closest('.zed-video-card') || btn.closest('.zed-dl-card')) : null;
-        if(!card) continue;
-        var prog=card.querySelector('.zed-vid-progress[data-vid="'+videoId+'"]');
-        var ptext=card.querySelector('.zed-vid-progress-text[data-vid="'+videoId+'"]');
-        if(!prog){
-          var holder=card.querySelector('.zed-video-actions');
-          var parent=(holder && holder.parentElement) ? holder.parentElement : card;
-          prog=document.createElement('div'); prog.className='zed-vid-progress show'; prog.setAttribute('data-vid', videoId);
-          var fill=document.createElement('div'); fill.className='zed-vid-progress-fill'; prog.appendChild(fill);
-          ptext=document.createElement('div'); ptext.className='zed-vid-progress-text show'; ptext.setAttribute('data-vid', videoId);
-          ptext.textContent='Downloading... 0%';
-          parent.appendChild(prog); parent.appendChild(ptext);
-        } else {
-          prog.classList.add('show'); if(ptext) ptext.classList.add('show');
-          var f=prog.querySelector('.zed-vid-progress-fill'); if(f) f.style.width='0%';
-          if(ptext) ptext.textContent='Downloading... 0%';
-        }
-      }
-    }catch(e){}
+      var sel=[
+        '[data-zed-download="'+videoId+'"]',
+        '[data-zed-unlocked-dl="'+videoId+'"]',
+        '[data-zed-dl-redownload="'+videoId+'"]'
+      ];
+      var out=[];
+      sel.forEach(function(s){ document.querySelectorAll(s).forEach(function(b){ out.push(b); }); });
+      return out;
+    }catch(e){ return []; }
   }
-  function zedUpdateVideoProgress(videoId, received, total){
+  function zedShowVideoProgress(videoId, pct, downloadedBytes, totalBytes){
     try{
-      var pct=total ? Math.round(received/total*100) : 0;
-      var label=total ? ('Downloading... '+pct+'% \u2022 '+zedFmtSize(received)+' of '+zedFmtSize(total)) : ('Downloading... '+zedFmtSize(received));
-      var btnLabel=total ? ('Downloading... '+pct+'%') : ('Downloading... '+zedFmtSize(received));
-      document.querySelectorAll('.zed-vid-progress[data-vid="'+videoId+'"]').forEach(function(prog){
-        var f=prog.querySelector('.zed-vid-progress-fill'); if(f && total) f.style.width=pct+'%';
+      var btns=zedVideoDlButtons(videoId);
+      btns.forEach(function(btn){
+        if(!btn.dataset.zedOrigText) btn.dataset.zedOrigText=btn.textContent;
+        var label=totalBytes ? ('Downloading... '+Math.round(pct)+'%') : ('Downloading... '+((downloadedBytes/1048576).toFixed(1))+' MB');
+        if(btn.textContent!==label) btn.textContent=label;
+        btn.disabled=true;
+        var actions=btn.closest('.zed-video-actions') || btn.parentElement;
+        var bar=actions ? actions.querySelector('.zed-vid-progress') : null;
+        if(!bar && actions){
+          bar=document.createElement('div');
+          bar.className='zed-vid-progress';
+          bar.innerHTML='<div class="zed-vid-progress-track"><div class="zed-vid-progress-fill"></div></div><div class="zed-vid-progress-text">Downloading... 0%</div>';
+          actions.appendChild(bar);
+        }
+        if(bar){
+          var fill=bar.querySelector('.zed-vid-progress-fill');
+          var txt=bar.querySelector('.zed-vid-progress-text');
+          if(fill) fill.style.width=Math.max(0, Math.min(100, pct))+'%';
+          if(txt) txt.textContent = totalBytes
+            ? ('Downloading... '+Math.round(pct)+'% • '+((downloadedBytes/1048576).toFixed(1))+' MB of '+((totalBytes/1048576).toFixed(1))+' MB')
+            : ('Downloading... '+((downloadedBytes/1048576).toFixed(1))+' MB');
+        }
       });
-      document.querySelectorAll('.zed-vid-progress-text[data-vid="'+videoId+'"]').forEach(function(el){ el.textContent=label; });
-      document.querySelectorAll('[data-zed-download="'+videoId+'"], [data-zed-unlocked-dl="'+videoId+'"], [data-zed-dl-redownload="'+videoId+'"]').forEach(function(btn){ btn.textContent=btnLabel; });
     }catch(e){}
   }
   function zedHideVideoProgress(videoId){
     try{
-      document.querySelectorAll('.zed-vid-progress[data-vid="'+videoId+'"], .zed-vid-progress-text[data-vid="'+videoId+'"]').forEach(function(el){ try{ el.remove(); }catch(e){} });
-      document.querySelectorAll('[data-zed-download="'+videoId+'"], [data-zed-unlocked-dl="'+videoId+'"], [data-zed-dl-redownload="'+videoId+'"]').forEach(function(btn){
-        if(btn.dataset.zedOrigText){ btn.textContent=btn.dataset.zedOrigText; delete btn.dataset.zedOrigText; }
+      zedVideoDlButtons(videoId).forEach(function(btn){
+        btn.disabled=false;
+        if(btn.dataset.zedOrigText) btn.textContent=btn.dataset.zedOrigText;
+        var actions=btn.closest('.zed-video-actions') || btn.parentElement;
+        var bar=actions ? actions.querySelector('.zed-vid-progress') : null;
+        if(bar) bar.remove();
       });
     }catch(e){}
   }
   async function handleDownload(videoId){
-    if(isOffline()){ toast('You are offline \u2014 downloading needs data once. Your saved videos below still play offline.'); return; }
-    if(!window._zedDownloading) window._zedDownloading={};
-    if(window._zedDownloading[videoId]){ toast('Already downloading\u2026 keep the app open'); return; }
-    window._zedDownloading[videoId]=1;
+    if(isOffline()){ toast('You are offline — downloading needs data once. Your saved videos below still play offline.'); return; }
+    var cards=findVideoCards(); var info=null;
+    for(var i=0;i<cards.length;i++){ var inf=extractInfo(cards[i]); if(inf.id===videoId){ info=inf; break; } }
+    if(!info) info={ id: videoId, title:'Video' };
+    if(!isUnlockedInfo(info)){ toast('Unlock this video first (25 coins)'); return; }
+    if(info.video_type==='youtube'){ alert('YouTube videos cannot be downloaded.\n\nYou can unlock + watch them online in the app.\nOnly MP4 videos can be saved offline inside the app.'); return; }
+    var url=info.video_url;
+    if(!url && info.origSrc) url=info.origSrc;
+    if(!url){ toast('No video file found for this video'); return; }
     try{
-      var cards=findVideoCards(); var info=null;
-      for(var i=0;i<cards.length;i++){ var inf=extractInfo(cards[i]); if(inf.id===videoId){ info=inf; break; } }
-      // Fallback 1 - stored unlock meta: the grid card may be filtered out / not loaded yet,
-      // but meta still has the real title + video_url. Without this, info became {title:'Video'}
-      // and isUnlockedInfo() failed even though the video IS unlocked.
-      if(!info || !info.video_url){
-        try{
-          var _m=getUnlockedMeta();
-          for(var _mi=0;_mi<_m.length;_mi++){
-            if(_m[_mi].id===videoId){
-              var _mm=_m[_mi];
-              if(!info) info={id:_mm.id, title:_mm.title||'Video', subject:_mm.subject||'', video_url:_mm.video_url||'', video_type:_mm.video_type||'mp4', ytId:_mm.ytId||'', thumbnail_url:_mm.thumbnail_url||'', origSrc:_mm.video_url||''};
-              else if(!info.video_url && _mm.video_url) info.video_url=_mm.video_url;
-              if(!info.origSrc && _mm.video_url) info.origSrc=_mm.video_url;
-              break;
-            }
-          }
-        }catch(e){}
-      }
-      // Fallback 2 - saved download record (re-download path): its video_url is still valid.
-      if(!info || !info.video_url){
-        try{
-          var _all=await getAllDownloads();
-          for(var _di=0;_di<_all.length;_di++){
-            if(_all[_di].id===videoId){
-              var _rec=_all[_di];
-              if(!info) info={id:_rec.id, title:_rec.title||'Video', subject:_rec.subject||'', video_url:_rec.video_url||'', video_type:_rec.video_type||'mp4', ytId:_rec.ytId||'', thumbnail_url:_rec.thumbnail_url||'', origSrc:_rec.video_url||''};
-              else if(!info.video_url && _rec.video_url) info.video_url=_rec.video_url;
-              if(!info.origSrc && _rec.video_url) info.origSrc=_rec.video_url;
-              break;
-            }
-          }
-        }catch(e){}
-      }
-      if(!info) info={ id: videoId, title:'Video' };
-      if(!isUnlockedInfo(info)){ toast('Unlock this video first (25 coins)'); return; }
-      if(info.video_type==='youtube'){ alert('YouTube videos cannot be downloaded.\n\nYou can unlock + watch them online in the app.\nOnly MP4 videos can be saved offline inside the app.'); return; }
-      var url=info.video_url;
-      if(!url || url==='about:blank' || url.indexOf('blob:')===0){ url=info.origSrc||''; }
-      if(!url){ toast('No video file found for this video'); return; }
-      toast('Downloading\u2026 keep the app open');
-      zedShowVideoProgress(videoId);
-      var res=await fetch(url, {cache:'no-store'});
+      toast('Downloading... keep the app open');
+      zedShowVideoProgress(videoId, 0, 0, 0);
+      var res=await fetch(url);
       if(!res.ok) throw new Error('Download failed: '+res.status);
-      var total=0; try{ total=Number(res.headers.get('Content-Length'))||0; }catch(e){}
-      var blob=null;
-      if(!res.body){
-        blob=await res.blob();
-        zedUpdateVideoProgress(videoId, blob.size, blob.size);
-      } else {
-        var reader=res.body.getReader(); var chunks=[]; var received=0;
+      // Stream so we can show % like papers do - fetch -> blob() gives no progress.
+      var total=0;
+      try{ total=parseInt(res.headers.get('Content-Length')||'0', 10)||0; }catch(e){ total=0; }
+      var blob;
+      if(res.body && res.body.getReader){
+        var reader=res.body.getReader();
+        var chunks=[]; var got=0;
         while(true){
           var r=await reader.read();
           if(r.done) break;
-          chunks.push(r.value); received+=r.value.byteLength;
-          zedUpdateVideoProgress(videoId, received, total);
+          chunks.push(r.value); got+=r.value.length;
+          zedShowVideoProgress(videoId, total ? (got/total*100) : 0, got, total);
         }
         blob=new Blob(chunks, {type:'video/mp4'});
+      } else {
+        blob=await res.blob();
       }
+      zedHideVideoProgress(videoId);
       // V15: If fetch returns no MIME type, phone won't play it as video. Force video/mp4.
       if(!blob.type || blob.type.indexOf('video/')!==0){
         try{ blob=new Blob([blob], {type:'video/mp4'}); }catch(e){}
@@ -10716,15 +10706,9 @@ window._zedV15Filter = 'search';
       lastDownloadsSig=''; // new download - rebuild Downloads view once
       getCandidateIds(info).forEach(function(cid){ downloadedIds.add(cid); });
       downloadedIds.add(videoId);
-      toast('Saved inside app \u2713 \u2022 Find it in Videos \u2192 Downloads');
+      toast('Saved inside app ✓ • Find it in Videos → Downloads');
       lastProcess=0; processVideos();
-    }catch(e){
-      try{ zedHideVideoProgress(videoId); }catch(e2){}
-      // NEVER silent: a failed fetch / save used to do nothing at all, so the button looked dead.
-      toast('Could not download \u2014 '+(e && e.message ? e.message : 'check data and try again'));
-    }finally{
-      try{ delete window._zedDownloading[videoId]; }catch(e){}
-    }
+    }catch(e){ zedHideVideoProgress(videoId); toast('Download failed - check data and try again'); }
   }
   async function handleDeleteDownload(videoId){
     if(!confirm('Remove this download from the app?')) return;
@@ -10812,7 +10796,7 @@ window._zedV15Filter = 'search';
     }
     // V16: Unlocked view - Play Offline / Download buttons inside the stored-unlocks view
     var unlDl=t.closest('[data-zed-unlocked-dl]');
-    if(unlDl){ e.preventDefault(); e.stopPropagation(); var _uid=unlDl.getAttribute('data-zed-unlocked-dl'); if(isOffline()){ toast('You are offline — download needs data once'); return; } handleDownload(_uid); return; }
+    if(unlDl){ e.preventDefault(); var _uid=unlDl.getAttribute('data-zed-unlocked-dl'); if(isOffline()){ toast('You are offline — download needs data once'); return; } (function(){ var _m=getUnlockedMeta(); for(var _i=0;_i<_m.length;_i++){ if(_m[_i].id===_uid){ handleDownload(_uid); break; } } })(); return; }
     var unlYt=t.closest('[data-zed-unlocked-yt]');
     if(unlYt){ e.preventDefault(); if(isOffline()){ toast('YouTube videos need data to play'); return; } toast('YouTube video needs data — opening online player'); return; }
     // V11: Top tabs are boss. Tapping VIDEOS always goes back to Search (not stuck in Downloads). Other tabs leave Videos cleanly.
@@ -11866,11 +11850,112 @@ div[class*="backdrop-blur"]{ backdrop-filter:none !important; -webkit-backdrop-f
 
 
 <!-- ZED FIX 14 Nov 2026 — TRANSPARENT LOCK SHIELD: thumbnail stays visible -->
-
+<style>
+/* The lock cover had TWO opaque layers hiding the thumbnail:
+   1) background-color:#12294D (the BLUE shield)
+   2) ::after background:rgba(0,0,0,.82) (the BLACK shield)
+   Both must be transparent at the same time, otherwise one still hides the thumbnail. */
+.zed-lock-cover{
+  background-color: transparent !important;
+  background-size: cover !important;
+  background-position: center !important;
+  background-repeat: no-repeat !important;
+  /* keep the thumbnail as the cover's own background, no solid fill */
+}
+.zed-lock-cover::after{
+  content:"" !important;
+  position:absolute !important;
+  inset:0 !important;
+  /* Very light scrim only — just enough to read the lock, thumbnail shows through clearly */
+  background: transparent !important;
+  z-index:0 !important;
+}
+.zed-lock-cover > *{ position:relative !important; z-index:1 !important; }
+/* Lock + text become small floating pills, NOT a full shield */
+.zed-lock-icon{
+  font-size:30px !important;
+  line-height:1 !important;
+  background: transparent !important;
+  backdrop-filter: blur(2px);
+  padding: 10px 12px !important;
+  border-radius: 999px !important;
+  box-shadow: 0 4px 14px rgba(0,0,0,0.35) !important;
+  text-shadow: 0 1px 3px rgba(0,0,0,0.6) !important;
+}
+.zed-lock-sub{
+  color:#fff !important;
+  background: transparent !important;
+  padding: 5px 10px !important;
+  border-radius: 999px !important;
+  font-size:11px !important;
+  font-weight:700 !important;
+  text-shadow: 0 1px 2px rgba(0,0,0,0.6) !important;
+}
+/* Underlying YouTube facade had the SAME problem: a solid blue ::before covering its <img> thumbnail */
+.yt-lite{
+  background-color: transparent !important;
+  background-size: cover !important;
+  background-position: center !important;
+}
+.yt-lite::before{
+  background: transparent !important;
+  content: none !important;
+  display:none !important;
+}
+.yt-lite img.yt-thumb{
+  display:block !important;
+  opacity:1 !important;
+  position:relative !important;
+  z-index:0 !important;
+}
+.yt-lite .yt-title-bar{
+  background: linear-gradient(180deg, rgba(0,0,0,0.55), transparent) !important;
+}
+/* YouTube click-block shields stay transparent — they were already correct, keep them that way */
+.zed-yt-shield-top, .zed-yt-shield-logo, .zed-more-shield, .zed-yt-expand-shield{
+  background: transparent !important;
+}
+</style>
 
 
 <!-- ZED FIX 14 Nov 2026 — FULLY TRANSPARENT LOCK SHIELD v2: zero gradient, zero dark pill -->
-
+<style>
+.zed-lock-cover{
+  background-color: transparent !important;
+}
+.zed-lock-cover::after{
+  background: transparent !important;
+  background-image: none !important;
+  display:none !important;
+  content:none !important;
+}
+.zed-lock-cover::before{
+  background: transparent !important;
+  display:none !important;
+  content:none !important;
+}
+.zed-lock-icon{
+  background: transparent !important;
+  background-color: transparent !important;
+  box-shadow: none !important;
+  backdrop-filter: none !important;
+  /* keep lock visible on bright thumbnails without a dark box */
+  text-shadow: 0 2px 6px rgba(0,0,0,0.85), 0 0 2px rgba(0,0,0,0.9) !important;
+  filter: drop-shadow(0 2px 4px rgba(0,0,0,0.8)) !important;
+  padding: 0 !important;
+}
+.zed-lock-sub{
+  background: transparent !important;
+  background-color: transparent !important;
+  box-shadow: none !important;
+  backdrop-filter: none !important;
+  color:#fff !important;
+  text-shadow: 0 2px 6px rgba(0,0,0,0.9), 0 0 2px rgba(0,0,0,0.9) !important;
+  padding: 0 !important;
+}
+.yt-lite::before{ background: transparent !important; display:none !important; content:none !important; }
+.yt-lite{ background-color: transparent !important; }
+</style>
 
 <style>/* USER FIX: province cards COMPLETELY REMOVED — never show, even after React re-render */
 div.grid[class*="lg:grid-cols-5"]{display:none !important;visibility:hidden !important;height:0 !important;min-height:0 !important;margin:0 !important;padding:0 !important;overflow:hidden !important;}
@@ -12740,6 +12825,61 @@ div[class*="backdrop-blur"]{ backdrop-filter:none !important; -webkit-backdrop-f
   <div class="zed-gs-dots"><span></span><span></span><span></span></div>
 </div>
 <div id="zed-gs-dl-toast"></div>
+<script> // === ZED - Get Started page RESTORED - the HTML existed but NO JS ever showed it or wired its buttons, so it could never appear ===
+(function(){
+  if(window.__zedGSInit) return; window.__zedGSInit=true;
+  function hasUser(){
+    try{
+      var raw=localStorage.getItem('zed_user');
+      if(!raw || raw==='null' || raw==='undefined' || raw==='') return false;
+      try{ var u=JSON.parse(raw); return !!(u && (u.phone || u.name || u.id)); }catch(e){ return true; }
+    }catch(e){ return false; }
+  }
+  function hideGS(){
+    try{ var gs=document.getElementById('zed-gs-getting-started'); if(gs) gs.classList.remove('show'); }catch(e){}
+    try{ document.body.style.overflow=''; }catch(e){}
+  }
+  function showGS(){
+    try{
+      var gs=document.getElementById('zed-gs-getting-started');
+      if(gs){ gs.classList.add('show'); try{ document.body.style.overflow='hidden'; }catch(e){} }
+    }catch(e){}
+  }
+  function openSignup(){
+    // React login screen has #zed-signup-open ("Create account") which flips React into signup mode.
+    // React renders async, so retry until it exists.
+    var tries=0;
+    var timer=setInterval(function(){
+      tries++;
+      try{
+        var b=document.getElementById('zed-signup-open');
+        if(b){ try{ b.click(); }catch(e){} clearInterval(timer); return; }
+        if(tries>=20){
+          clearInterval(timer);
+          try{ location.hash='#signup'; document.documentElement.setAttribute('data-signup','open'); }catch(e){}
+        }
+      }catch(e){ clearInterval(timer); }
+    }, 250);
+  }
+  function init(){
+    try{
+      var gs=document.getElementById('zed-gs-getting-started');
+      if(!gs) return;
+      // Test hook: ?getstarted=1 (or #getstarted) forces the page even when logged in, so you can preview it.
+      var force=false;
+      try{ force=(location.search.indexOf('getstarted')!==-1) || (location.hash.indexOf('getstarted')!==-1); }catch(e){}
+      if(!force && hasUser()){ hideGS(); return; }
+      showGS();
+      var start=document.getElementById('zed-gs-btn-start');
+      var create=document.getElementById('zed-gs-btn-create');
+      if(start) start.addEventListener('click', function(){ hideGS(); try{ window.scrollTo(0,0); }catch(e){} });
+      if(create) create.addEventListener('click', function(){ hideGS(); try{ window.scrollTo(0,0); }catch(e){} openSignup(); });
+    }catch(e){}
+  }
+  if(document.readyState==='loading') document.addEventListener('DOMContentLoaded', init);
+  else init();
+})();
+</script>
 <!-- REMOVED OLD DOWNLOAD SCRIPT - replaced by ONE clean system below -->
 
 <style id="zed-beauty-theme-v1">
@@ -13273,11 +13413,31 @@ header *{ transition:none!important; animation:none!important; }
 
 
 <!-- ZED FIX v2 FINAL — 100% transparent, placed last so it wins -->
-
+<style>
+.zed-lock-cover{ background-color: transparent !important; background-size: cover !important; background-position: center !important; }
+.zed-lock-cover::after, .zed-lock-cover::before{ background-color: transparent !important; }
+.zed-lock-cover::after, .zed-lock-cover::before{ display:none !important; content:none !important; }
+.zed-lock-icon, .zed-lock-sub{ background: transparent !important; box-shadow:none !important; backdrop-filter:none !important; }
+.yt-lite .yt-title-bar{ background: transparent !important; background-image:none !important; text-shadow: 0 1px 4px rgba(0,0,0,0.8) !important; }
+.yt-lite::before{ background: transparent !important; display:none !important; content:none !important; }
+</style>
 
 
 <!-- ZED FIX — REMOVE BLACK SHIELD COMPLETELY — 14 Nov 2026 -->
-
+<style>
+/* BLACK SHIELD = 3 layers. All must go at once:
+   1) .zed-lock-cover::after black overlay
+   2) .aspect-video / .yt-lite / video background:#000
+   3) .zed-expand-btn black oval */
+.zed-lock-cover{ background-color: transparent !important; }
+.zed-lock-cover::after, .zed-lock-cover::before{ background: transparent !important; background-color: transparent !important; display:none !important; content:none !important; }
+.zed-lock-cover img.zed-cover-thumb{ position:absolute !important; inset:0 !important; width:100% !important; height:100% !important; object-fit:cover !important; z-index:0 !important; display:block !important; border-radius:14px 14px 0 0 !important; }
+.zed-lock-cover > .zed-lock-icon, .zed-lock-cover > .zed-lock-sub{ position:relative !important; z-index:2 !important; }
+.zed-lock-icon, .zed-lock-sub{ background: transparent !important; box-shadow:none !important; text-shadow: 0 2px 6px rgba(0,0,0,0.9) !important; }
+.aspect-video, .video-wrapper, .yt-lite, .zed-dl-card video{ background: transparent !important; background-color: transparent !important; }
+.yt-lite img.yt-thumb{ display:block !important; opacity:1 !important; }
+.zed-expand-btn{ background: transparent !important; background-color: transparent !important; border:none !important; box-shadow:none !important; text-shadow: 0 2px 6px rgba(0,0,0,0.9) !important; }
+</style>
 <script>
 (function(){
   function getThumbForCover(cover, card){
@@ -14082,685 +14242,6 @@ main div.grid.grid-cols-3.zed-top3-parent{ grid-template-columns:1fr !important;
   console.log('[ZED FIX] Papers/Docs ONLY - Leaderboard small, no Download on Leaderboard');
 })();
 </script>
-
-<!-- ZED FINAL v4 — MP4 THUMBNAILS + DELETED VIDEOS + SEARCH BAR NEVER STUCK (replaces v2/v3, do not stack another final block) -->
-<style>
-div.grid[class*="lg:grid-cols-5"]{display:none !important;visibility:hidden !important;height:0 !important;min-height:0 !important;margin:0 !important;padding:0 !important;overflow:hidden !important;}
-.zed-province-small,.zed-province-row{display:none !important;}
-.zed-video-card .aspect-video,.zed-video-card .yt-lite,.zed-video-card video{background:transparent !important;background-color:transparent !important;}
-.zed-video-card .yt-lite::before{display:none !important;content:none !important;background:transparent !important;}
-.zed-video-card .yt-lite img.yt-thumb{display:block !important;opacity:1 !important;width:100% !important;height:100% !important;object-fit:cover !important;}
-.zed-video-card video{display:block !important;opacity:1 !important;width:100% !important;height:100% !important;object-fit:cover !important;}
-.zed-lock-cover{background:transparent !important;background-color:transparent !important;background-image:none !important;box-shadow:none !important;}
-.zed-lock-cover::before,.zed-lock-cover::after{display:none !important;content:none !important;background:transparent !important;background-image:none !important;}
-.zed-lock-cover img.zed-cover-thumb{position:absolute !important;inset:0 !important;width:100% !important;height:100% !important;object-fit:cover !important;z-index:0 !important;display:block !important;border-radius:14px 14px 0 0 !important;}
-.zed-lock-cover > .zed-lock-icon,.zed-lock-cover > .zed-lock-sub{position:relative !important;z-index:2 !important;background:transparent !important;background-color:transparent !important;box-shadow:none !important;backdrop-filter:none !important;text-shadow:0 2px 6px rgba(0,0,0,0.9),0 0 2px rgba(0,0,0,0.9) !important;}
-.zed-video-card .aspect-video iframe[src="about:blank"]{display:none !important;}
-img.zed-mp4-thumb{position:absolute !important;inset:0 !important;width:100% !important;height:100% !important;object-fit:cover !important;z-index:1 !important;display:block !important;border-radius:14px 14px 0 0 !important;}
-.zed-dl-card{position:relative !important;}
-/* SEARCH BAR: stable size, no tap-delay, no zoom-resize. 16px stops the phone resizing / zooming the page when the keyboard opens. */
-#zed-v16-wrap{width:100% !important;box-sizing:border-box !important;touch-action:manipulation !important;}
-#zed-v16-input{width:100% !important;flex:1 1 auto !important;min-width:0 !important;font-size:16px !important;touch-action:manipulation !important;-webkit-tap-highlight-color:transparent !important;pointer-events:auto !important;}
-/* While you are touching / typing in search, NOTHING may hide or move the search box. Stylesheet !important beats the other scripts' plain style.display='none'. */
-body.zed-search-active #zed-v16-wrap, body.zed-search-active #zed-v15-toolbar{display:block !important;visibility:visible !important;opacity:1 !important;pointer-events:auto !important;}
-body.zed-search-active #zed-v16-input{display:block !important;visibility:visible !important;opacity:1 !important;pointer-events:auto !important;}
-body.zed-search-active #zed-v16-wrap{position:relative !important;z-index:5 !important;}
-</style>
-<script>(function(){
-  // ---------- search-active flag: set on TOUCHSTART, before focus lands, before any interval can move the box ----------
-  var searchOffTimer=null;
-  function setSearchActive(on){
-    try{
-      if(on){
-        if(searchOffTimer){ clearTimeout(searchOffTimer); searchOffTimer=null; }
-        document.body.dataset.zedSearchActive="1";
-        document.body.classList.add("zed-search-active");
-      } else {
-        // Keep it on for 600ms after blur — covers keyboard-open delay + refocus + Search-button -> focus (120ms) race.
-        if(searchOffTimer) clearTimeout(searchOffTimer);
-        searchOffTimer=setTimeout(function(){
-          try{ document.body.dataset.zedSearchActive="0"; document.body.classList.remove("zed-search-active"); }catch(e){}
-        }, 600);
-      }
-    }catch(e){}
-  }
-  function isSearchActive(){
-    try{
-      if(document.body && document.body.dataset.zedSearchActive==="1") return true;
-      var ae=document.activeElement;
-      if(ae && (ae.id==="zed-v16-input" || ae.id==="zed-topic-input")) return true;
-      if(ae && ae.tagName==="INPUT" && ae.placeholder && ae.placeholder.toLowerCase().indexOf("search")!==-1) return true;
-    }catch(e){}
-    return false;
-  }
-  function getSearchInputEl(){ return document.getElementById("zed-v16-input") || document.getElementById("zed-topic-input"); }
-  var lastSearchValue="";
-  // Capture phase = runs BEFORE the other scripts' document click / MutationObserver handlers.
-  document.addEventListener("touchstart", function(e){
-    try{
-      var tg=e.target;
-      if(!tg || !tg.closest) return;
-      if(tg.closest("#zed-v16-input") || tg.closest("#zed-v16-wrap") || tg.closest('[data-zed-filter="search"]')) setSearchActive(true);
-    }catch(err){}
-  }, true);
-  document.addEventListener("mousedown", function(e){
-    try{
-      var tg=e.target;
-      if(!tg || !tg.closest) return;
-      if(tg.closest("#zed-v16-input") || tg.closest("#zed-v16-wrap") || tg.closest('[data-zed-filter="search"]')) setSearchActive(true);
-    }catch(err){}
-  }, true);
-  document.addEventListener("focusin", function(e){
-    try{ if(e.target && (e.target.id==="zed-v16-input" || e.target.id==="zed-topic-input")) setSearchActive(true); }catch(err){}
-  }, true);
-  document.addEventListener("focusout", function(e){
-    try{ if(e.target && (e.target.id==="zed-v16-input" || e.target.id==="zed-topic-input")) setSearchActive(false); }catch(err){}
-  }, true);
-  document.addEventListener("input", function(e){
-    try{
-      if(e.target && (e.target.id==="zed-v16-input" || e.target.id==="zed-topic-input")){
-        lastSearchValue=e.target.value||"";
-        setSearchActive(true);
-      }
-    }catch(err){}
-  }, true);
-  // Stabilise the input ONCE per element — never rewrite styles every tick while typing (that was re-laying out the focused input).
-  function stabilizeSearchInput(){
-    try{
-      var inp=getSearchInputEl();
-      if(!inp || inp.dataset.zedV4Stable==="1") return;
-      inp.dataset.zedV4Stable="1";
-      inp.removeAttribute("readonly"); inp.disabled=false;
-      inp.style.pointerEvents="auto";
-      try{ inp.setAttribute("inputmode","search"); }catch(e){}
-      try{ inp.setAttribute("enterkeyhint","search"); }catch(e){}
-      try{ inp.setAttribute("autocomplete","off"); }catch(e){}
-      try{ inp.setAttribute("autocapitalize","characters"); }catch(e){}
-      try{ inp.setAttribute("autocorrect","off"); }catch(e){}
-      try{ inp.spellcheck=false; }catch(e){}
-      try{ inp.style.touchAction="manipulation"; }catch(e){}
-      var wrap=document.getElementById("zed-v16-wrap");
-      if(wrap){ try{ wrap.style.touchAction="manipulation"; }catch(e){} }
-    }catch(e){}
-  }
-  // If React / V16 recreates the wrap and the focused input is removed, put the value + focus back on the new input.
-  var lastSeenInput=null;
-  function refocusIfRecreated(){
-    try{
-      if(!isSearchActive()) return;
-      var cur=getSearchInputEl();
-      if(cur && cur!==lastSeenInput){
-        if(lastSeenInput && !document.body.contains(lastSeenInput)){
-          try{ if(cur.value!==lastSearchValue) cur.value=lastSearchValue; }catch(e){}
-          try{ cur.focus({preventScroll:true}); }catch(e){ try{ cur.focus(); }catch(e2){} }
-        }
-        lastSeenInput=cur;
-      } else if(cur){ lastSeenInput=cur; }
-    }catch(e){}
-  }
-  // Keep video top order correct WHILE NOT searching, so Video Coins' enforce does nothing (its idempotent check returns) when you tap Search.
-  function ensureVideoOrderOnce(){
-    try{
-      if(isSearchActive()) return;
-      var bar=document.getElementById("zed-v15-toolbar");
-      if(!bar || !bar.parentNode) return;
-      var parent=bar.parentNode;
-      var wrap=document.getElementById("zed-v16-wrap");
-      var bn=document.getElementById("zed-v15-offline-banner");
-      var dv=document.getElementById("zed-v15-downloads-view");
-      var uv=document.getElementById("zed-v15-unlocked-view");
-      var kids=Array.prototype.slice.call(parent.children||[]);
-      var idx=function(el){ return el ? kids.indexOf(el) : -1; };
-      var seq=[idx(bar), idx(wrap), idx(bn), idx(dv), idx(uv)].filter(function(v){ return v>=0; });
-      var inOrder=true;
-      for(var k=1;k<seq.length;k++){ if(seq[k]<=seq[k-1]) inOrder=false; }
-      if(inOrder) return;
-      var grids=document.querySelectorAll(".grid");
-      var anchor=null;
-      for(var i=0;i<grids.length;i++){ if(grids[i].parentNode===parent){ anchor=grids[i]; break; } }
-      if(anchor){
-        [bar,wrap,bn,dv,uv].forEach(function(el){ if(el && el.parentNode===parent && el!==anchor){ try{ parent.insertBefore(el, anchor); }catch(e){} } });
-      }
-    }catch(e){}
-  }
-  function dedupSearchWraps(){
-    try{
-      if(isSearchActive()) return; // NEVER remove a wrap while user is touching / typing in it.
-      var wraps=document.querySelectorAll("#zed-v16-wrap");
-      if(wraps.length>1){
-        for(var i=1;i<wraps.length;i++){ try{ wraps[i].remove(); }catch(e){} }
-      }
-    }catch(e){}
-  }
-  // ---------- helpers ----------
-  function hashStr(s){ var h=0; s=String(s||""); for(var i=0;i<s.length;i++){ h=((h<<5)-h)+s.charCodeAt(i); h|=0; } return String(h).replace("-","n"); }
-  function normTS(title, subject){ return String(title||"").trim().toLowerCase()+"|"+String(subject||"").trim().toLowerCase(); }
-  function ytIdFromUrl(u){
-    if(!u) return "";
-    var m=String(u).match(/(?:youtube\.com\/(?:embed\/|watch\?v=|v\/)|youtu\.be\/|youtube-nocookie\.com\/embed\/)([A-Za-z0-9_-]{11})/);
-    return m?m[1]:"";
-  }
-  function getYtId(card){
-    if(!card) return "";
-    if(card.dataset && card.dataset.zedYtId) return card.dataset.zedYtId;
-    var lite=card.querySelector('.yt-lite[data-vid]');
-    if(lite && lite.getAttribute('data-vid')) return lite.getAttribute('data-vid');
-    if(card.dataset){
-      if(card.dataset.zedThumb) { var tt=ytIdFromUrl(card.dataset.zedThumb); if(tt) return tt; }
-      if(card.dataset.zedOrigSrc) { var a=ytIdFromUrl(card.dataset.zedOrigSrc); if(a) return a; }
-      if(card.dataset.zedVideoUrl) { var b=ytIdFromUrl(card.dataset.zedVideoUrl); if(b) return b; }
-    }
-    var fr=card.querySelector('iframe');
-    if(fr){ var s=fr.getAttribute('src')||fr.src||""; if(s && s!=="about:blank"){ var c=ytIdFromUrl(s); if(c) return c; } }
-    var thumbImg=card.querySelector('img.yt-thumb');
-    if(thumbImg && thumbImg.src){ var d=ytIdFromUrl(thumbImg.src); if(d) return d; }
-    var anyVid=card.querySelector('[data-vid]');
-    if(anyVid && anyVid.getAttribute('data-vid')) return anyVid.getAttribute('data-vid');
-    return "";
-  }
-  function getCardTitleSubject(card){
-    var title="", subject="";
-    var te=card.querySelector('.font-semibold');
-    if(te) title=(te.textContent||"").trim();
-    if(!title){
-      var body=card.querySelector('.zed-dl-body');
-      if(body){ var divs=body.querySelectorAll('div'); if(divs.length>=2) title=(divs[1].textContent||"").trim(); if(divs.length>=1) subject=(divs[0].textContent||"").trim(); }
-    } else {
-      var p4=card.querySelector('div.p-4');
-      if(p4){ var first=p4.querySelector('div'); if(first) subject=(first.textContent||"").trim(); }
-    }
-    if(!subject){
-      var b2=card.querySelector('.zed-dl-body');
-      if(b2){ var ds=b2.querySelectorAll('div'); if(ds.length>=1) subject=(ds[0].textContent||"").trim(); }
-    }
-    return {title:title, subject:subject};
-  }
-  function getMp4Src(card){
-    if(!card) return "";
-    var v=card.querySelector('video');
-    if(v){ var s=v.getAttribute('src')||v.src||""; if(s && s!=="about:blank") return s; }
-    if(card.dataset){
-      if(card.dataset.zedOrigVideoSrc) return card.dataset.zedOrigVideoSrc;
-      if(card.dataset.zedVideoUrl && card.dataset.zedVideoUrl!=="about:blank" && card.dataset.zedVideoUrl.indexOf("youtube")===-1 && card.dataset.zedVideoUrl.indexOf("youtu.be")===-1) return card.dataset.zedVideoUrl;
-    }
-    return "";
-  }
-  // ---------- MP4 thumbnail cache: captured ONCE, reused everywhere ----------
-  function thumbKeyUrl(url){ return "zed_mp4_thumb_url_"+hashStr(url); }
-  function thumbKeyTS(title, subject){ return "zed_mp4_thumb_ts_"+hashStr(normTS(title, subject)); }
-  function getCachedThumbByUrl(url){ if(!url) return ""; try{ return localStorage.getItem(thumbKeyUrl(url))||""; }catch(e){ return ""; } }
-  function getCachedThumbByTS(title, subject){ try{ return localStorage.getItem(thumbKeyTS(title, subject))||""; }catch(e){ return ""; } }
-  function saveThumb(url, title, subject, dataUrl){
-    if(!dataUrl || dataUrl.length<1000) return;
-    try{
-      if(url) localStorage.setItem(thumbKeyUrl(url), dataUrl);
-      if(title) localStorage.setItem(thumbKeyTS(title, subject), dataUrl);
-    }catch(e){}
-  }
-  window.zedGetCachedThumb=function(meta){
-    if(!meta) return "";
-    if(meta.thumbnail_url) return meta.thumbnail_url;
-    var byUrl=getCachedThumbByUrl(meta.video_url||"");
-    if(byUrl) return byUrl;
-    return getCachedThumbByTS(meta.title||"", meta.subject||"");
-  };
-  function captureFromVideo(videoEl, url, title, subject){
-    try{
-      if(!videoEl || videoEl.readyState<2 || !videoEl.videoWidth) return "";
-      var canvas=document.createElement("canvas");
-      canvas.width=480; canvas.height=270;
-      var ctx=canvas.getContext("2d");
-      ctx.drawImage(videoEl, 0, 0, 480, 270);
-      var dataUrl=canvas.toDataURL("image/jpeg", 0.65);
-      if(dataUrl.length<3000) return "";
-      saveThumb(url, title, subject, dataUrl);
-      return dataUrl;
-    }catch(e){ return ""; }
-  }
-  function ensureThumbImgInArea(area, dataUrl){
-    if(!area || !dataUrl) return null;
-    if(area.classList && area.classList.contains('zed-dl-card')) return null; // NEVER cover a whole Downloads card
-    var existing=area.querySelector('img.zed-mp4-thumb');
-    if(existing){ if(existing.src!==dataUrl) existing.src=dataUrl; existing.style.display="block"; return existing; }
-    var im=document.createElement("img");
-    im.className="zed-mp4-thumb"; im.alt=""; im.loading="lazy"; im.src=dataUrl;
-    im.style.position="absolute"; im.style.inset="0"; im.style.width="100%"; im.style.height="100%";
-    im.style.objectFit="cover"; im.style.zIndex="1"; im.style.display="block";
-    if(getComputedStyle(area).position==="static") area.style.position="relative";
-    area.insertBefore(im, area.firstChild);
-    return im;
-  }
-  function attachCapture(videoEl, card){
-    // FIX: Downloads cards must NEVER get a thumbnail overlay. Their <video> IS the player.
-    // Old code used videoEl.parentElement (= the whole .zed-dl-card) as the thumb area, so
-    // ensureThumbImgInArea() inserted an absolute inset:0 img covering video + title + buttons.
-    // That is the tall cartoon in the screenshot - a captured frame covering the whole card.
-    if(card && card.classList && card.classList.contains('zed-dl-card')) return;
-    if(!videoEl || videoEl.dataset.zedThumbCapture) return;
-    videoEl.dataset.zedThumbCapture="1";
-    var done=false;
-    function tryCapture(){
-      if(done) return;
-      var ts=getCardTitleSubject(card);
-      var url=getMp4Src(card);
-      try{
-        if(videoEl.duration && videoEl.duration>0.6 && videoEl.currentTime<0.1 && videoEl.paused){
-          videoEl.currentTime=0.5;
-          return;
-        }
-      }catch(e){}
-      var dataUrl=captureFromVideo(videoEl, url, ts.title, ts.subject);
-      if(dataUrl){
-        done=true;
-        var area=card.querySelector('.aspect-video')||videoEl.parentElement;
-        if(!area || area===card) return; // never cover the whole card
-        if(area) ensureThumbImgInArea(area, dataUrl);
-      }
-    }
-    videoEl.addEventListener('loadeddata', tryCapture);
-    videoEl.addEventListener('seeked', tryCapture);
-    videoEl.addEventListener('loadedmetadata', function(){
-      try{ if(videoEl.paused && videoEl.duration && videoEl.duration>0.6) videoEl.currentTime=0.5; }catch(e){}
-    });
-    tryCapture();
-  }
-  function fixMp4Card(card){
-    if(!card || getYtId(card)) return;
-    if(card.classList && card.classList.contains('zed-dl-card')) return; // Downloads cards show the video itself, no thumb overlay
-    var videoEl=card.querySelector('video');
-    if(!videoEl && !card.querySelector('.aspect-video')) return;
-    var ts=getCardTitleSubject(card);
-    var url=getMp4Src(card);
-    var cached=getCachedThumbByUrl(url) || getCachedThumbByTS(ts.title, ts.subject);
-    var area=card.querySelector('.aspect-video')|| (videoEl ? videoEl.parentElement : null);
-    if(cached && area){
-      var im=ensureThumbImgInArea(area, cached);
-      if(videoEl && !videoEl.paused && videoEl.currentTime>0){ if(im) im.style.display="none"; }
-      else if(im){ im.style.display="block"; }
-    }
-    if(videoEl) attachCapture(videoEl, card);
-  }
-  function fixDlCardThumb(card){
-    if(!card || !card.classList.contains('zed-dl-card')) return;
-    var placeholder=null;
-    var divs=card.querySelectorAll('div');
-    for(var i=0;i<divs.length;i++){ if(divs[i].textContent.trim()==="🎬"){ placeholder=divs[i]; break; } }
-    if(!placeholder){
-      var img0=card.querySelector('img');
-      if(img0 && (!img0.src || img0.naturalWidth===0)) placeholder=img0;
-      else return;
-    }
-    var ts=getCardTitleSubject(card);
-    var cached=getCachedThumbByTS(ts.title, ts.subject);
-    if(!cached) return;
-    var nim=document.createElement("img");
-    nim.src=cached; nim.alt="";
-    nim.style.cssText="width:100%;aspect-ratio:16/9;object-fit:cover;display:block;";
-    if(placeholder && placeholder.parentNode) placeholder.parentNode.replaceChild(nim, placeholder);
-  }
-  function fixLockedThumbs(){
-    document.querySelectorAll('.zed-lock-cover').forEach(function(cover){
-      cover.style.backgroundImage="none";
-      cover.style.backgroundColor="transparent";
-      cover.style.background="transparent";
-      var card=cover.closest('.zed-video-card')||cover.parentElement;
-      var ytId=getYtId(card);
-      var existing=cover.querySelector('img.zed-cover-thumb');
-      if(ytId){
-        var base="https://i.ytimg.com/vi/"+ytId+"/";
-        var tries=[base+"hqdefault.jpg", base+"mqdefault.jpg", base+"default.jpg", base+"0.jpg"];
-        if(!existing){
-          var im=document.createElement("img");
-          im.className="zed-cover-thumb"; im.alt=""; im.loading="lazy";
-          im.dataset.zedTry="0";
-          im.onerror=function(){
-            var n=parseInt(this.dataset.zedTry||"0",10)+1;
-            if(n<tries.length){ this.dataset.zedTry=String(n); this.src=tries[n]; }
-            else { try{ this.remove(); }catch(e){} }
-          };
-          im.src=tries[0];
-          cover.insertBefore(im, cover.firstChild);
-        } else if(existing.src.indexOf(ytId)===-1){
-          existing.dataset.zedTry="0"; existing.src=tries[0];
-        }
-      } else {
-        if(existing){ try{ existing.remove(); }catch(e){} }
-        var v=card ? card.querySelector('video') : null;
-        var src=getMp4Src(card);
-        if(v && src){
-          if((v.getAttribute('src')||v.src||"")!==src){ try{ v.setAttribute('src', src); v.src=src; }catch(e){} }
-          try{
-            v.muted=true; v.controls=false; v.setAttribute('preload','metadata'); v.setAttribute('playsinline','');
-            v.style.pointerEvents="none"; v.style.display="block"; v.style.opacity="1";
-            v.pause();
-            if(v.readyState<2){ try{ v.load(); }catch(e){} }
-          }catch(e){}
-        }
-      }
-      cover.querySelectorAll('.zed-lock-icon, .zed-lock-sub').forEach(function(n){
-        n.style.position="relative"; n.style.zIndex="2";
-        n.style.background="transparent"; n.style.backgroundColor="transparent"; n.style.boxShadow="none";
-      });
-    });
-    document.querySelectorAll('.zed-video-card').forEach(function(card){
-      var locked=!!card.querySelector('.zed-lock-cover');
-      card.querySelectorAll('.aspect-video, .yt-lite').forEach(function(el){
-        el.style.backgroundColor="transparent"; el.style.background="transparent";
-      });
-      var vid=card.querySelector('video');
-      if(vid){ vid.style.backgroundColor="transparent"; vid.style.background="transparent"; }
-      var thumbImg=card.querySelector('.yt-lite img.yt-thumb');
-      if(thumbImg){ thumbImg.style.display="block"; thumbImg.style.opacity="1"; }
-      card.querySelectorAll('iframe').forEach(function(fr){
-        var s=fr.getAttribute('src')||fr.src||"";
-        if(locked && (s==="about:blank" || s==="")){ fr.style.display="none"; }
-        else if(!locked && s && s!=="about:blank"){ fr.style.display=""; }
-      });
-      fixMp4Card(card);
-    });
-    document.querySelectorAll('#zed-v15-unlocked-view .zed-dl-card, #zed-v15-downloads-view .zed-dl-card').forEach(function(c){
-      fixDlCardThumb(c);
-      var vv=c.querySelector('video');
-      if(vv) attachCapture(vv, c);
-    });
-  }
-  // ---------- Deleted in Supabase = gone, UNLESS downloaded ----------
-  var brokenUrls={};
-  function isOnline(){ try{ return navigator.onLine; }catch(e){ return true; } }
-  function getLiveKeys(){
-    var keys={yt:{}, url:{}, ts:{}};
-    var cards=document.querySelectorAll('.grid > div');
-    var liveCount=0;
-    cards.forEach(function(card){
-      if(!card.querySelector) return;
-      if(card.closest && (card.closest('#zed-v15-unlocked-view') || card.closest('#zed-v15-downloads-view') || card.closest('#zed-chat-panel') || card.closest('#zed-v15-toolbar'))) return;
-      if(!card.querySelector('.font-semibold')) return;
-      liveCount++;
-      var ts=getCardTitleSubject(card);
-      if(ts.title) keys.ts[normTS(ts.title, ts.subject)]=1;
-      var yt=getYtId(card);
-      if(yt) keys.yt[yt]=1;
-      var u=getMp4Src(card);
-      if(u) keys.url[u]=1;
-      var fr=card.querySelector('iframe');
-      if(fr){ var s=fr.getAttribute('src')||fr.src||""; if(s && s!=="about:blank") keys.url[s]=1; }
-      if(card.dataset && card.dataset.zedOrigSrc) keys.url[card.dataset.zedOrigSrc]=1;
-      if(card.dataset && card.dataset.zedVideoUrl) keys.url[card.dataset.zedVideoUrl]=1;
-    });
-    return {keys:keys, count:liveCount};
-  }
-  function isLiveReady(live){
-    if(live.count>0) return true;
-    var txt=document.body ? document.body.innerText||"" : "";
-    if(txt.indexOf("No videos")!==-1) return true;
-    if(/\b0 videos\b/.test(txt)) return true;
-    return false;
-  }
-  function isDownloadedCard(card){
-    if(!card) return false;
-    if(card.closest && card.closest('#zed-v15-downloads-view')) return true;
-    var html=card.innerText||"";
-    if(html.indexOf("Saved inside app")!==-1 || html.indexOf("Plays offline")!==-1) return true;
-    if(card.querySelector('[data-zed-dl-play]')) return true;
-    if(card.querySelector('video') && (card.querySelector('video').src||"").indexOf("blob:")===0) return true;
-    return false;
-  }
-  function pruneDeleted(){
-    if(!isOnline()) return;
-    var live=getLiveKeys();
-    if(!isLiveReady(live)) return;
-    var keys=live.keys;
-    var view=document.getElementById('zed-v15-unlocked-view');
-    if(!view) return;
-    var visible=0;
-    view.querySelectorAll('.zed-dl-card').forEach(function(card){
-      if(isDownloadedCard(card)){
-        if(card.dataset.zedDeleted==="1"){ delete card.dataset.zedDeleted; }
-        card.style.display="";
-        visible++;
-        return;
-      }
-      var ts=getCardTitleSubject(card);
-      var tsKey=normTS(ts.title, ts.subject);
-      var yt="";
-      var thumbImg=card.querySelector('img');
-      if(thumbImg && thumbImg.src) yt=ytIdFromUrl(thumbImg.src);
-      var stillLive = (yt && keys.yt[yt]) || (tsKey && tsKey!=="|" && keys.ts[tsKey]);
-      if(stillLive){
-        if(card.dataset.zedDeleted==="1"){ delete card.dataset.zedDeleted; }
-        card.style.display="";
-        visible++;
-      } else {
-        card.dataset.zedDeleted="1";
-        card.style.display="none";
-      }
-    });
-    // V4.1: NEVER write the Unlocked pill here. Video Coins owns it (counts meta).
-    // pruneDeleted only counted .zed-dl-card in #zed-v15-unlocked-view - when filter is
-    // Unlocked ONLINE, unlocked videos live in the grid and unlocked-view is empty,
-    // so this wrote (0) over the correct count. Hiding deleted cards stays; counting goes.
-  }
-  function checkBrokenVideo(videoEl){
-    if(!videoEl || videoEl.dataset.zedBrokenChecked) return;
-    videoEl.dataset.zedBrokenChecked="1";
-    videoEl.addEventListener('error', function(){
-      var src=videoEl.getAttribute('src')||videoEl.src||"";
-      if(!src || src.indexOf("blob:")===0 || brokenUrls[src]) return;
-      if(!isOnline()) return;
-      fetch(src, {method:'HEAD'}).then(function(res){
-        if(res.status===404 || res.status===400){
-          brokenUrls[src]=1;
-          var card=videoEl.closest('.zed-video-card')||videoEl.closest('.zed-dl-card');
-          if(card && !isDownloadedCard(card)){
-            card.dataset.zedDeleted="1";
-            card.style.display="none";
-          }
-        }
-      }).catch(function(){});
-    }, true);
-  }
-  // ---------- V4.1 COUNTS: pill must count what is actually unlocked / downloaded ----------
-  // Badge (Unlocked check) reads candidate IDs in zed_unlocked_videos_<user>.
-  // Pill (getUnlockedCount) reads meta in zed_unlocked_meta_<user>.
-  // If meta is missing / blank for a video the badge already shows as unlocked, pill = 0 while badge = Unlocked.
-  // Repair: copy meta from every grid card the badge already counts as unlocked, so pill and badge agree.
-  // Downloads pill: Video Coins writes downloadedIds.size (a Set that starts empty and only fills after an async load).
-  // True count is IndexedDB records in zed_videos_vault_v1 / videos - read it directly and write it.
-  function hashIdV4(str){ var h=5381; str=String(str||""); for(var i=0;i<str.length;i++){ h=((h<<5)+h)+str.charCodeAt(i); h=h&h; } return 'vid_'+Math.abs(h).toString(36); }
-  function getMeV4(){ try{ return JSON.parse(localStorage.getItem('zed_user')||'null'); }catch(e){ return null; } }
-  function unlockKeyV4(){ var u=getMeV4(); return 'zed_unlocked_videos_'+(u&&u.id?u.id:(u&&u.phone?u.phone:'guest')); }
-  function metaKeyV4(){ var u=getMeV4(); return 'zed_unlocked_meta_'+(u&&u.id?u.id:(u&&u.phone?u.phone:'guest')); }
-  function getUnlockedListV4(){ try{ var a=JSON.parse(localStorage.getItem(unlockKeyV4())||'[]'); return Array.isArray(a)?a:[]; }catch(e){ return []; } }
-  function saveUnlockedListV4(list){ try{ localStorage.setItem(unlockKeyV4(), JSON.stringify(list||[])); }catch(e){} }
-  function getUnlockedMetaV4(){ try{ var a=JSON.parse(localStorage.getItem(metaKeyV4())||'[]'); return Array.isArray(a)?a:[]; }catch(e){ return []; } }
-  function saveUnlockedMetaV4(list){ try{ localStorage.setItem(metaKeyV4(), JSON.stringify(list||[])); }catch(e){} }
-  function extractInfoV4(card){
-    var ts=getCardTitleSubject(card);
-    var ytId=getYtId(card);
-    var origSrc=(card.dataset&&card.dataset.zedOrigSrc)||'';
-    var videoUrl='';
-    var fr=card.querySelector('iframe');
-    if(fr){ var s=fr.getAttribute('src')||fr.src||''; if(s&&s!=='about:blank') videoUrl=s; }
-    if(!videoUrl && card.dataset && card.dataset.zedVideoUrl && card.dataset.zedVideoUrl!=='about:blank') videoUrl=card.dataset.zedVideoUrl;
-    if(!videoUrl && origSrc) videoUrl=origSrc;
-    if(!videoUrl) videoUrl=getMp4Src(card)||'';
-    var thumb='';
-    if(ytId) thumb='https://i.ytimg.com/vi/'+ytId+'/hqdefault.jpg';
-    if(card.dataset && card.dataset.zedThumb) thumb=card.dataset.zedThumb;
-    var id='';
-    if(ytId) id=hashIdV4('yt|'+ts.title+'|'+ts.subject+'|'+ytId);
-    else { var stable=origSrc||(card.dataset&&card.dataset.zedOrigVideoSrc)||videoUrl||''; id=hashIdV4('mp4|'+ts.title+'|'+ts.subject+'|'+stable); }
-    return {id:id, title:ts.title, subject:ts.subject, video_url:videoUrl, video_type:ytId?'youtube':'mp4', ytId:ytId, thumbnail_url:thumb, origSrc:origSrc};
-  }
-  function getCandidateIdsV4(info){
-    var out=[info.id];
-    if(info.ytId){
-      out.push(hashIdV4(info.title+'|'+info.subject+'|https://www.youtube-nocookie.com/embed/'+info.ytId));
-      out.push(hashIdV4(info.title+'|'+info.subject+'|https://www.youtube.com/embed/'+info.ytId));
-      out.push(hashIdV4(info.title+'|'+info.subject+'|'+info.ytId));
-    }
-    if(info.video_url && info.video_url!=='about:blank') out.push(hashIdV4(info.title+'|'+info.subject+'|'+info.video_url));
-    if(info.origSrc){
-      out.push(hashIdV4(info.title+'|'+info.subject+'|'+info.origSrc));
-      out.push(hashIdV4('mp4|'+info.title+'|'+info.subject+'|'+info.origSrc));
-    }
-    var seen={}, res=[];
-    out.forEach(function(x){ if(!seen[x]){ seen[x]=1; res.push(x); } });
-    return res;
-  }
-  function metaKeysV4(m){
-    var out={url:null, ts:null};
-    if(m.ytId) out.url='yt:'+String(m.ytId).trim();
-    else if(m.video_url && m.video_url!=='about:blank' && m.video_url!=='') out.url='url:'+String(m.video_url).trim();
-    var tt=String(m.title||'').trim().toLowerCase();
-    if(tt && tt!=='video' && tt!=='unlocked video') out.ts='ts:'+tt+'|'+String(m.subject||'').trim().toLowerCase();
-    return out;
-  }
-  function countDistinctMetaV4(meta){
-    var seenURL={}, seenTS={}, n=0;
-    for(var i=0;i<meta.length;i++){
-      var k=metaKeysV4(meta[i]);
-      if(k.url && seenURL[k.url]) continue;
-      if(k.ts && seenTS[k.ts]) continue;
-      if(k.url) seenURL[k.url]=1;
-      if(k.ts) seenTS[k.ts]=1;
-      n++;
-    }
-    return n;
-  }
-  function writeUnlockedPillV4(){
-    try{
-      var n=countDistinctMetaV4(getUnlockedMetaV4());
-      var el=document.querySelector('[data-zed-count="unlocked"]');
-      if(el) el.textContent='('+n+')';
-      return n;
-    }catch(e){ return 0; }
-  }
-  function repairUnlockMetaFromGrid(){
-    try{
-      var unlockList=getUnlockedListV4();
-      if(!unlockList.length) return false;
-      var meta=getUnlockedMetaV4();
-      var changed=false;
-      var cards=document.querySelectorAll('.grid > div');
-      cards.forEach(function(card){
-        if(!card.querySelector || !card.querySelector('.font-semibold')) return;
-        if(card.closest && (card.closest('#zed-v15-unlocked-view')||card.closest('#zed-v15-downloads-view')||card.closest('#zed-chat-panel')||card.closest('#zed-v15-toolbar'))) return;
-        var info=extractInfoV4(card);
-        if(!info.title) return;
-        var cands=getCandidateIdsV4(info);
-        var isUnlocked=false;
-        for(var i=0;i<cands.length;i++){ if(unlockList.indexOf(cands[i])!==-1){ isUnlocked=true; break; } }
-        if(!isUnlocked) return;
-        // Already in meta? Match by id, ytId/url, or title|subject - same dedup as getUnlockedCount.
-        var ik=metaKeysV4(info);
-        var found=false;
-        for(var j=0;j<meta.length;j++){
-          if(meta[j].id===info.id){ found=true; break; }
-          var mk=metaKeysV4(meta[j]);
-          if(ik.url && mk.url && ik.url===mk.url){ found=true; break; }
-          if(ik.ts && mk.ts && ik.ts===mk.ts){ found=true; break; }
-        }
-        if(found) return;
-        meta.push({id:info.id, title:info.title||'Video', subject:info.subject||'', video_url:info.video_url||'', video_type:info.video_type||'mp4', thumbnail_url:info.thumbnail_url||'', ytId:info.ytId||'', savedAt:Date.now()});
-        changed=true;
-      });
-      if(changed) saveUnlockedMetaV4(meta);
-      return changed;
-    }catch(e){ return false; }
-  }
-  var lastDlRepair=0;
-  function repairDownloadsFromDB(){
-    try{
-      var now=Date.now();
-      if(now-lastDlRepair<8000) return; // IndexedDB read max once per 8s - not on every 1.5s tick.
-      lastDlRepair=now;
-      var req=indexedDB.open('zed_videos_vault_v1', 1);
-      req.onsuccess=function(){
-        try{
-          var db=req.result;
-          var tx=db.transaction('videos','readonly');
-          var st=tx.objectStore('videos');
-          var getAll=st.getAll();
-          getAll.onsuccess=function(){
-            try{
-              var all=getAll.result||[];
-              var el=document.querySelector('[data-zed-count="downloads"]');
-              if(el) el.textContent='('+all.length+')';
-              // Download = unlocked. If a download never went through Downloads view, it never got
-              // added to unlock list / meta - so Unlocked pill missed it. Add it here.
-              if(all.length){
-                var ul=getUnlockedListV4();
-                var meta=getUnlockedMetaV4();
-                var changedU=false, changedM=false;
-                all.forEach(function(rec){
-                  if(ul.indexOf(rec.id)===-1){ ul.push(rec.id); changedU=true; }
-                  var hasMeta=false;
-                  for(var i=0;i<meta.length;i++){
-                    if(meta[i].id===rec.id){ hasMeta=true; break; }
-                    var mk=metaKeysV4(meta[i]);
-                    var rk=metaKeysV4({ytId:rec.ytId||'', video_url:rec.video_url||'', title:rec.title||'', subject:rec.subject||''});
-                    if(rk.url && mk.url && rk.url===mk.url){ hasMeta=true; break; }
-                    if(rk.ts && mk.ts && rk.ts===mk.ts){ hasMeta=true; break; }
-                  }
-                  if(!hasMeta){
-                    meta.push({id:rec.id, title:rec.title||'Video', subject:rec.subject||'', video_url:rec.video_url||'', video_type:rec.video_type||'mp4', thumbnail_url:rec.thumbnail_url||'', ytId:rec.ytId||'', savedAt:Date.now()});
-                    changedM=true;
-                  }
-                });
-                if(changedU) saveUnlockedListV4(ul);
-                if(changedM) saveUnlockedMetaV4(meta);
-                if(changedM) writeUnlockedPillV4();
-              }
-            }catch(e){}
-          };
-          getAll.onerror=function(){};
-        }catch(e){}
-      };
-      req.onerror=function(){};
-    }catch(e){}
-  }
-  function repairCountsV4(){
-    try{
-      var changed= repairUnlockMetaFromGrid();
-      if(changed) writeUnlockedPillV4();
-      else {
-        // Even with no new meta, re-write pill from meta so a stale (0) left by an older build corrects itself.
-        // Video Coins writes the same number on its next pass, so this does not flicker.
-        writeUnlockedPillV4();
-      }
-      repairDownloadsFromDB();
-    }catch(e){}
-  }
-  // ---------- Throttled, search-aware main loop: NEVER do heavy DOM writes while user is touching / typing in search ----------
-  var lastFixAll=0;
-  function fixAll(){
-    stabilizeSearchInput();
-    refocusIfRecreated();
-    dedupSearchWraps();
-    if(isSearchActive()) return; // searching = freeze everything else. Typing already filters via Video Coins' own input handler.
-    var now=Date.now();
-    if(now-lastFixAll<1500) return; // max once per 1.5s — the old 500-800ms loops + observer storms were what froze the phone.
-    lastFixAll=now;
-    ensureVideoOrderOnce();
-    fixLockedThumbs();
-    pruneDeleted();
-    repairCountsV4();
-    document.querySelectorAll('video').forEach(function(v){ checkBrokenVideo(v); });
-  }
-  fixAll();
-  document.addEventListener("DOMContentLoaded", fixAll);
-  window.addEventListener("load", fixAll);
-  setInterval(fixAll, 2000);
-  var obsTimer=null;
-  if(document.body){
-    new MutationObserver(function(){
-      if(obsTimer) return;
-      obsTimer=setTimeout(function(){ obsTimer=null; fixAll(); }, 400);
-    }).observe(document.body, {childList:true, subtree:true});
-  }
-  console.log("[ZED FINAL v4] Search bar freeze + MP4 thumbs cached + deleted videos hidden unless downloaded.");
-})();</script>
 
 </body>
 </html>
