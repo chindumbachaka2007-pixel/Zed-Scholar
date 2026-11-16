@@ -7,7 +7,20 @@
   <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, viewport-fit=cover">
   <title>ZED SCHOLAR - ECZ Past Papers | Form 1-6, Grade 10-12</title>
   <meta name="google-site-verification" content="cawMAmcgDD18xCH8Kn4eof_LJKgGeOEuiLX-m7caheY">
-   <!-- Google AdSense - base script (Auto Ads + manual ad units). -->
+   <!-- ZED - LOGIN REMOVED FOR NOW (AdSense review): app opens straight into content as Guest. Login code is NOT deleted - set window.__zedLoginDisabled=false to bring login back. -->
+<script>
+window.__zedLoginDisabled = true;
+try{
+  var _raw = null; try{ _raw = localStorage.getItem('zed_user'); }catch(e){}
+  var _has = false;
+  try{ var _u = _raw ? JSON.parse(_raw) : null; _has = !!(_u && (_u.phone || _u.name || _u.id)); }catch(e){ _has = !!_raw; }
+  if(window.__zedLoginDisabled && !_has){
+    localStorage.setItem('zed_user', JSON.stringify({name:'Guest', phone:'', school:'Guest', province:'', district:'', grade:'Form 1', is_guest:true}));
+    localStorage.setItem('zed_guest','1');
+  }
+}catch(e){}
+</script>
+<!-- Google AdSense - base script (Auto Ads + manual ad units). -->
    <script async src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-2589035267682710"
      crossorigin="anonymous"></script>
 
@@ -12864,7 +12877,7 @@ div[class*="backdrop-blur"]{ backdrop-filter:none !important; -webkit-backdrop-f
   function init(){
     try{
       var gs=document.getElementById('zed-gs-getting-started');
-      if(!gs) return;
+      if(!gs) return; if(window.__zedLoginDisabled){ hideGS(); return; } // LOGIN REMOVED FOR NOW - never show Get Started / login gate
       // Test hook: ?getstarted=1 (or #getstarted) forces the page even when logged in, so you can preview it.
       var force=false;
       try{ force=(location.search.indexOf('getstarted')!==-1) || (location.hash.indexOf('getstarted')!==-1); }catch(e){}
