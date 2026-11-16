@@ -9648,7 +9648,7 @@ window._zedV15Filter = 'search';
     }catch(e){ return 0; }
   }
   async function ensureDownloadsLoaded(){ if(downloadedLoaded) return; var all=await getAllDownloads(); downloadedIds=new Set(all.map(function(x){return x.id;})); downloadedLoaded=true; }
-  async function saveDownload(meta, blob){ var db=await openDB(); return new Promise(function(resolve,reject){ var tx=db.transaction(STORE,'readwrite'); var rec={ id: meta.id, title: meta.title, subject: meta.subject, video_url: meta.video_url, video_type: meta.video_type, thumbnail_url: meta.thumbnail_url||'', savedAt: Date.now(), size: blob.size||0, blob: blob }; tx.objectStore(STORE).put(rec); tx.oncomplete=function(){ resolve(rec); }; tx.onerror=function(){ reject(tx.error); }; }); }
+  async function saveDownload(meta, blob){ var db=await openDB(); return new Promise(function(resolve,reject){ var tx=db.transaction(STORE,'readwrite'); var rec={ id: meta.id, title: meta.title, subject: meta.subject, video_url: meta.video_url, video_type: meta.video_type, thumbnail_url: meta.thumbnail_url||((window.zedGetCachedThumb&&window.zedGetCachedThumb(meta))||''), savedAt: Date.now(), size: blob.size||0, blob: blob }; tx.objectStore(STORE).put(rec); tx.oncomplete=function(){ resolve(rec); }; tx.onerror=function(){ reject(tx.error); }; }); }
   async function deleteDownload(id){ var db=await openDB(); return new Promise(function(resolve){ var tx=db.transaction(STORE,'readwrite'); tx.objectStore(STORE).delete(id); tx.oncomplete=function(){ resolve(); }; tx.onerror=function(){ resolve(); }; }); }
   async function fetchFreshCoins(){
     var me=getMe(); if(!me || !me.id) return getCoins();
@@ -10427,10 +10427,9 @@ window._zedV15Filter = 'search';
       var vsrc=v.getAttribute('src')||v.src||'';
       if(vsrc){
         card.dataset.zedOrigVideoSrc=vsrc;
+        try{ v.pause(); }catch(e){}
+        try{ v.removeAttribute('src'); v.load(); }catch(e){}
       }
-      // DO NOT remove src — src IS the thumbnail (first frame). Just pause, mute, no controls, so locked video shows its frame but cannot play.
-      try{ v.pause(); }catch(e){}
-      try{ v.muted=true; v.controls=false; v.setAttribute('preload','metadata'); v.setAttribute('playsinline',''); }catch(e){}
     }
   }
   function restoreUnlockedMedia(card){
@@ -13996,11 +13995,10 @@ main div.grid.grid-cols-3.zed-top3-parent{ grid-template-columns:1fr !important;
 })();
 </script>
 
-<!-- ZED FINAL v2 — LOCKED THUMBNAIL, NO DARK COLOUR (replaces v1 black-area fix, which was deleted above) -->
+<!-- ZED FINAL v4 — MP4 THUMBNAILS + DELETED VIDEOS + SEARCH BAR NEVER STUCK (replaces v2/v3, do not stack another final block) -->
 <style>
 div.grid[class*="lg:grid-cols-5"]{display:none !important;visibility:hidden !important;height:0 !important;min-height:0 !important;margin:0 !important;padding:0 !important;overflow:hidden !important;}
 .zed-province-small,.zed-province-row{display:none !important;}
-/* NO dark colour around the lock: video area + facade + video element are all transparent. Thumbnail itself fills the area. */
 .zed-video-card .aspect-video,.zed-video-card .yt-lite,.zed-video-card video{background:transparent !important;background-color:transparent !important;}
 .zed-video-card .yt-lite::before{display:none !important;content:none !important;background:transparent !important;}
 .zed-video-card .yt-lite img.yt-thumb{display:block !important;opacity:1 !important;width:100% !important;height:100% !important;object-fit:cover !important;}
@@ -14010,8 +14008,145 @@ div.grid[class*="lg:grid-cols-5"]{display:none !important;visibility:hidden !imp
 .zed-lock-cover img.zed-cover-thumb{position:absolute !important;inset:0 !important;width:100% !important;height:100% !important;object-fit:cover !important;z-index:0 !important;display:block !important;border-radius:14px 14px 0 0 !important;}
 .zed-lock-cover > .zed-lock-icon,.zed-lock-cover > .zed-lock-sub{position:relative !important;z-index:2 !important;background:transparent !important;background-color:transparent !important;box-shadow:none !important;backdrop-filter:none !important;text-shadow:0 2px 6px rgba(0,0,0,0.9),0 0 2px rgba(0,0,0,0.9) !important;}
 .zed-video-card .aspect-video iframe[src="about:blank"]{display:none !important;}
+img.zed-mp4-thumb{position:absolute !important;inset:0 !important;width:100% !important;height:100% !important;object-fit:cover !important;z-index:1 !important;display:block !important;border-radius:14px 14px 0 0 !important;}
+.zed-dl-card{position:relative !important;}
+/* SEARCH BAR: stable size, no tap-delay, no zoom-resize. 16px stops the phone resizing / zooming the page when the keyboard opens. */
+#zed-v16-wrap{width:100% !important;box-sizing:border-box !important;touch-action:manipulation !important;}
+#zed-v16-input{width:100% !important;flex:1 1 auto !important;min-width:0 !important;font-size:16px !important;touch-action:manipulation !important;-webkit-tap-highlight-color:transparent !important;pointer-events:auto !important;}
+/* While you are touching / typing in search, NOTHING may hide or move the search box. Stylesheet !important beats the other scripts' plain style.display='none'. */
+body.zed-search-active #zed-v16-wrap, body.zed-search-active #zed-v15-toolbar{display:block !important;visibility:visible !important;opacity:1 !important;pointer-events:auto !important;}
+body.zed-search-active #zed-v16-input{display:block !important;visibility:visible !important;opacity:1 !important;pointer-events:auto !important;}
+body.zed-search-active #zed-v16-wrap{position:relative !important;z-index:5 !important;}
 </style>
 <script>(function(){
+  // ---------- search-active flag: set on TOUCHSTART, before focus lands, before any interval can move the box ----------
+  var searchOffTimer=null;
+  function setSearchActive(on){
+    try{
+      if(on){
+        if(searchOffTimer){ clearTimeout(searchOffTimer); searchOffTimer=null; }
+        document.body.dataset.zedSearchActive="1";
+        document.body.classList.add("zed-search-active");
+      } else {
+        // Keep it on for 600ms after blur — covers keyboard-open delay + refocus + Search-button -> focus (120ms) race.
+        if(searchOffTimer) clearTimeout(searchOffTimer);
+        searchOffTimer=setTimeout(function(){
+          try{ document.body.dataset.zedSearchActive="0"; document.body.classList.remove("zed-search-active"); }catch(e){}
+        }, 600);
+      }
+    }catch(e){}
+  }
+  function isSearchActive(){
+    try{
+      if(document.body && document.body.dataset.zedSearchActive==="1") return true;
+      var ae=document.activeElement;
+      if(ae && (ae.id==="zed-v16-input" || ae.id==="zed-topic-input")) return true;
+      if(ae && ae.tagName==="INPUT" && ae.placeholder && ae.placeholder.toLowerCase().indexOf("search")!==-1) return true;
+    }catch(e){}
+    return false;
+  }
+  function getSearchInputEl(){ return document.getElementById("zed-v16-input") || document.getElementById("zed-topic-input"); }
+  var lastSearchValue="";
+  // Capture phase = runs BEFORE the other scripts' document click / MutationObserver handlers.
+  document.addEventListener("touchstart", function(e){
+    try{
+      var tg=e.target;
+      if(!tg || !tg.closest) return;
+      if(tg.closest("#zed-v16-input") || tg.closest("#zed-v16-wrap") || tg.closest('[data-zed-filter="search"]')) setSearchActive(true);
+    }catch(err){}
+  }, true);
+  document.addEventListener("mousedown", function(e){
+    try{
+      var tg=e.target;
+      if(!tg || !tg.closest) return;
+      if(tg.closest("#zed-v16-input") || tg.closest("#zed-v16-wrap") || tg.closest('[data-zed-filter="search"]')) setSearchActive(true);
+    }catch(err){}
+  }, true);
+  document.addEventListener("focusin", function(e){
+    try{ if(e.target && (e.target.id==="zed-v16-input" || e.target.id==="zed-topic-input")) setSearchActive(true); }catch(err){}
+  }, true);
+  document.addEventListener("focusout", function(e){
+    try{ if(e.target && (e.target.id==="zed-v16-input" || e.target.id==="zed-topic-input")) setSearchActive(false); }catch(err){}
+  }, true);
+  document.addEventListener("input", function(e){
+    try{
+      if(e.target && (e.target.id==="zed-v16-input" || e.target.id==="zed-topic-input")){
+        lastSearchValue=e.target.value||"";
+        setSearchActive(true);
+      }
+    }catch(err){}
+  }, true);
+  // Stabilise the input ONCE per element — never rewrite styles every tick while typing (that was re-laying out the focused input).
+  function stabilizeSearchInput(){
+    try{
+      var inp=getSearchInputEl();
+      if(!inp || inp.dataset.zedV4Stable==="1") return;
+      inp.dataset.zedV4Stable="1";
+      inp.removeAttribute("readonly"); inp.disabled=false;
+      inp.style.pointerEvents="auto";
+      try{ inp.setAttribute("inputmode","search"); }catch(e){}
+      try{ inp.setAttribute("enterkeyhint","search"); }catch(e){}
+      try{ inp.setAttribute("autocomplete","off"); }catch(e){}
+      try{ inp.setAttribute("autocapitalize","characters"); }catch(e){}
+      try{ inp.setAttribute("autocorrect","off"); }catch(e){}
+      try{ inp.spellcheck=false; }catch(e){}
+      try{ inp.style.touchAction="manipulation"; }catch(e){}
+      var wrap=document.getElementById("zed-v16-wrap");
+      if(wrap){ try{ wrap.style.touchAction="manipulation"; }catch(e){} }
+    }catch(e){}
+  }
+  // If React / V16 recreates the wrap and the focused input is removed, put the value + focus back on the new input.
+  var lastSeenInput=null;
+  function refocusIfRecreated(){
+    try{
+      if(!isSearchActive()) return;
+      var cur=getSearchInputEl();
+      if(cur && cur!==lastSeenInput){
+        if(lastSeenInput && !document.body.contains(lastSeenInput)){
+          try{ if(cur.value!==lastSearchValue) cur.value=lastSearchValue; }catch(e){}
+          try{ cur.focus({preventScroll:true}); }catch(e){ try{ cur.focus(); }catch(e2){} }
+        }
+        lastSeenInput=cur;
+      } else if(cur){ lastSeenInput=cur; }
+    }catch(e){}
+  }
+  // Keep video top order correct WHILE NOT searching, so Video Coins' enforce does nothing (its idempotent check returns) when you tap Search.
+  function ensureVideoOrderOnce(){
+    try{
+      if(isSearchActive()) return;
+      var bar=document.getElementById("zed-v15-toolbar");
+      if(!bar || !bar.parentNode) return;
+      var parent=bar.parentNode;
+      var wrap=document.getElementById("zed-v16-wrap");
+      var bn=document.getElementById("zed-v15-offline-banner");
+      var dv=document.getElementById("zed-v15-downloads-view");
+      var uv=document.getElementById("zed-v15-unlocked-view");
+      var kids=Array.prototype.slice.call(parent.children||[]);
+      var idx=function(el){ return el ? kids.indexOf(el) : -1; };
+      var seq=[idx(bar), idx(wrap), idx(bn), idx(dv), idx(uv)].filter(function(v){ return v>=0; });
+      var inOrder=true;
+      for(var k=1;k<seq.length;k++){ if(seq[k]<=seq[k-1]) inOrder=false; }
+      if(inOrder) return;
+      var grids=document.querySelectorAll(".grid");
+      var anchor=null;
+      for(var i=0;i<grids.length;i++){ if(grids[i].parentNode===parent){ anchor=grids[i]; break; } }
+      if(anchor){
+        [bar,wrap,bn,dv,uv].forEach(function(el){ if(el && el.parentNode===parent && el!==anchor){ try{ parent.insertBefore(el, anchor); }catch(e){} } });
+      }
+    }catch(e){}
+  }
+  function dedupSearchWraps(){
+    try{
+      if(isSearchActive()) return; // NEVER remove a wrap while user is touching / typing in it.
+      var wraps=document.querySelectorAll("#zed-v16-wrap");
+      if(wraps.length>1){
+        for(var i=1;i<wraps.length;i++){ try{ wraps[i].remove(); }catch(e){} }
+      }
+    }catch(e){}
+  }
+  // ---------- helpers ----------
+  function hashStr(s){ var h=0; s=String(s||""); for(var i=0;i<s.length;i++){ h=((h<<5)-h)+s.charCodeAt(i); h|=0; } return String(h).replace("-","n"); }
+  function normTS(title, subject){ return String(title||"").trim().toLowerCase()+"|"+String(subject||"").trim().toLowerCase(); }
   function ytIdFromUrl(u){
     if(!u) return "";
     var m=String(u).match(/(?:youtube\.com\/(?:embed\/|watch\?v=|v\/)|youtu\.be\/|youtube-nocookie\.com\/embed\/)([A-Za-z0-9_-]{11})/);
@@ -14035,15 +14170,137 @@ div.grid[class*="lg:grid-cols-5"]{display:none !important;visibility:hidden !imp
     if(anyVid && anyVid.getAttribute('data-vid')) return anyVid.getAttribute('data-vid');
     return "";
   }
+  function getCardTitleSubject(card){
+    var title="", subject="";
+    var te=card.querySelector('.font-semibold');
+    if(te) title=(te.textContent||"").trim();
+    if(!title){
+      var body=card.querySelector('.zed-dl-body');
+      if(body){ var divs=body.querySelectorAll('div'); if(divs.length>=2) title=(divs[1].textContent||"").trim(); if(divs.length>=1) subject=(divs[0].textContent||"").trim(); }
+    } else {
+      var p4=card.querySelector('div.p-4');
+      if(p4){ var first=p4.querySelector('div'); if(first) subject=(first.textContent||"").trim(); }
+    }
+    if(!subject){
+      var b2=card.querySelector('.zed-dl-body');
+      if(b2){ var ds=b2.querySelectorAll('div'); if(ds.length>=1) subject=(ds[0].textContent||"").trim(); }
+    }
+    return {title:title, subject:subject};
+  }
   function getMp4Src(card){
     if(!card) return "";
     var v=card.querySelector('video');
-    if(v){ var s=v.getAttribute('src')||v.src||""; if(s) return s; }
+    if(v){ var s=v.getAttribute('src')||v.src||""; if(s && s!=="about:blank") return s; }
     if(card.dataset){
       if(card.dataset.zedOrigVideoSrc) return card.dataset.zedOrigVideoSrc;
-      if(card.dataset.zedVideoUrl && card.dataset.zedVideoUrl!=="about:blank" && card.dataset.zedVideoUrl.indexOf("youtube")==-1 && card.dataset.zedVideoUrl.indexOf("youtu.be")==-1) return card.dataset.zedVideoUrl;
+      if(card.dataset.zedVideoUrl && card.dataset.zedVideoUrl!=="about:blank" && card.dataset.zedVideoUrl.indexOf("youtube")===-1 && card.dataset.zedVideoUrl.indexOf("youtu.be")===-1) return card.dataset.zedVideoUrl;
     }
     return "";
+  }
+  // ---------- MP4 thumbnail cache: captured ONCE, reused everywhere ----------
+  function thumbKeyUrl(url){ return "zed_mp4_thumb_url_"+hashStr(url); }
+  function thumbKeyTS(title, subject){ return "zed_mp4_thumb_ts_"+hashStr(normTS(title, subject)); }
+  function getCachedThumbByUrl(url){ if(!url) return ""; try{ return localStorage.getItem(thumbKeyUrl(url))||""; }catch(e){ return ""; } }
+  function getCachedThumbByTS(title, subject){ try{ return localStorage.getItem(thumbKeyTS(title, subject))||""; }catch(e){ return ""; } }
+  function saveThumb(url, title, subject, dataUrl){
+    if(!dataUrl || dataUrl.length<1000) return;
+    try{
+      if(url) localStorage.setItem(thumbKeyUrl(url), dataUrl);
+      if(title) localStorage.setItem(thumbKeyTS(title, subject), dataUrl);
+    }catch(e){}
+  }
+  window.zedGetCachedThumb=function(meta){
+    if(!meta) return "";
+    if(meta.thumbnail_url) return meta.thumbnail_url;
+    var byUrl=getCachedThumbByUrl(meta.video_url||"");
+    if(byUrl) return byUrl;
+    return getCachedThumbByTS(meta.title||"", meta.subject||"");
+  };
+  function captureFromVideo(videoEl, url, title, subject){
+    try{
+      if(!videoEl || videoEl.readyState<2 || !videoEl.videoWidth) return "";
+      var canvas=document.createElement("canvas");
+      canvas.width=480; canvas.height=270;
+      var ctx=canvas.getContext("2d");
+      ctx.drawImage(videoEl, 0, 0, 480, 270);
+      var dataUrl=canvas.toDataURL("image/jpeg", 0.65);
+      if(dataUrl.length<3000) return "";
+      saveThumb(url, title, subject, dataUrl);
+      return dataUrl;
+    }catch(e){ return ""; }
+  }
+  function ensureThumbImgInArea(area, dataUrl){
+    if(!area || !dataUrl) return null;
+    var existing=area.querySelector('img.zed-mp4-thumb');
+    if(existing){ if(existing.src!==dataUrl) existing.src=dataUrl; existing.style.display="block"; return existing; }
+    var im=document.createElement("img");
+    im.className="zed-mp4-thumb"; im.alt=""; im.loading="lazy"; im.src=dataUrl;
+    im.style.position="absolute"; im.style.inset="0"; im.style.width="100%"; im.style.height="100%";
+    im.style.objectFit="cover"; im.style.zIndex="1"; im.style.display="block";
+    if(getComputedStyle(area).position==="static") area.style.position="relative";
+    area.insertBefore(im, area.firstChild);
+    return im;
+  }
+  function attachCapture(videoEl, card){
+    if(!videoEl || videoEl.dataset.zedThumbCapture) return;
+    videoEl.dataset.zedThumbCapture="1";
+    var done=false;
+    function tryCapture(){
+      if(done) return;
+      var ts=getCardTitleSubject(card);
+      var url=getMp4Src(card);
+      try{
+        if(videoEl.duration && videoEl.duration>0.6 && videoEl.currentTime<0.1 && videoEl.paused){
+          videoEl.currentTime=0.5;
+          return;
+        }
+      }catch(e){}
+      var dataUrl=captureFromVideo(videoEl, url, ts.title, ts.subject);
+      if(dataUrl){
+        done=true;
+        var area=card.querySelector('.aspect-video')||videoEl.parentElement;
+        if(area) ensureThumbImgInArea(area, dataUrl);
+      }
+    }
+    videoEl.addEventListener('loadeddata', tryCapture);
+    videoEl.addEventListener('seeked', tryCapture);
+    videoEl.addEventListener('loadedmetadata', function(){
+      try{ if(videoEl.paused && videoEl.duration && videoEl.duration>0.6) videoEl.currentTime=0.5; }catch(e){}
+    });
+    tryCapture();
+  }
+  function fixMp4Card(card){
+    if(!card || getYtId(card)) return;
+    var videoEl=card.querySelector('video');
+    if(!videoEl && !card.querySelector('.aspect-video')) return;
+    var ts=getCardTitleSubject(card);
+    var url=getMp4Src(card);
+    var cached=getCachedThumbByUrl(url) || getCachedThumbByTS(ts.title, ts.subject);
+    var area=card.querySelector('.aspect-video')|| (videoEl ? videoEl.parentElement : null);
+    if(cached && area){
+      var im=ensureThumbImgInArea(area, cached);
+      if(videoEl && !videoEl.paused && videoEl.currentTime>0){ if(im) im.style.display="none"; }
+      else if(im){ im.style.display="block"; }
+    }
+    if(videoEl) attachCapture(videoEl, card);
+  }
+  function fixDlCardThumb(card){
+    if(!card || !card.classList.contains('zed-dl-card')) return;
+    var placeholder=null;
+    var divs=card.querySelectorAll('div');
+    for(var i=0;i<divs.length;i++){ if(divs[i].textContent.trim()==="🎬"){ placeholder=divs[i]; break; } }
+    if(!placeholder){
+      var img0=card.querySelector('img');
+      if(img0 && (!img0.src || img0.naturalWidth===0)) placeholder=img0;
+      else return;
+    }
+    var ts=getCardTitleSubject(card);
+    var cached=getCachedThumbByTS(ts.title, ts.subject);
+    if(!cached) return;
+    var nim=document.createElement("img");
+    nim.src=cached; nim.alt="";
+    nim.style.cssText="width:100%;aspect-ratio:16/9;object-fit:cover;display:block;";
+    if(placeholder && placeholder.parentNode) placeholder.parentNode.replaceChild(nim, placeholder);
   }
   function fixLockedThumbs(){
     document.querySelectorAll('.zed-lock-cover').forEach(function(cover){
@@ -14054,7 +14311,6 @@ div.grid[class*="lg:grid-cols-5"]{display:none !important;visibility:hidden !imp
       var ytId=getYtId(card);
       var existing=cover.querySelector('img.zed-cover-thumb');
       if(ytId){
-        // YouTube: thumbnail is the YouTube image. Try hq -> mq -> default -> 0, never leave a dark box.
         var base="https://i.ytimg.com/vi/"+ytId+"/";
         var tries=[base+"hqdefault.jpg", base+"mqdefault.jpg", base+"default.jpg", base+"0.jpg"];
         if(!existing){
@@ -14072,8 +14328,6 @@ div.grid[class*="lg:grid-cols-5"]{display:none !important;visibility:hidden !imp
           existing.dataset.zedTry="0"; existing.src=tries[0];
         }
       } else {
-        // MP4 (e.g. HOW TO STUDY MATHS if uploaded from phone): NO YouTube thumb exists.
-        // Thumbnail = the video's own first frame. Remove any cover img so it does not hide the video.
         if(existing){ try{ existing.remove(); }catch(e){} }
         var v=card ? card.querySelector('video') : null;
         var src=getMp4Src(card);
@@ -14083,9 +14337,7 @@ div.grid[class*="lg:grid-cols-5"]{display:none !important;visibility:hidden !imp
             v.muted=true; v.controls=false; v.setAttribute('preload','metadata'); v.setAttribute('playsinline','');
             v.style.pointerEvents="none"; v.style.display="block"; v.style.opacity="1";
             v.pause();
-            // Nudge to first frame if browser has not drawn it yet
             if(v.readyState<2){ try{ v.load(); }catch(e){} }
-            if(!v.dataset.zedFirstFrame && v.currentTime!==0){ try{ v.currentTime=0; }catch(e){} }
           }catch(e){}
         }
       }
@@ -14096,7 +14348,6 @@ div.grid[class*="lg:grid-cols-5"]{display:none !important;visibility:hidden !imp
     });
     document.querySelectorAll('.zed-video-card').forEach(function(card){
       var locked=!!card.querySelector('.zed-lock-cover');
-      // Video area: transparent, never dark. The thumbnail / first frame fills it.
       card.querySelectorAll('.aspect-video, .yt-lite').forEach(function(el){
         el.style.backgroundColor="transparent"; el.style.background="transparent";
       });
@@ -14109,14 +14360,136 @@ div.grid[class*="lg:grid-cols-5"]{display:none !important;visibility:hidden !imp
         if(locked && (s==="about:blank" || s==="")){ fr.style.display="none"; }
         else if(!locked && s && s!=="about:blank"){ fr.style.display=""; }
       });
+      fixMp4Card(card);
+    });
+    document.querySelectorAll('#zed-v15-unlocked-view .zed-dl-card, #zed-v15-downloads-view .zed-dl-card').forEach(function(c){
+      fixDlCardThumb(c);
+      var vv=c.querySelector('video');
+      if(vv) attachCapture(vv, c);
     });
   }
-  fixLockedThumbs();
-  document.addEventListener("DOMContentLoaded", fixLockedThumbs);
-  window.addEventListener("load", fixLockedThumbs);
-  setInterval(fixLockedThumbs, 800);
-  if(document.body){ new MutationObserver(function(){ fixLockedThumbs(); }).observe(document.body, {childList:true, subtree:true}); }
-  console.log("[ZED FINAL v2] Locked thumbnail: no dark colour, YouTube img OR MP4 first frame shows through.");
+  // ---------- Deleted in Supabase = gone, UNLESS downloaded ----------
+  var brokenUrls={};
+  function isOnline(){ try{ return navigator.onLine; }catch(e){ return true; } }
+  function getLiveKeys(){
+    var keys={yt:{}, url:{}, ts:{}};
+    var cards=document.querySelectorAll('.grid > div');
+    var liveCount=0;
+    cards.forEach(function(card){
+      if(!card.querySelector) return;
+      if(card.closest && (card.closest('#zed-v15-unlocked-view') || card.closest('#zed-v15-downloads-view') || card.closest('#zed-chat-panel') || card.closest('#zed-v15-toolbar'))) return;
+      if(!card.querySelector('.font-semibold')) return;
+      liveCount++;
+      var ts=getCardTitleSubject(card);
+      if(ts.title) keys.ts[normTS(ts.title, ts.subject)]=1;
+      var yt=getYtId(card);
+      if(yt) keys.yt[yt]=1;
+      var u=getMp4Src(card);
+      if(u) keys.url[u]=1;
+      var fr=card.querySelector('iframe');
+      if(fr){ var s=fr.getAttribute('src')||fr.src||""; if(s && s!=="about:blank") keys.url[s]=1; }
+      if(card.dataset && card.dataset.zedOrigSrc) keys.url[card.dataset.zedOrigSrc]=1;
+      if(card.dataset && card.dataset.zedVideoUrl) keys.url[card.dataset.zedVideoUrl]=1;
+    });
+    return {keys:keys, count:liveCount};
+  }
+  function isLiveReady(live){
+    if(live.count>0) return true;
+    var txt=document.body ? document.body.innerText||"" : "";
+    if(txt.indexOf("No videos")!==-1) return true;
+    if(/\b0 videos\b/.test(txt)) return true;
+    return false;
+  }
+  function isDownloadedCard(card){
+    if(!card) return false;
+    if(card.closest && card.closest('#zed-v15-downloads-view')) return true;
+    var html=card.innerText||"";
+    if(html.indexOf("Saved inside app")!==-1 || html.indexOf("Plays offline")!==-1) return true;
+    if(card.querySelector('[data-zed-dl-play]')) return true;
+    if(card.querySelector('video') && (card.querySelector('video').src||"").indexOf("blob:")===0) return true;
+    return false;
+  }
+  function pruneDeleted(){
+    if(!isOnline()) return;
+    var live=getLiveKeys();
+    if(!isLiveReady(live)) return;
+    var keys=live.keys;
+    var view=document.getElementById('zed-v15-unlocked-view');
+    if(!view) return;
+    var visible=0;
+    view.querySelectorAll('.zed-dl-card').forEach(function(card){
+      if(isDownloadedCard(card)){
+        if(card.dataset.zedDeleted==="1"){ delete card.dataset.zedDeleted; }
+        card.style.display="";
+        visible++;
+        return;
+      }
+      var ts=getCardTitleSubject(card);
+      var tsKey=normTS(ts.title, ts.subject);
+      var yt="";
+      var thumbImg=card.querySelector('img');
+      if(thumbImg && thumbImg.src) yt=ytIdFromUrl(thumbImg.src);
+      var stillLive = (yt && keys.yt[yt]) || (tsKey && tsKey!=="|" && keys.ts[tsKey]);
+      if(stillLive){
+        if(card.dataset.zedDeleted==="1"){ delete card.dataset.zedDeleted; }
+        card.style.display="";
+        visible++;
+      } else {
+        card.dataset.zedDeleted="1";
+        card.style.display="none";
+      }
+    });
+    try{
+      var countEl=document.querySelector('[data-zed-count="unlocked"]');
+      if(countEl) countEl.textContent="("+visible+")";
+    }catch(e){}
+  }
+  function checkBrokenVideo(videoEl){
+    if(!videoEl || videoEl.dataset.zedBrokenChecked) return;
+    videoEl.dataset.zedBrokenChecked="1";
+    videoEl.addEventListener('error', function(){
+      var src=videoEl.getAttribute('src')||videoEl.src||"";
+      if(!src || src.indexOf("blob:")===0 || brokenUrls[src]) return;
+      if(!isOnline()) return;
+      fetch(src, {method:'HEAD'}).then(function(res){
+        if(res.status===404 || res.status===400){
+          brokenUrls[src]=1;
+          var card=videoEl.closest('.zed-video-card')||videoEl.closest('.zed-dl-card');
+          if(card && !isDownloadedCard(card)){
+            card.dataset.zedDeleted="1";
+            card.style.display="none";
+          }
+        }
+      }).catch(function(){});
+    }, true);
+  }
+  // ---------- Throttled, search-aware main loop: NEVER do heavy DOM writes while user is touching / typing in search ----------
+  var lastFixAll=0;
+  function fixAll(){
+    stabilizeSearchInput();
+    refocusIfRecreated();
+    dedupSearchWraps();
+    if(isSearchActive()) return; // searching = freeze everything else. Typing already filters via Video Coins' own input handler.
+    var now=Date.now();
+    if(now-lastFixAll<1500) return; // max once per 1.5s — the old 500-800ms loops + observer storms were what froze the phone.
+    lastFixAll=now;
+    ensureVideoOrderOnce();
+    fixLockedThumbs();
+    pruneDeleted();
+    document.querySelectorAll('video').forEach(function(v){ checkBrokenVideo(v); });
+  }
+  fixAll();
+  document.addEventListener("DOMContentLoaded", fixAll);
+  window.addEventListener("load", fixAll);
+  setInterval(fixAll, 2000);
+  var obsTimer=null;
+  if(document.body){
+    new MutationObserver(function(){
+      if(obsTimer) return;
+      obsTimer=setTimeout(function(){ obsTimer=null; fixAll(); }, 400);
+    }).observe(document.body, {childList:true, subtree:true});
+  }
+  console.log("[ZED FINAL v4] Search bar freeze + MP4 thumbs cached + deleted videos hidden unless downloaded.");
 })();</script>
 
 </body>
