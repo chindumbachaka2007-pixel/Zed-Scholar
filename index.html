@@ -5774,7 +5774,7 @@ input[placeholder="search a topic"], input[placeholder="Search here"] {
 // NEW LOOK: Full-screen dim + SOLID WHITE card in the CENTER of the screen.
 // - Card is 100% opaque (background:#FFFFFF) - NOT transparent, NOT see-through.
 // - Big title, big button, dark readable text. Nothing overlaps the Login / Create account buttons.
-// - "Later" only hides the popup for THIS visit and leaves a solid "NEW UPDATE" pill at the bottom.
+// - "Later" only hides the popup for THIS visit and leaves a WHITE "New Update Available" bar at the bottom.
 //   The pill stays until they update. Next visit, the centered popup shows again.
 let zedWaitingWorker = null;
 let zedUpdateReg = null;
@@ -5818,9 +5818,10 @@ function showZedUpdatePill(){
   let pill = document.createElement('button');
   pill.id = 'zed-update-pill';
   pill.type = 'button';
-  // SOLID, opaque pill - yellow bg + black text = highest visibility on dark blue background
-  pill.style.cssText = 'position:fixed;left:50%;transform:translateX(-50%);bottom:16px;z-index:9999998;background:#FFC107;color:#000000;border:3px solid #FFFFFF;padding:13px 20px;border-radius:999px;font-weight:900;font-size:15px;cursor:pointer;box-shadow:0 10px 30px rgba(0,0,0,0.6);font-family:"Bricolage Grotesque",sans-serif;white-space:nowrap;';
-  pill.textContent = '⬆  NEW UPDATE AVAILABLE  •  Tap to Update';
+  // WHITE bar - fits screen, wraps, never cuts off. No yellow, no nowrap.
+  // left:12px + right:12px (NOT left:50% + nowrap) = always inside the screen.
+  pill.style.cssText = 'position:fixed;left:12px;right:12px;bottom:calc(16px + env(safe-area-inset-bottom));z-index:9999998;background:#FFFFFF;color:#0F172A;border:1px solid #E2E8F0;padding:13px 16px;border-radius:16px;font-weight:800;font-size:14px;line-height:1.4;cursor:pointer;box-shadow:0 10px 30px rgba(15,23,42,0.18);font-family:"Bricolage Grotesque",sans-serif;box-sizing:border-box;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:2px;text-align:center;white-space:normal;word-wrap:break-word;';
+  pill.innerHTML = '<span>New Update Available</span><span style="color:#2563EB;font-size:13px;">Tap to update now &rarr;</span>';
   pill.onclick = () => { pill.remove(); showZedUpdateToast(); };
   document.body.appendChild(pill);
 }
@@ -5843,8 +5844,7 @@ function showZedUpdateToast(){
   card.innerHTML = `
     <div style="width:72px;height:72px;margin:0 auto 14px;background:#3B82F6;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:36px;">✨</div>
     <div style="font-size:23px;font-weight:900;line-height:1.15;color:#081A33;letter-spacing:0.2px;">NEW UPDATE<br>AVAILABLE</div>
-    <div style="font-size:15px;line-height:1.5;color:#334155;margin:12px 0 4px;font-weight:600;">Update to access new features,<br>premium features and improvements.</div>
-    <div style="font-size:13px;line-height:1.4;color:#64748B;margin-bottom:20px;">Faster videos &bull; Fixed search &bull; Tap to pause</div>
+    <div style="font-size:15px;line-height:1.55;color:#334155;margin:14px 0 22px;font-weight:600;">A new version of ZED SCHOLAR is ready. Update now to get the latest improvements.</div>
     <button id="zed-update-btn" type="button" style="background:#3B82F6;color:#FFFFFF;border:none;padding:16px 20px;border-radius:14px;font-weight:900;font-size:17px;cursor:pointer;width:100%;box-shadow:0 8px 20px rgba(59,130,246,0.45);">⬆ &nbsp; Update Now</button>
     <button id="zed-update-later" type="button" style="background:none;border:none;color:#64748B;font-size:14px;font-weight:700;cursor:pointer;padding:14px 10px 4px;width:100%;text-decoration:underline;">Later, keep using old version</button>
   `;
