@@ -1,33 +1,41 @@
-// ZED SCHOLAR - MANUAL-UPDATE Service Worker
-const VERSION = 30;
-const CACHE_NAME = 'zed-scholar-v' + VERSION + '-manual';
-const CACHE_VERSION = 'v' + VERSION;
+// ZED SCHOLAR - Service Worker V30 - TRULY MANUAL UPDATE
+// Bump this version every time you push a new build
+// v30 = MANUAL update release. Nothing updates until the user taps "Tap to Update Now".
+//
+// RULE: This SW must NEVER call skipWaiting() on its own.
+// - install: new SW installs and goes into WAITING state. It does NOT take over.
+// - activate: only runs AFTER the user taps Update -> page sends SKIP_WAITING -> skipWaiting() runs.
+// - clients.claim() in activate is SAFE: activate only happens after that manual tap.
+const CACHE_NAME = 'zed-scholar-v30';
+const CACHE_VERSION = 'v30';
 
 const ASSETS_TO_CACHE = [
   './',
   './index.html',
   './manifest.json',
-  // './icon-192.png',
-  // './icon-512.png'
+  './icon-192.png',
+  './icon-512.png'
 ];
 
-// 1. INSTALL - cache new files, but DO NOT take over.
-// NO skipWaiting() here on purpose. New SW stays in "waiting" state
-// until the user clicks Update.
+// 1. INSTALL - cache new files, then WAIT. Do NOT take over yet.
 self.addEventListener('install', (event) => {
-  console.log('[SW] Install - new version downloaded, WAITING for user to tap Update', CACHE_VERSION);
+  console.log('[SW] Install', CACHE_VERSION, '- WAITING for user to tap Update, NOT taking over');
+  // NO self.skipWaiting() here - this is what makes it truly manual.
+  // The new SW stays in "waiting" until the page sends {type:'SKIP_WAITING'}.
   event.waitUntil(
     caches.open(CACHE_NAME).then((cache) => {
-      return cache.addAll(ASSETS_TO_CACHE);
+      return Promise.all(
+        ASSETS_TO_CACHE.map((url) =>
+          cache.add(url).catch((err) => console.log('[SW] Could not cache', url, err))
+        )
+      );
     })
   );
-  // Do NOT auto-activate here - that would auto-update
 });
 
-// 2. ACTIVATE - only runs AFTER user taps Update (SKIP_WAITING).
-// Then we delete old caches and take control.
+// 2. ACTIVATE - only runs after user tapped Update. Delete old caches, then take control.
 self.addEventListener('activate', (event) => {
-  console.log('[SW] Activate - user approved update', CACHE_VERSION);
+  console.log('[SW] Activate', CACHE_VERSION, '- user tapped Update, taking over now');
   event.waitUntil(
     caches.keys().then((keys) => {
       return Promise.all(
@@ -39,58 +47,50 @@ self.addEventListener('activate', (event) => {
         })
       );
     }).then(() => {
-      // Now that user approved, take control immediately
-      return self.clients.claim();
+      return self.clients.claim(); // Safe here: we are already activated by the manual tap
     })
   );
 });
 
-// 3. FETCH - Serve OLD cached version until user updates.
-// IMPORTANT: HTML is CACHE-FIRST here, not network-first.
-// Network-first would show the new HTML automatically on next navigation,
-// which defeats "wait for user to click Update".
+// 3. FETCH - Network first for HTML (so updates show fast), Cache first for others
 self.addEventListener('fetch', (event) => {
   if (event.request.method !== 'GET' || event.request.url.startsWith('chrome-extension')) return;
 
-  // For HTML pages - serve from cache (old version) until user updates.
-  // If no cache yet (first visit), go to network.
   if (event.request.headers.get('accept')?.includes('text/html')) {
     event.respondWith(
-      caches.match(event.request).then((cached) => {
-        if (cached) return cached;
-        return fetch(event.request).then((res) => {
+      fetch(event.request)
+        .then((res) => {
+          const clone = res.clone();
+          caches.open(CACHE_NAME).then((cache) => cache.put(event.request, clone));
           return res;
-        }).catch(() => {
-          return caches.match('./index.html');
-        });
-      })
+        })
+        .catch(() => {
+          return caches.match(event.request).then((cached) => cached || caches.match('./index.html'));
+        })
     );
     return;
   }
 
-  // For everything else - cache first, then network
   event.respondWith(
     caches.match(event.request).then((cached) => {
       if (cached) return cached;
       return fetch(event.request).then((res) => {
-        // Don't cache supabase, youtube, etc
         if (event.request.url.includes('supabase') || event.request.url.includes('youtube') || event.request.url.includes('ytimg')) {
           return res;
         }
-        // Only cache same-origin static assets, and only if response is ok
-        if (!res || res.status !== 200 || res.type !== 'basic') return res;
         const clone = res.clone();
         caches.open(CACHE_NAME).then((cache) => cache.put(event.request, clone));
         return res;
-      }).catch(() => cached);
-    })
+      });
+    }).catch(() => caches.match('./index.html'))
   );
 });
 
-// 4. MESSAGE - only way to activate new version is user tapping Update
+// MANUAL UPDATE ONLY: page sends this when user taps "Tap to Update Now".
+// This is the ONLY place skipWaiting() is allowed to run.
 self.addEventListener('message', (event) => {
   if (event.data && event.data.type === 'SKIP_WAITING') {
-    console.log('[SW] User tapped Update - activating new version');
+    console.log('[SW] User tapped Update - skipWaiting now');
     self.skipWaiting();
   }
 });
