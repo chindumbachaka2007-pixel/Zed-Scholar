@@ -14312,10 +14312,13 @@ main div.grid.grid-cols-3.zed-top3-parent{ grid-template-columns:1fr !important;
   #zed-install-btn:active{transform:scale(0.97)}
   #zed-install-min{background:#F1F5F9;color:#64748B;border:none;width:28px;height:28px;border-radius:50%;font-size:14px;cursor:pointer;flex-shrink:0;line-height:1;display:flex;align-items:center;justify-content:center}
   /* Minimised state - small pill at TOP CENTER, not bottom */
-  #zed-install-pill{position:fixed;top:calc(10px + env(safe-area-inset-top));left:50%;transform:translateX(-50%);z-index:9999998;display:none;align-items:center;gap:6px;background:#081A33;color:#FFFFFF;border:none;padding:8px 14px;border-radius:999px;font-weight:700;font-size:12px;cursor:pointer;box-shadow:0 6px 18px rgba(15,23,42,0.25);font-family:"Bricolage Grotesque",sans-serif;white-space:nowrap}
+  #zed-install-pill{position:fixed;top:calc(10px + env(safe-area-inset-top));left:50%;transform:translateX(-50%);z-index:9999998;display:none;align-items:center;gap:6px;background:#3B82F6;color:#FFFFFF;border:2px solid #FFFFFF;padding:10px 18px;border-radius:999px;font-weight:800;font-size:13px;cursor:pointer;box-shadow:0 8px 22px rgba(0,0,0,0.45);font-family:"Bricolage Grotesque",sans-serif;white-space:nowrap}
   /* Hint card - also TOP, white, professional */
   #zed-install-hint{position:fixed;top:calc(66px + env(safe-area-inset-top));left:12px;right:12px;z-index:9999998;display:none;background:#FFFFFF;color:#0F172A;border:1px solid #E2E8F0;padding:13px 14px;border-radius:12px;font-size:13px;line-height:1.5;text-align:left;box-shadow:0 10px 30px rgba(15,23,42,0.14);font-family:"Bricolage Grotesque",sans-serif;box-sizing:border-box}
   #zed-install-hint b{color:#0F172A}
+  /* FIX 17 Nov: Remove long blank space after footer - old rules added 180px + 120px padding-bottom to main/#root */
+  main, #root, div[class*="min-h"], div[id*="content"], div[class*="content"]{padding-bottom:80px !important}
+  html, body{padding-bottom:0 !important;margin-bottom:0 !important}
 </style>
 
 <div id="zed-install-banner" role="dialog" aria-label="Install ZED SCHOLAR app">
@@ -14328,7 +14331,7 @@ main div.grid.grid-cols-3.zed-top3-parent{ grid-template-columns:1fr !important;
   <button id="zed-install-min" type="button" aria-label="Hide install banner for now" title="Hide for now">&and;</button>
 </div>
 
-<button id="zed-install-pill" type="button">Install ZED SCHOLAR</button>
+<button id="zed-install-pill" type="button">\u2193 Install ZED SCHOLAR</button>
 
 <div id="zed-install-hint"></div>
 
@@ -14367,9 +14370,11 @@ main div.grid.grid-cols-3.zed-top3-parent{ grid-template-columns:1fr !important;
     hint.style.display = 'none';
     document.body.style.paddingTop = originalBodyPaddingTop;
   }
-  function showBanner(){
+  function showBanner(force){
     if (isInstalled()) { hideAll(); return; }
-    if (pill.style.display === 'flex') return;
+    // BUG FIX: pill click must FORCE the banner open. Old code returned early here,
+    // so tapping the pill did nothing and Install looked broken.
+    if (!force && pill.style.display === 'flex') return;
     banner.style.display = 'flex';
     pill.style.display = 'none';
     // Wait a tick so offsetHeight is measured after display
@@ -14423,8 +14428,26 @@ main div.grid.grid-cols-3.zed-top3-parent{ grid-template-columns:1fr !important;
 
   // Minimise = collapse to small TOP pill, NOT disappear
   minBtn.addEventListener('click', function(){ showPill(); });
-  pill.addEventListener('click', function(){ showBanner(); });
+  pill.addEventListener('click', function(){ showBanner(true); });
 
+  function showInstallHelp(){
+    // Centered, stays until user taps Got it - unlike the old 8s hint that was easy to miss.
+    if (document.getElementById('zed-install-help')) return;
+    var ov = document.createElement('div');
+    ov.id = 'zed-install-help';
+    ov.style.cssText = 'position:fixed;inset:0;z-index:10000000;background:rgba(0,0,0,0.75);display:flex;align-items:center;justify-content:center;padding:20px;box-sizing:border-box;';
+    var card = document.createElement('div');
+    card.style.cssText = 'background:#FFFFFF;color:#0F172A;width:100%;max-width:360px;border-radius:20px;padding:26px 22px;text-align:center;box-shadow:0 24px 60px rgba(0,0,0,0.6);font-family:"Bricolage Grotesque",sans-serif;box-sizing:border-box;';
+    if (isIOS) {
+      card.innerHTML = '<div style="font-size:20px;font-weight:900;margin-bottom:10px;">How to install on iPhone</div><div style="font-size:14px;line-height:1.6;color:#334155;text-align:left;">1. Tap <b>Share</b> (square + arrow at the bottom)<br>2. Tap <b>Add to Home Screen</b><br>3. Tap <b>Add</b></div><button id="zed-install-help-close" type="button" style="background:#081A33;color:#fff;border:none;padding:13px 20px;border-radius:12px;font-weight:800;font-size:14px;cursor:pointer;width:100%;margin-top:18px;">Got it</button>';
+    } else {
+      card.innerHTML = '<div style="font-size:20px;font-weight:900;margin-bottom:10px;">How to install</div><div style="font-size:14px;line-height:1.6;color:#334155;text-align:left;">1. Tap your browser menu <b>&#8942;</b> (top right)<br>2. Tap <b>Add to Home screen</b> / <b>Install app</b><br>3. Tap <b>Install</b></div><div style="font-size:12px;line-height:1.5;color:#64748B;margin-top:12px;">If you already added a shortcut, open ZED SCHOLAR from your home screen - you are already installed.</div><button id="zed-install-help-close" type="button" style="background:#081A33;color:#fff;border:none;padding:13px 20px;border-radius:12px;font-weight:800;font-size:14px;cursor:pointer;width:100%;margin-top:14px;">Got it</button>';
+    }
+    ov.appendChild(card);
+    document.body.appendChild(ov);
+    document.getElementById('zed-install-help-close').onclick = function(){ ov.remove(); };
+    ov.onclick = function(e){ if (e.target === ov) ov.remove(); };
+  }
   function onInstallClick(){
     if (isInstalled()) { hideAll(); return; }
     if (deferredPrompt) {
@@ -14435,19 +14458,16 @@ main div.grid.grid-cols-3.zed-top3-parent{ grid-template-columns:1fr !important;
         if (choice.outcome === 'accepted') {
           // appinstalled event will hide banner
         } else {
-          showHint('<b>Not installed yet.</b> Tap <b>Install</b> again anytime to try again.');
-          showBanner();
+          showInstallHelp();
         }
       }).catch(function(){ showBanner(); });
       return;
     }
     if (isIOS) {
-      showHint('<b>To install on iPhone:</b><br>1. Tap <b>Share</b> (square + arrow) &nbsp; 2. Tap <b>Add to Home Screen</b> &nbsp; 3. Tap <b>Add</b>');
-      showBanner();
+      showInstallHelp();
       return;
     }
-    showHint('<b>To install:</b> Tap your browser menu <b>&#8942;</b> &gt; <b>Add to Home screen</b> / <b>Install app</b>.');
-    showBanner();
+    showInstallHelp();
   }
   installBtn.addEventListener('click', onInstallClick);
   window.zedShowInstall = showBanner;

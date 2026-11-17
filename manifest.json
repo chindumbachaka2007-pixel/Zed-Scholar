@@ -2,15 +2,17 @@
   "name": "ZED SCHOLAR - ECZ Past Papers",
   "short_name": "ZED SCHOLAR",
   "description": "Free ECZ past papers for Senior Secondary in Zambia - Form 1-6 & Grade 10-12 with marking schemes, quizzes & videos. Works offline.",
-  "start_url": "https://zed-scholar.pages.dev/",
-  "scope": "https://zed-scholar.pages.dev/",
-  "id": "https://zed-scholar.pages.dev/",
+  "start_url": "./",
+  "scope": "./",
+  "id": "./",
   "display": "standalone",
   "orientation": "portrait",
   "background_color": "#081A33",
   "theme_color": "#081A33",
   "lang": "en-ZM",
-  "categories": ["education"],
+  "categories": [
+    "education"
+  ],
   "icons": [
     {
       "src": "icon-192.png",
