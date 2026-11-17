@@ -1,10 +1,10 @@
-// ZED SCHOLAR - MANUAL-UPDATE Service Worker V1
+// ZED SCHOLAR - MANUAL-UPDATE Service Worker V29
 // MANUAL UPDATE ONLY: This SW will NEVER auto-update.
 // It downloads the new version in the background, then WAITS.
 // It only activates when the user taps "Update Now" in the prompt.
 // Bump CACHE_NAME + CACHE_VERSION every time you push a new build.
-const CACHE_NAME = 'zed-scholar-v2-manual';
-const CACHE_VERSION = 'v2';
+const CACHE_NAME = 'zed-scholar-v29-manual';
+const CACHE_VERSION = 'v29';
 
 const ASSETS_TO_CACHE = [
   './',
@@ -99,4 +99,3 @@ self.addEventListener('message', (event) => {
     self.skipWaiting();
   }
 });
-);
