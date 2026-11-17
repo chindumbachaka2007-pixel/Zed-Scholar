@@ -4675,138 +4675,176 @@ input[placeholder="search a topic"], input[placeholder="Search here"] {
 
 
 <script>
-// === ZED SCHOLAR V27 PWA MANUAL-UPDATE - WAITS FOR USER ===
-    // RULES: 1) NEVER auto-reload. 2) Prompt NEVER disappears until user taps Update.
-    // 3) SW stays in "waiting" until user taps Update. No skipWaiting on install.
-    if ('serviceWorker' in navigator) {
-      let zedWaitingWorker = null;
-      let zedRefreshing = false;
+// === ZED SCHOLAR V28 PWA MANUAL-UPDATE - SHOWS WHEN LOGGED IN TOO ===
+// RULES: 1) NEVER auto-reload. 2) Prompt NEVER disappears until user taps Update.
+// 3) SW stays in "waiting" until user taps Update. No skipWaiting on install.
+// FIX: Old code checked for update only on load + every 1 hour, so if you stayed
+// logged in, you never saw it until you logged out (logout reloads page).
+// Now it checks every 30 sec + on focus + when you come back + when you log in,
+// so it pops up WHILE you are logged in, not only after logout.
+if ('serviceWorker' in navigator) {
+  let zedWaitingWorker = null;
+  let zedRefreshing = false;
+  let zedReg = null;
 
-      function zedShowUpdatePrompt() {
-        // If prompt already on screen, do nothing - don't create duplicate
-        if (document.getElementById('zed-update-toast')) return;
-        if (!document.body) return;
+  function zedIsLoggedIn(){
+    try { return !!localStorage.getItem('zed_user'); } catch(e){ return false; }
+  }
+  function zedGetPromptBottom(){
+    // Logged in = inside app, bottom nav covers bottom:12px, so lift it above nav
+    // Logged out = login screen, no nav, keep it at very bottom
+    return zedIsLoggedIn() ? '86px' : '12px';
+  }
+  // Host attached to <html>, NOT to body / React root, so React re-renders
+  // when you log in / navigate inside the app CANNOT remove or hide it.
+  function zedEnsureHost(){
+    let host = document.getElementById('zed-update-host');
+    if (!host) {
+      host = document.createElement('div');
+      host.id = 'zed-update-host';
+      host.style.cssText = 'position:fixed;inset:0;pointer-events:none;z-index:2147483647;';
+      document.documentElement.appendChild(host);
+    }
+    return host;
+  }
 
-        // Remember that an update is pending, so if user closes/reopens app,
-        // or React re-renders and removes the banner, we can bring it back
-        try { localStorage.setItem('zed_update_pending', '1'); } catch(e){}
+  function zedShowUpdatePrompt() {
+    if (document.getElementById('zed-update-toast')) return;
+    try { localStorage.setItem('zed_update_pending', '1'); } catch(e){}
 
-        let toast = document.createElement('div');
-        toast.id = 'zed-update-toast';
-        // NO close button, NO timeout, NO auto-hide. Only Update button removes it.
-        // Show in BOTH logged-in and logged-out. When logged in, bottom nav / FABs cover bottom:12px,
-// so lift the bar above them. When logged out (login screen), keep it at the very bottom.
-        function zedGetPromptBottom(){
-          try {
-            const loggedIn = !!localStorage.getItem('zed_user');
-            const hasLoginBtn = !!document.getElementById('zed-login-btn');
-            // Logged in = has zed_user and no login button
-            if (loggedIn && !hasLoginBtn) return '86px';
-          } catch(e){}
-          return '12px';
-        }
-        toast.style.cssText = 'position:fixed;bottom:' + zedGetPromptBottom() + ';left:12px;right:12px;margin:0 auto;max-width:420px;background:#1A1917;border:1.5px solid #3B82F6;color:#F5F1E8;padding:10px 12px;border-radius:12px;font-size:12px;z-index:9999999;box-shadow:0 8px 24px rgba(0,0,0,0.5);display:flex;align-items:center;gap:10px;font-family:"Bricolage Grotesque",sans-serif;font-weight:600;';
-        toast.innerHTML = `
-          <span style="font-size:16px;flex-shrink:0;">✨</span>
-          <span style="flex:1;text-align:left;line-height:1.2;min-width:0;"><b>New update available</b></span>
-          <button id="zed-update-btn" style="background:#3B82F6;color:#fff;border:none;padding:8px 14px;border-radius:8px;font-weight:800;font-size:12px;cursor:pointer;white-space:nowrap;flex-shrink:0;">Update</button>
-        `;
-        document.body.appendChild(toast);
+    let host = zedEnsureHost();
+    let toast = document.createElement('div');
+    toast.id = 'zed-update-toast';
+    // NO close button, NO timeout, NO auto-hide. Only Update button removes it.
+    // pointer-events:auto so button is clickable even though host is pointer-events:none
+    toast.style.cssText = 'position:fixed;bottom:' + zedGetPromptBottom() + ';left:12px;right:12px;margin:0 auto;max-width:420px;background:#1A1917;border:1.5px solid #3B82F6;color:#F5F1E8;padding:10px 12px;border-radius:12px;font-size:12px;z-index:2147483647;box-shadow:0 8px 24px rgba(0,0,0,0.5);display:flex;align-items:center;gap:10px;font-family:"Bricolage Grotesque",sans-serif;font-weight:600;pointer-events:auto;';
+    toast.innerHTML = `
+      <span style="font-size:16px;flex-shrink:0;">✨</span>
+      <span style="flex:1;text-align:left;line-height:1.2;min-width:0;"><b>New update available</b></span>
+      <button id="zed-update-btn" style="background:#3B82F6;color:#fff;border:none;padding:8px 14px;border-radius:8px;font-weight:800;font-size:12px;cursor:pointer;white-space:nowrap;flex-shrink:0;">Update</button>
+    `;
+    host.appendChild(toast);
 
-        document.getElementById('zed-update-btn').onclick = () => {
-          const btn = document.getElementById('zed-update-btn');
-          if (btn) { btn.disabled = true; btn.textContent = 'Updating...'; }
-          // Send SKIP_WAITING to the WAITING worker, not to the old controller
-          const workerToUpdate = zedWaitingWorker || (window.__zedReg && window.__zedReg.waiting);
-          if (workerToUpdate) {
-            console.log('[ZED] User tapped Update - telling waiting SW to activate');
-            workerToUpdate.postMessage({type:'SKIP_WAITING'});
-          } else if (navigator.serviceWorker.controller) {
-            // Fallback: if no waiting worker tracked, try controller
-            navigator.serviceWorker.controller.postMessage({type:'SKIP_WAITING'});
-          }
-          // Do NOT reload here. Wait for controllerchange (new SW activated) then reload once.
-          // Fallback: if controllerchange doesn't fire in 4s (e.g. SW already activated), reload
-          setTimeout(() => {
-            if (!zedRefreshing) {
-              console.log('[ZED] Update fallback reload');
-              try { localStorage.removeItem('zed_update_pending'); } catch(e){}
-              window.location.reload();
-            }
-          }, 4000);
-        };
+    document.getElementById('zed-update-btn').onclick = () => {
+      const btn = document.getElementById('zed-update-btn');
+      if (btn) { btn.disabled = true; btn.textContent = 'Updating...'; }
+      const workerToUpdate = zedWaitingWorker || (zedReg && zedReg.waiting) || (window.__zedReg && window.__zedReg.waiting);
+      if (workerToUpdate) {
+        console.log('[ZED] User tapped Update - telling waiting SW to activate');
+        workerToUpdate.postMessage({type:'SKIP_WAITING'});
+      } else if (navigator.serviceWorker.controller) {
+        navigator.serviceWorker.controller.postMessage({type:'SKIP_WAITING'});
       }
-
-      // Watchdog: if React or anything removes the prompt, bring it back
-      // as long as an update is still pending. This is what makes it "never disappear".
-      setInterval(() => {
-        try {
-          const pending = localStorage.getItem('zed_update_pending') === '1';
-          const existing = document.getElementById('zed-update-toast');
-          if (pending && zedWaitingWorker && !existing) {
-            console.log('[ZED] Update prompt was removed - restoring it');
-            zedShowUpdatePrompt();
-          }
-          // If prompt exists but user logged in/out, move it so it's not hidden behind bottom nav
-          if (existing) {
-            try {
-              const loggedIn = !!localStorage.getItem('zed_user');
-              const hasLoginBtn = !!document.getElementById('zed-login-btn');
-              const wantBottom = (loggedIn && !hasLoginBtn) ? '86px' : '12px';
-              if (existing.style.bottom !== wantBottom) existing.style.bottom = wantBottom;
-            } catch(e){}
-          }
-        } catch(e){}
-      }, 2000);
-
-      // Also restore on visibility change (user comes back to app)
-      document.addEventListener('visibilitychange', () => {
-        if (!document.hidden) {
-          try {
-            if (localStorage.getItem('zed_update_pending') === '1' && zedWaitingWorker) zedShowUpdatePrompt();
-          } catch(e){}
+      setTimeout(() => {
+        if (!zedRefreshing) {
+          console.log('[ZED] Update fallback reload');
+          try { localStorage.removeItem('zed_update_pending'); } catch(e){}
+          window.location.reload();
         }
-      });
+      }, 4000);
+    };
+  }
 
-      navigator.serviceWorker.register('./sw.js').then(reg => {
-        window.__zedReg = reg;
-        console.log('[ZED] SW registered', reg.scope);
+  function zedCheckForUpdate(){
+    if (!zedReg) return;
+    try { zedReg.update(); } catch(e){}
+    // If SW is ALREADY waiting (update downloaded while logged in), show NOW - don't wait
+    if (zedReg.waiting) {
+      zedWaitingWorker = zedReg.waiting;
+      zedShowUpdatePrompt();
+    }
+  }
 
-        // CASE 1: User closed app before updating, reopened - SW is ALREADY waiting.
-        // Show prompt immediately, don't wait for another updatefound.
-        if (reg.waiting) {
-          console.log('[ZED] SW already waiting from before - showing prompt');
-          zedWaitingWorker = reg.waiting;
+  // Watchdog: if React or anything removes the prompt, bring it back
+  // as long as an update is still pending. Also moves it if you log in/out.
+  setInterval(() => {
+    try {
+      const pending = localStorage.getItem('zed_update_pending') === '1';
+      const existing = document.getElementById('zed-update-toast');
+      if (pending && zedWaitingWorker && !existing) {
+        console.log('[ZED] Update prompt was removed - restoring it');
+        zedShowUpdatePrompt();
+      }
+      if (existing) {
+        const wantBottom = zedGetPromptBottom();
+        if (existing.style.bottom !== wantBottom) existing.style.bottom = wantBottom;
+      }
+      // Also re-check waiting worker every 2s - catches update that arrived while logged in
+      if (zedReg && zedReg.waiting && !zedWaitingWorker) {
+        zedWaitingWorker = zedReg.waiting;
+        zedShowUpdatePrompt();
+      }
+    } catch(e){}
+  }, 2000);
+
+  // Show again when user comes back to app (even while logged in)
+  document.addEventListener('visibilitychange', () => {
+    if (!document.hidden) {
+      zedCheckForUpdate();
+      try {
+        if (localStorage.getItem('zed_update_pending') === '1' && zedWaitingWorker) zedShowUpdatePrompt();
+      } catch(e){}
+    }
+  });
+  window.addEventListener('focus', () => { zedCheckForUpdate(); });
+  window.addEventListener('online', () => { zedCheckForUpdate(); });
+
+  // Watch login change: if user logs in while update is pending, show/move prompt immediately
+  let zedLastLoggedIn = zedIsLoggedIn();
+  setInterval(() => {
+    try {
+      const nowLoggedIn = zedIsLoggedIn();
+      if (nowLoggedIn !== zedLastLoggedIn) {
+        zedLastLoggedIn = nowLoggedIn;
+        console.log('[ZED] Login state changed, re-checking for update');
+        zedCheckForUpdate();
+        // If update was already pending, show it right after login, don't wait for logout
+        if (localStorage.getItem('zed_update_pending') === '1' && zedWaitingWorker) zedShowUpdatePrompt();
+      }
+    } catch(e){}
+  }, 1000);
+
+  navigator.serviceWorker.register('./sw.js').then(reg => {
+    zedReg = reg;
+    window.__zedReg = reg;
+    console.log('[ZED] SW registered', reg.scope);
+
+    // CASE 1: User closed app before updating, reopened - SW is ALREADY waiting.
+    // Show prompt immediately, logged in OR logged out.
+    if (reg.waiting) {
+      console.log('[ZED] SW already waiting from before - showing prompt');
+      zedWaitingWorker = reg.waiting;
+      zedShowUpdatePrompt();
+    }
+
+    // CASE 2: New SW found while app is open (logged in or logged out)
+    reg.onupdatefound = () => {
+      const newWorker = reg.installing;
+      console.log('[ZED] New SW found - downloading, will wait for user');
+      newWorker.onstatechange = () => {
+        if (newWorker.state === 'installed' && navigator.serviceWorker.controller) {
+          console.log('[ZED] New version ready - showing prompt even if logged in');
+          zedWaitingWorker = newWorker;
           zedShowUpdatePrompt();
         }
+      };
+    };
 
-        // CASE 2: New SW found while app is open
-        reg.onupdatefound = () => {
-          const newWorker = reg.installing;
-          console.log('[ZED] New SW found - downloading, will wait for user');
-          newWorker.onstatechange = () => {
-            if (newWorker.state === 'installed' && navigator.serviceWorker.controller) {
-              console.log('[ZED] New version ready - showing persistent prompt');
-              zedWaitingWorker = newWorker;
-              zedShowUpdatePrompt();
-            }
-          };
-        };
+    // Check on load, then EVERY 30 SECONDS (was 1 hour - that's why it only showed after logout)
+    // NEVER auto-activate, only check.
+    zedCheckForUpdate();
+    setInterval(() => zedCheckForUpdate(), 30 * 1000);
+  }).catch(err => console.log('[ZED] SW register failed', err));
 
-        // Check for update on load and every hour, but NEVER auto-activate
-        reg.update();
-        setInterval(() => reg.update(), 60 * 60 * 1000);
-      }).catch(err => console.log('[ZED] SW register failed', err));
-
-      // Reload ONLY after user tapped Update and new SW takes control
-      navigator.serviceWorker.addEventListener('controllerchange', () => {
-        if (zedRefreshing) return;
-        zedRefreshing = true;
-        console.log('[ZED] New SW controlling - user approved, reloading');
-        try { localStorage.removeItem('zed_update_pending'); } catch(e){}
-        window.location.reload();
-      });
-    }
+  // Reload ONLY after user tapped Update and new SW takes control
+  navigator.serviceWorker.addEventListener('controllerchange', () => {
+    if (zedRefreshing) return;
+    zedRefreshing = true;
+    console.log('[ZED] New SW controlling - user approved, reloading');
+    try { localStorage.removeItem('zed_update_pending'); } catch(e){}
+    window.location.reload();
+  });
+}
 </script>
 
 
