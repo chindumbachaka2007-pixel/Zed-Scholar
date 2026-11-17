@@ -4681,7 +4681,8 @@ input[placeholder="search a topic"], input[placeholder="Search here"] {
 // - Card is 100% opaque (background:#FFFFFF) - NOT transparent, NOT see-through.
 // - Big title, big button, dark readable text. Nothing overlaps the Login / Create account buttons.
 // - "Later" only hides the popup for THIS visit and leaves a WHITE "New Update Available" bar at the bottom.
-//   The pill stays until they update. Next visit, the centered popup shows again.
+//   The pill stays until they update. Tapping the pill updates directly (ONE TAP) - it no longer opens the popup first.
+//   Next visit, the centered popup shows again if they still have not updated.
 let zedWaitingWorker = null;
 let zedUpdateReg = null;
 let zedRefreshing = false;
@@ -4719,6 +4720,42 @@ if ('serviceWorker' in navigator) {
   });
 }
 
+// FIX 17 Nov: ONE-TAP UPDATE. Old flow was 2 taps: pill tap -> opens popup (tap 1), Update Now (tap 2).
+// Worse: if the new worker was still downloading, Update Now just reloaded and you had to tap AGAIN.
+// Now: pill tap = update starts. Popup Update Now = update starts. If no waiting worker yet, we WAIT for it
+// in THIS tap (up to 10s) instead of reloading and asking for a second tap.
+let zedUpdateStarted = false;
+function doZedUpdate(btn){
+  if(zedUpdateStarted) return;
+  zedUpdateStarted = true;
+  try{
+    if(btn){
+      btn.disabled = true;
+      if(btn.id==='zed-update-pill'){ btn.innerHTML='<span>\uD83D\uDD04 Updating... Please wait</span><span style="color:#2563EB;font-size:13px;">Do not close the app</span>'; }
+      else { btn.textContent='\uD83D\uDD04 Updating... Please wait'; btn.style.opacity='0.8'; }
+    }
+    var _tb=document.getElementById('zed-update-btn');
+    if(_tb && _tb!==btn){ _tb.disabled=true; _tb.textContent='\uD83D\uDD04 Updating... Please wait'; _tb.style.opacity='0.8'; }
+  }catch(e){}
+  function _activate(w){
+    try{ w.postMessage({type:'SKIP_WAITING'}); }catch(e){}
+    setTimeout(function(){ if(!zedRefreshing){ zedRefreshing=true; window.location.reload(); } }, 3000);
+  }
+  var worker = zedWaitingWorker || (zedUpdateReg && zedUpdateReg.waiting);
+  if(worker){ console.log('[ZED] ONE-TAP update - activating waiting worker'); _activate(worker); return; }
+  if(zedUpdateReg){
+    try{ zedUpdateReg.update(); }catch(e){}
+    var waited=0;
+    var timer=setInterval(function(){
+      var w2 = zedWaitingWorker || (zedUpdateReg && zedUpdateReg.waiting);
+      if(w2){ clearInterval(timer); _activate(w2); return; }
+      waited+=500;
+      if(waited>=10000){ clearInterval(timer); window.location.reload(); }
+    }, 500);
+    return;
+  }
+  window.location.reload();
+}
 function showZedUpdatePill(){
   if (document.getElementById('zed-update-pill')) return;
   let pill = document.createElement('button');
@@ -4728,7 +4765,8 @@ function showZedUpdatePill(){
   // left:12px + right:12px (NOT left:50% + nowrap) = always inside the screen.
   pill.style.cssText = 'position:fixed;left:12px;right:12px;bottom:calc(16px + env(safe-area-inset-bottom));z-index:9999998;background:#FFFFFF;color:#0F172A;border:1px solid #E2E8F0;padding:13px 16px;border-radius:16px;font-weight:800;font-size:14px;line-height:1.4;cursor:pointer;box-shadow:0 10px 30px rgba(15,23,42,0.18);font-family:"Bricolage Grotesque",sans-serif;box-sizing:border-box;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:2px;text-align:center;white-space:normal;word-wrap:break-word;';
   pill.innerHTML = '<span>New Update Available</span><span style="color:#2563EB;font-size:13px;">Tap to update now &rarr;</span>';
-  pill.onclick = () => { pill.remove(); showZedUpdateToast(); };
+  // FIX 17 Nov: ONE TAP - pill IS the update button. Old code opened the popup here (tap 1) then needed Update Now (tap 2).
+  pill.onclick = () => { doZedUpdate(pill); };
   document.body.appendChild(pill);
 }
 
@@ -4767,20 +4805,8 @@ function showZedUpdateToast(){
   // Tapping the dark area does NOT close it - user must choose Update or Later.
   // This stops accidental closes.
 
-  document.getElementById('zed-update-btn').onclick = () => {
-    const btn = document.getElementById('zed-update-btn');
-    btn.disabled = true;
-    btn.textContent = '🔄 Updating... Please wait';
-    btn.style.opacity = '0.8';
-    const worker = zedWaitingWorker || (zedUpdateReg && zedUpdateReg.waiting);
-    if (worker) {
-      console.log('[ZED] User tapped Update - telling WAITING worker to activate');
-      worker.postMessage({type:'SKIP_WAITING'});
-      setTimeout(() => { if (!zedRefreshing) { zedRefreshing = true; window.location.reload(); } }, 3000);
-    } else {
-      window.location.reload();
-    }
-  };
+  // FIX 17 Nov: ONE TAP - doZedUpdate handles waiting worker + still-downloading case, no second tap.
+  document.getElementById('zed-update-btn').onclick = () => { doZedUpdate(document.getElementById('zed-update-btn')); };
 
   document.getElementById('zed-update-later').onclick = () => {
     // Later = hide popup for THIS visit only, show solid pill instead. Update is NOT lost.
@@ -9662,7 +9688,8 @@ window._zedV15Filter = 'search';
         if(m.ytId) out.url='yt:'+String(m.ytId).trim();
         else if(m.video_url && m.video_url!=='about:blank' && m.video_url!=='') out.url='url:'+String(m.video_url).trim();
         var t=String(m.title||'').trim().toLowerCase();
-        if(t && t!=='video' && t!=='unlocked video') out.ts='ts:'+t+'|'+String(m.subject||'').trim().toLowerCase();
+        // FIX 17 Nov: TS = title ONLY. Subject is unstable ("• G" vs "MATHEMATICS • G") so same video counted twice.
+        if(t && t!=='video' && t!=='unlocked video') out.ts='ts:'+t;
         return out;
       }
       for(var i=0;i<metas.length;i++){
@@ -9681,6 +9708,57 @@ window._zedV15Filter = 'search';
       return n;
       
     }catch(e){ try{ return getUnlockedVideoIds().length; }catch(e2){ return 0; } }
+  }
+  // FIX 17 Nov: repairUnlockMeta() was referenced in comments but NEVER DEFINED, so bare-ID unlocks never got title/URL back.
+  // Now it really exists: grid cards that are unlocked (by candidate hash) get their meta back, so Unlocked shows on FIRST open.
+  function repairUnlockMetaFromGrid(cards){
+    try{
+      (cards||[]).forEach(function(card){
+        try{
+          var info=extractInfo(card);
+          if(!info || !info.id) return;
+          if(!isUnlockedInfo(info)) return;
+          var metas=getUnlockedMeta();
+          var has=false;
+          for(var i=0;i<metas.length;i++){
+            var mm=metas[i];
+            if(info.ytId && mm.ytId && String(mm.ytId)===String(info.ytId)) { has=true; break; }
+            if(info.video_url && mm.video_url && String(mm.video_url)===String(info.video_url)) { has=true; break; }
+            var mt=String(mm.title||'').trim().toLowerCase(), it2=String(info.title||'').trim().toLowerCase();
+            if(mt && mt===it2) { has=true; break; }
+          }
+          if(!has) rememberUnlockedMeta(info);
+        }catch(e){}
+      });
+    }catch(e){}
+  }
+  // FIX 17 Nov: downloads ARE unlocked. If a download has no meta entry, count (which reads meta) misses it while the list shows it.
+  // Sync downloads -> meta, throttled so it does not hammer IndexedDB on every 600ms tick.
+  var _zedDlMetaSyncAt=0, _zedDlMetaSyncBusy=false;
+  async function syncDownloadsToUnlockedMeta(){
+    try{
+      var now=Date.now();
+      if(_zedDlMetaSyncBusy || (now-_zedDlMetaSyncAt)<10000) return;
+      _zedDlMetaSyncBusy=true; _zedDlMetaSyncAt=now;
+      var all=await getAllDownloads();
+      var changed=false;
+      all.forEach(function(r){
+        try{
+          var metas=getUnlockedMeta();
+          var has=false;
+          for(var i=0;i<metas.length;i++){
+            var mm=metas[i];
+            if(mm.id===r.id) { has=true; break; }
+            if(r.video_url && mm.video_url && String(mm.video_url)===String(r.video_url)) { has=true; break; }
+            var mt=String(mm.title||'').trim().toLowerCase(), rt=String(r.title||'').trim().toLowerCase();
+            if(rt && mt===rt) { has=true; break; }
+          }
+          if(!has){ rememberUnlockedMeta({id:r.id,title:r.title,subject:r.subject,video_url:r.video_url,video_type:r.video_type,thumbnail_url:r.thumbnail_url,ytId:''}); changed=true; }
+        }catch(e){}
+      });
+      _zedDlMetaSyncBusy=false;
+      if(changed){ lastProcess=0; setTimeout(function(){ try{ processVideos(); }catch(e){} }, 200); }
+    }catch(e){ _zedDlMetaSyncBusy=false; }
   }
   function saveUnlocked(list){ try{ localStorage.setItem(unlockKey(), JSON.stringify(list)); }catch(e){} }
   function hashId(str){ var h=5381; for(var i=0;i<str.length;i++){ h=((h<<5)+h)+str.charCodeAt(i); h=h&h; } return 'vid_' + Math.abs(h).toString(36); }
@@ -10127,6 +10205,11 @@ window._zedV15Filter = 'search';
         }
       });
     });
+    // FIX 17 Nov: set counts on FIRST creation. Old code left them blank until the next tick, so Unlocked ( ) showed empty at first.
+    try{
+      var _uEl=bar.querySelector('[data-zed-count="unlocked"]'); if(_uEl) _uEl.textContent='('+getUnlockedCount()+')';
+      var _dEl=bar.querySelector('[data-zed-count="downloads"]'); if(_dEl) _dEl.textContent='('+downloadedIds.size+')';
+    }catch(e){}
     lastToolbarSig='';
     return bar;
   }
@@ -10254,21 +10337,15 @@ window._zedV15Filter = 'search';
       return;
     }
     if(filter==='unlocked'){
-      // Online: filter the live grid as before. Offline / empty grid: render from stored unlocks.
-      if(isOffline() || cards.length===0){
-        cards.forEach(function(card){ setHidden(card, true); });
-        var dvU=document.getElementById('zed-v15-downloads-view'); if(dvU) dvU.style.display='none';
-        renderUnlockedViewFromStorage(q);
-        return;
-      }
-      var uv1=document.getElementById('zed-v15-unlocked-view'); if(uv1) uv1.style.display='none';
-      var dvU2=document.getElementById('zed-v15-downloads-view'); if(dvU2) dvU2.style.display='none';
-      cards.forEach(function(card){
-        var info=extractInfo(card);
-        var show = isUnlockedInfo(info);
-        if(show && q && !matchesSearch(info, q)) show=false;
-        setHidden(card, !show);
-      });
+      // FIX 17 Nov: ONE source of truth - storage view (metas + downloads), online AND offline.
+      // Old code filtered the live grid online (fragile hash: title+subject+URL, subject changes -> video vanishes)
+      // and used storage only offline/empty-grid, so Unlocked showed different lists, or nothing, on first open.
+      cards.forEach(function(card){ setHidden(card, true); });
+      var dvU=document.getElementById('zed-v15-downloads-view'); if(dvU) dvU.style.display='none';
+      var uvU=document.getElementById('zed-v15-unlocked-view'); if(uvU) uvU.style.display='';
+      try{ repairUnlockMetaFromGrid(cards); }catch(e){}
+      try{ syncDownloadsToUnlockedMeta(); }catch(e){}
+      renderUnlockedViewFromStorage(q);
       return;
     }
     // filter === 'search'
@@ -10317,7 +10394,8 @@ window._zedV15Filter = 'search';
         if(it.ytId) out.url='yt:'+String(it.ytId).trim();
         else if(it.video_url && it.video_url!=='about:blank' && it.video_url!=='') out.url='url:'+String(it.video_url).trim();
         var _t=String(it.title||'').trim().toLowerCase();
-        if(_t && _t!=='video' && _t!=='unlocked video') out.ts='ts:'+_t+'|'+String(it.subject||'').trim().toLowerCase();
+        // FIX 17 Nov: TS = title ONLY, same reason as count - subject strings change between renders.
+        if(_t && _t!=='video' && _t!=='unlocked video') out.ts='ts:'+_t;
         return out;
       }
       function _zedMergeInto(existing, incoming){
@@ -10342,6 +10420,14 @@ window._zedV15Filter = 'search';
         items.push(it);
       }
       allDl.forEach(function(r){ _zedPush({id:r.id,title:r.title,subject:r.subject,video_type:r.video_type,thumbnail_url:r.thumbnail_url,video_url:r.video_url,ytId:'',isDownload:true,blob:r.blob}); });
+      // FIX 17 Nov: downloads are unlocked - persist them to meta here too, so Unlocked (N) == list length.
+      try{
+        allDl.forEach(function(r){
+          var _mn=getUnlockedMeta(); var _has=false;
+          for(var _mi=0;_mi<_mn.length;_mi++){ var _mm=_mn[_mi]; if(_mm.id===r.id) {_has=true; break;} if(r.video_url && _mm.video_url && String(_mm.video_url)===String(r.video_url)) {_has=true; break;} if(String(_mm.title||'').trim().toLowerCase()===String(r.title||'').trim().toLowerCase() && String(r.title||'').trim()!=='') {_has=true; break;} }
+          if(!_has) rememberUnlockedMeta({id:r.id,title:r.title,subject:r.subject,video_url:r.video_url,video_type:r.video_type,thumbnail_url:r.thumbnail_url,ytId:''});
+        });
+      }catch(e){}
       meta.forEach(function(m){ _zedPush({id:m.id,title:m.title,subject:m.subject,video_type:m.video_type,thumbnail_url:m.thumbnail_url,video_url:m.video_url,ytId:m.ytId||'',isDownload:false,blob:null}); });
       /* FIX 14 Nov 2026 (correction) — NO placeholder cards at all: a canonical id with no
         meta/download has no title, no thumbnail, no URL, so it cannot be played or downloaded.
@@ -10585,6 +10671,9 @@ window._zedV15Filter = 'search';
         if(!_searchFocused){ try{ var _inp3=getSearchInput(); if(_inp3) _inp3.placeholder = isOffline() ? 'Search downloaded videos...' : (filter==='downloads' ? 'Search downloaded videos...' : (filter==='unlocked' ? 'Search unlocked videos...' : 'Search a topic, e.g. Forces')); }catch(e){} }
       }
       var cards=findVideoCards();
+      // FIX 17 Nov: repair meta from grid on every tick, so Unlocked is correct on FIRST open, not after re-opening.
+      try{ repairUnlockMetaFromGrid(cards); }catch(e){}
+      try{ syncDownloadsToUnlockedMeta(); }catch(e){}
       applyFilter();
       for(var i=0;i<cards.length;i++){
         var c=cards[i];
