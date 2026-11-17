@@ -3,8 +3,8 @@
 // It downloads the new version in the background, then WAITS.
 // It only activates when the user taps "Update Now" in the prompt.
 // Bump CACHE_NAME + CACHE_VERSION every time you push a new build.
-const CACHE_NAME = 'zed-scholar-v29-manual';
-const CACHE_VERSION = 'v29';
+const CACHE_NAME = 'zed-scholar-v30-manual';
+const CACHE_VERSION = 'v30';
 
 const ASSETS_TO_CACHE = [
   './',
