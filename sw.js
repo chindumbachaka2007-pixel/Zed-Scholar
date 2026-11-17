@@ -1,109 +1,101 @@
-/* ZED SCHOLAR Service Worker — v7 (14 Nov 2026)
-   WHY THIS FILE EXISTS: the app is a single page served from Vercel. Without a
-   service worker, going offline means Chrome has nothing to show — "This site
-   can't be reached" (ERR_CONNECTION_ABORTED) — because the page itself never
-   loads, so none of the app's own offline code ever runs. This worker caches
-   the app shell on the first ONLINE visit, then serves it when offline.
+// ZED SCHOLAR - MANUAL-UPDATE Service Worker V29
+// MANUAL UPDATE ONLY: This SW will NEVER auto-update.
+// It downloads the new version in the background, then WAITS.
+// It only activates when the user taps "Update Now" in the prompt.
+// Bump CACHE_NAME + CACHE_VERSION every time you push a new build.
+const CACHE_NAME = 'zed-scholar-v29-manual';
+const CACHE_VERSION = 'v29';
 
-   RULE FOR FUTURE CHANGES (the "old must be removed" rule): when you change
-   index.html, bump CACHE_NAME below (v7 -> v8) and redeploy BOTH files.
-   On activate, this worker deletes EVERY cache that is not the current one,
-   so the old version is gone — it can never come back and fight the new one. */
+const ASSETS_TO_CACHE = [
+  './',
+  './index.html',
+  './manifest.json',
+  // './icon-192.png',
+  // './icon-512.png'
+];
 
-const CACHE_NAME = 'zed-scholar-v3';
-const APP_SHELL = ['/', '/index.html', '/manifest.json', '/icon-192.png', '/icon-512.png'];
-
-function addAllSafe(cache, urls) {
-  // addAll() fails entirely if ONE file 404s — add one by one so a missing
-  // icon can never kill offline mode.
-  return Promise.all(urls.map(function (u) {
-    return cache.add(u).catch(function () { /* ignore missing file */ });
-  }));
-}
-
-self.addEventListener('install', function (e) {
-  e.waitUntil(
-    caches.open(CACHE_NAME)
-      .then(function (cache) { return addAllSafe(cache, APP_SHELL); })
-      .then(function () { return self.skipWaiting(); })
+// 1. INSTALL - cache new files, but DO NOT take over.
+// NO skipWaiting() here on purpose. New SW stays in "waiting" state
+// until the user clicks Update.
+self.addEventListener('install', (event) => {
+  console.log('[SW] Install - new version downloaded, WAITING for user to tap Update', CACHE_VERSION);
+  event.waitUntil(
+    caches.open(CACHE_NAME).then((cache) => {
+      return cache.addAll(ASSETS_TO_CACHE);
+    })
   );
+  // Do NOT auto-activate here - that would auto-update
 });
 
-self.addEventListener('activate', function (e) {
-  e.waitUntil(
-    caches.keys().then(function (keys) {
-      return Promise.all(keys.map(function (k) {
-        if (k !== CACHE_NAME) return caches.delete(k); // DELETE OLD VERSIONS
-      }));
-    }).then(function () { return self.clients.claim(); })
-  );
-});
-
-self.addEventListener('message', function (e) {
-  if (e.data && e.data.type === 'SKIP_WAITING') self.skipWaiting();
-});
-
-
-// Notification clicks — moved here from a blob-registered worker that Chrome
-// rejects (a service worker must be a real file, which this one is).
-self.addEventListener('notificationclick', function (e) {
-  e.notification.close();
-  e.waitUntil(
-    clients.matchAll({ type: 'window', includeUncontrolled: true }).then(function (cs) {
-      if (cs.length) return cs[0].focus();
-      return clients.openWindow('./');
+// 2. ACTIVATE - only runs AFTER user taps Update (SKIP_WAITING).
+// Then we delete old caches and take control.
+self.addEventListener('activate', (event) => {
+  console.log('[SW] Activate - user approved update', CACHE_VERSION);
+  event.waitUntil(
+    caches.keys().then((keys) => {
+      return Promise.all(
+        keys.map((key) => {
+          if (key !== CACHE_NAME) {
+            console.log('[SW] Deleting old cache', key);
+            return caches.delete(key);
+          }
+        })
+      );
+    }).then(() => {
+      // Now that user approved, take control immediately
+      return self.clients.claim();
     })
   );
 });
 
-self.addEventListener('fetch', function (e) {
-  var url;
-  try { url = new URL(e.request.url); } catch (err) { return; }
-  if (e.request.method !== 'GET') return;
+// 3. FETCH - Serve OLD cached version until user updates.
+// IMPORTANT: HTML is CACHE-FIRST here, not network-first.
+// Network-first would show the new HTML automatically on next navigation,
+// which defeats "wait for user to click Update".
+self.addEventListener('fetch', (event) => {
+  if (event.request.method !== 'GET' || event.request.url.startsWith('chrome-extension')) return;
 
-  // NEVER intercept Supabase / API calls. The app handles offline itself
-  // (IndexedDB + localStorage). Caching API responses would serve stale
-  // coins / unlocks / auth data — worse than no cache.
-  if (url.hostname.indexOf('supabase.co') !== -1) return;
-
-  // NAVIGATION (opening the site, refreshing): network first, then the
-  // cached app shell. This is what makes offline open work.
-  if (e.request.mode === 'navigate') {
-    e.respondWith(
-      fetch(e.request).then(function (res) {
-        var copy = res.clone();
-        caches.open(CACHE_NAME).then(function (c) { c.put('/index.html', copy); });
-        return res;
-      }).catch(function () { return caches.match('/index.html'); })
-    );
-    return;
-  }
-
-  // Same-origin static files: serve cache instantly, refresh in background.
-  if (url.origin === self.location.origin) {
-    e.respondWith(
-      caches.match(e.request).then(function (cached) {
-        var network = fetch(e.request).then(function (res) {
-          if (res && res.ok) {
-            var copy = res.clone();
-            caches.open(CACHE_NAME).then(function (c) { c.put(e.request, copy); });
-          }
+  // For HTML pages - serve from cache (old version) until user updates.
+  // If no cache yet (first visit), go to network.
+  if (event.request.headers.get('accept')?.includes('text/html')) {
+    event.respondWith(
+      caches.match(event.request).then((cached) => {
+        if (cached) return cached;
+        return fetch(event.request).then((res) => {
+          // Only cache if this is the current version's fetch (first load)
+          // Don't overwrite cache with new HTML while waiting - that would leak the update.
           return res;
-        }).catch(function () { return cached; });
-        return cached || network;
+        }).catch(() => {
+          return caches.match('./index.html');
+        });
       })
     );
     return;
   }
 
-  // CDN files (fonts, Tailwind): network first, fall back to cache.
-  e.respondWith(
-    fetch(e.request).then(function (res) {
-      if (res && res.ok) {
-        var copy = res.clone();
-        caches.open(CACHE_NAME).then(function (c) { c.put(e.request, copy); });
-      }
-      return res;
-    }).catch(function () { return caches.match(e.request); })
+  // For everything else - cache first, then network
+  event.respondWith(
+    caches.match(event.request).then((cached) => {
+      if (cached) return cached;
+      return fetch(event.request).then((res) => {
+        // Don't cache supabase, youtube, etc
+        if (event.request.url.includes('supabase') || event.request.url.includes('youtube') || event.request.url.includes('ytimg')) {
+          return res;
+        }
+        // Only cache same-origin static assets, and only if response is ok
+        if (!res || res.status !== 200 || res.type !== 'basic') return res;
+        const clone = res.clone();
+        caches.open(CACHE_NAME).then((cache) => cache.put(event.request, clone));
+        return res;
+      }).catch(() => cached);
+    })
   );
+});
+
+// 4. MESSAGE - only way to activate new version is user tapping Update
+self.addEventListener('message', (event) => {
+  if (event.data && event.data.type === 'SKIP_WAITING') {
+    console.log('[SW] User tapped Update - activating new version');
+    self.skipWaiting();
+  }
 });

@@ -25,16 +25,16 @@
   <meta property="og:type" content="website">
   <meta property="og:title" content="ZED SCHOLAR - ECZ Past Papers | Form 1-6, Grade 10-12">
   <meta property="og:description" content="Free ECZ past papers for Senior Secondary in Zambia - Form 1-6 & Grade 10-12 with marking schemes, quizzes & videos. Works offline.">
-  <meta property="og:url" content="https://zedscholar.vercel.app/">
+  <meta property="og:url" content="https://zedscholar.netlify.app/">
   <meta property="og:site_name" content="ZED SCHOLAR">
-  <meta property="og:image" content="https://zedscholar.vercel.app/icon-512.png">
+  <meta property="og:image" content="https://zedscholar.netlify.app/icon-512.png">
   <meta property="og:locale" content="en_ZM">
 
   <!-- Twitter -->
   <meta name="twitter:card" content="summary_large_image">
   <meta name="twitter:title" content="ZED SCHOLAR - ECZ Past Papers | Form 1-6, Grade 10-12">
   <meta name="twitter:description" content="Free ECZ past papers for Senior Secondary in Zambia - Form 1-6 & Grade 10-12 with marking schemes, quizzes & videos. Works offline.">
-  <meta name="twitter:image" content="https://zedscholar.vercel.app/icon-512.png">
+  <meta name="twitter:image" content="https://zedscholar.netlify.app/icon-512.png">
 
   <!-- PWA -->
   <link rel="manifest" href="./manifest.json">
@@ -51,7 +51,7 @@
     "@type": "WebApplication",
     "name": "ZED SCHOLAR",
     "alternateName": ["Zed Scholar", "Zed Past Papers", "ECZ Past Papers"],
-    "url": "https://zedscholar.vercel.app/",
+    "url": "https://zedscholar.netlify.app/",
     "applicationCategory": "EducationalApplication",
     "operatingSystem": "Any",
     "offers": {"@type": "Offer", "price": "0", "priceCurrency": "ZMW"},
@@ -66,7 +66,7 @@
     "@context": "https://schema.org",
     "@type": "FAQPage",
     "mainEntity": [
-      {"@type": "Question", "name": "Where can I download ECZ past papers for Zambia?", "acceptedAnswer": {"@type": "Answer", "text": "Download free ECZ past papers for Senior Secondary - Form 1-6 and Grade 10-12 on ZED SCHOLAR at zedscholar.vercel.app - includes marking schemes and works offline."}},
+      {"@type": "Question", "name": "Where can I download ECZ past papers for Zambia?", "acceptedAnswer": {"@type": "Answer", "text": "Download free ECZ past papers for Senior Secondary - Form 1-6 and Grade 10-12 on ZED SCHOLAR at zedscholar.netlify.app - includes marking schemes and works offline."}},
       {"@type": "Question", "name": "What is ZED SCHOLAR?", "acceptedAnswer": {"@type": "Answer", "text": "ZED SCHOLAR is Zambia's free offline learning app for Senior Secondary ECZ past papers, quizzes, docs and videos - Form 1-6 and Grade 10-12."}}
     ]
   }
@@ -4675,68 +4675,120 @@ input[placeholder="search a topic"], input[placeholder="Search here"] {
 
 
 <script>
-// === ZED SCHOLAR V26 PWA AUTO-UPDATE ===
-if ('serviceWorker' in navigator) {
-  navigator.serviceWorker.register('./sw.js').then(reg => {
-    console.log('[ZED] SW registered', reg.scope);
-    // Check for update immediately and every hour
-    reg.update();
-    setInterval(() => reg.update(), 60 * 60 * 1000);
+// === ZED SCHOLAR V27 PWA MANUAL-UPDATE - WAITS FOR USER ===
+    // RULES: 1) NEVER auto-reload. 2) Prompt NEVER disappears until user taps Update.
+    // 3) SW stays in "waiting" until user taps Update. No skipWaiting on install.
+    if ('serviceWorker' in navigator) {
+      let zedWaitingWorker = null;
+      let zedRefreshing = false;
 
-    reg.onupdatefound = () => {
-      const newWorker = reg.installing;
-      console.log('[ZED] New SW found');
-      newWorker.onstatechange = () => {
-        if (newWorker.state === 'installed' && navigator.serviceWorker.controller) {
-          console.log('[ZED] New version ready');
-          showZedUpdateToast();
+      function zedShowUpdatePrompt() {
+        // If prompt already on screen, do nothing - don't create duplicate
+        if (document.getElementById('zed-update-toast')) return;
+        if (!document.body) return;
+
+        // Remember that an update is pending, so if user closes/reopens app,
+        // or React re-renders and removes the banner, we can bring it back
+        try { localStorage.setItem('zed_update_pending', '1'); } catch(e){}
+
+        let toast = document.createElement('div');
+        toast.id = 'zed-update-toast';
+        // NO close button, NO timeout, NO auto-hide. Only Update button removes it.
+        toast.style.cssText = 'position:fixed;bottom:90px;left:50%;transform:translateX(-50%);background:#1A1917;border:2px solid #3B82F6;color:#F5F1E8;padding:16px 20px;border-radius:16px;font-size:13px;z-index:9999999;box-shadow:0 12px 40px rgba(0,0,0,0.6);max-width:90vw;text-align:center;font-family:"Bricolage Grotesque",sans-serif;font-weight:600;';
+        toast.innerHTML = `
+          <div style="display:flex;align-items:center;gap:8px;justify-content:center;margin-bottom:6px;">
+            <span style="font-size:18px;">✨</span>
+            <span style="font-weight:800;letter-spacing:0.3px;">NEW UPDATE AVAILABLE</span>
+          </div>
+          <div style="font-size:11px;color:#9A9590;margin-bottom:10px;">Tap Update to get the latest version. This will stay here until you update.</div>
+          <button id="zed-update-btn" style="background:#3B82F6;color:#fff;border:none;padding:12px 18px;border-radius:10px;font-weight:800;font-size:13px;cursor:pointer;width:100%;">Tap to Update Now</button>
+        `;
+        document.body.appendChild(toast);
+
+        document.getElementById('zed-update-btn').onclick = () => {
+          const btn = document.getElementById('zed-update-btn');
+          if (btn) { btn.disabled = true; btn.textContent = 'Updating... Please wait'; }
+          // Send SKIP_WAITING to the WAITING worker, not to the old controller
+          const workerToUpdate = zedWaitingWorker || (window.__zedReg && window.__zedReg.waiting);
+          if (workerToUpdate) {
+            console.log('[ZED] User tapped Update - telling waiting SW to activate');
+            workerToUpdate.postMessage({type:'SKIP_WAITING'});
+          } else if (navigator.serviceWorker.controller) {
+            // Fallback: if no waiting worker tracked, try controller
+            navigator.serviceWorker.controller.postMessage({type:'SKIP_WAITING'});
+          }
+          // Do NOT reload here. Wait for controllerchange (new SW activated) then reload once.
+          // Fallback: if controllerchange doesn't fire in 4s (e.g. SW already activated), reload
+          setTimeout(() => {
+            if (!zedRefreshing) {
+              console.log('[ZED] Update fallback reload');
+              try { localStorage.removeItem('zed_update_pending'); } catch(e){}
+              window.location.reload();
+            }
+          }, 4000);
+        };
+      }
+
+      // Watchdog: if React or anything removes the prompt, bring it back
+      // as long as an update is still pending. This is what makes it "never disappear".
+      setInterval(() => {
+        try {
+          const pending = localStorage.getItem('zed_update_pending') === '1';
+          if (pending && zedWaitingWorker && !document.getElementById('zed-update-toast')) {
+            console.log('[ZED] Update prompt was removed - restoring it');
+            zedShowUpdatePrompt();
+          }
+        } catch(e){}
+      }, 2000);
+
+      // Also restore on visibility change (user comes back to app)
+      document.addEventListener('visibilitychange', () => {
+        if (!document.hidden) {
+          try {
+            if (localStorage.getItem('zed_update_pending') === '1' && zedWaitingWorker) zedShowUpdatePrompt();
+          } catch(e){}
         }
-      };
-    };
-  }).catch(err => console.log('[ZED] SW register failed', err));
+      });
 
-  // Auto reload when new SW takes control
-  let refreshing = false;
-  navigator.serviceWorker.addEventListener('controllerchange', () => {
-    if (refreshing) return;
-    refreshing = true;
-    console.log('[ZED] New SW controlling - reloading');
-    window.location.reload();
-  });
-}
+      navigator.serviceWorker.register('./sw.js').then(reg => {
+        window.__zedReg = reg;
+        console.log('[ZED] SW registered', reg.scope);
 
-function showZedUpdateToast(){
-  // Don't show twice
-  if(document.getElementById('zed-update-toast')) return;
-  let toast = document.createElement('div');
-  toast.id = 'zed-update-toast';
-  toast.style.cssText = 'position:fixed;bottom:90px;left:50%;transform:translateX(-50%);background:#1A1917;border:2px solid #3B82F6;color:#F5F1E8;padding:16px 20px;border-radius:16px;font-size:13px;z-index:9999999;box-shadow:0 12px 40px rgba(0,0,0,0.6);max-width:90vw;text-align:center;font-family:"Bricolage Grotesque",sans-serif;font-weight:600;animation:zedSlideUp 0.4s ease;';
-  toast.innerHTML = `
-    <div style="display:flex;align-items:center;gap:8px;justify-content:center;margin-bottom:6px;">
-      <span style="font-size:18px;">✨</span>
-      <span style="font-weight:800;letter-spacing:0.3px;">NEW UPDATE AVAILABLE</span>
-    </div>
-    <div style="font-size:11px;color:#9A9590;margin-bottom:10px;">Faster videos + fixed search + tap to pause</div>
-    <button id="zed-update-btn" style="background:#3B82F6;color:#fff;border:none;padding:10px 18px;border-radius:10px;font-weight:800;font-size:13px;cursor:pointer;width:100%;">Tap to Update Now</button>
-  `;
-  // Add animation
-  let style = document.createElement('style');
-  style.textContent = '@keyframes zedSlideUp{from{transform:translateX(-50%) translateY(100px);opacity:0}to{transform:translateX(-50%) translateY(0);opacity:1}}';
-  document.head.appendChild(style);
-  
-  document.body.appendChild(toast);
-  document.getElementById('zed-update-btn').onclick = () => {
-    toast.innerHTML = '<div style="padding:8px;">🔄 Updating...</div>';
-    // Force SW to skip waiting
-    if(navigator.serviceWorker.controller){
-      navigator.serviceWorker.controller.postMessage({type:'SKIP_WAITING'});
+        // CASE 1: User closed app before updating, reopened - SW is ALREADY waiting.
+        // Show prompt immediately, don't wait for another updatefound.
+        if (reg.waiting) {
+          console.log('[ZED] SW already waiting from before - showing prompt');
+          zedWaitingWorker = reg.waiting;
+          zedShowUpdatePrompt();
+        }
+
+        // CASE 2: New SW found while app is open
+        reg.onupdatefound = () => {
+          const newWorker = reg.installing;
+          console.log('[ZED] New SW found - downloading, will wait for user');
+          newWorker.onstatechange = () => {
+            if (newWorker.state === 'installed' && navigator.serviceWorker.controller) {
+              console.log('[ZED] New version ready - showing persistent prompt');
+              zedWaitingWorker = newWorker;
+              zedShowUpdatePrompt();
+            }
+          };
+        };
+
+        // Check for update on load and every hour, but NEVER auto-activate
+        reg.update();
+        setInterval(() => reg.update(), 60 * 60 * 1000);
+      }).catch(err => console.log('[ZED] SW register failed', err));
+
+      // Reload ONLY after user tapped Update and new SW takes control
+      navigator.serviceWorker.addEventListener('controllerchange', () => {
+        if (zedRefreshing) return;
+        zedRefreshing = true;
+        console.log('[ZED] New SW controlling - user approved, reloading');
+        try { localStorage.removeItem('zed_update_pending'); } catch(e){}
+        window.location.reload();
+      });
     }
-    setTimeout(()=>{ window.location.reload(); }, 800);
-  };
-  /* FIX 14 Nov 2026: NO auto-reload after 6s. The old code reloaded even if the user was
-     mid-download. The toast stays until the user taps "Tap to Update Now" — that is the
-     only thing that swaps in the new version (old version is then deleted by the SW). */
-}
 </script>
 
 
