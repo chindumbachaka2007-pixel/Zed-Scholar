@@ -14476,5 +14476,124 @@ main div.grid.grid-cols-3.zed-top3-parent{ grid-template-columns:1fr !important;
 </script>
 <!-- ===== END ZED INSTALL BANNER ===== -->
 
+
+<!-- ===== ZED FIX 17 Nov: REAL LIVE / OFFLINE - header pill + footer ===== -->
+<!-- WHY: footer was hardcoded to "Online", header pill only re-styled whatever React first rendered and never flipped LIVE->OFFLINE. navigator.onLine alone also lies on WiFi with no internet, so we do a real no-cors connectivity check. -->
+<script>
+(function(){
+  var netOk = (typeof navigator !== 'undefined' && 'onLine' in navigator) ? navigator.onLine : true;
+  var lastCheckAt = 0;
+  var checking = false;
+
+  function isLiveText(t){
+    t = (t||'').trim();
+    return t==='● LIVE'||t==='LIVE'||t==='Live'||t==='● ONLINE'||t==='ONLINE'||t==='Online'||t==='Connecting';
+  }
+  function isOfflineText(t){
+    t = (t||'').trim();
+    return t==='● OFFLINE'||t==='OFFLINE'||t==='Offline';
+  }
+
+  function applyNet(online){
+    try{
+      // 1) HEADER PILL - every span that is a LIVE/OFFLINE label
+      document.querySelectorAll('header span').forEach(function(sp){
+        var t = (sp.textContent||'').trim();
+        if(!isLiveText(t) && !isOfflineText(t)) return;
+        // Keep the same style the pill already used: ● + UPPERCASE in main header, Title case on auth screens
+        var hasDot = t.indexOf('●') !== -1;
+        var isUpper = (t === t.toUpperCase());
+        var newText;
+        if(hasDot) newText = online ? '● LIVE' : '● OFFLINE';
+        else if(isUpper) newText = online ? 'LIVE' : 'OFFLINE';
+        else newText = online ? 'Live' : 'Offline';
+        if(sp.textContent !== newText) sp.textContent = newText;
+        // Colour: LIVE = white text, OFFLINE = red text (ONE SCRIPT also does this, we agree)
+        sp.style.color = online ? '#FFFFFF' : '#FF6B6B';
+        // Dot: the empty span next to the label in the same pill
+        var pill = sp.parentElement;
+        if(pill){
+          var sibs = pill.querySelectorAll('span');
+          for(var j=0;j<sibs.length;j++){
+            if(sibs[j]===sp) continue;
+            if(((sibs[j].textContent||'').trim())===''){
+              sibs[j].style.background = online ? '#22C55E' : '#FF3B30';
+              sibs[j].style.opacity = '1';
+              break;
+            }
+          }
+        }
+      });
+      // 2) FOOTER - was hardcoded to "Online", never changed. React re-renders it, so we re-apply on every tick.
+      document.querySelectorAll('footer').forEach(function(f){
+        var txt = f.textContent||'';
+        if(txt.indexOf('ZED SCHOLAR')===-1) return;
+        var want = online ? 'Online' : 'Offline';
+        if(txt.indexOf('• '+want)!==-1) return;
+        // Replace the trailing Online/Offline word, keep the rest exactly
+        var htmlTxt = f.innerHTML;
+        if(/•\s*(Online|Offline)/.test(htmlTxt)){
+          f.innerHTML = htmlTxt.replace(/•\s*(Online|Offline)/, '• '+want);
+        } else if(/Online|Offline/.test(f.textContent)){
+          f.textContent = txt.replace(/Online|Offline/, want);
+        }
+      });
+      // 3) Body flag for any other CSS/JS that reads it
+      try{
+        document.body.classList.toggle('zed-offline', !online);
+        document.body.classList.toggle('zed-online', online);
+        document.documentElement.setAttribute('data-zed-net', online ? 'online' : 'offline');
+      }catch(e){}
+    }catch(e){}
+  }
+
+  function checkNet(force){
+    // navigator.onLine === false = definitely offline, no fetch needed
+    try{ if(typeof navigator!=='undefined' && 'onLine' in navigator && !navigator.onLine){ netOk=false; lastCheckAt=Date.now(); applyNet(false); return Promise.resolve(false); } }catch(e){}
+    var now = Date.now();
+    if(!force && (now - lastCheckAt) < 15000 && !checking) { applyNet(netOk); return Promise.resolve(netOk); }
+    if(checking) return Promise.resolve(netOk);
+    checking = true;
+    var ctrl = null;
+    try{ ctrl = new AbortController(); }catch(e){}
+    var timer = null;
+    if(ctrl){ timer = setTimeout(function(){ try{ ctrl.abort(); }catch(e){} }, 4000); }
+    // generate_204 + no-cors: any response (even opaque) = real internet. Only a throw/timeout = offline.
+    var p = fetch('https://connectivitycheck.gstatic.com/generate_204', {method:'GET', mode:'no-cors', cache:'no-store', signal: ctrl ? ctrl.signal : undefined})
+      .then(function(){ netOk = true; })
+      .catch(function(){ netOk = false; })
+      .then(function(){
+        checking = false;
+        lastCheckAt = Date.now();
+        if(timer) clearTimeout(timer);
+        applyNet(netOk);
+        return netOk;
+      });
+    return p;
+  }
+
+  // Instant: apply cached/navigator state right away, then verify with a real check
+  applyNet(netOk);
+  checkNet(true);
+  window.addEventListener('online', function(){ checkNet(true); });
+  window.addEventListener('offline', function(){ netOk=false; lastCheckAt=Date.now(); applyNet(false); });
+  document.addEventListener('visibilitychange', function(){ if(!document.hidden) checkNet(true); });
+  // Re-apply often - React re-renders header + footer and resets them to LIVE/Online
+  setInterval(function(){ applyNet(netOk); }, 2000);
+  setInterval(function(){ checkNet(false); }, 15000);
+  // Also re-apply right after any DOM change in header/footer
+  try{
+    var mo = new MutationObserver(function(){ applyNet(netOk); });
+    var h = document.querySelector('header'); if(h) mo.observe(h, {childList:true, subtree:true, characterData:true});
+    var f = document.querySelector('footer'); if(f) mo.observe(f, {childList:true, subtree:true, characterData:true});
+    // Footer may mount later - observe body for it
+    mo.observe(document.body, {childList:true, subtree:true});
+  }catch(e){}
+  window.__zedNetOk = function(){ return netOk; };
+  console.log('[ZED] REAL LIVE/OFFLINE active - header + footer');
+})();
+</script>
+<!-- ===== END ZED REAL LIVE/OFFLINE ===== -->
+
 </body>
 </html>
