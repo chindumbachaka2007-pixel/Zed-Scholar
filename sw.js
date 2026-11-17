@@ -1,7 +1,7 @@
 // ZED SCHOLAR - Service Worker V35 - TRULY MANUAL UPDATE
 // v35 = Install button fix + blank-space fix + TOP install banner + CENTERED update popup + MANUAL update. Nothing updates until user taps Update.
-const CACHE_NAME = 'zed-scholar-v2';
-const CACHE_VERSION = 'v2';
+const CACHE_NAME = 'zed-scholar-v3';
+const CACHE_VERSION = 'v3';
 const ASSETS_TO_CACHE = ['./','./index.html','./manifest.json','./icon-192.png','./icon-512.png'];
 self.addEventListener('install', (event) => {
   console.log('[SW] Install', CACHE_VERSION, '- WAITING for user to tap Update, NOT taking over');
