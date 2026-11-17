@@ -19,22 +19,22 @@
   <meta name="language" content="en-ZM">
   <meta name="geo.region" content="ZM">
   <meta name="geo.placename" content="Lusaka, Zambia">
-  <link rel="canonical" href="https://zed-scholar.pages.dev/">
+  <link rel="canonical" href="https://zedscholar.vercel.app/">
   
   <!-- Open Graph for WhatsApp / Facebook share -->
   <meta property="og:type" content="website">
   <meta property="og:title" content="ZED SCHOLAR - ECZ Past Papers | Form 1-6, Grade 10-12">
   <meta property="og:description" content="Free ECZ past papers for Senior Secondary in Zambia - Form 1-6 & Grade 10-12 with marking schemes, quizzes & videos. Works offline.">
-  <meta property="og:url" content="https://zed-scholar.pages.dev/">
+  <meta property="og:url" content="https://zedscholar.vercel.app/">
   <meta property="og:site_name" content="ZED SCHOLAR">
-  <meta property="og:image" content="https://zed-scholar.pages.dev/icon-512.png">
+  <meta property="og:image" content="https://zedscholar.vercel.app/icon-512.png">
   <meta property="og:locale" content="en_ZM">
 
   <!-- Twitter -->
   <meta name="twitter:card" content="summary_large_image">
   <meta name="twitter:title" content="ZED SCHOLAR - ECZ Past Papers | Form 1-6, Grade 10-12">
   <meta name="twitter:description" content="Free ECZ past papers for Senior Secondary in Zambia - Form 1-6 & Grade 10-12 with marking schemes, quizzes & videos. Works offline.">
-  <meta name="twitter:image" content="https://zed-scholar.pages.dev/icon-512.png">
+  <meta name="twitter:image" content="https://zedscholar.vercel.app/icon-512.png">
 
   <!-- PWA -->
   <link rel="manifest" href="./manifest.json">
@@ -51,7 +51,7 @@
     "@type": "WebApplication",
     "name": "ZED SCHOLAR",
     "alternateName": ["Zed Scholar", "Zed Past Papers", "ECZ Past Papers"],
-    "url": "https://zed-scholar.pages.dev/",
+    "url": "https://zedscholar.vercel.app/",
     "applicationCategory": "EducationalApplication",
     "operatingSystem": "Any",
     "offers": {"@type": "Offer", "price": "0", "priceCurrency": "ZMW"},
@@ -66,7 +66,7 @@
     "@context": "https://schema.org",
     "@type": "FAQPage",
     "mainEntity": [
-      {"@type": "Question", "name": "Where can I download ECZ past papers for Zambia?", "acceptedAnswer": {"@type": "Answer", "text": "Download free ECZ past papers for Senior Secondary - Form 1-6 and Grade 10-12 on ZED SCHOLAR at zed-scholar.pages.dev - includes marking schemes and works offline."}},
+      {"@type": "Question", "name": "Where can I download ECZ past papers for Zambia?", "acceptedAnswer": {"@type": "Answer", "text": "Download free ECZ past papers for Senior Secondary - Form 1-6 and Grade 10-12 on ZED SCHOLAR at zedscholar.vercel.app - includes marking schemes and works offline."}},
       {"@type": "Question", "name": "What is ZED SCHOLAR?", "acceptedAnswer": {"@type": "Answer", "text": "ZED SCHOLAR is Zambia's free offline learning app for Senior Secondary ECZ past papers, quizzes, docs and videos - Form 1-6 and Grade 10-12."}}
     ]
   }
@@ -2709,7 +2709,7 @@ html, body { overflow-x: hidden !important; }
     <li>ECZ Marking Schemes</li>
     <li>Zed Scholar Videos and Quizzes</li>
   </ul>
-  <a href="https://zed-scholar.pages.dev/">ZED SCHOLAR - ECZ Past Papers</a>
+  <a href="https://zedscholar.vercel.app/">ZED SCHOLAR - ECZ Past Papers</a>
 </div>
 
 
@@ -2981,7 +2981,7 @@ if(h)throw Error(h.message);F(vidFile?"Video uploaded from phone ✓":"Video add
 <!-- REMOVED OLD DOWNLOAD SCRIPT - replaced by ONE clean system below -->
 
 
-<!-- REMOVED 14 Nov 2026: duplicate service-worker registration + fake 'works offline' install hint. The ONE registration lives in the V34 PWA block below, and the real sw.js + manifest.json are now shipped with this file. -->
+<!-- REMOVED 14 Nov 2026: duplicate service-worker registration + fake 'works offline' install hint. The ONE registration lives in the V26 PWA block below, and the real sw.js + manifest.json are now shipped with this file. -->
 
 <script>
 // Prevent YouTube embeds from redirecting to youtube.com - stay in ZED SCHOLAR app
@@ -4675,146 +4675,67 @@ input[placeholder="search a topic"], input[placeholder="Search here"] {
 
 
 <script>
-// === ZED SCHOLAR V34 CENTERED UPDATE POPUP - TRULY MANUAL - 17 Nov 2026 ===
-// RULE: Nothing updates until the user taps "Update Now".
-// NEW LOOK: Full-screen dim + SOLID WHITE card in the CENTER of the screen.
-// - Card is 100% opaque (background:#FFFFFF) - NOT transparent, NOT see-through.
-// - Big title, big button, dark readable text. Nothing overlaps the Login / Create account buttons.
-// - "Later" only hides the popup for THIS visit and leaves a WHITE "New Update Available" bar at the bottom.
-//   The pill stays until they update. Tapping the pill updates directly (ONE TAP) - it no longer opens the popup first.
-//   Next visit, the centered popup shows again if they still have not updated.
-let zedWaitingWorker = null;
-let zedUpdateReg = null;
-let zedRefreshing = false;
-
+// === ZED SCHOLAR V26 PWA AUTO-UPDATE ===
 if ('serviceWorker' in navigator) {
   navigator.serviceWorker.register('./sw.js').then(reg => {
-    zedUpdateReg = reg;
     console.log('[ZED] SW registered', reg.scope);
+    // Check for update immediately and every hour
     reg.update();
     setInterval(() => reg.update(), 60 * 60 * 1000);
 
-    if (reg.waiting && navigator.serviceWorker.controller) {
-      zedWaitingWorker = reg.waiting;
-      showZedUpdateToast();
-    }
-
     reg.onupdatefound = () => {
       const newWorker = reg.installing;
-      console.log('[ZED] New SW found - downloading, will WAIT for tap');
+      console.log('[ZED] New SW found');
       newWorker.onstatechange = () => {
         if (newWorker.state === 'installed' && navigator.serviceWorker.controller) {
-          console.log('[ZED] New version ready - WAITING for user tap');
-          zedWaitingWorker = newWorker;
+          console.log('[ZED] New version ready');
           showZedUpdateToast();
         }
       };
     };
   }).catch(err => console.log('[ZED] SW register failed', err));
 
+  // Auto reload when new SW takes control
+  let refreshing = false;
   navigator.serviceWorker.addEventListener('controllerchange', () => {
-    if (zedRefreshing) return;
-    zedRefreshing = true;
-    console.log('[ZED] New SW controlling after manual tap - reloading');
+    if (refreshing) return;
+    refreshing = true;
+    console.log('[ZED] New SW controlling - reloading');
     window.location.reload();
   });
 }
 
-// FIX 17 Nov: ONE-TAP UPDATE. Old flow was 2 taps: pill tap -> opens popup (tap 1), Update Now (tap 2).
-// Worse: if the new worker was still downloading, Update Now just reloaded and you had to tap AGAIN.
-// Now: pill tap = update starts. Popup Update Now = update starts. If no waiting worker yet, we WAIT for it
-// in THIS tap (up to 10s) instead of reloading and asking for a second tap.
-let zedUpdateStarted = false;
-function doZedUpdate(btn){
-  if(zedUpdateStarted) return;
-  zedUpdateStarted = true;
-  try{
-    if(btn){
-      btn.disabled = true;
-      if(btn.id==='zed-update-pill'){ btn.innerHTML='<span>\uD83D\uDD04 Updating... Please wait</span><span style="color:#2563EB;font-size:13px;">Do not close the app</span>'; }
-      else { btn.textContent='\uD83D\uDD04 Updating... Please wait'; btn.style.opacity='0.8'; }
-    }
-    var _tb=document.getElementById('zed-update-btn');
-    if(_tb && _tb!==btn){ _tb.disabled=true; _tb.textContent='\uD83D\uDD04 Updating... Please wait'; _tb.style.opacity='0.8'; }
-  }catch(e){}
-  function _activate(w){
-    try{ w.postMessage({type:'SKIP_WAITING'}); }catch(e){}
-    setTimeout(function(){ if(!zedRefreshing){ zedRefreshing=true; window.location.reload(); } }, 3000);
-  }
-  var worker = zedWaitingWorker || (zedUpdateReg && zedUpdateReg.waiting);
-  if(worker){ console.log('[ZED] ONE-TAP update - activating waiting worker'); _activate(worker); return; }
-  if(zedUpdateReg){
-    try{ zedUpdateReg.update(); }catch(e){}
-    var waited=0;
-    var timer=setInterval(function(){
-      var w2 = zedWaitingWorker || (zedUpdateReg && zedUpdateReg.waiting);
-      if(w2){ clearInterval(timer); _activate(w2); return; }
-      waited+=500;
-      if(waited>=10000){ clearInterval(timer); window.location.reload(); }
-    }, 500);
-    return;
-  }
-  window.location.reload();
-}
-function showZedUpdatePill(){
-  if (document.getElementById('zed-update-pill')) return;
-  let pill = document.createElement('button');
-  pill.id = 'zed-update-pill';
-  pill.type = 'button';
-  // WHITE bar - fits screen, wraps, never cuts off. No yellow, no nowrap.
-  // left:12px + right:12px (NOT left:50% + nowrap) = always inside the screen.
-  pill.style.cssText = 'position:fixed;left:12px;right:12px;bottom:calc(16px + env(safe-area-inset-bottom));z-index:9999998;background:#FFFFFF;color:#0F172A;border:1px solid #E2E8F0;padding:13px 16px;border-radius:16px;font-weight:800;font-size:14px;line-height:1.4;cursor:pointer;box-shadow:0 10px 30px rgba(15,23,42,0.18);font-family:"Bricolage Grotesque",sans-serif;box-sizing:border-box;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:2px;text-align:center;white-space:normal;word-wrap:break-word;';
-  pill.innerHTML = '<span>New Update Available</span><span style="color:#2563EB;font-size:13px;">Tap to update now &rarr;</span>';
-  // FIX 17 Nov: ONE TAP - pill IS the update button. Old code opened the popup here (tap 1) then needed Update Now (tap 2).
-  pill.onclick = () => { doZedUpdate(pill); };
-  document.body.appendChild(pill);
-}
-
 function showZedUpdateToast(){
-  if (document.getElementById('zed-update-overlay')) return;
-  // Remove pill if it exists - popup replaces it
-  const oldPill = document.getElementById('zed-update-pill');
-  if (oldPill) oldPill.remove();
-
-  // 1) OVERLAY - dims the page so the popup stands out. Card itself is SOLID white.
-  let overlay = document.createElement('div');
-  overlay.id = 'zed-update-overlay';
-  overlay.style.cssText = 'position:fixed;inset:0;z-index:9999999;background:rgba(0,0,0,0.75);display:flex;align-items:center;justify-content:center;padding:20px;box-sizing:border-box;';
-
-  // 2) CARD - CENTERED, 100% OPAQUE WHITE, no transparency anywhere
-  let card = document.createElement('div');
-  card.id = 'zed-update-toast';
-  card.style.cssText = 'background:#FFFFFF;color:#0B1220;width:100%;max-width:380px;border-radius:24px;border:4px solid #3B82F6;padding:28px 24px 22px;text-align:center;box-shadow:0 24px 60px rgba(0,0,0,0.65);font-family:"Bricolage Grotesque",sans-serif;animation:zedPopIn 0.25s ease;box-sizing:border-box;';
-  card.innerHTML = `
-    <div style="width:72px;height:72px;margin:0 auto 14px;background:#3B82F6;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:36px;">✨</div>
-    <div style="font-size:23px;font-weight:900;line-height:1.15;color:#081A33;letter-spacing:0.2px;">NEW UPDATE<br>AVAILABLE</div>
-    <div style="font-size:15px;line-height:1.55;color:#334155;margin:14px 0 22px;font-weight:600;">A new version of ZED SCHOLAR is ready. Update now to get the latest improvements.</div>
-    <button id="zed-update-btn" type="button" style="background:#3B82F6;color:#FFFFFF;border:none;padding:16px 20px;border-radius:14px;font-weight:900;font-size:17px;cursor:pointer;width:100%;box-shadow:0 8px 20px rgba(59,130,246,0.45);">⬆ &nbsp; Update Now</button>
-    <button id="zed-update-later" type="button" style="background:none;border:none;color:#64748B;font-size:14px;font-weight:700;cursor:pointer;padding:14px 10px 4px;width:100%;text-decoration:underline;">Later, keep using old version</button>
+  // Don't show twice
+  if(document.getElementById('zed-update-toast')) return;
+  let toast = document.createElement('div');
+  toast.id = 'zed-update-toast';
+  toast.style.cssText = 'position:fixed;bottom:90px;left:50%;transform:translateX(-50%);background:#1A1917;border:2px solid #3B82F6;color:#F5F1E8;padding:16px 20px;border-radius:16px;font-size:13px;z-index:9999999;box-shadow:0 12px 40px rgba(0,0,0,0.6);max-width:90vw;text-align:center;font-family:"Bricolage Grotesque",sans-serif;font-weight:600;animation:zedSlideUp 0.4s ease;';
+  toast.innerHTML = `
+    <div style="display:flex;align-items:center;gap:8px;justify-content:center;margin-bottom:6px;">
+      <span style="font-size:18px;">✨</span>
+      <span style="font-weight:800;letter-spacing:0.3px;">NEW UPDATE AVAILABLE</span>
+    </div>
+    <div style="font-size:11px;color:#9A9590;margin-bottom:10px;">Faster videos + fixed search + tap to pause</div>
+    <button id="zed-update-btn" style="background:#3B82F6;color:#fff;border:none;padding:10px 18px;border-radius:10px;font-weight:800;font-size:13px;cursor:pointer;width:100%;">Tap to Update Now</button>
   `;
-
-  // Animation + lock background scroll while popup is open
+  // Add animation
   let style = document.createElement('style');
-  style.textContent = '@keyframes zedPopIn{from{transform:scale(0.85);opacity:0}to{transform:scale(1);opacity:1}}';
+  style.textContent = '@keyframes zedSlideUp{from{transform:translateX(-50%) translateY(100px);opacity:0}to{transform:translateX(-50%) translateY(0);opacity:1}}';
   document.head.appendChild(style);
-  document.body.style.overflow = 'hidden';
-
-  overlay.appendChild(card);
-  document.body.appendChild(overlay);
-
-  // Tapping the dark area does NOT close it - user must choose Update or Later.
-  // This stops accidental closes.
-
-  // FIX 17 Nov: ONE TAP - doZedUpdate handles waiting worker + still-downloading case, no second tap.
-  document.getElementById('zed-update-btn').onclick = () => { doZedUpdate(document.getElementById('zed-update-btn')); };
-
-  document.getElementById('zed-update-later').onclick = () => {
-    // Later = hide popup for THIS visit only, show solid pill instead. Update is NOT lost.
-    overlay.remove();
-    document.body.style.overflow = '';
-    showZedUpdatePill();
+  
+  document.body.appendChild(toast);
+  document.getElementById('zed-update-btn').onclick = () => {
+    toast.innerHTML = '<div style="padding:8px;">🔄 Updating...</div>';
+    // Force SW to skip waiting
+    if(navigator.serviceWorker.controller){
+      navigator.serviceWorker.controller.postMessage({type:'SKIP_WAITING'});
+    }
+    setTimeout(()=>{ window.location.reload(); }, 800);
   };
-  /* MANUAL ONLY: NO auto-reload. Popup stays centered until user taps Update or Later. */
+  /* FIX 14 Nov 2026: NO auto-reload after 6s. The old code reloaded even if the user was
+     mid-download. The toast stays until the user taps "Tap to Update Now" — that is the
+     only thing that swaps in the new version (old version is then deleted by the SW). */
 }
 </script>
 
@@ -9688,8 +9609,7 @@ window._zedV15Filter = 'search';
         if(m.ytId) out.url='yt:'+String(m.ytId).trim();
         else if(m.video_url && m.video_url!=='about:blank' && m.video_url!=='') out.url='url:'+String(m.video_url).trim();
         var t=String(m.title||'').trim().toLowerCase();
-        // FIX 17 Nov: TS = title ONLY. Subject is unstable ("• G" vs "MATHEMATICS • G") so same video counted twice.
-        if(t && t!=='video' && t!=='unlocked video') out.ts='ts:'+t;
+        if(t && t!=='video' && t!=='unlocked video') out.ts='ts:'+t+'|'+String(m.subject||'').trim().toLowerCase();
         return out;
       }
       for(var i=0;i<metas.length;i++){
@@ -9708,57 +9628,6 @@ window._zedV15Filter = 'search';
       return n;
       
     }catch(e){ try{ return getUnlockedVideoIds().length; }catch(e2){ return 0; } }
-  }
-  // FIX 17 Nov: repairUnlockMeta() was referenced in comments but NEVER DEFINED, so bare-ID unlocks never got title/URL back.
-  // Now it really exists: grid cards that are unlocked (by candidate hash) get their meta back, so Unlocked shows on FIRST open.
-  function repairUnlockMetaFromGrid(cards){
-    try{
-      (cards||[]).forEach(function(card){
-        try{
-          var info=extractInfo(card);
-          if(!info || !info.id) return;
-          if(!isUnlockedInfo(info)) return;
-          var metas=getUnlockedMeta();
-          var has=false;
-          for(var i=0;i<metas.length;i++){
-            var mm=metas[i];
-            if(info.ytId && mm.ytId && String(mm.ytId)===String(info.ytId)) { has=true; break; }
-            if(info.video_url && mm.video_url && String(mm.video_url)===String(info.video_url)) { has=true; break; }
-            var mt=String(mm.title||'').trim().toLowerCase(), it2=String(info.title||'').trim().toLowerCase();
-            if(mt && mt===it2) { has=true; break; }
-          }
-          if(!has) rememberUnlockedMeta(info);
-        }catch(e){}
-      });
-    }catch(e){}
-  }
-  // FIX 17 Nov: downloads ARE unlocked. If a download has no meta entry, count (which reads meta) misses it while the list shows it.
-  // Sync downloads -> meta, throttled so it does not hammer IndexedDB on every 600ms tick.
-  var _zedDlMetaSyncAt=0, _zedDlMetaSyncBusy=false;
-  async function syncDownloadsToUnlockedMeta(){
-    try{
-      var now=Date.now();
-      if(_zedDlMetaSyncBusy || (now-_zedDlMetaSyncAt)<10000) return;
-      _zedDlMetaSyncBusy=true; _zedDlMetaSyncAt=now;
-      var all=await getAllDownloads();
-      var changed=false;
-      all.forEach(function(r){
-        try{
-          var metas=getUnlockedMeta();
-          var has=false;
-          for(var i=0;i<metas.length;i++){
-            var mm=metas[i];
-            if(mm.id===r.id) { has=true; break; }
-            if(r.video_url && mm.video_url && String(mm.video_url)===String(r.video_url)) { has=true; break; }
-            var mt=String(mm.title||'').trim().toLowerCase(), rt=String(r.title||'').trim().toLowerCase();
-            if(rt && mt===rt) { has=true; break; }
-          }
-          if(!has){ rememberUnlockedMeta({id:r.id,title:r.title,subject:r.subject,video_url:r.video_url,video_type:r.video_type,thumbnail_url:r.thumbnail_url,ytId:''}); changed=true; }
-        }catch(e){}
-      });
-      _zedDlMetaSyncBusy=false;
-      if(changed){ lastProcess=0; setTimeout(function(){ try{ processVideos(); }catch(e){} }, 200); }
-    }catch(e){ _zedDlMetaSyncBusy=false; }
   }
   function saveUnlocked(list){ try{ localStorage.setItem(unlockKey(), JSON.stringify(list)); }catch(e){} }
   function hashId(str){ var h=5381; for(var i=0;i<str.length;i++){ h=((h<<5)+h)+str.charCodeAt(i); h=h&h; } return 'vid_' + Math.abs(h).toString(36); }
@@ -10205,11 +10074,6 @@ window._zedV15Filter = 'search';
         }
       });
     });
-    // FIX 17 Nov: set counts on FIRST creation. Old code left them blank until the next tick, so Unlocked ( ) showed empty at first.
-    try{
-      var _uEl=bar.querySelector('[data-zed-count="unlocked"]'); if(_uEl) _uEl.textContent='('+getUnlockedCount()+')';
-      var _dEl=bar.querySelector('[data-zed-count="downloads"]'); if(_dEl) _dEl.textContent='('+downloadedIds.size+')';
-    }catch(e){}
     lastToolbarSig='';
     return bar;
   }
@@ -10337,15 +10201,21 @@ window._zedV15Filter = 'search';
       return;
     }
     if(filter==='unlocked'){
-      // FIX 17 Nov: ONE source of truth - storage view (metas + downloads), online AND offline.
-      // Old code filtered the live grid online (fragile hash: title+subject+URL, subject changes -> video vanishes)
-      // and used storage only offline/empty-grid, so Unlocked showed different lists, or nothing, on first open.
-      cards.forEach(function(card){ setHidden(card, true); });
-      var dvU=document.getElementById('zed-v15-downloads-view'); if(dvU) dvU.style.display='none';
-      var uvU=document.getElementById('zed-v15-unlocked-view'); if(uvU) uvU.style.display='';
-      try{ repairUnlockMetaFromGrid(cards); }catch(e){}
-      try{ syncDownloadsToUnlockedMeta(); }catch(e){}
-      renderUnlockedViewFromStorage(q);
+      // Online: filter the live grid as before. Offline / empty grid: render from stored unlocks.
+      if(isOffline() || cards.length===0){
+        cards.forEach(function(card){ setHidden(card, true); });
+        var dvU=document.getElementById('zed-v15-downloads-view'); if(dvU) dvU.style.display='none';
+        renderUnlockedViewFromStorage(q);
+        return;
+      }
+      var uv1=document.getElementById('zed-v15-unlocked-view'); if(uv1) uv1.style.display='none';
+      var dvU2=document.getElementById('zed-v15-downloads-view'); if(dvU2) dvU2.style.display='none';
+      cards.forEach(function(card){
+        var info=extractInfo(card);
+        var show = isUnlockedInfo(info);
+        if(show && q && !matchesSearch(info, q)) show=false;
+        setHidden(card, !show);
+      });
       return;
     }
     // filter === 'search'
@@ -10394,8 +10264,7 @@ window._zedV15Filter = 'search';
         if(it.ytId) out.url='yt:'+String(it.ytId).trim();
         else if(it.video_url && it.video_url!=='about:blank' && it.video_url!=='') out.url='url:'+String(it.video_url).trim();
         var _t=String(it.title||'').trim().toLowerCase();
-        // FIX 17 Nov: TS = title ONLY, same reason as count - subject strings change between renders.
-        if(_t && _t!=='video' && _t!=='unlocked video') out.ts='ts:'+_t;
+        if(_t && _t!=='video' && _t!=='unlocked video') out.ts='ts:'+_t+'|'+String(it.subject||'').trim().toLowerCase();
         return out;
       }
       function _zedMergeInto(existing, incoming){
@@ -10420,14 +10289,6 @@ window._zedV15Filter = 'search';
         items.push(it);
       }
       allDl.forEach(function(r){ _zedPush({id:r.id,title:r.title,subject:r.subject,video_type:r.video_type,thumbnail_url:r.thumbnail_url,video_url:r.video_url,ytId:'',isDownload:true,blob:r.blob}); });
-      // FIX 17 Nov: downloads are unlocked - persist them to meta here too, so Unlocked (N) == list length.
-      try{
-        allDl.forEach(function(r){
-          var _mn=getUnlockedMeta(); var _has=false;
-          for(var _mi=0;_mi<_mn.length;_mi++){ var _mm=_mn[_mi]; if(_mm.id===r.id) {_has=true; break;} if(r.video_url && _mm.video_url && String(_mm.video_url)===String(r.video_url)) {_has=true; break;} if(String(_mm.title||'').trim().toLowerCase()===String(r.title||'').trim().toLowerCase() && String(r.title||'').trim()!=='') {_has=true; break;} }
-          if(!_has) rememberUnlockedMeta({id:r.id,title:r.title,subject:r.subject,video_url:r.video_url,video_type:r.video_type,thumbnail_url:r.thumbnail_url,ytId:''});
-        });
-      }catch(e){}
       meta.forEach(function(m){ _zedPush({id:m.id,title:m.title,subject:m.subject,video_type:m.video_type,thumbnail_url:m.thumbnail_url,video_url:m.video_url,ytId:m.ytId||'',isDownload:false,blob:null}); });
       /* FIX 14 Nov 2026 (correction) — NO placeholder cards at all: a canonical id with no
         meta/download has no title, no thumbnail, no URL, so it cannot be played or downloaded.
@@ -10671,9 +10532,6 @@ window._zedV15Filter = 'search';
         if(!_searchFocused){ try{ var _inp3=getSearchInput(); if(_inp3) _inp3.placeholder = isOffline() ? 'Search downloaded videos...' : (filter==='downloads' ? 'Search downloaded videos...' : (filter==='unlocked' ? 'Search unlocked videos...' : 'Search a topic, e.g. Forces')); }catch(e){} }
       }
       var cards=findVideoCards();
-      // FIX 17 Nov: repair meta from grid on every tick, so Unlocked is correct on FIRST open, not after re-opening.
-      try{ repairUnlockMetaFromGrid(cards); }catch(e){}
-      try{ syncDownloadsToUnlockedMeta(); }catch(e){}
       applyFilter();
       for(var i=0;i<cards.length;i++){
         var c=cards[i];
@@ -14386,303 +14244,7 @@ main div.grid.grid-cols-3.zed-top3-parent{ grid-template-columns:1fr !important;
 </script>
 
 </body>
-</html>
-
-<!-- ===== ZED SCHOLAR INSTALL BANNER - TOP, PROFESSIONAL - v32 - 17 Nov 2026 ===== -->
-<!-- TOP bar, not bottom. Clean white bar like App Store / Play Store banners. -->
-<!-- Still persistent: hides ONLY when installed. Minimise collapses to a small TOP pill, never disappears. -->
-<style>
-  #zed-install-banner{position:fixed;top:0;left:0;right:0;z-index:9999998;display:none;align-items:center;gap:11px;background:#FFFFFF;color:#0F172A;padding:calc(8px + env(safe-area-inset-top)) 12px 8px;border-bottom:1px solid #E2E8F0;box-shadow:0 2px 14px rgba(15,23,42,0.08);font-family:"Bricolage Grotesque",sans-serif;box-sizing:border-box}
-  #zed-install-banner .zed-inst-icon{width:38px;height:38px;border-radius:10px;object-fit:cover;flex-shrink:0;border:1px solid #E2E8F0;background:#081A33}
-  #zed-install-banner .zed-inst-text{flex:1;min-width:0;text-align:left;line-height:1.25}
-  #zed-install-banner .zed-inst-title{font-weight:800;font-size:14px;letter-spacing:0.3px;color:#0F172A;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
-  #zed-install-banner .zed-inst-sub{font-size:12px;font-weight:500;color:#64748B;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
-  #zed-install-btn{background:#081A33;color:#FFFFFF;border:none;padding:9px 18px;border-radius:999px;font-weight:700;font-size:13px;cursor:pointer;white-space:nowrap;flex-shrink:0;letter-spacing:0.2px}
-  #zed-install-btn:active{transform:scale(0.97)}
-  #zed-install-min{background:#F1F5F9;color:#64748B;border:none;width:28px;height:28px;border-radius:50%;font-size:14px;cursor:pointer;flex-shrink:0;line-height:1;display:flex;align-items:center;justify-content:center}
-  /* Minimised state - small pill at TOP CENTER, not bottom */
-  #zed-install-pill{position:fixed;top:calc(10px + env(safe-area-inset-top));left:50%;transform:translateX(-50%);z-index:9999998;display:none;align-items:center;gap:6px;background:#3B82F6;color:#FFFFFF;border:2px solid #FFFFFF;padding:10px 18px;border-radius:999px;font-weight:800;font-size:13px;cursor:pointer;box-shadow:0 8px 22px rgba(0,0,0,0.45);font-family:"Bricolage Grotesque",sans-serif;white-space:nowrap}
-  /* Hint card - also TOP, white, professional */
-  #zed-install-hint{position:fixed;top:calc(66px + env(safe-area-inset-top));left:12px;right:12px;z-index:9999998;display:none;background:#FFFFFF;color:#0F172A;border:1px solid #E2E8F0;padding:13px 14px;border-radius:12px;font-size:13px;line-height:1.5;text-align:left;box-shadow:0 10px 30px rgba(15,23,42,0.14);font-family:"Bricolage Grotesque",sans-serif;box-sizing:border-box}
-  #zed-install-hint b{color:#0F172A}
-  /* FIX 17 Nov: Remove long blank space after footer - old rules added 180px + 120px padding-bottom to main/#root */
-  main, #root, div[class*="min-h"], div[id*="content"], div[class*="content"]{padding-bottom:80px !important}
-  html, body{padding-bottom:0 !important;margin-bottom:0 !important}
-</style>
-
-<div id="zed-install-banner" role="dialog" aria-label="Install ZED SCHOLAR app">
-  <img class="zed-inst-icon" src="./icon-192.png" alt="" onerror="this.style.display='none'">
-  <div class="zed-inst-text">
-    <div class="zed-inst-title">ZED SCHOLAR</div>
-    <div class="zed-inst-sub">Get the app &mdash; study offline</div>
-  </div>
-  <button id="zed-install-btn" type="button">Install</button>
-  <button id="zed-install-min" type="button" aria-label="Hide install banner for now" title="Hide for now">&and;</button>
-</div>
-
-<button id="zed-install-pill" type="button">\u2193 Install ZED SCHOLAR</button>
-
-<div id="zed-install-hint"></div>
-
-<script>
-// === ZED SCHOLAR INSTALL BANNER - TOP ===
-(function(){
-  var banner = document.getElementById('zed-install-banner');
-  var pill = document.getElementById('zed-install-pill');
-  var installBtn = document.getElementById('zed-install-btn');
-  var minBtn = document.getElementById('zed-install-min');
-  var hint = document.getElementById('zed-install-hint');
-  if(!banner || !installBtn) return;
-
-  var deferredPrompt = null;
-  var isIOS = /iphone|ipad|ipod/i.test(navigator.userAgent) && !window.MSStream;
-  var originalBodyPaddingTop = document.body.style.paddingTop || '';
-
-  function isInstalled(){
-    if (window.matchMedia && window.matchMedia('(display-mode: standalone)').matches) return true;
-    if (window.navigator.standalone) return true;
-    if (localStorage.getItem('zed-installed') === '1') return true;
-    return false;
-  }
-  function syncBodyOffset(){
-    // Push page content down so the TOP bar never covers the logo / hero.
-    // Pill floats, so it needs no offset. Installed = no offset.
-    if (banner.style.display === 'flex') {
-      document.body.style.paddingTop = banner.offsetHeight + 'px';
-    } else {
-      document.body.style.paddingTop = originalBodyPaddingTop;
-    }
-  }
-  function hideAll(){
-    banner.style.display = 'none';
-    pill.style.display = 'none';
-    hint.style.display = 'none';
-    document.body.style.paddingTop = originalBodyPaddingTop;
-  }
-  function showBanner(force){
-    if (isInstalled()) { hideAll(); return; }
-    // BUG FIX: pill click must FORCE the banner open. Old code returned early here,
-    // so tapping the pill did nothing and Install looked broken.
-    if (!force && pill.style.display === 'flex') return;
-    banner.style.display = 'flex';
-    pill.style.display = 'none';
-    // Wait a tick so offsetHeight is measured after display
-    requestAnimationFrame(syncBodyOffset);
-    setTimeout(syncBodyOffset, 50);
-  }
-  function showPill(){
-    if (isInstalled()) { hideAll(); return; }
-    banner.style.display = 'none';
-    pill.style.display = 'flex';
-    document.body.style.paddingTop = originalBodyPaddingTop;
-  }
-  function showHint(html){
-    hint.innerHTML = html;
-    hint.style.display = 'block';
-    clearTimeout(showHint._t);
-    showHint._t = setTimeout(function(){ hint.style.display = 'none'; }, 8000);
-  }
-
-  if (isInstalled()) { hideAll(); return; }
-
-  window.addEventListener('beforeinstallprompt', function(e){
-    e.preventDefault();
-    deferredPrompt = e;
-    installBtn.textContent = 'Install';
-    showBanner();
-  });
-
-  window.addEventListener('appinstalled', function(){
-    try{ localStorage.setItem('zed-installed', '1'); }catch(e){}
-    deferredPrompt = null;
-    hideAll();
-  });
-
-  if (window.matchMedia) {
-    window.matchMedia('(display-mode: standalone)').addEventListener('change', function(e){
-      if (e.matches) hideAll();
-    });
-  }
-
-  setTimeout(showBanner, 1200);
-
-  setInterval(function(){
-    if (isInstalled()) { hideAll(); return; }
-    if (banner.style.display === 'none' && pill.style.display !== 'flex') showBanner();
-  }, 5000);
-  document.addEventListener('visibilitychange', function(){
-    if (!document.hidden) showBanner();
-  });
-  window.addEventListener('resize', syncBodyOffset);
-
-  // Minimise = collapse to small TOP pill, NOT disappear
-  minBtn.addEventListener('click', function(){ showPill(); });
-  pill.addEventListener('click', function(){ showBanner(true); });
-
-  function showInstallHelp(){
-    // Centered, stays until user taps Got it - unlike the old 8s hint that was easy to miss.
-    if (document.getElementById('zed-install-help')) return;
-    var ov = document.createElement('div');
-    ov.id = 'zed-install-help';
-    ov.style.cssText = 'position:fixed;inset:0;z-index:10000000;background:rgba(0,0,0,0.75);display:flex;align-items:center;justify-content:center;padding:20px;box-sizing:border-box;';
-    var card = document.createElement('div');
-    card.style.cssText = 'background:#FFFFFF;color:#0F172A;width:100%;max-width:360px;border-radius:20px;padding:26px 22px;text-align:center;box-shadow:0 24px 60px rgba(0,0,0,0.6);font-family:"Bricolage Grotesque",sans-serif;box-sizing:border-box;';
-    if (isIOS) {
-      card.innerHTML = '<div style="font-size:20px;font-weight:900;margin-bottom:10px;">How to install on iPhone</div><div style="font-size:14px;line-height:1.6;color:#334155;text-align:left;">1. Tap <b>Share</b> (square + arrow at the bottom)<br>2. Tap <b>Add to Home Screen</b><br>3. Tap <b>Add</b></div><button id="zed-install-help-close" type="button" style="background:#081A33;color:#fff;border:none;padding:13px 20px;border-radius:12px;font-weight:800;font-size:14px;cursor:pointer;width:100%;margin-top:18px;">Got it</button>';
-    } else {
-      card.innerHTML = '<div style="font-size:20px;font-weight:900;margin-bottom:10px;">How to install</div><div style="font-size:14px;line-height:1.6;color:#334155;text-align:left;">1. Tap your browser menu <b>&#8942;</b> (top right)<br>2. Tap <b>Add to Home screen</b> / <b>Install app</b><br>3. Tap <b>Install</b></div><div style="font-size:12px;line-height:1.5;color:#64748B;margin-top:12px;">If you already added a shortcut, open ZED SCHOLAR from your home screen - you are already installed.</div><button id="zed-install-help-close" type="button" style="background:#081A33;color:#fff;border:none;padding:13px 20px;border-radius:12px;font-weight:800;font-size:14px;cursor:pointer;width:100%;margin-top:14px;">Got it</button>';
-    }
-    ov.appendChild(card);
-    document.body.appendChild(ov);
-    document.getElementById('zed-install-help-close').onclick = function(){ ov.remove(); };
-    ov.onclick = function(e){ if (e.target === ov) ov.remove(); };
-  }
-  function onInstallClick(){
-    if (isInstalled()) { hideAll(); return; }
-    if (deferredPrompt) {
-      var p = deferredPrompt;
-      deferredPrompt = null;
-      p.prompt();
-      p.userChoice.then(function(choice){
-        if (choice.outcome === 'accepted') {
-          // appinstalled event will hide banner
-        } else {
-          showInstallHelp();
-        }
-      }).catch(function(){ showBanner(); });
-      return;
-    }
-    if (isIOS) {
-      showInstallHelp();
-      return;
-    }
-    showInstallHelp();
-  }
-  installBtn.addEventListener('click', onInstallClick);
-  window.zedShowInstall = showBanner;
-  console.log('[ZED] Top install banner ready');
-})();
-</script>
-<!-- ===== END ZED INSTALL BANNER ===== -->
-
-
-<!-- ===== ZED FIX 17 Nov: REAL LIVE / OFFLINE - header pill + footer ===== -->
-<!-- WHY: footer was hardcoded to "Online", header pill only re-styled whatever React first rendered and never flipped LIVE->OFFLINE. navigator.onLine alone also lies on WiFi with no internet, so we do a real no-cors connectivity check. -->
-<script>
-(function(){
-  var netOk = (typeof navigator !== 'undefined' && 'onLine' in navigator) ? navigator.onLine : true;
-  var lastCheckAt = 0;
-  var checking = false;
-
-  function isLiveText(t){
-    t = (t||'').trim();
-    return t==='● LIVE'||t==='LIVE'||t==='Live'||t==='● ONLINE'||t==='ONLINE'||t==='Online'||t==='Connecting';
-  }
-  function isOfflineText(t){
-    t = (t||'').trim();
-    return t==='● OFFLINE'||t==='OFFLINE'||t==='Offline';
-  }
-
-  function applyNet(online){
-    try{
-      // 1) HEADER PILL - every span that is a LIVE/OFFLINE label
-      document.querySelectorAll('header span').forEach(function(sp){
-        var t = (sp.textContent||'').trim();
-        if(!isLiveText(t) && !isOfflineText(t)) return;
-        // Keep the same style the pill already used: ● + UPPERCASE in main header, Title case on auth screens
-        var hasDot = t.indexOf('●') !== -1;
-        var isUpper = (t === t.toUpperCase());
-        var newText;
-        if(hasDot) newText = online ? '● LIVE' : '● OFFLINE';
-        else if(isUpper) newText = online ? 'LIVE' : 'OFFLINE';
-        else newText = online ? 'Live' : 'Offline';
-        if(sp.textContent !== newText) sp.textContent = newText;
-        // Colour: LIVE = white text, OFFLINE = red text (ONE SCRIPT also does this, we agree)
-        sp.style.color = online ? '#FFFFFF' : '#FF6B6B';
-        // Dot: the empty span next to the label in the same pill
-        var pill = sp.parentElement;
-        if(pill){
-          var sibs = pill.querySelectorAll('span');
-          for(var j=0;j<sibs.length;j++){
-            if(sibs[j]===sp) continue;
-            if(((sibs[j].textContent||'').trim())===''){
-              sibs[j].style.background = online ? '#22C55E' : '#FF3B30';
-              sibs[j].style.opacity = '1';
-              break;
-            }
-          }
-        }
-      });
-      // 2) FOOTER - was hardcoded to "Online", never changed. React re-renders it, so we re-apply on every tick.
-      document.querySelectorAll('footer').forEach(function(f){
-        var txt = f.textContent||'';
-        if(txt.indexOf('ZED SCHOLAR')===-1) return;
-        var want = online ? 'Online' : 'Offline';
-        if(txt.indexOf('• '+want)!==-1) return;
-        // Replace the trailing Online/Offline word, keep the rest exactly
-        var htmlTxt = f.innerHTML;
-        if(/•\s*(Online|Offline)/.test(htmlTxt)){
-          f.innerHTML = htmlTxt.replace(/•\s*(Online|Offline)/, '• '+want);
-        } else if(/Online|Offline/.test(f.textContent)){
-          f.textContent = txt.replace(/Online|Offline/, want);
-        }
-      });
-      // 3) Body flag for any other CSS/JS that reads it
-      try{
-        document.body.classList.toggle('zed-offline', !online);
-        document.body.classList.toggle('zed-online', online);
-        document.documentElement.setAttribute('data-zed-net', online ? 'online' : 'offline');
-      }catch(e){}
-    }catch(e){}
-  }
-
-  function checkNet(force){
-    // navigator.onLine === false = definitely offline, no fetch needed
-    try{ if(typeof navigator!=='undefined' && 'onLine' in navigator && !navigator.onLine){ netOk=false; lastCheckAt=Date.now(); applyNet(false); return Promise.resolve(false); } }catch(e){}
-    var now = Date.now();
-    if(!force && (now - lastCheckAt) < 15000 && !checking) { applyNet(netOk); return Promise.resolve(netOk); }
-    if(checking) return Promise.resolve(netOk);
-    checking = true;
-    var ctrl = null;
-    try{ ctrl = new AbortController(); }catch(e){}
-    var timer = null;
-    if(ctrl){ timer = setTimeout(function(){ try{ ctrl.abort(); }catch(e){} }, 4000); }
-    // generate_204 + no-cors: any response (even opaque) = real internet. Only a throw/timeout = offline.
-    var p = fetch('https://connectivitycheck.gstatic.com/generate_204', {method:'GET', mode:'no-cors', cache:'no-store', signal: ctrl ? ctrl.signal : undefined})
-      .then(function(){ netOk = true; })
-      .catch(function(){ netOk = false; })
-      .then(function(){
-        checking = false;
-        lastCheckAt = Date.now();
-        if(timer) clearTimeout(timer);
-        applyNet(netOk);
-        return netOk;
-      });
-    return p;
-  }
-
-  // Instant: apply cached/navigator state right away, then verify with a real check
-  applyNet(netOk);
-  checkNet(true);
-  window.addEventListener('online', function(){ checkNet(true); });
-  window.addEventListener('offline', function(){ netOk=false; lastCheckAt=Date.now(); applyNet(false); });
-  document.addEventListener('visibilitychange', function(){ if(!document.hidden) checkNet(true); });
-  // Re-apply often - React re-renders header + footer and resets them to LIVE/Online
-  setInterval(function(){ applyNet(netOk); }, 2000);
-  setInterval(function(){ checkNet(false); }, 15000);
-  // Also re-apply right after any DOM change in header/footer
-  try{
-    var mo = new MutationObserver(function(){ applyNet(netOk); });
-    var h = document.querySelector('header'); if(h) mo.observe(h, {childList:true, subtree:true, characterData:true});
-    var f = document.querySelector('footer'); if(f) mo.observe(f, {childList:true, subtree:true, characterData:true});
-    // Footer may mount later - observe body for it
-    mo.observe(document.body, {childList:true, subtree:true});
-  }catch(e){}
-  window.__zedNetOk = function(){ return netOk; };
-  console.log('[ZED] REAL LIVE/OFFLINE active - header + footer');
-})();
-</script>
-<!-- ===== END ZED REAL LIVE/OFFLINE ===== -->
+</html>t>
 
 </body>
 </html>
