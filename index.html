@@ -14243,6 +14243,208 @@ main div.grid.grid-cols-3.zed-top3-parent{ grid-template-columns:1fr !important;
 })();
 </script>
 
+
+<script>
+// === ZED SCHOLAR - INSTALL POPUP FIX - 17 Nov 2026 ===
+// Why it was NOT popping up before: this file had NO 'beforeinstallprompt' handler at all,
+// so Chrome never gave the site a chance to show an install popup. This block fixes that.
+// It: 1) catches Chrome's install prompt, 2) shows our own popup, 3) falls back to manual
+// instructions if Chrome never fires the event (manifest/SW blocked, prompt dismissed before),
+// 4) handles iPhone Safari which has NO automatic prompt, 5) never shows if already installed,
+// 6) remembers "Not now" for 3 days so it does not nag on every load.
+(function(){
+  if (window.__zedInstallFixLoaded) return;
+  window.__zedInstallFixLoaded = true;
+
+  var deferredPrompt = null;
+  var popupShownThisLoad = false;
+  var COOLDOWN_MS = 3 * 24 * 60 * 60 * 1000; // 3 days after "Not now" / dismissed Chrome prompt
+  var DISMISS_KEY = 'zed_install_dismissed_at';
+  var INSTALLED_KEY = 'zed_install_installed';
+
+  function isInstalled(){
+    try{
+      if (window.matchMedia && window.matchMedia('(display-mode: standalone)').matches) return true;
+      if (window.navigator && window.navigator.standalone === true) return true;
+      if (window.localStorage && window.localStorage.getItem(INSTALLED_KEY) === '1') return true;
+    }catch(e){}
+    return false;
+  }
+  function isIOS(){
+    try{
+      return /iphone|ipad|ipod/i.test(window.navigator.userAgent) && !window.MSStream;
+    }catch(e){ return false; }
+  }
+  function dismissedRecently(){
+    try{
+      var v = window.localStorage.getItem(DISMISS_KEY);
+      if(!v) return false;
+      return (Date.now() - parseInt(v, 10)) < COOLDOWN_MS;
+    }catch(e){ return false; }
+  }
+  function markDismissed(){
+    try{ window.localStorage.setItem(DISMISS_KEY, String(Date.now())); }catch(e){}
+  }
+  function markInstalled(){
+    try{ window.localStorage.setItem(INSTALLED_KEY, '1'); }catch(e){}
+  }
+  function clearDismissed(){
+    try{ window.localStorage.removeItem(DISMISS_KEY); }catch(e){}
+  }
+
+  function removePopup(){
+    var el = document.getElementById('zed-install-popup');
+    if(el) el.remove();
+  }
+  function showFab(){
+    if(document.getElementById('zed-install-fab')) return;
+    if(isInstalled()) return;
+    var fab = document.createElement('button');
+    fab.id = 'zed-install-fab';
+    fab.textContent = '⬇ Install App';
+    fab.style.cssText = 'position:fixed;bottom:18px;right:16px;z-index:9999998;background:#3B82F6;color:#fff;border:none;border-radius:999px;padding:11px 16px;font-size:13px;font-weight:800;font-family:inherit;box-shadow:0 8px 24px rgba(0,0,0,.45);cursor:pointer;';
+    fab.onclick = function(){ showInstallPopup(true); };
+    document.body.appendChild(fab);
+  }
+  function hideFab(){
+    var f = document.getElementById('zed-install-fab');
+    if(f) f.remove();
+  }
+
+  function buildPopup(){
+    removePopup();
+    var isApple = isIOS();
+    var hasRealPrompt = !!deferredPrompt;
+    // Mode: 'chrome' = real Chrome prompt available, 'ios' = iPhone manual steps, 'manual' = Chrome menu steps
+    var mode = hasRealPrompt ? 'chrome' : (isApple ? 'ios' : 'manual');
+
+    var overlay = document.createElement('div');
+    overlay.id = 'zed-install-popup';
+    overlay.style.cssText = 'position:fixed;inset:0;z-index:9999999;background:rgba(0,0,0,.72);display:flex;align-items:flex-end;justify-content:center;padding:16px;box-sizing:border-box;';
+    var card = document.createElement('div');
+    card.style.cssText = 'background:#081A33;border:2px solid #3B82F6;border-radius:20px;width:100%;max-width:400px;padding:22px 20px 18px;box-sizing:border-box;color:#F5F1E8;font-family:inherit;box-shadow:0 20px 50px rgba(0,0,0,.6);position:relative;';
+
+    var mainBtnLabel = mode === 'chrome' ? '📲 Install ZED SCHOLAR' : 'Got it';
+    var stepsHtml = '';
+    if(mode === 'ios'){
+      stepsHtml = '<div style="background:#12294D;border:1px solid #2A2A2A;border-radius:12px;padding:12px 14px;font-size:13px;line-height:1.6;text-align:left;margin:12px 0;">'
+        + '<div><b>1.</b> Tap the <b>Share</b> button ⬆️ at the bottom of Safari</div>'
+        + '<div><b>2.</b> Scroll down and tap <b>Add to Home Screen</b></div>'
+        + '<div><b>3.</b> Tap <b>Add</b> — the app will appear on your home screen</div></div>';
+    } else if(mode === 'manual'){
+      stepsHtml = '<div style="background:#12294D;border:1px solid #2A2A2A;border-radius:12px;padding:12px 14px;font-size:13px;line-height:1.6;text-align:left;margin:12px 0;">'
+        + '<div><b>1.</b> Tap the <b>⋮ menu</b> (top-right in Chrome)</div>'
+        + '<div><b>2.</b> Tap <b>Install app</b> / <b>Add to Home screen</b></div>'
+        + '<div><b>3.</b> Tap <b>Install</b> — it will appear like a real app</div></div>';
+    } else {
+      stepsHtml = '<div style="color:#9A9590;font-size:12.5px;line-height:1.5;margin:8px 0 14px;">Works offline • Faster loading • Past papers on your home screen — free.</div>';
+    }
+
+    card.innerHTML =
+      '<button id="zed-install-close" style="position:absolute;top:10px;right:10px;background:#fff;color:#000;border:none;width:32px;height:32px;border-radius:10px;font-weight:800;cursor:pointer;font-size:14px;">✕</button>'
+      + '<div style="font-size:42px;line-height:1;margin-bottom:8px;">🎓</div>'
+      + '<div style="font-size:19px;font-weight:800;line-height:1.25;">Install ZED SCHOLAR</div>'
+      + '<div style="font-size:13px;color:#CBD5E1;margin-top:4px;">ECZ Past Papers — Form 1-6 &amp; Grade 10-12</div>'
+      + stepsHtml
+      + '<button id="zed-install-go" style="width:100%;background:#3B82F6;color:#fff;border:none;height:48px;border-radius:12px;font-size:15px;font-weight:800;cursor:pointer;">' + mainBtnLabel + '</button>'
+      + '<button id="zed-install-later" style="width:100%;background:transparent;color:#9A9590;border:none;height:40px;border-radius:12px;font-size:13px;font-weight:600;cursor:pointer;margin-top:4px;">Not now</button>';
+
+    overlay.appendChild(card);
+    document.body.appendChild(overlay);
+    popupShownThisLoad = true;
+
+    function closePopup(remember){
+      removePopup();
+      if(remember) markDismissed();
+      // Keep a small Install button so they can still install later without waiting 3 days
+      showFab();
+    }
+    document.getElementById('zed-install-close').onclick = function(){ closePopup(true); };
+    document.getElementById('zed-install-later').onclick = function(){ closePopup(true); };
+    overlay.onclick = function(e){ if(e.target === overlay) closePopup(true); };
+
+    document.getElementById('zed-install-go').onclick = function(){
+      if(mode === 'chrome' && deferredPrompt){
+        var btn = document.getElementById('zed-install-go');
+        if(btn) btn.textContent = 'Opening install...';
+        try{
+          deferredPrompt.prompt();
+          deferredPrompt.userChoice.then(function(choice){
+            if(choice && choice.outcome === 'accepted'){
+              markInstalled();
+              clearDismissed();
+              removePopup();
+              hideFab();
+            } else {
+              // User pressed Cancel in Chrome's prompt - don't nag, wait 3 days
+              markDismissed();
+              removePopup();
+              showFab();
+            }
+            deferredPrompt = null;
+          }).catch(function(){ removePopup(); showFab(); });
+        }catch(err){
+          removePopup();
+          showFab();
+        }
+      } else {
+        // iOS / manual mode - there is no automatic prompt to trigger, user follows steps above
+        removePopup();
+        showFab();
+      }
+    };
+    console.log('[ZED INSTALL] Popup shown, mode=' + mode);
+  }
+
+  function showInstallPopup(force){
+    if(isInstalled()){ console.log('[ZED INSTALL] Already installed - not showing'); return; }
+    if(popupShownThisLoad && !force) return;
+    if(!force && dismissedRecently()){ console.log('[ZED INSTALL] Dismissed recently - not showing'); showFab(); return; }
+    if(document.getElementById('zed-install-popup')) return;
+    buildPopup();
+  }
+  // Let you test it any time from console / a button: window.zedShowInstallPopup(true)
+  window.zedShowInstallPopup = function(){ showInstallPopup(true); };
+  window.zedHideInstallPopup = function(){ removePopup(); };
+
+  // 1) Chrome / Edge / Samsung Internet - the REAL install event
+  window.addEventListener('beforeinstallprompt', function(e){
+    e.preventDefault(); // Stop Chrome's tiny auto-bar so OUR popup shows instead
+    deferredPrompt = e;
+    console.log('[ZED INSTALL] beforeinstallprompt captured - will show popup');
+    // Small delay so it does not clash with login / welcome popup
+    setTimeout(function(){ showInstallPopup(false); }, 1200);
+  });
+
+  // 2) User actually installed - never show again
+  window.addEventListener('appinstalled', function(){
+    console.log('[ZED INSTALL] App installed');
+    markInstalled();
+    clearDismissed();
+    removePopup();
+    hideFab();
+  });
+
+  // 3) Fallback: if Chrome never fires beforeinstallprompt (manifest/SW issue, or prompt
+  // was dismissed before), STILL show the popup after 5s with manual steps - so it is
+  // never silently missing again. iPhone also lands here with iOS steps.
+  function startFallbackTimer(){
+    setTimeout(function(){
+      if(isInstalled()) return;
+      if(document.getElementById('zed-install-popup')) return;
+      if(dismissedRecently()){ showFab(); return; }
+      console.log('[ZED INSTALL] Fallback timer - showing popup, hasRealPrompt=' + !!deferredPrompt);
+      showInstallPopup(false);
+    }, 5000);
+  }
+  if(document.readyState === 'loading'){
+    document.addEventListener('DOMContentLoaded', startFallbackTimer);
+  } else {
+    startFallbackTimer();
+  }
+})();
+</script>
+
 </body>
 </html>t>
 
