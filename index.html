@@ -1972,22 +1972,7 @@ if (typeof pdfjsLib !== 'undefined') {
 .yt-lite.yt-loaded {
   cursor: default;
 }
-.yt-lite .yt-title-bar {
-  position: absolute;
-  top: 0;
-  left: 0;
-  right: 0;
-  padding: 10px 12px;
-  z-index: 2;
-  color: white;
-  font-size: 12px;
-  font-weight: 600;
-  line-height: 1.3;
-  background: linear-gradient(180deg, rgba(0,0,0,0.55), transparent);
-  white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
-}
+/* DELETED 18 Nov — .yt-title-bar CSS (overlay title deleted, card title is the only title). */
 /* Force grid via CSS to avoid JS thrashing */
 
 /* === V21 LIST VIEW - NO GRID === */
@@ -2021,8 +2006,8 @@ if (typeof pdfjsLib !== 'undefined') {
 
 <style>
 /* ZED - Own Expand button - ALWAYS works, even if YouTube's own button is blocked */
-.zed-expand-btn{position:absolute !important;top:8px !important;right:8px !important;z-index:40 !important;width:38px !important;height:38px !important;background:rgba(0,0,0,0.65) !important;border:1px solid rgba(255,255,255,0.35) !important;border-radius:10px !important;color:#fff !important;font-size:18px !important;display:flex !important;align-items:center !important;justify-content:center !important;cursor:pointer !important;pointer-events:auto !important;}
-.zed-expand-btn:active{transform:scale(0.92);}
+/* DELETED 18 Nov — CONFLICT: .zed-expand-btn floating button CSS (button deleted). Actions-row Expand is the only Expand. */
+/* DELETED 18 Nov — .zed-expand-btn:active (button deleted). */
 .zed-video-fullscreen{position:fixed !important;inset:0 !important;width:100vw !important;height:100vh !important;max-width:100vw !important;max-height:100vh !important;z-index:999999 !important;background:#000 !important;display:flex !important;align-items:center !important;justify-content:center !important;border-radius:0 !important;}
 .zed-video-fullscreen{background:#000 !important;display:flex !important;align-items:center !important;justify-content:center !important;}
 .zed-video-fullscreen iframe{width:min(100vw, 177.78vh) !important;height:min(56.25vw, 100vh) !important;aspect-ratio:16/9 !important;margin:auto !important;flex:none !important;}
@@ -2030,9 +2015,9 @@ if (typeof pdfjsLib !== 'undefined') {
 iframe:fullscreen{width:min(100vw, 177.78vh) !important;height:min(56.25vw, 100vh) !important;aspect-ratio:16/9 !important;margin:auto !important;}
 iframe:-webkit-full-screen{width:min(100vw, 177.78vh) !important;height:min(56.25vw, 100vh) !important;aspect-ratio:16/9 !important;}
 
-.zed-video-fullscreen .zed-expand-btn{top:12px !important;right:12px !important;}
-.zed-fullscreen-close{position:absolute !important;top:12px !important;left:12px !important;z-index:41 !important;background:rgba(255,255,255,0.9) !important;color:#000 !important;border:none !important;width:38px !important;height:38px !important;border-radius:50% !important;font-size:16px !important;font-weight:800 !important;display:none !important;align-items:center !important;justify-content:center !important;cursor:pointer !important;}
-.zed-video-fullscreen .zed-fullscreen-close{display:flex !important;}
+/* DELETED 18 Nov — fullscreen .zed-expand-btn rule (button deleted). */
+/* DELETED 18 Nov — CONFLICT: early .zed-fullscreen-close (z-index 41, fought canonical fixed X z-index 9999999). Canonical X rule at end of file is now the only one. */
+/* DELETED 18 Nov — duplicate fullscreen X display rule (canonical rule at end of file owns it). */
 /* ZED - Landscape fallback for iPhone / browsers where orientation.lock is blocked */
 .zed-force-landscape{width:100vh !important;height:100vw !important;left:50% !important;top:50% !important;inset:auto !important;transform:translate(-50%,-50%) rotate(90deg) !important;position:fixed !important;}
 iframe.zed-force-landscape-iframe{width:100vh !important;height:100vw !important;position:fixed !important;left:50% !important;top:50% !important;transform:translate(-50%,-50%) rotate(90deg) !important;}
@@ -2053,10 +2038,9 @@ iframe.zed-force-landscape-iframe{width:100vh !important;height:100vw !important
 
 <style>
 /* ZED - Hide / block YouTube More videos + YouTube own expand button */
-.zed-more-shield{position:absolute !important;left:0 !important;right:0 !important;bottom:44px !important;height:70px !important;background:transparent !important;pointer-events:auto !important;z-index:22 !important;}
-.zed-yt-expand-shield{position:absolute !important;top:0 !important;right:0 !important;width:72px !important;height:54px !important;background:transparent !important;pointer-events:auto !important;z-index:22 !important;}
-/* Our own ZED expand button stays above shields */
-.zed-expand-btn{z-index:30 !important;}
+/* DELETED 18 Nov — CONFLICT: .zed-more-shield CSS (shield deleted). */
+/* DELETED 18 Nov — CONFLICT: .zed-yt-expand-shield CSS (shield deleted). */
+/* DELETED 18 Nov — .zed-expand-btn z-index (button deleted). */
 /* Load more button */
 #zed-load-more-videos{width:100% !important;height:48px !important;background:#E8C15A !important;color:#fff !important;border:none !important;border-radius:12px !important;font-weight:800 !important;font-size:14px !important;letter-spacing:.08em !important;cursor:pointer !important;margin:12px 0 !important;}
 #zed-videos-loading{font-size:12px !important;color:#888 !important;text-align:center !important;padding:8px !important;}
@@ -3508,12 +3492,9 @@ if(h)throw Error(h.message);F(vidFile?"Video uploaded from phone ✓":"Video add
     play.className = 'yt-play-btn';
     play.setAttribute('aria-label', 'Play');
 
-    let titleBar = document.createElement('div');
-    titleBar.className = 'yt-title-bar';
-    titleBar.textContent = title || '';
+    /* DELETED 18 Nov — CONFLICT/DUPLICATE TITLE: facade .yt-title-bar painted the title over the thumbnail, while the card below already shows the same title (see screenshot: PHYSICS 2026 GCE SCIENCE 1 twice). Card title is the only title now. */
 
     wrap.appendChild(img);
-    wrap.appendChild(titleBar);
     wrap.appendChild(play);
 
     // Click to load iframe
@@ -3539,20 +3520,7 @@ if(h)throw Error(h.message);F(vidFile?"Video uploaded from phone ✓":"Video add
       // Replace content
       wrap.innerHTML = '';
       wrap.appendChild(iframe);
-      // SHIELDS: block clicks on YouTube logo (bottom-right) + title/channel (top) - they would open YouTube
-      // Play/pause, seek bar + controls at very bottom are NOT covered, so they still work
-      var shieldTop = document.createElement('div');
-      shieldTop.className = 'zed-yt-shield-top';
-      shieldTop.setAttribute('aria-hidden', 'true');
-      shieldTop.addEventListener('click', function(e){ e.preventDefault(); e.stopPropagation(); }, true);
-      shieldTop.addEventListener('touchstart', function(e){ e.stopPropagation(); }, {passive:true});
-      wrap.appendChild(shieldTop);
-      var shieldLogo = document.createElement('div');
-      shieldLogo.className = 'zed-yt-shield-logo';
-      shieldLogo.setAttribute('aria-hidden', 'true');
-      shieldLogo.addEventListener('click', function(e){ e.preventDefault(); e.stopPropagation(); }, true);
-      shieldLogo.addEventListener('touchstart', function(e){ e.stopPropagation(); }, {passive:true});
-      wrap.appendChild(shieldLogo);
+      /* DELETED 18 Nov — CONFLICT: facade div shields .zed-yt-shield-top (top 0-52px, left 0-70% — sat directly over the X) + .zed-yt-shield-logo. Deleted. No div now covers the X. */
     }, {once: false});
 
     return wrap;
@@ -3693,21 +3661,20 @@ if(h)throw Error(h.message);F(vidFile?"Video uploaded from phone ✓":"Video add
 <style>
 /* ZED BULLETPROOF - CSS shields survive React re-renders (React wipes DOM shields, CSS stays) */
 .aspect-video:has(iframe[src*="youtube"]){position:relative !important;overflow:hidden !important;}
-.aspect-video:has(iframe[src*="youtube"])::before{content:'' !important;position:absolute !important;top:0 !important;left:0 !important;right:30% !important;height:52px !important;z-index:30 !important;background:transparent !important;pointer-events:auto !important;cursor:default !important;display:block !important;}
-.aspect-video:has(iframe[src*="youtube"])::after{content:'' !important;position:absolute !important;bottom:48px !important;right:10px !important;width:110px !important;height:38px !important;z-index:30 !important;background:transparent !important;pointer-events:auto !important;cursor:default !important;display:block !important;}
-/* Fallback for old WebViews without :has() - cover via generic aspect-video inside video grid */
-.grid .aspect-video::before{pointer-events:auto;}
+/* DELETED 18 Nov — CONFLICT: ::before top shield (invisible, sat over X corner). */
+/* DELETED 18 Nov — CONFLICT: ::after logo shield (invisible, overlapped bottom-right guard). */
+/* DELETED 18 Nov — CONFLICT: :has() fallback ::before shield. */
 /* Facade wrapper: when loaded, ::before becomes top shield, ::after becomes logo shield */
-.yt-lite.yt-loaded::before{display:block !important;content:'' !important;position:absolute !important;top:0 !important;left:0 !important;right:30% !important;height:52px !important;z-index:20 !important;background:transparent !important;pointer-events:auto !important;}
-.yt-lite.yt-loaded::after{content:'' !important;position:absolute !important;bottom:48px !important;right:10px !important;width:110px !important;height:38px !important;z-index:20 !important;background:transparent !important;pointer-events:auto !important;display:block !important;}
+/* DELETED 18 Nov — CONFLICT: .yt-lite::before top shield. */
+/* DELETED 18 Nov — CONFLICT: .yt-lite::after logo shield. */
 /* Hide YouTube watermark/logo elements that can be clicked */
 .ytp-watermark, .ytp-youtube-button, .ytp-chrome-top, .ytp-show-cards-title{display:none !important;pointer-events:none !important;}
 </style>
 <style>
 /* ZED - YouTube stays in-app: shields block logo/title clicks, NOT controls */
-.zed-yt-shield-top{position:absolute;top:0;left:0;right:30%;height:52px;z-index:20;background:transparent;pointer-events:auto;cursor:default;}
-.zed-yt-shield-logo{position:absolute;bottom:48px;right:10px;width:110px;height:38px;z-index:20;background:transparent;pointer-events:auto;cursor:default;}
-.yt-lite.yt-loaded .zed-yt-shield-top,.yt-lite.yt-loaded .zed-yt-shield-logo{display:block !important;}
+/* DELETED 18 Nov — .zed-yt-shield-top CSS (div deleted above). */
+/* DELETED 18 Nov — .zed-yt-shield-logo CSS (div deleted above). */
+/* DELETED 18 Nov — shield div display rule (divs deleted). */
 </style>
 <style>
 /* V25 FIX - MAKE CONTROLS TAPPABLE */
@@ -3715,10 +3682,10 @@ if(h)throw Error(h.message);F(vidFile?"Video uploaded from phone ✓":"Video add
   display: none !important;
   content: none !important;
 }
-.yt-lite.yt-loaded .yt-play-btn,
-.yt-lite.yt-loaded .yt-title-bar {
+.yt-lite.yt-loaded .yt-play-btn {
   display: none !important;
 }
+/* DELETED 18 Nov — .yt-title-bar hide rule (title bar deleted). */
 .yt-lite.yt-loaded {
   background: #000 !important;
   cursor: default !important;
@@ -4003,37 +3970,7 @@ function showZedUpdateToast(){
   }
   function isExpanded(wrapper){ return wrapper.classList.contains('zed-video-fullscreen'); }
 
-  function ensureExpandButtons(){
-    document.querySelectorAll('.aspect-video, .yt-lite').forEach(function(wrap){
-      // Only for YouTube videos (has iframe or has yt-lite)
-      var isYT = wrap.querySelector('iframe[src*="youtube"]') || wrap.classList.contains('yt-lite') || wrap.dataset.vid;
-      if(!isYT) return;
-      // Don't add twice
-      if(wrap.querySelector('.zed-expand-btn')) return;
-      // Wrapper must be position:relative for button to sit correctly
-      if(getComputedStyle(wrap).position === 'static') wrap.style.position = 'relative';
-      var btn = document.createElement('button');
-      btn.className = 'zed-expand-btn';
-      btn.type = 'button';
-      btn.setAttribute('aria-label','Expand video - make it bigger');
-      btn.innerHTML = '⤢';
-      btn.addEventListener('click', function(e){
-        e.preventDefault(); e.stopPropagation();
-        if(isExpanded(wrap)) shrinkVideo(wrap); else expandVideo(wrap);
-      });
-      btn.addEventListener('touchstart', function(e){ e.stopPropagation(); }, {passive:true});
-      wrap.appendChild(btn);
-      // Close button for fullscreen mode
-      if(!wrap.querySelector('.zed-fullscreen-close')){
-        var close = document.createElement('button');
-        close.className = 'zed-fullscreen-close';
-        close.type = 'button';
-        close.innerHTML = '✕';
-        close.addEventListener('click', function(e){ e.preventDefault(); e.stopPropagation(); shrinkVideo(wrap); });
-        wrap.appendChild(close);
-      }
-    });
-  }
+  /* DELETED 18 Nov — CONFLICT: old ensureExpandButtons created a second floating .zed-expand-btn + a second .zed-fullscreen-close with a stale closure (wrap captured at creation). It fought the canonical delegated X. Actions-row Expand ([data-zed-expand]) is the only Expand left. */
   // If user exits native fullscreen via Back / Esc, also remove CSS class
   document.addEventListener('fullscreenchange', function(){
     if(!document.fullscreenElement){
@@ -4052,10 +3989,7 @@ function showZedUpdateToast(){
       lockLandscape();
     }
   });
-  setInterval(ensureExpandButtons, 600);
-  new MutationObserver(ensureExpandButtons).observe(document.body, {childList:true, subtree:true});
-  ensureExpandButtons();
-  console.log('[ZED] Expand button active - tap ⤢ to make video big');
+  /* DELETED 18 Nov — old ensureExpandButtons interval + observer + call (see above). */
 })();
 </script>
 
@@ -4103,29 +4037,9 @@ console.log('[ZED] Welcome popup + fast login active');
 // they never ran (applyPagination returned early: 'V15 owns pagination') and duplicated
 // V15/V16 pagination. Only the shields are live, so only they stay.
 (function(){
-  function addShields(){
-    document.querySelectorAll('.aspect-video').forEach(function(wrap){
-      if(!wrap) return;
-      if(wrap.style.position !== 'relative') wrap.style.position = 'relative';
-      if(!wrap.querySelector('.zed-more-shield')){
-        var s = document.createElement('div');
-        s.className = 'zed-more-shield'; s.title = '';
-        s.addEventListener('click', function(e){ e.preventDefault(); e.stopPropagation(); });
-        s.addEventListener('pointerdown', function(e){ e.preventDefault(); e.stopPropagation(); });
-        wrap.appendChild(s);
-      }
-      if(!wrap.querySelector('.zed-yt-expand-shield')){
-        var s2 = document.createElement('div');
-        s2.className = 'zed-yt-expand-shield'; s2.title = '';
-        s2.addEventListener('click', function(e){ e.preventDefault(); e.stopPropagation(); });
-        s2.addEventListener('pointerdown', function(e){ e.preventDefault(); e.stopPropagation(); });
-        wrap.appendChild(s2);
-      }
-    });
-  }
-  addShields();
-  setInterval(function(){ try{ addShields(); }catch(e){} }, 800);
-  console.log('[ZED] More-videos shields active (pagination owned by V15)');
+  /* DELETED 18 Nov — CONFLICT: addShields created .zed-more-shield (bottom 70px, covered controls/suggestions) + .zed-yt-expand-shield (top-right) every 800ms. They intercepted taps meant for X / suggestions. Canonical bottom-right guard is now only .zed-yt-fs-shield. */
+
+  /* DELETED 18 Nov — addShields log (function deleted above). */
 })();
 </script>
 
@@ -10441,7 +10355,7 @@ header *{ transition:none!important; animation:none!important; }
 .zed-lock-cover::after, .zed-lock-cover::before{ background-color: transparent !important; }
 .zed-lock-cover::after, .zed-lock-cover::before{ display:none !important; content:none !important; }
 .zed-lock-icon, .zed-lock-sub{ background: transparent !important; box-shadow:none !important; backdrop-filter:none !important; }
-.yt-lite .yt-title-bar{ background: transparent !important; background-image:none !important; text-shadow: 0 1px 4px rgba(0,0,0,0.8) !important; }
+/* DELETED 18 Nov — .yt-title-bar override (title bar deleted). */
 .yt-lite::before{ background: transparent !important; display:none !important; content:none !important; }
 </style>
 
@@ -10459,7 +10373,7 @@ header *{ transition:none!important; animation:none!important; }
 .zed-lock-icon, .zed-lock-sub{ background: transparent !important; box-shadow:none !important; text-shadow: 0 2px 6px rgba(0,0,0,0.9) !important; }
 .aspect-video, .video-wrapper, .yt-lite, .zed-dl-card video{ background: transparent !important; background-color: transparent !important; }
 .yt-lite img.yt-thumb{ display:block !important; opacity:1 !important; }
-.zed-expand-btn{ background: transparent !important; background-color: transparent !important; border:none !important; box-shadow:none !important; text-shadow: 0 2px 6px rgba(0,0,0,0.9) !important; }
+/* DELETED 18 Nov — .zed-expand-btn transparent rule (button deleted). */
 </style>
 <script>
 (function(){
@@ -10508,12 +10422,7 @@ header *{ transition:none!important; animation:none!important; }
       el.style.backgroundColor = "transparent";
       el.style.background = "transparent";
     });
-    document.querySelectorAll(".zed-expand-btn").forEach(function(b){
-      b.style.background = "transparent";
-      b.style.backgroundColor = "transparent";
-      b.style.border = "none";
-      b.style.boxShadow = "none";
-    });
+    /* DELETED 18 Nov — fixBlackShield .zed-expand-btn loop (button deleted, loop was touching a dead button every 800ms). Lock-cover work below is kept. */
     // Fix every lock cover
     document.querySelectorAll(".zed-lock-cover").forEach(function(cover){
       cover.style.backgroundColor = "transparent";
@@ -10580,11 +10489,9 @@ header *{ transition:none!important; animation:none!important; }
   min-width:96px !important; justify-content:center !important;
 }
 /* Hide the tiny old expand button on the thumbnail - we now use the big one after Play */
-.yt-lite > .zed-expand-btn, .aspect-video > .zed-expand-btn{
-  display:none !important;
-}
+/* DELETED 18 Nov — .zed-expand-btn hide rule (button deleted). */
 /* In fullscreen, keep close button visible */
-.zed-video-fullscreen .zed-fullscreen-close{ display:flex !important; }
+/* DELETED 18 Nov — duplicate fullscreen X display rule (canonical rule at end owns it). */
 </style>
 <script>
 (function(){
@@ -14408,10 +14315,22 @@ window._zedV15Filter = 'search';
   }
   function ensureControls(wrap){
     if(!wrap || !isInnermostWrap(wrap)) return;
-    if(getComputedStyle(wrap).position === 'static') wrap.style.position = 'relative';
+    // FIX 18 Nov (pausing): NEVER call getComputedStyle here. It forces layout on every pass.
+    // Position only needs setting once.
+    if(!wrap.dataset.zedPosFixed){
+      if(!wrap.style.position) wrap.style.position = 'relative';
+      wrap.dataset.zedPosFixed = '1';
+    }
     getOrigId(wrap);
+    // FAST PATH: if everything is already in place, do NOTHING. No appendChild = no mutation = no observer loop.
+    var close0 = wrap.querySelector('.zed-fullscreen-close');
+    var shield0 = wrap.querySelector('.zed-yt-fs-shield');
+    var bar0 = wrap.querySelector('.zed-suggest-bar');
+    var suggestOn = wrap.dataset.zedShowSuggest === '1';
+    var suggestOk = suggestOn ? wrap.classList.contains('zed-show-suggest') : !wrap.classList.contains('zed-show-suggest');
+    if(close0 && shield0 && bar0 && suggestOk && wrap.lastElementChild === close0) return;
     // --- X close button (reuse the old one if it survived, else create it) ---
-    var close = wrap.querySelector('.zed-fullscreen-close');
+    var close = close0;
     if(!close){
       close = document.createElement('button');
       close.className = 'zed-fullscreen-close';
@@ -14420,25 +14339,20 @@ window._zedV15Filter = 'search';
       close.innerHTML = '✕';
     }
     bindTap(close, function(){ exitFullscreen(); });
-    wrap.appendChild(close); // LAST child = paints above iframe + shields
     // --- Shield over YouTube's own fullscreen button (bottom-right) ---
-    if(!wrap.querySelector('.zed-yt-fs-shield')){
-      var sh = document.createElement('div');
-      sh.className = 'zed-yt-fs-shield';
-      sh.setAttribute('aria-hidden', 'true');
-      sh.title = '';
-      bindTap(sh, function(){ enterFullscreen(wrap); });
-      wrap.appendChild(sh);
-    } else {
-      // Keep shield above iframe but below X / suggestions bar
-      var ex = wrap.querySelector('.zed-yt-fs-shield');
-      if(ex && !ex.dataset.zedTapBound) bindTap(ex, function(){ enterFullscreen(wrap); });
-      // Re-append shield BEFORE X so X stays last: move shield, then move X again below.
-      wrap.appendChild(ex);
-      wrap.appendChild(close);
+    var shield = shield0;
+    if(!shield){
+      shield = document.createElement('div');
+      shield.className = 'zed-yt-fs-shield';
+      shield.setAttribute('aria-hidden', 'true');
+      shield.title = '';
+      bindTap(shield, function(){ enterFullscreen(wrap); });
+      wrap.appendChild(shield);
+    } else if(!shield.dataset.zedTapBound){
+      bindTap(shield, function(){ enterFullscreen(wrap); });
     }
     // --- Suggestions bar (hidden until video ends) ---
-    var bar = wrap.querySelector('.zed-suggest-bar');
+    var bar = bar0;
     if(!bar){
       bar = document.createElement('div');
       bar.className = 'zed-suggest-bar';
@@ -14455,11 +14369,13 @@ window._zedV15Filter = 'search';
       bar.appendChild(replay);
       bar.appendChild(cls);
       wrap.appendChild(bar);
-      wrap.appendChild(close); // X stays last
     }
-    // Restore "show suggestions" state after a facade wipe / re-render
-    if(wrap.dataset.zedShowSuggest === '1') wrap.classList.add('zed-show-suggest');
-    else wrap.classList.remove('zed-show-suggest');
+    // ONE ordering fix only: X must be last. Only move it if it is not already last.
+    if(wrap.lastElementChild !== close) wrap.appendChild(close);
+    // Suggest class only if it actually differs — do not toggle it every pass.
+    if(suggestOn){ if(!wrap.classList.contains('zed-show-suggest')) wrap.classList.add('zed-show-suggest'); }
+    else { if(wrap.classList.contains('zed-show-suggest')) wrap.classList.remove('zed-show-suggest'); }
+    wrap.dataset.zedControlsDone = '1';
   }
   function showSuggestBar(wrap){
     if(!wrap) return;
@@ -14504,13 +14420,40 @@ window._zedV15Filter = 'search';
       hideSuggestBar(wrap);
     }
   }
+  var _lastSweep = 0;
+  var _sweepScheduled = false;
+  function isAnythingPlaying(){
+    try{
+      var vids = document.querySelectorAll('video');
+      for(var i = 0; i < vids.length; i++){ var v = vids[i]; if(v && !v.paused && !v.ended && v.currentTime > 0) return true; }
+      if(document.querySelector('.zed-video-card[data-zed-playing="1"]')) return true;
+      if(document.querySelector('.zed-video-fullscreen')) return true;
+    }catch(e){}
+    return false;
+  }
   function sweep(){
-    document.querySelectorAll('.yt-lite, .aspect-video').forEach(function(wrap){
-      try{
-        var hasYt = wrap.classList.contains('yt-lite') || wrap.querySelector('iframe[src*="youtube"]') || wrap.querySelector('iframe[src*="youtube-nocookie"]') || wrap.dataset.vid;
-        if(hasYt) ensureControls(wrap);
-      }catch(e){}
-    });
+    try{
+      if(document.hidden) return;
+      var now = Date.now();
+      if(now - _lastSweep < 1000) return; // at most 1 sweep per second
+      _lastSweep = now;
+      if(isAnythingPlaying()) return; // do not steal the main thread while a video is playing
+      var wraps = document.querySelectorAll('.yt-lite, .aspect-video');
+      for(var i = 0; i < wraps.length; i++){
+        var wrap = wraps[i];
+        try{
+          // Fast skip: already done and X still last — no work, no DOM write.
+          if(wrap.dataset.zedControlsDone === '1' && wrap.lastElementChild && wrap.lastElementChild.classList && wrap.lastElementChild.classList.contains('zed-fullscreen-close')) continue;
+          var hasYt = wrap.classList.contains('yt-lite') || wrap.querySelector('iframe[src*="youtube"]') || wrap.querySelector('iframe[src*="youtube-nocookie"]') || wrap.dataset.vid;
+          if(hasYt) ensureControls(wrap);
+        }catch(e){}
+      }
+    }catch(e){}
+  }
+  function requestSweep(){
+    if(_sweepScheduled) return;
+    _sweepScheduled = true;
+    setTimeout(function(){ _sweepScheduled = false; sweep(); }, 400);
   }
   // --- Unify the actions-row Expand button with the same enter/exit logic ---
   var _origToggle = window.zedToggleExpand;
@@ -14567,9 +14510,163 @@ window._zedV15Filter = 'search';
     }catch(e){}
   });
   sweep();
-  setInterval(sweep, 500);
-  try{ new MutationObserver(function(){ sweep(); }).observe(document.body, {childList:true, subtree:true}); }catch(e){}
+  setInterval(function(){ if(!document.hidden) sweep(); }, 3000);
+  // FIX 18 Nov (pausing): old observer ran sweep() on EVERY mutation with no filter and no debounce,
+  // and sweep() itself wrote to the DOM every time — a self-feeding loop that froze the Videos tab.
+  // New observer: only reacts to NEW video wrappers / iframes / cards, ignores our own buttons, debounced.
+  try{
+    new MutationObserver(function(muts){
+      try{
+        for(var i = 0; i < muts.length; i++){
+          var added = muts[i].addedNodes || [];
+          for(var j = 0; j < added.length; j++){
+            var n = added[j];
+            if(!n || n.nodeType !== 1) continue;
+            var cn = n.className || '';
+            if(typeof cn === 'string' && (cn.indexOf('zed-fullscreen-close') !== -1 || cn.indexOf('zed-yt-fs-shield') !== -1 || cn.indexOf('zed-suggest-bar') !== -1)) continue;
+            if(n.classList && (n.classList.contains('yt-lite') || n.classList.contains('aspect-video') || n.classList.contains('grid'))){ requestSweep(); return; }
+            if(n.tagName === 'IFRAME' || n.tagName === 'VIDEO'){ requestSweep(); return; }
+            if(n.querySelector && (n.querySelector('.yt-lite') || n.querySelector('iframe[src*="youtube"]') || n.querySelector('.grid'))){ requestSweep(); return; }
+          }
+        }
+      }catch(e){}
+    }).observe(document.body, {childList:true, subtree:true});
+  }catch(e){}
   console.log('[ZED] Fullscreen Close + Suggestions Close fix active (18 Nov 2026)');
+})();
+</script>
+
+
+<style>
+/* ZED FIX 18 Nov 2026 (2) — X button must work even when its per-button handler is stale/wiped */
+/* Make X fixed to the viewport + topmost, so no shield / iframe / pseudo-element can cover it. */
+.zed-video-fullscreen .zed-fullscreen-close{position:fixed !important;top:12px !important;left:12px !important;z-index:9999999 !important;pointer-events:auto !important;touch-action:manipulation !important;display:flex !important;}
+/* In fullscreen, kill every shield that covers the top of the player (they sit over the X). Keep ONLY the bottom-right YouTube-fullscreen shield. */
+.zed-video-fullscreen .zed-yt-shield-top,.zed-video-fullscreen .zed-yt-shield-logo,.zed-video-fullscreen .zed-more-shield,.zed-video-fullscreen .zed-yt-expand-shield{display:none !important;pointer-events:none !important;}
+.zed-video-fullscreen .zed-yt-fs-shield{display:block !important;pointer-events:auto !important;}
+</style>
+<script>
+// === ZED FIX 18 Nov 2026 (2) — X button: delegated handler + fullscreen watchdog ===
+// Why X died again:
+//  - The pausing fix made sweep() SKIP while a video is playing / fullscreen, so if the X was wiped
+//    or re-created by the old code AFTER entering fullscreen, nothing re-bound it.
+//  - Per-button handlers are fragile: facade innerHTML='' deletes the button, React re-renders replace
+//    it, and the old code creates X buttons with a stale closure. Any of those leaves a visible but dead X.
+// Fix: do NOT depend on per-button handlers. One delegated handler on document catches taps on ANY
+// .zed-fullscreen-close that exists, whenever it was created. Plus a cheap watchdog that only touches
+// the fullscreen wrapper (1 element) and re-creates / re-orders its X even while playing.
+(function(){
+  var lastExit = 0;
+  function exitFullscreen(){
+    var now = Date.now();
+    if(now - lastExit < 350) return;
+    lastExit = now;
+    try{ document.querySelectorAll('.zed-video-fullscreen').forEach(function(w){ w.classList.remove('zed-video-fullscreen'); }); }catch(e){}
+    try{ if(screen.orientation && screen.orientation.unlock) screen.orientation.unlock(); }catch(e){}
+    try{ document.querySelectorAll('.zed-force-landscape').forEach(function(el){ el.classList.remove('zed-force-landscape'); }); }catch(e){}
+    try{ document.querySelectorAll('.zed-force-landscape-iframe').forEach(function(el){ el.classList.remove('zed-force-landscape-iframe'); }); }catch(e){}
+    try{ if(document.fullscreenElement) document.exitFullscreen(); }catch(e){}
+    try{ if(document.webkitFullscreenElement) document.webkitExitFullscreen(); }catch(e){}
+    try{ if(document.mozFullScreenElement) document.mozCancelFullScreen(); }catch(e){}
+  }
+  function enterFullscreen(wrap){
+    if(!wrap) return;
+    try{ wrap.classList.add('zed-video-fullscreen'); }catch(e){}
+    try{
+      if(wrap.requestFullscreen) wrap.requestFullscreen();
+      else if(wrap.webkitRequestFullscreen) wrap.webkitRequestFullscreen();
+      else if(wrap.mozRequestFullScreen) wrap.mozRequestFullScreen();
+    }catch(e){}
+    try{ if(screen.orientation && screen.orientation.lock){ var p = screen.orientation.lock('landscape'); if(p && p.catch) p.catch(function(){}); } }catch(e){}
+  }
+  function getWrap(el){
+    try{ return el.closest ? (el.closest('.yt-lite') || el.closest('.aspect-video')) : null; }catch(e){ return null; }
+  }
+  function getOrigId(wrap){
+    if(!wrap) return '';
+    if(wrap.dataset.zedOrigYtId) return wrap.dataset.zedOrigYtId;
+    var id = wrap.dataset.vid || '';
+    if(!id){
+      var ifr = wrap.querySelector('iframe');
+      var src = ifr ? (ifr.getAttribute('src') || '') : '';
+      var m = src.match(/(?:embed\/|v=|youtu\.be\/)([A-Za-z0-9_-]{11})/);
+      if(m) id = m[1];
+    }
+    if(!id){
+      var card = wrap.closest ? wrap.closest('.zed-video-card') : null;
+      if(card && card.dataset.zedYtId) id = card.dataset.zedYtId;
+    }
+    if(id) wrap.dataset.zedOrigYtId = id;
+    return id || '';
+  }
+  function reloadYt(wrap, autoplay){
+    var id = getOrigId(wrap);
+    var ifr = wrap ? wrap.querySelector('iframe') : null;
+    if(!id || !ifr) return false;
+    try{ wrap.dataset.zedShowSuggest = '0'; wrap.classList.remove('zed-show-suggest'); }catch(e){}
+    try{ ifr.setAttribute('src', 'https://www.youtube-nocookie.com/embed/' + id + '?autoplay=' + (autoplay ? '1' : '0') + '&modestbranding=1&rel=0&iv_load_policy=3&playsinline=1&controls=1&fs=1&enablejsapi=1'); }catch(e){}
+    return true;
+  }
+  // --- Delegated taps: survive facade wipes, React re-renders, stale closures, fast-path skips ---
+  function onTap(e){
+    try{
+      var t = e.target && e.target.closest ? e.target.closest('.zed-fullscreen-close, .zed-yt-fs-shield, .zed-suggest-close, .zed-suggest-replay') : null;
+      if(!t) return;
+      try{ e.preventDefault(); }catch(_){}
+      try{ e.stopPropagation(); }catch(_){}
+      try{ if(e.stopImmediatePropagation) e.stopImmediatePropagation(); }catch(_){}
+      if(t.classList.contains('zed-fullscreen-close')){
+        exitFullscreen();
+        return;
+      }
+      var wrap = getWrap(t);
+      if(!wrap) return;
+      if(t.classList.contains('zed-yt-fs-shield')){
+        // Tapping YouTube's own fullscreen corner -> ZED fullscreen instead
+        if(wrap.classList.contains('zed-video-fullscreen')) exitFullscreen();
+        else enterFullscreen(wrap);
+        return;
+      }
+      if(t.classList.contains('zed-suggest-close')){
+        if(!reloadYt(wrap, false)){
+          try{ var ifr = wrap.querySelector('iframe'); if(ifr && ifr.contentWindow) ifr.contentWindow.postMessage(JSON.stringify({event:'command', func:'pauseVideo', args:''}), '*'); }catch(_){}
+        }
+        return;
+      }
+      if(t.classList.contains('zed-suggest-replay')){
+        reloadYt(wrap, true);
+        return;
+      }
+    }catch(_){}
+  }
+  document.addEventListener('pointerdown', onTap, true);
+  document.addEventListener('click', onTap, true);
+  // --- Watchdog: ONLY touches the fullscreen wrapper (max 1 element), even while playing. ---
+  // If its X was deleted or buried under a re-created shield, re-create it and move it last.
+  function watchFullscreen(){
+    try{
+      if(document.hidden) return;
+      var fsWrap = document.querySelector('.zed-video-fullscreen');
+      if(!fsWrap) return;
+      var x = fsWrap.querySelector('.zed-fullscreen-close');
+      if(!x){
+        x = document.createElement('button');
+        x.className = 'zed-fullscreen-close';
+        x.type = 'button';
+        x.setAttribute('aria-label', 'Close fullscreen');
+        x.innerHTML = '✕';
+        fsWrap.appendChild(x);
+      } else if(fsWrap.lastElementChild !== x){
+        fsWrap.appendChild(x);
+      }
+    }catch(e){}
+  }
+  setInterval(watchFullscreen, 1000);
+  // Run once on load, and right after entering fullscreen (enter is async, so check again shortly after)
+  watchFullscreen();
+  document.addEventListener('fullscreenchange', function(){ setTimeout(watchFullscreen, 100); setTimeout(watchFullscreen, 600); });
+  document.addEventListener('webkitfullscreenchange', function(){ setTimeout(watchFullscreen, 100); setTimeout(watchFullscreen, 600); });
+  console.log('[ZED] X delegated handler + fullscreen watchdog active (18 Nov 2026 fix 2)');
 })();
 </script>
 
