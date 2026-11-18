@@ -4379,14 +4379,7 @@ function showZedUpdateToast(){
   let toast = document.createElement('div');
   toast.id = 'zed-update-toast';
   toast.style.cssText = 'position:fixed;bottom:90px;left:50%;transform:translateX(-50%);background:#1A1917;border:2px solid #E8C15A;color:#F5F1E8;padding:16px 20px;border-radius:16px;font-size:13px;z-index:9999999;box-shadow:0 12px 40px rgba(0,0,0,0.6);max-width:90vw;text-align:center;font-family:"Bricolage Grotesque",sans-serif;font-weight:600;animation:zedSlideUp 0.4s ease;';
-  toast.innerHTML = `
-    <div style="display:flex;align-items:center;gap:8px;justify-content:center;margin-bottom:6px;">
-      <span style="font-size:18px;">✨</span>
-      <span style="font-weight:800;letter-spacing:0.3px;">NEW UPDATE AVAILABLE</span>
-    </div>
-    <div style="font-size:11px;color:#9A9590;margin-bottom:10px;">Faster videos + fixed search + tap to pause</div>
-    <button id="zed-update-btn" style="background:#E8C15A;color:#fff;border:none;padding:10px 18px;border-radius:10px;font-weight:800;font-size:13px;cursor:pointer;width:100%;">Tap to Update Now</button>
-  `;
+  toast.innerHTML = '<div style="display:flex;align-items:center;gap:8px;justify-content:center;margin-bottom:10px;"><span style="font-size:18px;">✨</span><span style="font-weight:800;letter-spacing:0.3px;">New update is available</span></div><button id="zed-update-btn" style="background:#E8C15A;color:#fff;border:none;padding:10px 18px;border-radius:10px;font-weight:800;font-size:13px;cursor:pointer;width:100%;">Update</button>';
   // Add animation
   let style = document.createElement('style');
   style.textContent = '@keyframes zedSlideUp{from{transform:translateX(-50%) translateY(100px);opacity:0}to{transform:translateX(-50%) translateY(0);opacity:1}}';
@@ -4402,7 +4395,7 @@ function showZedUpdateToast(){
     setTimeout(()=>{ window.location.reload(); }, 800);
   };
   /* FIX 14 Nov 2026: NO auto-reload after 6s. The old code reloaded even if the user was
-     mid-download. The toast stays until the user taps "Tap to Update Now" — that is the
+     mid-download. The toast stays until the user taps Update — that is the
      only thing that swaps in the new version (old version is then deleted by the SW). */
 }
 </script>
@@ -6897,6 +6890,10 @@ console.log('[ZED] Welcome popup + fast login active');
       allRows.forEach(function(r){ if(r.user_id===me.id) outSet2[r.friend_id]=true; if(r.friend_id===me.id) inSet2[r.user_id]=true; });
       var incoming=allRows.filter(function(r){ return r.friend_id===me.id && !outSet2[r.user_id]; });
       var outgoing=allRows.filter(function(r){ return r.user_id===me.id && !inSet2[r.friend_id]; });
+      // FIX: one card per person — duplicate friendship rows used to show the same person twice
+      var _seenIn={}, _seenOut={};
+      incoming=incoming.filter(function(r){ if(_seenIn[r.user_id]) return false; _seenIn[r.user_id]=true; return true; });
+      outgoing=outgoing.filter(function(r){ if(_seenOut[r.friend_id]) return false; _seenOut[r.friend_id]=true; return true; });
       try{
         var _rk = (incoming.map(function(r){return r.user_id;}).sort().join(',')) + '|' + (outgoing.map(function(r){return r.friend_id;}).sort().join(','));
         if(_rk===_lastReqKey && _hadContent){ return; }
@@ -6916,7 +6913,7 @@ console.log('[ZED] Welcome popup + fast login active');
           var pRows=await resP.json(); var p=pRows && pRows[0] ? pRows[0] : {name:'Student'};
           var card=document.createElement('div');
           card.style.cssText='display:flex;justify-content:space-between;align-items:center;background:#0F2547;border:1px solid #E8C15A;border-radius:12px;padding:12px;margin:0 12px 10px';
-          card.innerHTML='<div class="zed-req-person" data-zed-profile-id="'+(p.id||'')+'" title="Tap to view profile" style="display:flex;align-items:center;gap:10px;flex:1;min-width:0;cursor:pointer"><div style="width:44px;height:44px;min-width:44px;border-radius:999px;overflow:hidden;background:#0F2547;display:flex;align-items:center;justify-content:center;font-weight:900;color:#fff;font-size:16px;border:2px solid #E8C15A">'+((p.avatar||p.avatar_url)?'<img src="'+(p.avatar||p.avatar_url)+'" style="width:100%;height:100%;object-fit:cover" />':(p.name||'S')[0])+'</div><div style="min-width:0"><div style="font-weight:700;color:#fff;font-size:13px;line-height:1.2;white-space:normal;word-break:keep-all;overflow-wrap:normal">'+(p.name||'Student')+'</div><div style="font-size:11px;color:#A9B8D0;line-height:1.2;white-space:normal;word-break:keep-all;overflow-wrap:normal">'+(p.school||'')+' \u2022 '+(p.grade||'')+'</div><div style="font-size:11px;color:#A9B8D0;white-space:nowrap">Tap to view profile</div></div></div><div style="display:flex;gap:6px"><button data-act="accept" style="background:#E8C15A;color:#fff;border:none;border-radius:999px;padding:8px 12px;font-weight:900;font-size:12px">ACCEPT</button><button data-act="decline" style="background:#14315A;color:#fff;border:none;border-radius:999px;padding:8px 12px;font-weight:900;font-size:12px">DECLINE</button></div>';
+          card.innerHTML='<div class="zed-req-person" data-zed-profile-id="'+(p.id||'')+'" data-zed-dir="in" title="Tap to view profile" style="display:flex;align-items:center;gap:10px;flex:1;min-width:0;cursor:pointer"><div class="zed-friends-avatar" data-profile-id="'+(p.id||'')+'" title="Tap to view profile pic" style="width:44px;height:44px;min-width:44px;border-radius:999px;overflow:hidden;background:#0F2547;display:flex;align-items:center;justify-content:center;font-weight:900;color:#fff;font-size:16px;border:2px solid #E8C15A;cursor:pointer">'+((p.avatar||p.avatar_url)?'<img src="'+(p.avatar||p.avatar_url)+'" style="width:100%;height:100%;object-fit:cover" />':(p.name||'S')[0])+'</div><div style="min-width:0"><div style="font-weight:700;color:#fff;font-size:13px;line-height:1.2;white-space:normal;word-break:keep-all;overflow-wrap:normal">'+(p.name||'Student')+'</div><div style="font-size:11px;color:#A9B8D0;line-height:1.2;white-space:normal;word-break:keep-all;overflow-wrap:normal">'+(p.school||'')+' \u2022 '+(p.grade||'')+'</div><div style="font-size:11px;color:#A9B8D0;white-space:nowrap">Tap to view profile</div></div></div><div style="display:flex;gap:6px"><button data-act="accept" style="background:#E8C15A;color:#fff;border:none;border-radius:999px;padding:8px 12px;font-weight:900;font-size:12px">ACCEPT</button><button data-act="decline" style="background:#14315A;color:#fff;border:none;border-radius:999px;padding:8px 12px;font-weight:900;font-size:12px">DECLINE</button></div>';
           (function(sid2, cardEl){
             cardEl.querySelector('[data-act="accept"]').addEventListener('click', async function(){ await fetch(SUPA_URL+'/rest/v1/friendships', {method:'POST', headers:headers(), body: JSON.stringify({user_id:me.id, friend_id:sid2})}); loadRequestsTab(); loadFriends(); updateChatBadge(); });
             cardEl.querySelector('[data-act="decline"]').addEventListener('click', async function(){ await fetch(SUPA_URL+'/rest/v1/friendships?user_id=eq.'+sid2+'&friend_id=eq.'+me.id, {method:'DELETE', headers:headers()}); loadRequestsTab(); loadFriends(); updateChatBadge(); });
@@ -6931,7 +6928,7 @@ console.log('[ZED] Welcome popup + fast login active');
           var pRows2=await resP2.json(); var p2=pRows2 && pRows2[0] ? pRows2[0] : {name:'Student'};
           var card2=document.createElement('div');
           card2.style.cssText='display:flex;gap:8px;align-items:center;background:#0F2547;border:1px solid #C9A227;border-radius:12px;padding:8px;margin:0 10px 8px';
-          card2.innerHTML='<div class="zed-req-person" data-zed-profile-id="'+(p2.id||'')+'" title="Tap to view profile" style="display:flex;align-items:center;gap:10px;flex:1;min-width:0;cursor:pointer"><div style="width:44px;height:44px;min-width:44px;border-radius:999px;overflow:hidden;background:#0F2547;display:flex;align-items:center;justify-content:center;font-weight:900;color:#fff;font-size:16px;border:2px solid #E8C15A">'+((p2.avatar||p2.avatar_url)?'<img src="'+(p2.avatar||p2.avatar_url)+'" style="width:100%;height:100%;object-fit:cover" />':(p2.name||'S')[0])+'</div><div style="min-width:0;flex:1"><div style="font-weight:700;color:#fff;font-size:13px;line-height:1.2;white-space:normal;word-break:keep-all;overflow-wrap:normal">'+(p2.name||'Student')+'</div><div style="font-size:11px;color:#A9B8D0;line-height:1.2;white-space:normal;word-break:keep-all;overflow-wrap:normal">'+(p2.school||'')+'</div><div style="font-size:11px;color:#A9B8D0;white-space:nowrap">Tap to view profile</div></div></div><span style="background:#14315A;color:#A9B8D0;border-radius:999px;padding:5px 7px;font-size:10px;font-weight:900;white-space:nowrap;flex-shrink:0">✓ REQUEST SENT</span>';
+          card2.innerHTML='<div class="zed-req-person" data-zed-profile-id="'+(p2.id||'')+'" data-zed-dir="out" title="Tap to view profile" style="display:flex;align-items:center;gap:10px;flex:1;min-width:0;cursor:pointer"><div class="zed-friends-avatar" data-profile-id="'+(p2.id||'')+'" title="Tap to view profile pic" style="width:44px;height:44px;min-width:44px;border-radius:999px;overflow:hidden;background:#0F2547;display:flex;align-items:center;justify-content:center;font-weight:900;color:#fff;font-size:16px;border:2px solid #E8C15A;cursor:pointer">'+((p2.avatar||p2.avatar_url)?'<img src="'+(p2.avatar||p2.avatar_url)+'" style="width:100%;height:100%;object-fit:cover" />':(p2.name||'S')[0])+'</div><div style="min-width:0;flex:1"><div style="font-weight:700;color:#fff;font-size:13px;line-height:1.2;white-space:normal;word-break:keep-all;overflow-wrap:normal">'+(p2.name||'Student')+'</div><div style="font-size:11px;color:#A9B8D0;line-height:1.2;white-space:normal;word-break:keep-all;overflow-wrap:normal">'+(p2.school||'')+'</div><div style="font-size:11px;color:#A9B8D0;white-space:nowrap">Tap to view profile</div></div></div><span style="background:#14315A;color:#A9B8D0;border-radius:999px;padding:5px 7px;font-size:10px;font-weight:900;white-space:nowrap;flex-shrink:0">✓ REQUEST SENT</span>';
           reqList.appendChild(card2);
         }
       }
@@ -7047,7 +7044,7 @@ console.log('[ZED] Welcome popup + fast login active');
         } else {
           btnHtml='<button disabled style="background:#0F2547;color:#A9B8D0;border:1px solid #E8C15A;border-radius:999px;padding:7px 12px;font-weight:900;font-size:12px">✓ FRIENDS</button>';
         }
-        d.innerHTML='<div class="zed-search-person" style="display:flex;align-items:center;gap:10px;flex:1;min-width:0;cursor:pointer"><div class="zed-search-avatar" data-profile-id="'+r.id+'" style="width:48px;height:48px;min-width:48px;border-radius:999px;overflow:hidden;background:#0F2547;display:flex;align-items:center;justify-content:center;font-weight:900;color:#fff;font-size:18px;border:2px solid #E8C15A">'+((r.avatar||r.avatar_url)?'<img src="'+(r.avatar||r.avatar_url)+'" style="width:100%;height:100%;object-fit:cover" />':(r.name||'S')[0])+'</div><div style="min-width:0"><div style="font-weight:800;color:#fff;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">'+(r.name||'Student')+'</div><div style="font-size:12px;color:#A9B8D0;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">'+(r.school||'')+' \u2022 Grade '+(r.grade||'')+'</div></div></div>'+btnHtml;
+        d.innerHTML='<div class="zed-search-person" data-zed-status="'+(st?st.status:'none')+'" data-zed-dir="'+(st?st.dir:'')+'" style="display:flex;align-items:center;gap:10px;flex:1;min-width:0;cursor:pointer"><div class="zed-search-avatar" data-profile-id="'+r.id+'" style="width:48px;height:48px;min-width:48px;border-radius:999px;overflow:hidden;background:#0F2547;display:flex;align-items:center;justify-content:center;font-weight:900;color:#fff;font-size:18px;border:2px solid #E8C15A">'+((r.avatar||r.avatar_url)?'<img src="'+(r.avatar||r.avatar_url)+'" style="width:100%;height:100%;object-fit:cover" />':(r.name||'S')[0])+'</div><div style="min-width:0"><div style="font-weight:800;color:#fff;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">'+(r.name||'Student')+'</div><div style="font-size:12px;color:#A9B8D0;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">'+(r.school||'')+' \u2022 Grade '+(r.grade||'')+'</div></div></div>'+btnHtml;
         var _person=d.querySelector('.zed-search-person'); if(_person){ (function(_r,_st){ _person.addEventListener('click', function(e){ e.stopPropagation(); if(window.zedOpenUserProfile) window.zedOpenUserProfile(_r, {friendStatus:_st}); }); })(r, st); }
         var btn=d.querySelector('button');
         if(!st){
@@ -7092,7 +7089,7 @@ console.log('[ZED] Welcome popup + fast login active');
       try{
         var _pc=zedCacheGet('zed_profiles_cache_v1')||{profiles:[]}; var _q=q.toLowerCase();
         var _rows=(_pc.profiles||[]).filter(function(r){ return (r.name||'').toLowerCase().indexOf(_q)!==-1 || (r.school||'').toLowerCase().indexOf(_q)!==-1; });
-        if(_rows.length){ resEl.innerHTML=''; /* No banner */ _rows.slice(0,10).forEach(function(r){ var _d=document.createElement('div'); _d.style.cssText='display:flex;justify-content:space-between;align-items:center;background:#0F2547;border:1px solid #C9A227;border-radius:10px;padding:10px;gap:10px'; var _av=(r.avatar||r.avatar_url||''); _d.innerHTML='<div class="zed-search-person" style="display:flex;align-items:center;gap:10px;flex:1;min-width:0;cursor:pointer"><div class="zed-search-avatar" data-profile-id="'+(r.id||'')+'" style="width:48px;height:48px;min-width:48px;border-radius:999px;overflow:hidden;background:#0F2547;display:flex;align-items:center;justify-content:center;font-weight:900;color:#fff;font-size:18px;border:2px solid #E8C15A">'+(_av?'<img src="'+_av+'" style="width:100%;height:100%;object-fit:cover" />':(r.name||'S')[0])+'</div><div style="min-width:0"><div style="font-weight:800;color:#fff">'+(r.name||'Student')+'</div><div style="font-size:12px;color:#A9B8D0">'+(r.school||'')+' • Grade '+(r.grade||'')+'</div></div></div>'; (function(_r){ var _pp=_d.querySelector('.zed-search-person'); if(_pp) _pp.addEventListener('click', function(ev){ ev.stopPropagation(); if(window.zedOpenProfilePic) window.zedOpenProfilePic(_r); }); })(r); resEl.appendChild(_d); }); return; }
+        if(_rows.length){ resEl.innerHTML=''; /* No banner */ _rows.slice(0,10).forEach(function(r){ var _d=document.createElement('div'); _d.style.cssText='display:flex;justify-content:space-between;align-items:center;background:#0F2547;border:1px solid #C9A227;border-radius:10px;padding:10px;gap:10px'; var _av=(r.avatar||r.avatar_url||''); _d.innerHTML='<div class="zed-search-person" data-zed-status="none" data-zed-dir="" style="display:flex;align-items:center;gap:10px;flex:1;min-width:0;cursor:pointer"><div class="zed-search-avatar" data-profile-id="'+(r.id||'')+'" style="width:48px;height:48px;min-width:48px;border-radius:999px;overflow:hidden;background:#0F2547;display:flex;align-items:center;justify-content:center;font-weight:900;color:#fff;font-size:18px;border:2px solid #E8C15A">'+(_av?'<img src="'+_av+'" style="width:100%;height:100%;object-fit:cover" />':(r.name||'S')[0])+'</div><div style="min-width:0"><div style="font-weight:800;color:#fff">'+(r.name||'Student')+'</div><div style="font-size:12px;color:#A9B8D0">'+(r.school||'')+' • Grade '+(r.grade||'')+'</div></div></div>'; (function(_r){ var _pp=_d.querySelector('.zed-search-person'); if(_pp) _pp.addEventListener('click', function(ev){ ev.stopPropagation(); if(window.zedOpenProfilePic) window.zedOpenProfilePic(_r); }); })(r); resEl.appendChild(_d); }); return; }
       }catch(_e){}
       resEl.innerHTML='<div style="color:#A9B8D0;font-size:13px">No student found for "'+q+'". Try full name or school.</div>'; }
   });
@@ -7160,6 +7157,10 @@ console.log('[ZED] Welcome popup + fast login active');
       var incoming=allRows.filter(function(r){ return r.friend_id===me.id && !outSet[r.user_id]; });
       // Outgoing: I sent, they haven't accepted
       var outgoing=allRows.filter(function(r){ return r.user_id===me.id && !inSet[r.friend_id]; });
+      // FIX: one card per person — duplicate friendship rows used to show the same person twice
+      var _seenIn2={}, _seenOut2={};
+      incoming=incoming.filter(function(r){ if(_seenIn2[r.user_id]) return false; _seenIn2[r.user_id]=true; return true; });
+      outgoing=outgoing.filter(function(r){ if(_seenOut2[r.friend_id]) return false; _seenOut2[r.friend_id]=true; return true; });
       // Friends: both rows exist
       var friendIds=[];
       Object.keys(outSet).forEach(function(id){ if(inSet[id] && friendIds.indexOf(id)===-1) friendIds.push(id); });
@@ -7180,7 +7181,7 @@ console.log('[ZED] Welcome popup + fast login active');
             var p=pRows && pRows[0] ? pRows[0] : {name:'Student'};
             var card=document.createElement('div');
             card.style.cssText='display:flex;justify-content:space-between;align-items:center;background:#0F2547;border:1px solid #E8C15A;border-radius:12px;padding:12px;margin:0 12px 8px';
-            card.innerHTML='<div class="zed-req-person" data-zed-profile-id="'+(p.id||'')+'" title="Tap to view profile" style="display:flex;align-items:center;gap:10px;flex:1;min-width:0;cursor:pointer"><div style="width:44px;height:44px;min-width:44px;border-radius:999px;overflow:hidden;background:#0F2547;display:flex;align-items:center;justify-content:center;font-weight:900;color:#fff;font-size:16px;border:2px solid #E8C15A">'+((p.avatar||p.avatar_url)?'<img src="'+(p.avatar||p.avatar_url)+'" style="width:100%;height:100%;object-fit:cover" />':(p.name||'S')[0])+'</div><div style="min-width:0"><div style="font-weight:700;color:#fff;font-size:13px;line-height:1.2;white-space:normal;word-break:keep-all;overflow-wrap:normal">'+(p.name||'Student')+'</div><div style="font-size:11px;color:#A9B8D0;line-height:1.2;white-space:normal;word-break:keep-all;overflow-wrap:normal">'+(p.school||'')+' \u2022 '+(p.grade||'')+'</div><div style="font-size:11px;color:#A9B8D0;white-space:nowrap">Tap to view profile</div></div></div><div style="display:flex;gap:6px"><button data-act="accept" style="background:#E8C15A;color:#fff;border:none;border-radius:999px;padding:7px 12px;font-weight:900;font-size:12px;cursor:pointer">ACCEPT</button><button data-act="decline" style="background:#14315A;color:#fff;border:none;border-radius:999px;padding:7px 12px;font-weight:900;font-size:12px;cursor:pointer">DECLINE</button></div>';
+            card.innerHTML='<div class="zed-req-person" data-zed-profile-id="'+(p.id||'')+'" data-zed-dir="in" title="Tap to view profile" style="display:flex;align-items:center;gap:10px;flex:1;min-width:0;cursor:pointer"><div class="zed-friends-avatar" data-profile-id="'+(p.id||'')+'" title="Tap to view profile pic" style="width:44px;height:44px;min-width:44px;border-radius:999px;overflow:hidden;background:#0F2547;display:flex;align-items:center;justify-content:center;font-weight:900;color:#fff;font-size:16px;border:2px solid #E8C15A;cursor:pointer">'+((p.avatar||p.avatar_url)?'<img src="'+(p.avatar||p.avatar_url)+'" style="width:100%;height:100%;object-fit:cover" />':(p.name||'S')[0])+'</div><div style="min-width:0"><div style="font-weight:700;color:#fff;font-size:13px;line-height:1.2;white-space:normal;word-break:keep-all;overflow-wrap:normal">'+(p.name||'Student')+'</div><div style="font-size:11px;color:#A9B8D0;line-height:1.2;white-space:normal;word-break:keep-all;overflow-wrap:normal">'+(p.school||'')+' \u2022 '+(p.grade||'')+'</div><div style="font-size:11px;color:#A9B8D0;white-space:nowrap">Tap to view profile</div></div></div><div style="display:flex;gap:6px"><button data-act="accept" style="background:#E8C15A;color:#fff;border:none;border-radius:999px;padding:7px 12px;font-weight:900;font-size:12px;cursor:pointer">ACCEPT</button><button data-act="decline" style="background:#14315A;color:#fff;border:none;border-radius:999px;padding:7px 12px;font-weight:900;font-size:12px;cursor:pointer">DECLINE</button></div>';
             (function(sid, cardEl){
               cardEl.querySelector('[data-act="accept"]').addEventListener('click', async function(){
                 // Accept = add reverse row
@@ -8215,7 +8216,7 @@ input[placeholder="Search school..."]{ position: relative !important; z-index: 3
       + (joined?'<div style="color:#A9B8D0;font-size:12px;margin-top:4px">Joined '+esc(joined)+'</div>':'')
       + '<div style="display:flex;gap:8px;justify-content:center;margin-top:12px"><span style="background:#E8C15A;color:#000;padding:6px 12px;border-radius:999px;font-size:12px;font-weight:800">'+(u.coins||0)+' coins</span><span style="background:#0F2547;color:#fff;padding:6px 12px;border-radius:999px;font-size:12px">\uD83D\uDD25 '+(u.streak||0)+' streak</span></div>'
       + '</div>'
-      + '<div style="padding:14px 16px 8px"><div style="font-size:12px;color:#A9B8D0;font-weight:800;letter-spacing:0.5px">ABOUT</div><div style="color:#ddd;font-size:14px;line-height:1.6;margin-top:6px">Student at '+esc(u.school||'ZED SCHOLAR')+'. '+(u.grade?('Grade '+esc(u.grade)+'. ':'')+'Learning on ZED SCHOLAR.</div></div>'
+      + '<div style="padding:14px 16px 8px"><div style="font-size:12px;color:#A9B8D0;font-weight:800;letter-spacing:0.5px">ABOUT</div><div style="color:#ddd;font-size:14px;line-height:1.6;margin-top:6px">Student at '+esc(u.school||'ZED SCHOLAR')+'. '+(u.grade?('Grade '+esc(u.grade)+'. '):'')+'Learning on ZED SCHOLAR.</div></div>'
       + '<div style="display:flex;gap:8px;padding:6px 16px 8px">'+btnHtml+'</div>'
       + '<div style="padding:0 16px 16px"><button class="zed-profile-btn" id="zed-prof-photo" style="width:100%;background:#0F2547;color:#fff;border:1px solid #C9A227">\uD83D\uDDBC\uFE0F View Profile Photo</button><div style="text-align:center;color:#666;font-size:11px;margin-top:10px">Phone number is private \u2022 Only public profile info is shown</div></div>'
       + '</div>';
@@ -8267,10 +8268,12 @@ input[placeholder="Search school..."]{ position: relative !important; z-index: 3
   // Friend Requests: tap person (not ACCEPT/DECLINE) = view profile
   document.addEventListener('click', function(e){
     if(e.target.closest && e.target.closest('button')) return;
+    // Avatar taps belong to the pic viewer — let them through so the PIC opens, not the profile
+    if(e.target.closest && e.target.closest('.zed-friends-avatar, .zed-search-avatar, .zed-chat-avatar, #zed-chat-view-avatar')) return;
     var person = e.target.closest && e.target.closest('.zed-req-person');
     if(!person) return;
     var pid = person.getAttribute('data-zed-profile-id');
-    if(pid && window.zedOpenUserProfileById){ e.stopPropagation(); window.zedOpenUserProfileById(pid, {friendStatus:{status:'pending',dir:'in'}}); }
+    if(pid && window.zedOpenUserProfileById){ e.stopPropagation(); window.zedOpenUserProfileById(pid, {friendStatus:{status:'pending',dir:(person.getAttribute('data-zed-dir')||'in')}}); }
   }, true);
 
   console.log('[ZED] Facebook-style View Profile active - Search + Chats');
@@ -8326,6 +8329,7 @@ input[placeholder="Search school..."]{ position: relative !important; z-index: 3
   // --- FULLSCREEN PROFILE PIC: tap any avatar -> big pic ---
   function openProfilePic(u, opts){
     if(!u) return;
+    var _picStatus=(opts && opts.friendStatus) || {status:'none',dir:''};
     if(typeof u==='string'){ fetchProfileById(u).then(function(p){ if(p) openProfilePic(p, opts); }); return; }
     var old=document.getElementById('zed-pic-fullscreen'); if(old) old.remove();
     var av=(u.avatar||u.avatar_url||'');
@@ -8344,7 +8348,7 @@ input[placeholder="Search school..."]{ position: relative !important; z-index: 3
     overlay.querySelector('#zed-picfs-close').addEventListener('click', close);
     overlay.querySelector('#zed-picfs-close2').addEventListener('click', close);
     overlay.addEventListener('click', function(e){ if(e.target===overlay) close(); });
-    overlay.querySelector('#zed-picfs-profile').addEventListener('click', function(){ close(); if(window.zedOpenUserProfile) window.zedOpenUserProfile(u, {friendStatus:{status:'accepted',dir:'both'}}); });
+    overlay.querySelector('#zed-picfs-profile').addEventListener('click', function(){ close(); if(window.zedOpenUserProfile) window.zedOpenUserProfile(u, {friendStatus:_picStatus}); });
   }
   window.zedOpenProfilePic=openProfilePic;
 
@@ -8355,16 +8359,16 @@ input[placeholder="Search school..."]{ position: relative !important; z-index: 3
     var id=av.getAttribute('data-profile-id');
     if(!id) return;
     e.preventDefault(); e.stopPropagation();
+    // Real status from the card the avatar sits in: request card = pending + its direction, search card = its stamped status, friends/chats = accepted
+    var fs={status:'accepted',dir:'both'};
+    var reqEl=e.target.closest && e.target.closest('.zed-req-person');
+    if(reqEl){ fs={status:'pending',dir:(reqEl.getAttribute('data-zed-dir')||'in')}; }
+    else { var spEl=e.target.closest && e.target.closest('.zed-search-person'); if(spEl){ fs={status:(spEl.getAttribute('data-zed-status')||'none'),dir:(spEl.getAttribute('data-zed-dir')||'')}; } }
     // Try cache instantly so it works offline too
     var cached=profileFromCache(id);
-    if(cached) openProfilePic(cached);
-    fetchProfileById(id).then(function(p){ if(p && (!cached || p.avatar!==cached.avatar)) openProfilePic(p); });
+    if(cached) openProfilePic(cached, {friendStatus:fs});
+    fetchProfileById(id).then(function(p){ if(p && (!cached || p.avatar!==cached.avatar)) openProfilePic(p, {friendStatus:fs}); });
   }, true);
-
-        }, 80);
-      };
-    }
-  }catch(e){}
 
   // --- Outbox: send queued messages when back online ---
   async function flushOutbox(){
