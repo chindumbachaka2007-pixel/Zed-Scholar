@@ -14308,5 +14308,270 @@ window._zedV15Filter = 'search';
 })();
 </script>
 
+
+<style>
+/* ZED FIX 18 Nov 2026 — Fullscreen Close + YouTube Suggestions Close */
+/* 1) Close (X) must stay on top of the YouTube iframe + all shields, and stay tappable. */
+.zed-video-fullscreen .zed-fullscreen-close{display:flex !important;position:absolute !important;top:12px !important;left:12px !important;z-index:100 !important;pointer-events:auto !important;touch-action:manipulation !important;background:rgba(255,255,255,0.95) !important;color:#000 !important;border:none !important;width:40px !important;height:40px !important;border-radius:50% !important;font-size:17px !important;font-weight:800 !important;align-items:center !important;justify-content:center !important;cursor:pointer !important;box-shadow:0 4px 16px rgba(0,0,0,0.5) !important;}
+/* 2) In fullscreen, the CSS ::before/::after shields used to block the top-left corner where X lives. Turn them off when fullscreen so taps land on X, not on the shield. */
+.aspect-video.zed-video-fullscreen:has(iframe[src*="youtube"])::before,.aspect-video.zed-video-fullscreen:has(iframe[src*="youtube"])::after,.yt-lite.zed-video-fullscreen::before,.yt-lite.zed-video-fullscreen::after,.zed-video-fullscreen::before,.zed-video-fullscreen::after{display:none !important;content:none !important;pointer-events:none !important;}
+/* 3) Shield over YouTube's OWN fullscreen button (bottom-right corner). Tapping it opens ZED fullscreen instead, so YouTube can never trap the player in iframe-fullscreen where our X does not exist. */
+.zed-yt-fs-shield{position:absolute !important;right:0 !important;bottom:0 !important;width:48px !important;height:44px !important;background:transparent !important;pointer-events:auto !important;z-index:25 !important;cursor:pointer !important;}
+/* 4) Suggestions bar: appears only when YouTube shows its end-screen "More videos" grid (video ended). Sits just above YouTube controls so it never covers Play / Seek. */
+.zed-suggest-bar{position:absolute !important;left:8px !important;right:8px !important;bottom:52px !important;z-index:100 !important;display:none !important;align-items:center !important;justify-content:center !important;gap:8px !important;pointer-events:auto !important;}
+.zed-show-suggest > .zed-suggest-bar{display:flex !important;}
+.zed-suggest-bar button{pointer-events:auto !important;touch-action:manipulation !important;cursor:pointer !important;border:none !important;border-radius:999px !important;height:36px !important;padding:0 14px !important;font-size:12px !important;font-weight:800 !important;box-shadow:0 4px 16px rgba(0,0,0,0.5) !important;}
+.zed-suggest-replay{background:#E8C15A !important;color:#fff !important;}
+.zed-suggest-close{background:rgba(255,255,255,0.95) !important;color:#000 !important;}
+</style>
+<script>
+// === ZED FIX 18 Nov 2026 — Fullscreen Close + YouTube Suggestions Close ===
+// Why the old code broke:
+//  - The facade wipes the wrapper with wrap.innerHTML='' when Play is tapped, which DELETED the X button.
+//  - Tapping YouTube's OWN fullscreen button made the IFRAME the fullscreen element, so every ZED button
+//    (which lives outside the iframe) vanished and the user was trapped.
+//  - Two expand systems (old .zed-expand-btn / .zed-fullscreen-close + new [data-zed-expand] /
+//    window.zedToggleExpand) fought over the same wrapper.
+// This block is the single owner of: X close, the YouTube-fullscreen shield, and the Suggestions bar.
+// It runs LAST, re-creates the buttons after every facade wipe / React re-render, and unifies Expand.
+(function(){
+  function ytCmd(iframe, func, args){
+    try{ if(!iframe || !iframe.contentWindow) return;
+      iframe.contentWindow.postMessage(JSON.stringify({event:'command', func:func, args:args || ''}), '*');
+    }catch(e){}
+  }
+  function isInnermostWrap(wrap){
+    // Outer .aspect-video that contains a .yt-lite facade is NOT the player wrapper — skip it, or we get double buttons.
+    if(!wrap.classList.contains('yt-lite') && wrap.querySelector('.yt-lite')) return false;
+    return true;
+  }
+  function getWrap(el){
+    if(!el) return null;
+    var w = el.closest ? (el.closest('.yt-lite') || el.closest('.aspect-video')) : null;
+    return w || el.parentElement || null;
+  }
+  function getOrigId(wrap){
+    if(!wrap) return '';
+    if(wrap.dataset.zedOrigYtId) return wrap.dataset.zedOrigYtId;
+    var id = wrap.dataset.vid || '';
+    if(!id){
+      var ifr = wrap.querySelector('iframe');
+      var src = ifr ? (ifr.getAttribute('src') || '') : '';
+      var m = src.match(/(?:embed\/|v=|youtu\.be\/)([A-Za-z0-9_-]{11})/);
+      if(m) id = m[1];
+    }
+    if(!id){
+      var card = wrap.closest ? wrap.closest('.zed-video-card') : null;
+      if(card && card.dataset.zedYtId) id = card.dataset.zedYtId;
+    }
+    if(id && id.length >= 8){ wrap.dataset.zedOrigYtId = id; return id; }
+    return '';
+  }
+  function unlockOrientation(){
+    try{ if(screen.orientation && screen.orientation.unlock) screen.orientation.unlock(); }catch(e){}
+    document.querySelectorAll('.zed-force-landscape').forEach(function(el){ el.classList.remove('zed-force-landscape'); });
+    document.querySelectorAll('.zed-force-landscape-iframe').forEach(function(el){ el.classList.remove('zed-force-landscape-iframe'); });
+  }
+  function exitFullscreen(){
+    document.querySelectorAll('.zed-video-fullscreen').forEach(function(w){ w.classList.remove('zed-video-fullscreen'); });
+    unlockOrientation();
+    try{ if(document.fullscreenElement) document.exitFullscreen(); }catch(e){}
+    try{ if(document.webkitFullscreenElement) document.webkitExitFullscreen(); }catch(e){}
+    try{ if(document.mozFullScreenElement) document.mozCancelFullScreen(); }catch(e){}
+  }
+  function enterFullscreen(wrap){
+    if(!wrap) return;
+    wrap.classList.add('zed-video-fullscreen');
+    ensureControls(wrap); // make sure X is the LAST child, above iframe + shields
+    try{
+      if(wrap.requestFullscreen) wrap.requestFullscreen();
+      else if(wrap.webkitRequestFullscreen) wrap.webkitRequestFullscreen();
+      else if(wrap.mozRequestFullScreen) wrap.mozRequestFullScreen();
+    }catch(e){}
+    try{ if(screen.orientation && screen.orientation.lock){ var p = screen.orientation.lock('landscape'); if(p && p.catch) p.catch(function(){}); } }catch(e){}
+  }
+  // --- One tap handler shared by pointerdown + click, with dedupe so we never exit twice ---
+  function bindTap(btn, fn){
+    if(btn.dataset.zedTapBound === '1') return;
+    btn.dataset.zedTapBound = '1';
+    var last = 0;
+    function onTap(e){
+      try{ e.preventDefault(); }catch(_){}
+      try{ e.stopPropagation(); }catch(_){}
+      try{ if(e.stopImmediatePropagation) e.stopImmediatePropagation(); }catch(_){}
+      var now = Date.now(); if(now - last < 350) return; last = now;
+      fn();
+    }
+    btn.addEventListener('pointerdown', onTap, true);
+    btn.addEventListener('click', onTap, true);
+    btn.addEventListener('touchstart', function(e){ try{ e.stopPropagation(); }catch(_){} }, {passive:true, capture:true});
+  }
+  function ensureControls(wrap){
+    if(!wrap || !isInnermostWrap(wrap)) return;
+    if(getComputedStyle(wrap).position === 'static') wrap.style.position = 'relative';
+    getOrigId(wrap);
+    // --- X close button (reuse the old one if it survived, else create it) ---
+    var close = wrap.querySelector('.zed-fullscreen-close');
+    if(!close){
+      close = document.createElement('button');
+      close.className = 'zed-fullscreen-close';
+      close.type = 'button';
+      close.setAttribute('aria-label', 'Close fullscreen');
+      close.innerHTML = '✕';
+    }
+    bindTap(close, function(){ exitFullscreen(); });
+    wrap.appendChild(close); // LAST child = paints above iframe + shields
+    // --- Shield over YouTube's own fullscreen button (bottom-right) ---
+    if(!wrap.querySelector('.zed-yt-fs-shield')){
+      var sh = document.createElement('div');
+      sh.className = 'zed-yt-fs-shield';
+      sh.setAttribute('aria-hidden', 'true');
+      sh.title = '';
+      bindTap(sh, function(){ enterFullscreen(wrap); });
+      wrap.appendChild(sh);
+    } else {
+      // Keep shield above iframe but below X / suggestions bar
+      var ex = wrap.querySelector('.zed-yt-fs-shield');
+      if(ex && !ex.dataset.zedTapBound) bindTap(ex, function(){ enterFullscreen(wrap); });
+      // Re-append shield BEFORE X so X stays last: move shield, then move X again below.
+      wrap.appendChild(ex);
+      wrap.appendChild(close);
+    }
+    // --- Suggestions bar (hidden until video ends) ---
+    var bar = wrap.querySelector('.zed-suggest-bar');
+    if(!bar){
+      bar = document.createElement('div');
+      bar.className = 'zed-suggest-bar';
+      var replay = document.createElement('button');
+      replay.className = 'zed-suggest-replay';
+      replay.type = 'button';
+      replay.textContent = '↺ Replay';
+      bindTap(replay, function(){ replayVideo(wrap); });
+      var cls = document.createElement('button');
+      cls.className = 'zed-suggest-close';
+      cls.type = 'button';
+      cls.textContent = '✕ Close suggestions';
+      bindTap(cls, function(){ closeSuggestions(wrap); });
+      bar.appendChild(replay);
+      bar.appendChild(cls);
+      wrap.appendChild(bar);
+      wrap.appendChild(close); // X stays last
+    }
+    // Restore "show suggestions" state after a facade wipe / re-render
+    if(wrap.dataset.zedShowSuggest === '1') wrap.classList.add('zed-show-suggest');
+    else wrap.classList.remove('zed-show-suggest');
+  }
+  function showSuggestBar(wrap){
+    if(!wrap) return;
+    wrap.dataset.zedShowSuggest = '1';
+    wrap.classList.add('zed-show-suggest');
+    ensureControls(wrap);
+  }
+  function hideSuggestBar(wrap){
+    if(!wrap) return;
+    wrap.dataset.zedShowSuggest = '0';
+    wrap.classList.remove('zed-show-suggest');
+  }
+  function buildYtSrc(id, autoplay){
+    return 'https://www.youtube-nocookie.com/embed/' + id + '?autoplay=' + (autoplay ? '1' : '0') + '&modestbranding=1&rel=0&iv_load_policy=3&playsinline=1&controls=1&fs=1&enablejsapi=1';
+  }
+  function reloadYt(wrap, autoplay){
+    var id = getOrigId(wrap);
+    var ifr = wrap ? wrap.querySelector('iframe') : null;
+    if(!id || !ifr) return false;
+    hideSuggestBar(wrap);
+    try{ ifr.setAttribute('src', buildYtSrc(id, autoplay)); }catch(e){}
+    return true;
+  }
+  function closeSuggestions(wrap){
+    // Back to the ORIGINAL video, paused at the start — the end-screen grid is gone.
+    if(!reloadYt(wrap, false)){
+      // No iframe / no ID: fall back to pausing at start via API
+      var ifr = wrap ? wrap.querySelector('iframe') : null;
+      if(ifr){ ytCmd(ifr, 'seekTo', [0, true]); ytCmd(ifr, 'pauseVideo'); }
+      hideSuggestBar(wrap);
+    }
+    // Keep the Play button in sync: other script listens to playerState, but force it here too
+    try{
+      var card = wrap.closest ? wrap.closest('.zed-video-card') : null;
+      if(card){ var pb = card.querySelector('[data-zed-play]'); if(pb) pb.textContent = '▶ Play'; card.dataset.zedPlaying = '0'; }
+    }catch(e){}
+  }
+  function replayVideo(wrap){
+    if(!reloadYt(wrap, true)){
+      var ifr = wrap ? wrap.querySelector('iframe') : null;
+      if(ifr){ ytCmd(ifr, 'seekTo', [0, true]); ytCmd(ifr, 'playVideo'); }
+      hideSuggestBar(wrap);
+    }
+  }
+  function sweep(){
+    document.querySelectorAll('.yt-lite, .aspect-video').forEach(function(wrap){
+      try{
+        var hasYt = wrap.classList.contains('yt-lite') || wrap.querySelector('iframe[src*="youtube"]') || wrap.querySelector('iframe[src*="youtube-nocookie"]') || wrap.dataset.vid;
+        if(hasYt) ensureControls(wrap);
+      }catch(e){}
+    });
+  }
+  // --- Unify the actions-row Expand button with the same enter/exit logic ---
+  var _origToggle = window.zedToggleExpand;
+  window.zedToggleExpand = function(card){
+    try{
+      var wrap = card ? (card.querySelector('.yt-lite') || card.querySelector('.aspect-video') || (card.querySelector('iframe') && card.querySelector('iframe').parentElement) || (card.querySelector('video') && card.querySelector('video').parentElement) || card) : null;
+      if(!wrap) { if(_origToggle) return _origToggle(card); return; }
+      if(wrap.classList.contains('zed-video-fullscreen')) exitFullscreen();
+      else enterFullscreen(wrap);
+    }catch(e){ if(_origToggle) return _origToggle(card); }
+  };
+  // --- Safety net: if YouTube's iframe ever becomes the fullscreen element, exit it immediately. ---
+  // Our X lives outside the iframe, so iframe-fullscreen would hide it. Exiting puts the user back
+  // where ZED Expand (which uses wrapper-fullscreen) can take over.
+  var handlingIframeFs = false;
+  function onFsChange(){
+    try{
+      var fs = document.fullscreenElement || document.webkitFullscreenElement || document.mozFullScreenElement;
+      if(fs && fs.tagName === 'IFRAME' && /youtube/.test(fs.getAttribute('src') || '')){
+        if(handlingIframeFs) return;
+        handlingIframeFs = true;
+        try{ if(document.exitFullscreen) document.exitFullscreen(); }catch(e){}
+        try{ if(document.webkitExitFullscreen) document.webkitExitFullscreen(); }catch(e){}
+        document.querySelectorAll('.zed-video-fullscreen').forEach(function(w){ w.classList.remove('zed-video-fullscreen'); });
+        unlockOrientation();
+        setTimeout(function(){ handlingIframeFs = false; }, 500);
+      } else if(!fs){
+        unlockOrientation();
+      }
+    }catch(e){ handlingIframeFs = false; }
+  }
+  document.addEventListener('fullscreenchange', onFsChange);
+  document.addEventListener('webkitfullscreenchange', onFsChange);
+  document.addEventListener('mozfullscreenchange', onFsChange);
+  // --- YouTube playerState: 0 = ended -> show "Close suggestions" bar. 1 = playing -> hide it. ---
+  window.addEventListener('message', function(ev){
+    try{
+      var d = ev.data;
+      if(typeof d === 'string'){ try{ d = JSON.parse(d); }catch(e){ return; } }
+      if(!d || d.event !== 'infoDelivery' || !d.info) return;
+      var state = d.info.playerState;
+      if(state !== 0 && state !== 1) return;
+      var iframes = document.querySelectorAll('iframe');
+      for(var i = 0; i < iframes.length; i++){
+        if(iframes[i].contentWindow === ev.source){
+          var wrap = getWrap(iframes[i]);
+          if(wrap){
+            if(state === 0) showSuggestBar(wrap);
+            else hideSuggestBar(wrap);
+          }
+          break;
+        }
+      }
+    }catch(e){}
+  });
+  sweep();
+  setInterval(sweep, 500);
+  try{ new MutationObserver(function(){ sweep(); }).observe(document.body, {childList:true, subtree:true}); }catch(e){}
+  console.log('[ZED] Fullscreen Close + Suggestions Close fix active (18 Nov 2026)');
+})();
+</script>
+
 </body>
 </html>
