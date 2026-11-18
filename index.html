@@ -1903,19 +1903,12 @@ if (typeof pdfjsLib !== 'undefined') {
 }
 </script>
 <style>
-/* Enhanced PDF Viewer Styles */
-#zed-pdf-modal { background:#04101F !important; }
-#zed-pdf-container::-webkit-scrollbar { width:6px; height:6px; }
-#zed-pdf-container::-webkit-scrollbar-thumb { background:#1E3A5F; border-radius:999px; }
-.pdf-page-canvas { background:white; box-shadow:0 4px 24px rgba(0,0,0,0.5); border-radius:4px; max-width:none !important; max-height:none !important; flex-shrink:0; }
-/* FIX 18 Nov — PDF zoom: never stretch/squash the page. The old max-width:100% squeezed a zoomed page back to screen width while its height stayed at zoom height, so text went tall + overlapping. */
-#zed-pdf-modal #pdf-canvas{ max-width:none !important; max-height:none !important; flex-shrink:0 !important; }
-#zed-pdf-modal #zed-pdf-container{ display:block !important; }
-#zed-pdf-modal #pdf-render-wrapper{ width:max-content !important; max-width:none !important; margin-left:auto !important; margin-right:auto !important; }
-#zed-pdf-modal #pdf-scroll-container{ width:max-content !important; max-width:none !important; margin-left:auto !important; margin-right:auto !important; }
-#zed-pdf-modal #pdf-scroll-container > div{ width:max-content !important; max-width:none !important; margin-left:auto !important; margin-right:auto !important; flex-shrink:0; }
-.zed-pdf-enhanced-btn { transition:all 0.15s; }
-.zed-pdf-enhanced-btn:active { transform:scale(0.96); }
+/* ZED PDF VIEWER V2 — clean, no max-content centring, no sideways drift */
+#zed-pdf-modal[data-v2="1"] { display:flex !important; background:#04101F !important; }
+#zed-pdf-modal[data-v2="1"] [data-act="container"] { scroll-behavior:auto !important; overscroll-behavior:contain !important; }
+#zed-pdf-modal[data-v2="1"] [data-act="container"]::-webkit-scrollbar { width:6px; height:6px; }
+#zed-pdf-modal[data-v2="1"] [data-act="container"]::-webkit-scrollbar-thumb { background:#1E3A5F; border-radius:999px; }
+#zed-pdf-modal[data-v2="1"] canvas { background:#fff; box-shadow:0 4px 24px rgba(0,0,0,0.5); border-radius:4px; display:block; flex-shrink:0; max-width:none !important; max-height:none !important; }
 </style>
 
 <style>
@@ -2959,768 +2952,504 @@ if(h)throw Error(h.message);F(vidFile?"Video uploaded from phone ✓":"Video add
 
 
 <script>
-// ZED SCHOLAR - ENHANCED PDF VIEWER - Offline First - PDF.js Powered
+// ZED PDF VIEWER V2 — REBUILT 19 Nov 2026 — HOW A REAL PDF VIEWER WORKS
+// Why the old viewer kept breaking:
+//  - It had TWO modes (PAGE / SCROLL). Switching modes destroyed ALL canvases (innerHTML='')
+//    and re-rendered every page from scratch, then jumped scrollTop back to a saved page.
+//    Any scroll during that re-render fought the jump, so it felt like "pulling me back".
+//  - Zoom anchor was a fraction of the WHOLE document, so it drifted sideways + vertically.
+//  - Pinch scaled the WHOLE scroll container (all pages at once).
+//  - FIT was auto-clicked and raced the first render, resetting to page 1.
+//  - currentPage was never updated while scrolling, so Prev/Next/FIT thought you were on page 1.
+// V2 rules (these are what Chrome / Drive / Adobe do):
+//  1. ONE mode only: always continuous vertical scroll. No PAGE/SCROLL toggle to destroy anything.
+//  2. DOM is STABLE: one wrapper + one canvas per page, created ONCE. Zoom/rotate only changes
+//     wrapper heights + canvas CSS size. Canvases are NEVER cleared, NEVER rebuilt.
+//  3. Only VISIBLE pages (+ neighbours) are rendered, via IntersectionObserver. Scrolling never
+//     triggers a re-render of the whole document, and rendering never touches scrollTop.
+//  4. scrollTop is ONLY set by explicit user actions: Prev/Next, page jump, FIT, zoom, rotate,
+//     pinch-release. The scroll handler ONLY reads scroll to update the page number — it NEVER
+//     writes scrollTop. That is the fix for "wanting to take me back".
+//  5. Zoom anchor is page-relative: {page, fracX, fracY} — where inside WHICH page.
+//  6. Pinch only scales the ONE canvas under your fingers, live. The rest of the doc does not move.
 (function(){
-  const DB_NAME='zed_internal_storage_v2', STORE_NAME='offline_files';
-  const SUPABASE_ANON_KEY = 'sb_publishable_74vo5_RlNXb0U0TrNLCdCQ_8zjDwFni';
-  
-  function openDB(){ return new Promise((res,rej)=>{ const r=indexedDB.open(DB_NAME,2); r.onupgradeneeded=e=>{ const db=e.target.result; if(!db.objectStoreNames.contains(STORE_NAME)){ db.createObjectStore(STORE_NAME,{keyPath:'id'}); } }; r.onsuccess=()=>res(r.result); r.onerror=()=>rej(r.error); }); }
-  
-  let currentPdf = null;
-  let currentPageNum = 1;
-  let totalPages = 0;
-  let currentScale = 1.3;
-  let currentRotation = 0; // V16.3: 0, 90, 180, 270 - ROTATE button was dead, now actually rotates
-  let isScrollMode = false;
-  let currentBlob = null;
-  let currentBlobUrl = null;
-  let currentTitle = 'Paper';
-  let renderQueue = [];
-  let isRendering = false;
-  // V16.4: Smooth pinch - generation guard stops overlapping renders from fighting each other
-  let renderGen = 0;
-  let activeRenderTask = null;
-  let pinchCommitTimer = null;
-  // FIX 18 Nov — ANCHORED ZOOM: zoom stays on the thing you zoomed on.
-  // An anchor = the viewport point (x,y) + its position as a fraction (fx,fy) of the whole scrollable content.
-  // After a re-render at a new scale, scroll is set so that same fraction sits under the same viewport point.
-  // Fractions work for both single-page and scroll mode, and need no wrapper-offset maths.
-  let pendingPdfAnchor = null; // applied once, after the next render
-  let pendingScrollToPage = 0; // scroll mode: after re-render, jump to this page
-  function getPdfContainerEl(){ return document.getElementById('zed-pdf-container'); }
-  function capturePdfAnchor(clientX, clientY){
-    const c=getPdfContainerEl(); if(!c) return null;
-    try{
-      const r=c.getBoundingClientRect();
-      const sw=c.scrollWidth||1, sh=c.scrollHeight||1;
-      return {x:clientX, y:clientY, fx:(c.scrollLeft + (clientX - r.left))/sw, fy:(c.scrollTop + (clientY - r.top))/sh};
-    }catch(e){ return null; }
-  }
-  function captureCenterPdfAnchor(){ const c=getPdfContainerEl(); if(!c) return null; const r=c.getBoundingClientRect(); return capturePdfAnchor(r.left + r.width/2, r.top + r.height/2); }
-  function captureTopLeftPdfAnchor(){ const c=getPdfContainerEl(); if(!c) return null; const r=c.getBoundingClientRect(); return {x:r.left, y:r.top, fx:0, fy:0}; }
-  function restorePdfAnchor(a){
-    if(!a) return; const c=getPdfContainerEl(); if(!c) return;
-    try{
-      const r=c.getBoundingClientRect();
-      c.scrollLeft = Math.max(0, a.fx*(c.scrollWidth||1) - (a.x - r.left));
-      c.scrollTop = Math.max(0, a.fy*(c.scrollHeight||1) - (a.y - r.top));
-    }catch(e){}
-  }
-  function applyPendingPdfAnchor(){ const a=pendingPdfAnchor; pendingPdfAnchor=null; if(a) restorePdfAnchor(a); }
-  function scrollToPdfPage(n){
-    const c=getPdfContainerEl(); if(!c) return;
-    try{
-      const cv=c.querySelector('#pdf-scroll-container canvas[data-page="'+n+'"]');
-      if(cv){ c.scrollTop = Math.max(0, cv.offsetTop - 12); c.scrollLeft = 0; }
-    }catch(e){}
-  }
-  function isCancelledRenderErr(e){ if(!e) return false; const n=(e.name||''); const m=(e.message||''); return n==='RenderingCancelledException' || /cancel/i.test(n) || /cancel/i.test(m); }
-  
-  function showToast(m,isError){
-    let t=document.getElementById('zed-offline-toast');
-    if(!t){
-      t=document.createElement('div');t.id='zed-offline-toast';
-      t.innerHTML='<span id="zed-toast-text"></span>';
-      t.style.cssText='position:fixed;bottom:20px;left:50%;transform:translateX(-50%) translateY(120px);background:#1A1917;border:2px solid #E8C15A;color:#F5F1E8;padding:14px 22px;border-radius:14px;font-size:13px;z-index:9999999;transition:transform 0.35s cubic-bezier(.2,.8,.2,1);box-shadow:0 10px 30px rgba(0,0,0,0.5);max-width:90vw;text-align:center;font-family:"Bricolage Grotesque",sans-serif;font-weight:600;';
-      document.body.appendChild(t);
-    }
-    const txt=document.getElementById('zed-toast-text');if(txt) txt.textContent=m;
-    t.style.borderColor=isError?'#ff9a9a':'#E8C15A';
-    t.style.transform='translateX(-50%) translateY(0)';
-    clearTimeout(t._hide);
-    t._hide=setTimeout(()=>{t.style.transform='translateX(-50%) translateY(120px)';},4000);
-  }
+  if (window.__zedPdfV2Loaded) return;
+  window.__zedPdfV2Loaded = true;
+  var SUPA_KEY = 'sb_publishable_74vo5_RlNXb0U0TrNLCdCQ_8zjDwFni';
+  var active = null; // current viewer instance, null when closed
+
+  function clamp(v, lo, hi){ return Math.max(lo, Math.min(hi, v)); }
+  function esc(s){ return String(s||'Paper').slice(0,60).replace(/</g,'&lt;').replace(/>/g,'&gt;'); }
 
   async function fetchBlobFromUrl(url){
-    // Try to fetch blob URL or http URL
-    try{
-      if(url.startsWith('blob:')){
-        const resp = await fetch(url);
-        return await resp.blob();
-      } else {
-        // URL needs key
-        const resp = await fetch(url, {
-          mode:'cors',
-          cache:'no-store',
-          headers: { 'apikey': SUPABASE_ANON_KEY, 'Authorization': `Bearer ${SUPABASE_ANON_KEY}` }
-        });
-        if(!resp.ok) throw new Error('Network '+resp.status);
-        return await resp.blob();
-      }
-    }catch(e){
-      console.log('fetchBlob error', e);
-      throw e;
-    }
+    if (url && url.indexOf('blob:')===0){ var r0 = await fetch(url); return await r0.blob(); }
+    var r = await fetch(url, { mode:'cors', cache:'no-store', headers:{ 'apikey': SUPA_KEY, 'Authorization':'Bearer '+SUPA_KEY } });
+    if(!r.ok) throw new Error('Network '+r.status);
+    return await r.blob();
+  }
+  async function waitForPdfJs(){
+    var n=0;
+    while (typeof pdfjsLib==='undefined' && n<50){ await new Promise(function(res){ setTimeout(res,100); }); n++; }
+    if (typeof pdfjsLib==='undefined') throw new Error('PDF engine not loaded — check internet');
   }
 
-  async function renderPage(pdf, num, canvas, scale){
-    const page = await pdf.getPage(num);
-    const viewport = page.getViewport({scale, rotation: currentRotation});
-    // V16.4: Cap pixels - rotated + pinch-zoomed pages at dpr 3 could exceed canvas limits and throw 'Failed to render'
-    let dpr = Math.min(window.devicePixelRatio || 1, 2);
-    if(viewport.width * dpr > 3500) dpr = 3500 / viewport.width;
-    if(viewport.height * dpr > 3500) dpr = 3500 / viewport.height;
-    dpr = Math.max(0.5, dpr);
-    try{ canvas.style.transform=''; canvas.style.willChange=''; }catch(e){}
-    canvas.width = Math.floor(viewport.width * dpr);
-    canvas.height = Math.floor(viewport.height * dpr);
-    canvas.style.width = viewport.width + 'px';
-    canvas.style.height = viewport.height + 'px';
-    canvas.style.maxWidth='none'; canvas.style.maxHeight='none'; canvas.style.flexShrink='0'; // FIX 18 Nov: width+height always scale together — never squash one axis to fit the screen
-    const ctx = canvas.getContext('2d');
-    ctx.setTransform(dpr,0,0,dpr,0,0);
-    const renderContext = { canvasContext: ctx, viewport };
-    const task = page.render(renderContext);
-    activeRenderTask = task;
-    try{ await task.promise; }finally{ if(activeRenderTask===task) activeRenderTask=null; }
-    return viewport;
-  }
-
-  async function renderSinglePage(){
-    if(!currentPdf) return;
-    const myGen = ++renderGen;
-    const loader = document.getElementById('zed-pdf-loader');
-    const canvas = document.getElementById('pdf-canvas');
-    const scrollContainer = document.getElementById('pdf-scroll-container');
-    // V16.4: NEVER hide the current page before the new one is ready, and NEVER show loader instantly.
-    // Old code hid the canvas + showed loader on every pinch move, so a cancelled mid-pinch render left a 'Failed to render' screen.
-    // Now: keep old page visible, only show loader if render really takes >350ms.
-    if(scrollContainer) scrollContainer.style.display='none';
-    let loaderTimer = setTimeout(()=>{ if(renderGen===myGen && loader) loader.style.display='flex'; }, 350);
-    try{
-      const c = document.getElementById('pdf-canvas');
-      if(!c) { clearTimeout(loaderTimer); return; }
-      if(renderGen!==myGen){ clearTimeout(loaderTimer); return; }
-      // Cancel any in-flight render so pinch/rotate/zoom don't pile up overlapping renders
-      if(activeRenderTask){ try{ activeRenderTask.cancel(); }catch(e){} }
-      c.style.display='block';
-      await renderPage(currentPdf, currentPageNum, c, currentScale);
-      if(renderGen!==myGen){ clearTimeout(loaderTimer); return; } // stale - a newer pinch/rotate already started
-      clearTimeout(loaderTimer);
-      if(loader) loader.style.display='none';
-      try{ applyPendingPdfAnchor(); }catch(e){}
-      updateUI();
-    }catch(e){
-      clearTimeout(loaderTimer);
-      if(isCancelledRenderErr(e) || renderGen!==myGen){ if(loader && renderGen===myGen) loader.style.display='none'; return; } // cancelled/stale = silent, not an error
-      console.log('render error', e);
-      // V16.4: Real error -> keep old page visible, hide loader, tiny toast. Never replace loader with a blocking 'Failed to render' wall.
-      if(loader) loader.style.display='none';
-      try{ showToast('Could not re-render - tap + / - to try again', true); }catch(e2){}
-    }
-  }
-
-  async function renderScrollMode(){
-    if(!currentPdf) return;
-    const myGen = ++renderGen;
-    const loader = document.getElementById('zed-pdf-loader');
-    const canvas = document.getElementById('pdf-canvas');
-    const scrollContainer = document.getElementById('pdf-scroll-container');
-    if(canvas) canvas.style.display='none';
-    if(scrollContainer){
-      scrollContainer.style.display='flex';
-      scrollContainer.innerHTML='';
-    }
-    let loaderTimer = setTimeout(()=>{ if(renderGen===myGen && loader) loader.style.display='flex'; }, 350);
-    try{
-      for(let i=1;i<=totalPages;i++){
-        if(renderGen!==myGen){ clearTimeout(loaderTimer); return; } // stale - newer pinch/rotate started, abort this loop
-        const wrapper = document.createElement('div');
-        wrapper.style.cssText='position:relative;display:flex;flex-direction:column;align-items:center;gap:6px;width:max-content;max-width:none;min-width:100%;flex-shrink:0;';
-        const pageCanvas = document.createElement('canvas');
-        pageCanvas.className='pdf-page-canvas';
-        pageCanvas.dataset.page=i;
-        pageCanvas.style.cssText='background:white;box-shadow:0 4px 24px rgba(0,0,0,0.5);border-radius:4px;max-width:none;min-height:200px;flex-shrink:0;';
-        const label = document.createElement('div');
-        label.style.cssText='color:#9A9590;font-size:10px;font-weight:600;letter-spacing:0.06em;';
-        label.textContent = `Page ${i} / ${totalPages}`;
-        wrapper.appendChild(pageCanvas);
-        wrapper.appendChild(label);
-        scrollContainer.appendChild(wrapper);
-        await renderPage(currentPdf, i, pageCanvas, currentScale);
-        if(renderGen!==myGen){ clearTimeout(loaderTimer); return; }
-        if(i===1 && loader) loader.style.display='none';
-        await new Promise(r=>setTimeout(r, 20));
-      }
-      clearTimeout(loaderTimer);
-      if(renderGen!==myGen) return;
-      if(loader) loader.style.display='none';
-      try{ applyPendingPdfAnchor(); }catch(e){}
-      try{ if(pendingScrollToPage>0){ const p=pendingScrollToPage; pendingScrollToPage=0; scrollToPdfPage(p); } }catch(e){}
-      updateUI();
-    }catch(e){
-      clearTimeout(loaderTimer);
-      if(isCancelledRenderErr(e) || renderGen!==myGen){ if(loader && renderGen===myGen) loader.style.display='none'; return; }
-      console.log('scroll render error', e);
-      if(loader) loader.style.display='none';
-    }
-  }
-
-  function updateUI(){
-    const pageInput = document.getElementById('pdf-page-input');
-    const pageTotal = document.getElementById('pdf-page-total');
-    const zoomLabel = document.getElementById('pdf-zoom-label');
-    const prevBtn = document.getElementById('pdf-prev');
-    const nextBtn = document.getElementById('pdf-next');
-    if(pageInput) pageInput.value = currentPageNum;
-    if(pageTotal) pageTotal.textContent = totalPages;
-    if(zoomLabel) zoomLabel.textContent = Math.round(currentScale*75) + '%';
-    if(prevBtn) prevBtn.style.opacity = currentPageNum<=1 ? '0.4' : '1';
-    if(nextBtn) nextBtn.style.opacity = currentPageNum>=totalPages ? '0.4' : '1';
-  }
-
-  async function buildEnhancedModal(blobUrl, title, blob){
-    // Close existing
-    let old = document.getElementById('zed-pdf-modal');
-    if(old) old.remove();
-    
-    const modal = document.createElement('div');
+  // ---------- OPEN ----------
+  async function openPdfViewer(first, second, third){
+    // Flexible signature — every old caller still works:
+    // open(blob, {title, id}) | open(blobUrl, title, blob) | open(blobUrl, title)
+    var blob=null, title='Paper', blobUrl=null;
+    if (first && typeof first==='object' && first instanceof Blob){ blob=first; }
+    else if (typeof first==='string'){ blobUrl=first; }
+    if (second && typeof second==='object'){ title=second.title||'Paper'; if (second.blob) blob=second.blob; }
+    else if (typeof second==='string'){ title=second; }
+    if (third && third instanceof Blob){ blob=third; }
+    if (blobUrl && !blob){ try{ blob = await fetchBlobFromUrl(blobUrl); }catch(e){} }
+    if (!blob) throw new Error('No PDF to open');
+    // If a viewer is already open, close it FIRST — synchronously, so we never have two modals fighting.
+    try{ if (active) active.close(); }catch(e){}
+    var titleSafe = esc(title);
+    var modal = document.createElement('div');
     modal.id='zed-pdf-modal';
+    modal.setAttribute('data-v2','1');
     modal.style.cssText='position:fixed;inset:0;z-index:9999999;background:#04101F;display:flex;flex-direction:column;';
-    
-    const safeTitle = (title||'Paper').slice(0,60).replace(/</g,'&lt;');
-    
-    modal.innerHTML = `
-      <style>@keyframes spin{to{transform:rotate(360deg)}}</style>
-      <div style="height:52px;background:#1A1917;border-bottom:1px solid #2A2825;display:flex;align-items:center;justify-content:space-between;padding:0 12px;flex-shrink:0;">
-        <div style="display:flex;align-items:center;gap:8px;min-width:0;flex:1;">
-          <div style="color:#F5F1E8;font-size:13px;font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">${safeTitle}</div>
-          <span style="font-size:8px;background:#E8C15A;color:#fff;padding:3px 7px;border-radius:999px;font-weight:800;flex-shrink:0;">PDF VIEWER</span>
-        </div>
-        <div style="display:flex;gap:6px;flex-shrink:0;">
-          
-          <button id="zed-pdf-close-btn-enhanced" style="background:#F5F1E8;color:#000;border:none;width:32px;height:32px;border-radius:8px;font-size:14px;font-weight:700;cursor:pointer;display:flex;align-items:center;justify-content:center;">✕</button>
-        </div>
-      </div>
-      <div id="zed-pdf-controls-bar" style="height:46px;background:#141312;border-bottom:1px solid #2A2825;display:flex;align-items:center;justify-content:space-between;padding:0 10px;gap:8px;flex-shrink:0;overflow-x:auto;overflow-y:hidden;">
-        <div style="display:flex;align-items:center;gap:6px;">
-          <button id="pdf-prev" class="zed-pdf-enhanced-btn" style="background:#1E3A5F;border:1px solid #223A5E;color:#F5F1E8;width:36px;height:34px;border-radius:10px;display:flex;align-items:center;justify-content:center;cursor:pointer;font-size:16px;font-weight:700;">‹</button>
-          <div style="background:#0F2547;border:1px solid #1E3A5F;border-radius:10px;padding:0 8px;height:34px;display:flex;align-items:center;gap:6px;">
-            <input id="pdf-page-input" type="number" min="1" style="width:40px;background:transparent;border:none;color:#F5F1E8;text-align:center;font-size:12px;font-weight:700;outline:none;" value="1">
-            <span style="color:#6B6763;font-size:11px;">/</span>
-            <span id="pdf-page-total" style="color:#F5F1E8;font-size:12px;font-weight:700;min-width:18px;text-align:center;">1</span>
-          </div>
-          <button id="pdf-next" class="zed-pdf-enhanced-btn" style="background:#1E3A5F;border:1px solid #223A5E;color:#F5F1E8;width:36px;height:34px;border-radius:10px;display:flex;align-items:center;justify-content:center;cursor:pointer;font-size:16px;font-weight:700;">›</button>
-        </div>
-        <div style="display:flex;align-items:center;gap:6px;">
-          <button id="pdf-zoom-out" class="zed-pdf-enhanced-btn" style="background:#1E3A5F;border:1px solid #223A5E;color:#F5F1E8;width:36px;height:34px;border-radius:10px;cursor:pointer;font-size:14px;font-weight:700;">−</button>
-          <span id="pdf-zoom-label" style="color:#F5F1E8;font-size:11px;font-weight:700;min-width:44px;text-align:center;background:#0F2547;border:1px solid #1E3A5F;border-radius:8px;height:34px;display:flex;align-items:center;justify-content:center;padding:0 6px;">100%</span>
-          <button id="pdf-zoom-in" class="zed-pdf-enhanced-btn" style="background:#1E3A5F;border:1px solid #223A5E;color:#F5F1E8;width:36px;height:34px;border-radius:10px;cursor:pointer;font-size:14px;font-weight:700;">+</button>
-          <button id="pdf-fit" class="zed-pdf-enhanced-btn" style="background:#0F2547;border:1px solid #E8C15A;color:#A9B8D0;height:34px;padding:0 12px;border-radius:10px;font-size:10px;font-weight:800;cursor:pointer;letter-spacing:0.05em;">FIT</button>
-        </div>
-      </div>
-      <div id="zed-pdf-container" style="flex:1;overflow:auto;background:#0F0E0D;display:block;padding:12px;-webkit-overflow-scrolling:touch;position:relative;">
-        <div id="pdf-render-wrapper" style="position:relative;display:flex;flex-direction:column;align-items:center;gap:12px;width:max-content;max-width:none;min-width:100%;margin:0 auto;">
-          <div id="zed-pdf-loader" style="position:absolute;top:30%;left:50%;transform:translate(-50%,-50%);background:#1A1917;border:1px solid #2A2825;padding:22px 26px;border-radius:16px;display:flex;flex-direction:column;align-items:center;gap:14px;z-index:10;box-shadow:0 10px 30px rgba(0,0,0,0.5);">
-            <div style="width:38px;height:38px;border:3px solid #1E3A5F;border-top-color:#A9B8D0;border-radius:50%;animation:spin 0.7s linear infinite;"></div>
-            <div style="color:#F5F1E8;font-size:13px;font-weight:600;">Loading PDF</div>
-            <div style="color:#9A9590;font-size:11px;">${safeTitle.slice(0,35)}</div>
-          </div>
-          <canvas id="pdf-canvas" style="background:white;box-shadow:0 8px 32px rgba(0,0,0,0.6);border-radius:6px;max-width:none;display:none;flex-shrink:0;"></canvas>
-          <div id="pdf-scroll-container" style="width:max-content;max-width:none;min-width:100%;display:none;flex-direction:column;align-items:center;gap:16px;flex-shrink:0;"></div>
-        </div>
-      </div>
-      <div id="zed-pdf-bottom-bar" style="height:40px;background:#1A1917;border-top:1px solid #2A2825;display:flex;align-items:center;justify-content:space-between;padding:0 12px;flex-shrink:0;overflow-x:auto;">
-        <span id="zed-pdf-bottom-hint" style="color:#6B6763;font-size:10px;display:flex;align-items:center;gap:6px;"><span style="width:6px;height:6px;background:#E8C15A;border-radius:50%;display:inline-block;"></span> Pinch zoom • Swipe</span>
-        <div style="display:flex;gap:6px;">
-          <button id="pdf-toggle-scroll" style="background:#1E3A5F;border:1px solid #223A5E;color:#9A9590;height:28px;padding:0 12px;border-radius:999px;font-size:10px;font-weight:700;cursor:pointer;letter-spacing:0.04em;">SCROLL MODE</button>
-          <button id="pdf-rotate" style="background:#1E3A5F;border:1px solid #223A5E;color:#9A9590;height:28px;padding:0 10px;border-radius:999px;font-size:10px;font-weight:700;cursor:pointer;">↻ ROTATE</button>
-        </div>
-      </div>
-    `;
-    
+    modal.innerHTML =
+      '<div style="height:52px;background:#1A1917;border-bottom:1px solid #2A2825;display:flex;align-items:center;justify-content:space-between;padding:0 12px;flex-shrink:0;">'
+      + '<div style="display:flex;align-items:center;gap:8px;min-width:0;flex:1;"><div style="color:#F5F1E8;font-size:13px;font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">'+titleSafe+'</div>'
+      + '<span style="font-size:8px;background:#E8C15A;color:#fff;padding:3px 7px;border-radius:999px;font-weight:800;flex-shrink:0;">PDF VIEWER</span></div>'
+      + '<button data-act="close" style="background:#F5F1E8;color:#000;border:none;width:32px;height:32px;border-radius:8px;font-size:14px;font-weight:700;cursor:pointer;flex-shrink:0;">✕</button></div>'
+      + '<div style="height:46px;background:#141312;border-bottom:1px solid #2A2825;display:flex;align-items:center;justify-content:space-between;padding:0 10px;gap:8px;flex-shrink:0;">'
+      + '<div style="display:flex;align-items:center;gap:6px;"><button data-act="prev" style="background:#1E3A5F;border:1px solid #223A5E;color:#F5F1E8;width:36px;height:34px;border-radius:10px;cursor:pointer;font-size:16px;font-weight:700;">‹</button>'
+      + '<div style="background:#0F2547;border:1px solid #1E3A5F;border-radius:10px;padding:0 8px;height:34px;display:flex;align-items:center;gap:6px;"><input data-act="page-input" type="number" min="1" value="1" style="width:44px;background:transparent;border:none;color:#F5F1E8;text-align:center;font-size:12px;font-weight:700;outline:none;"><span style="color:#6B6763;font-size:11px;">/</span><span data-act="page-total" style="color:#F5F1E8;font-size:12px;font-weight:700;min-width:20px;text-align:center;">–</span></div>'
+      + '<button data-act="next" style="background:#1E3A5F;border:1px solid #223A5E;color:#F5F1E8;width:36px;height:34px;border-radius:10px;cursor:pointer;font-size:16px;font-weight:700;">›</button></div>'
+      + '<div style="display:flex;align-items:center;gap:6px;"><button data-act="zoom-out" style="background:#1E3A5F;border:1px solid #223A5E;color:#F5F1E8;width:36px;height:34px;border-radius:10px;cursor:pointer;font-size:14px;font-weight:700;">−</button>'
+      + '<span data-act="zoom-label" style="color:#F5F1E8;font-size:11px;font-weight:700;min-width:46px;text-align:center;background:#0F2547;border:1px solid #1E3A5F;border-radius:8px;height:34px;display:flex;align-items:center;justify-content:center;padding:0 6px;">100%</span>'
+      + '<button data-act="zoom-in" style="background:#1E3A5F;border:1px solid #223A5E;color:#F5F1E8;width:36px;height:34px;border-radius:10px;cursor:pointer;font-size:14px;font-weight:700;">+</button>'
+      + '<button data-act="fit" style="background:#0F2547;border:1px solid #E8C15A;color:#A9B8D0;height:34px;padding:0 12px;border-radius:10px;font-size:10px;font-weight:800;cursor:pointer;letter-spacing:0.05em;">FIT</button>'
+      + '<button data-act="rotate" style="background:#1E3A5F;border:1px solid #223A5E;color:#9A9590;height:34px;padding:0 10px;border-radius:10px;font-size:10px;font-weight:700;cursor:pointer;">↻ ROTATE</button></div></div>'
+      + '<div data-act="container" style="flex:1;overflow:auto;background:#0F0E0D;display:block;padding:12px 12px 32px;-webkit-overflow-scrolling:touch;position:relative;overscroll-behavior:contain;scroll-behavior:auto;">'
+      + '<div data-act="pages" style="display:flex;flex-direction:column;align-items:center;gap:16px;width:100%;margin:0 auto;"></div>'
+      + '<div data-act="loader" style="position:absolute;top:34%;left:50%;transform:translate(-50%,-50%);background:#1A1917;border:1px solid #2A2825;padding:22px 26px;border-radius:16px;display:flex;flex-direction:column;align-items:center;gap:12px;z-index:10;"><div style="width:34px;height:34px;border:3px solid #1E3A5F;border-top-color:#A9B8D0;border-radius:50%;animation:zedPdfSpin 0.7s linear infinite;"></div><div style="color:#F5F1E8;font-size:13px;font-weight:600;">Loading PDF</div></div>'
+      + '<style>@keyframes zedPdfSpin{to{transform:rotate(360deg)}}</style></div>'
+      + '<div style="height:34px;background:#1A1917;border-top:1px solid #2A2825;display:flex;align-items:center;justify-content:center;flex-shrink:0;"><span style="color:#6B6763;font-size:10px;">Scroll to read • Pinch to zoom • Swipe up / down</span></div>';
     document.body.appendChild(modal);
-    document.body.style.overflow='hidden';
-    
-    // Store current
-    currentBlob = blob;
-    currentBlobUrl = blobUrl;
-    currentTitle = title;
-    currentPageNum = 1;
-    currentScale = 1.3;
-    currentRotation = 0; // V16.3: every new document starts upright
-    isScrollMode = false;
-    
-    // Close handler
-    function closeViewer(){
-      modal.style.display='none';
-      document.body.style.overflow='';
-      setTimeout(()=>{ try{ modal.remove(); }catch{} const lib=document.getElementById('zed-offline-lib-modal'); if(lib) lib.style.display='flex'; },80);
-      if(currentPdf){
-        try{ currentPdf.destroy(); }catch{}
-        currentPdf=null;
+    try{ document.body.style.overflow='hidden'; }catch(e){}
+
+    var container = modal.querySelector('[data-act="container"]');
+    var pagesEl = modal.querySelector('[data-act="pages"]');
+    var loaderEl = modal.querySelector('[data-act="loader"]');
+    var pageInput = modal.querySelector('[data-act="page-input"]');
+    var pageTotalEl = modal.querySelector('[data-act="page-total"]');
+    var zoomLabel = modal.querySelector('[data-act="zoom-label"]');
+    var rotateBtn = modal.querySelector('[data-act="rotate"]');
+
+    var v = {
+      modal: modal, container: container, pagesEl: pagesEl,
+      pdf: null, total: 0, scale: 1, rotation: 0, currentPage: 1,
+      dims: [], // {w,h} at scale 1, rotation 0, per page (index 0 = page 1)
+      wrappers: [], canvases: [], renderedKey: [], rendering: {},
+      observer: null, closed: false, renderGen: 0,
+      scrollRaf: 0, isRestoring: false,
+      pinch: null, wheelTimer: null,
+      close: null
+    };
+    active = v;
+
+    function pageW(n){ var d=v.dims[n-1]; if(!d) return 600; return (v.rotation===90||v.rotation===270) ? d.h : d.w; }
+    function pageH(n){ var d=v.dims[n-1]; if(!d) return 800; return (v.rotation===90||v.rotation===270) ? d.w : d.h; }
+    function scaleKey(){ return v.scale.toFixed(3)+'|'+v.rotation; }
+    function updateUI(){
+      if (pageInput) pageInput.value = String(v.currentPage);
+      if (pageTotalEl) pageTotalEl.textContent = String(v.total||'–');
+      if (zoomLabel) zoomLabel.textContent = Math.round(v.scale*100)+'%';
+      var prevBtn = modal.querySelector('[data-act="prev"]');
+      var nextBtn = modal.querySelector('[data-act="next"]');
+      if (prevBtn) prevBtn.style.opacity = v.currentPage<=1 ? '0.4':'1';
+      if (nextBtn) nextBtn.style.opacity = v.currentPage>=v.total ? '0.4':'1';
+      if (rotateBtn){
+        rotateBtn.textContent = v.rotation===0 ? '↻ ROTATE' : '↻ '+v.rotation+'°';
+        rotateBtn.style.background = v.rotation!==0 ? '#E8C15A' : '#1E3A5F';
+        rotateBtn.style.color = v.rotation!==0 ? '#000' : '#9A9590';
+        rotateBtn.style.borderColor = v.rotation!==0 ? '#E8C15A' : '#223A5E';
       }
     }
-    document.getElementById('zed-pdf-close-btn-enhanced').onclick=closeViewer;
-    modal.addEventListener('click', (e)=>{ if(e.target===modal) closeViewer(); });
-    
-    document.getElementById('pdf-zoom-out').onclick=()=>{
-      pendingPdfAnchor=captureCenterPdfAnchor(); // FIX 18 Nov: +/- zoom stays on the centre of the screen
-      currentScale=Math.max(0.5, currentScale-0.25);
-      if(isScrollMode) renderScrollMode(); else renderSinglePage();
-    };
-    // FIX 18 Nov: + / ‹ / › / page number had NO handlers at all — they were dead buttons.
-    document.getElementById('pdf-zoom-in').onclick=()=>{
-      pendingPdfAnchor=captureCenterPdfAnchor();
-      currentScale=Math.min(3.5, currentScale+0.25);
-      if(isScrollMode) renderScrollMode(); else renderSinglePage();
-    };
-    document.getElementById('pdf-prev').onclick=()=>{
-      if(currentPageNum<=1) return;
-      currentPageNum--;
-      if(isScrollMode){ scrollToPdfPage(currentPageNum); try{ updateUI(); }catch(e){} }
-      else { pendingPdfAnchor=captureTopLeftPdfAnchor(); renderSinglePage(); }
-    };
-    document.getElementById('pdf-next').onclick=()=>{
-      if(currentPageNum>=totalPages) return;
-      currentPageNum++;
-      if(isScrollMode){ scrollToPdfPage(currentPageNum); try{ updateUI(); }catch(e){} }
-      else { pendingPdfAnchor=captureTopLeftPdfAnchor(); renderSinglePage(); }
-    };
-    document.getElementById('pdf-page-input').addEventListener('change', (e)=>{
-      const n=parseInt(e.target.value, 10);
-      if(!n || n<1 || n>totalPages){ try{ e.target.value=currentPageNum; }catch(err){} return; }
-      currentPageNum=n;
-      if(isScrollMode){ scrollToPdfPage(currentPageNum); try{ updateUI(); }catch(e2){} }
-      else { pendingPdfAnchor=captureTopLeftPdfAnchor(); renderSinglePage(); }
-    });
-    document.getElementById('pdf-fit').onclick=()=>{
-      // Fit to width
-      const container = document.getElementById('zed-pdf-container');
-      const wrapper = document.getElementById('pdf-render-wrapper');
-      if(container && currentPdf){
-        const availableWidth = container.clientWidth - 24;
-        currentPdf.getPage(currentPageNum).then(page=>{
-          const viewport = page.getViewport({scale:1, rotation: currentRotation}); // V16.3: FIT respects rotation
-          const scale = availableWidth / viewport.width;
-          currentScale = Math.min(2.5, Math.max(0.5, scale*0.95));
-          pendingPdfAnchor=captureTopLeftPdfAnchor(); // FIT shows the whole page from the top
-          if(isScrollMode) renderScrollMode(); else renderSinglePage();
-        });
-      }
-    };
-    document.getElementById('pdf-toggle-scroll').onclick=()=>{
-      isScrollMode=!isScrollMode;
-      const btn=document.getElementById('pdf-toggle-scroll');
-      if(btn) btn.textContent = isScrollMode ? 'PAGE MODE' : 'SCROLL MODE';
-      btn.style.background = isScrollMode ? '#E8C15A' : '#1E3A5F';
-      btn.style.color = isScrollMode ? '#000' : '#9A9590';
-      btn.style.borderColor = isScrollMode ? '#E8C15A' : '#223A5E';
-      if(isScrollMode){
-        pendingScrollToPage=currentPageNum; // FIX 18 Nov: scroll mode opens on the page you were on
-        renderScrollMode();
-      } else {
-        // Switch back to single page - find closest page in view
-        const canvases = document.querySelectorAll('#pdf-scroll-container canvas');
-        let closest = 1;
-        let minDist = Infinity;
-        const container = document.getElementById('zed-pdf-container');
-        const contTop = container.scrollTop;
-        canvases.forEach(c=>{
-          const rect = c.getBoundingClientRect();
-          const dist = Math.abs(rect.top);
-          if(dist<minDist){ minDist=dist; closest=parseInt(c.dataset.page)||1; }
-        });
-        currentPageNum = closest;
-        document.getElementById('pdf-scroll-container').style.display='none';
-        renderSinglePage();
-      }
-    };
-    
-    // V16.3: ROTATE - was a dead button (no onclick). Now cycles 0 -> 90 -> 180 -> 270 -> 0.
-    // In your photo the scan is sideways, so one tap turns it to portrait, another to landscape.
-    function updateRotateBtn(){
-      const rBtn=document.getElementById('pdf-rotate');
-      if(!rBtn) return;
-      rBtn.textContent = currentRotation===0 ? '↻ ROTATE' : '↻ '+currentRotation+'°';
-      rBtn.style.background = currentRotation!==0 ? '#E8C15A' : '#1E3A5F';
-      rBtn.style.color = currentRotation!==0 ? '#000' : '#9A9590';
-      rBtn.style.borderColor = currentRotation!==0 ? '#E8C15A' : '#223A5E';
+    function hideLoader(){ if (loaderEl) loaderEl.style.display='none'; }
+    function availWidth(){
+      try{ if (pagesEl && pagesEl.clientWidth>0) return pagesEl.clientWidth; }catch(e){}
+      return Math.max(0, container.clientWidth - 24);
     }
-    document.getElementById('pdf-rotate').onclick=()=>{
-      pendingPdfAnchor=captureCenterPdfAnchor(); // FIX 18 Nov: rotate keeps the middle of the screen
-      currentRotation = (currentRotation + 90) % 360;
-      updateRotateBtn();
-      // V16.3: After turning to landscape (90/270) the page gets wider than the screen.
-      // Auto-fit to width so it stays readable instead of overflowing / squashing.
-      if(currentPdf){
-        currentPdf.getPage(currentPageNum).then(page=>{
-          const vp = page.getViewport({scale:1, rotation: currentRotation});
-          const container = document.getElementById('zed-pdf-container');
-          if(container){
-            const avail = container.clientWidth - 24;
-            if(vp.width * currentScale > avail){
-              currentScale = Math.min(2.5, Math.max(0.5, (avail / vp.width) * 0.98));
-            }
-          }
-          if(isScrollMode) renderScrollMode(); else renderSinglePage();
-        }).catch(()=>{ if(isScrollMode) renderScrollMode(); else renderSinglePage(); });
-      } else {
-        if(isScrollMode) renderScrollMode(); else renderSinglePage();
-      }
-    };
-    // V16.4 SMOOTH PINCH: old code re-rendered the PDF on EVERY touchmove, so overlapping renders
-    // raced, cancelled each other, and left 'Failed to render'. New code:
-    // - WHILE pinching: only CSS scale the already-rendered canvas (instant, no render, no failure)
-    // - ON release: commit scale once, clear CSS, do ONE clean re-render at the final zoom
-    let pinchStartDist = 0;
-    let pinchStartScale = 1.3;
-    let pinchLiveScale = 1.3;
-    let isPinching = false;
-    let pinchTarget = null;
-    let pinchMidX = 0, pinchMidY = 0; // midpoint of the two fingers, in viewport (client) coords
-    let pinchAnchor = null; // capturePdfAnchor() at the midpoint — the thing under your fingers
-    const pdfContainer = document.getElementById('zed-pdf-container');
-    try{ pdfContainer.style.touchAction = 'pan-x pan-y'; }catch(e){}
-    function getPinchTarget(){ return isScrollMode ? document.getElementById('pdf-scroll-container') : document.getElementById('pdf-canvas'); }
-    function applyPinchLive(){
-      const el = getPinchTarget(); if(!el) return;
-      pinchTarget = el;
-      const ratio = pinchLiveScale / currentScale;
-      // FIX 18 Nov: old code always zoomed from 'center top', so the thing you pinched flew away.
-      // Now the zoom origin IS the pinch midpoint — the point under your fingers stays under your fingers.
-      let ox = 50, oy = 50;
+    function updateHorizontalLock(){
+      // If the widest page fits, there is NO horizontal scroll at all — kills sideways drift.
+      // Only when zoomed wider do we allow horizontal scrolling.
       try{
-        const rect = el.getBoundingClientRect();
-        if(rect.width>0 && rect.height>0){
-          ox = Math.max(0, Math.min(100, (pinchMidX - rect.left)/rect.width*100));
-          oy = Math.max(0, Math.min(100, (pinchMidY - rect.top)/rect.height*100));
-        }
+        var widest=0;
+        for (var i=1;i<=v.total;i++){ var w=pageW(i)*v.scale; if (w>widest) widest=w; }
+        var avail=availWidth();
+        if (widest>0 && widest <= avail + 1){
+          container.style.overflowX='hidden';
+          if (container.scrollLeft!==0) container.scrollLeft=0;
+        } else { container.style.overflowX='auto'; }
+        // FIX — was setting justifyContent (VERTICAL in a column flex), so horizontal alignment
+        // never changed and wide pages stayed centre-clipped with the left edge cut off (your screenshot).
+        // In a column flex, HORIZONTAL alignment is alignItems. Centre when it fits, left-align when it overflows.
+        var centre = widest <= avail + 1;
+        try{ pagesEl.style.alignItems = centre ? 'center' : 'flex-start'; }catch(e){}
+        for (var j=0;j<v.wrappers.length;j++){ v.wrappers[j].style.alignItems = centre ? 'center' : 'flex-start'; }
       }catch(e){}
-      el.style.willChange = 'transform';
-      el.style.transformOrigin = ox + '% ' + oy + '%';
-      el.style.transition = 'none';
-      el.style.transform = 'scale(' + ratio + ')';
-      const zl = document.getElementById('pdf-zoom-label'); if(zl) zl.textContent = Math.round(pinchLiveScale * 75) + '%';
     }
-    function clearPinchLive(){ if(pinchTarget){ pinchTarget.style.transform=''; pinchTarget.style.willChange=''; pinchTarget.style.transition=''; pinchTarget.style.transformOrigin=''; } pinchTarget=null; }
-    function endPinch(){
-      if(!isPinching) return;
-      isPinching = false;
-      const finalScale = pinchLiveScale;
-      const anchor = pinchAnchor; // the thing under your fingers, captured while pinching
-      clearPinchLive();
-      pinchStartDist = 0;
-      if(Math.abs(finalScale - currentScale) > 0.01){
-        currentScale = finalScale;
-        pendingPdfAnchor = anchor; // re-render, then scroll so the same thing is under the same fingers
-        clearTimeout(pinchCommitTimer);
-        pinchCommitTimer = setTimeout(()=>{ if(isScrollMode) renderScrollMode(); else renderSinglePage(); }, 60);
-      } else { try{ updateUI(); }catch(e){} }
-    }
-    pdfContainer.addEventListener('touchstart', (e)=>{
-      if(e.touches.length===2){
-        isPinching = true;
-        clearTimeout(pinchCommitTimer);
-        pinchStartDist = Math.hypot(e.touches[0].pageX - e.touches[1].pageX, e.touches[0].pageY - e.touches[1].pageY);
-        pinchStartScale = currentScale;
-        pinchLiveScale = currentScale;
-        pinchMidX = (e.touches[0].clientX + e.touches[1].clientX)/2;
-        pinchMidY = (e.touches[0].clientY + e.touches[1].clientY)/2;
-        pinchAnchor = capturePdfAnchor(pinchMidX, pinchMidY);
+    function layoutPages(){
+      // Resize wrappers + canvas CSS boxes ONLY. Never touches canvas bitmaps, never clears DOM.
+      for (var i=1;i<=v.total;i++){
+        var wrap=v.wrappers[i-1]; var cv=v.canvases[i-1]; if(!wrap||!cv) continue;
+        var w=Math.round(pageW(i)*v.scale), h=Math.round(pageH(i)*v.scale);
+        wrap.style.height=h+'px';
+        cv.style.width=w+'px'; cv.style.height=h+'px';
       }
-    }, {passive:true});
-    pdfContainer.addEventListener('touchmove', (e)=>{
-      if(e.touches.length===2 && isPinching){
-        try{ e.preventDefault(); }catch(err){}
-        const dist = Math.hypot(e.touches[0].pageX - e.touches[1].pageX, e.touches[0].pageY - e.touches[1].pageY);
-        if(pinchStartDist>0 && dist>0){
-          const ratio = dist / pinchStartDist;
-          pinchLiveScale = Math.min(3.5, Math.max(0.5, pinchStartScale * ratio));
-          pinchMidX = (e.touches[0].clientX + e.touches[1].clientX)/2;
-          pinchMidY = (e.touches[0].clientY + e.touches[1].clientY)/2;
-          // Do NOT re-capture the anchor here: while the page is CSS-scaled, layout coords
-          // no longer match what is visually under your fingers, so re-capturing would drift.
-          // The touchstart anchor (the thing you first pinched) is kept until release.
-          // Live CSS zoom only - no PDF re-render while fingers are moving
-          if(window.requestAnimationFrame){ requestAnimationFrame(applyPinchLive); } else { applyPinchLive(); }
+      updateHorizontalLock();
+    }
+    function captureAnchor(clientX, clientY){
+      // Page-relative anchor: WHICH page + WHERE inside it. Survives any zoom/rotate.
+      var cRect=container.getBoundingClientRect();
+      var best=null, bestDist=Infinity;
+      for (var i=1;i<=v.total;i++){
+        var wrap=v.wrappers[i-1]; if(!wrap) continue;
+        var r=wrap.getBoundingClientRect();
+        if (clientY>=r.top-2 && clientY<=r.bottom+2){
+          var fx = r.width>0 ? clamp((clientX-r.left)/r.width,0,1) : 0.5;
+          var fy = r.height>0 ? clamp((clientY-r.top)/r.height,0,1) : 0;
+          return { page:i, fx:fx, fy:fy, x:clientX, y:clientY };
         }
+        var d=Math.abs((r.top+r.height/2)-clientY);
+        if (d<bestDist){ bestDist=d; best=i; }
       }
-    }, {passive:false});
-    pdfContainer.addEventListener('touchend', (e)=>{ if(e.touches.length<2) endPinch(); }, {passive:true});
-    pdfContainer.addEventListener('touchcancel', ()=>{ endPinch(); }, {passive:true});
-    
-    // Keyboard navigation
-    const keyHandler = (e)=>{
-      if(e.key==='ArrowLeft' && currentPageNum>1){ currentPageNum--; pendingPdfAnchor=captureTopLeftPdfAnchor(); renderSinglePage(); }
-      if(e.key==='ArrowRight' && currentPageNum<totalPages){ currentPageNum++; pendingPdfAnchor=captureTopLeftPdfAnchor(); renderSinglePage(); }
-      if(e.key==='Escape'){ closeViewer(); document.removeEventListener('keydown', keyHandler); }
-      if(e.key==='+' || e.key==='='){ pendingPdfAnchor=captureCenterPdfAnchor(); currentScale=Math.min(3.5, currentScale+0.2); if(isScrollMode) renderScrollMode(); else renderSinglePage(); }
-      if(e.key==='-' || e.key==='_'){ pendingPdfAnchor=captureCenterPdfAnchor(); currentScale=Math.max(0.5, currentScale-0.2); if(isScrollMode) renderScrollMode(); else renderSinglePage(); }
-      if(e.key==='r' || e.key==='R'){ const rb=document.getElementById('pdf-rotate'); if(rb) rb.click(); } // V16.3: R = rotate
+      if (best){
+        var wr=v.wrappers[best-1]; var rr=wr.getBoundingClientRect();
+        return { page:best, fx:clamp((clientX-rr.left)/Math.max(1,rr.width),0,1), fy:clamp((clientY-rr.top)/Math.max(1,rr.height),0,1), x:clientX, y:clientY };
+      }
+      return { page:v.currentPage, fx:0.5, fy:0.5, x:clientX, y:clientY };
+    }
+    function restoreAnchor(a){
+      if(!a) return;
+      try{
+        var wrap=v.wrappers[a.page-1]; if(!wrap) return;
+        var cRect=container.getBoundingClientRect();
+        var wRect=wrap.getBoundingClientRect();
+        var targetTop = container.scrollTop + (wRect.top - cRect.top) + (a.fy||0)*wRect.height - (a.y - cRect.top);
+        var targetLeft = container.scrollLeft + (wRect.left - cRect.left) + (a.fx||0)*wRect.width - (a.x - cRect.left);
+        v.isRestoring=true;
+        container.scrollTop = Math.max(0, targetTop);
+        var wNow = pageW(a.page)*v.scale;
+        if (wNow <= availWidth() + 1){ container.scrollLeft=0; }
+        else { container.scrollLeft = Math.max(0, targetLeft); }
+        setTimeout(function(){ v.isRestoring=false; }, 60);
+      }catch(e){ v.isRestoring=false; }
+    }
+    function setScale(newScale, anchor){
+      newScale = clamp(newScale, 0.15, 3.5);
+      if (Math.abs(newScale - v.scale) < 0.001) return;
+      var a = anchor || (function(){ var r=container.getBoundingClientRect(); return captureAnchor(r.left+r.width/2, r.top+r.height/2); })();
+      v.scale = newScale;
+      v.renderGen++;
+      v.renderedKey = v.renderedKey.map(function(){ return ''; }); // old bitmaps are stale at new scale
+      layoutPages();
+      updateUI();
+      // Layout is synchronous — one rAF is enough for the settled rects. No double-restore fighting the user.
+      requestAnimationFrame(function(){ if (v.closed) return; restoreAnchor(a); renderVisible(); });
+    }
+    function goToPage(n){
+      n = clamp(Math.round(n)||1, 1, v.total);
+      v.currentPage=n; updateUI();
+      var wrap=v.wrappers[n-1]; if(!wrap) return;
+      // Explicit user action = the ONLY time we set scrollTop besides zoom/rotate/pinch.
+      var cRect=container.getBoundingClientRect(); var wRect=wrap.getBoundingClientRect();
+      v.isRestoring=true;
+      container.scrollTop = Math.max(0, container.scrollTop + (wRect.top - cRect.top) - 8);
+      if (pageW(n)*v.scale <= availWidth() + 1) container.scrollLeft=0;
+      setTimeout(function(){ v.isRestoring=false; }, 60);
+    }
+    async function renderPage(n){
+      if (v.closed || !v.pdf) return;
+      var key=scaleKey();
+      if (v.renderedKey[n-1]===key) return;
+      if (v.rendering[n]) return;
+      v.rendering[n]=true;
+      var myGen=v.renderGen;
+      try{
+        var page=await v.pdf.getPage(n);
+        if (v.closed || myGen!==v.renderGen) return;
+        var viewport=page.getViewport({ scale: v.scale, rotation: v.rotation });
+        var cv=v.canvases[n-1]; if(!cv) return;
+        var dpr=Math.min(window.devicePixelRatio||1, 2);
+        if (viewport.width*dpr>3500) dpr=3500/viewport.width;
+        if (viewport.height*dpr>3500) dpr=3500/viewport.height;
+        dpr=Math.max(0.5, dpr);
+        cv.width=Math.max(1, Math.floor(viewport.width*dpr));
+        cv.height=Math.max(1, Math.floor(viewport.height*dpr));
+        cv.style.width=viewport.width+'px'; cv.style.height=viewport.height+'px';
+        var ctx=cv.getContext('2d');
+        ctx.setTransform(dpr,0,0,dpr,0,0);
+        ctx.fillStyle='#fff'; ctx.fillRect(0,0,viewport.width,viewport.height);
+        await page.render({ canvasContext: ctx, viewport: viewport }).promise;
+        if (v.closed || myGen!==v.renderGen) return;
+        v.renderedKey[n-1]=key;
+        if (typeof page.cleanup==='function'){ try{ page.cleanup(); }catch(e){} }
+      }catch(e){
+        // A cancelled / stale render is silent — never show a "Failed to render" wall.
+      }finally{ v.rendering[n]=false; }
+    }
+    function renderVisible(){
+      if (v.closed) return;
+      var cRect=container.getBoundingClientRect();
+      for (var i=1;i<=v.total;i++){
+        var wrap=v.wrappers[i-1]; if(!wrap) continue;
+        var r=wrap.getBoundingClientRect();
+        // Visible + 1 page of margin each way. Everything else stays as a placeholder — no render.
+        if (r.bottom >= cRect.top-600 && r.top <= cRect.bottom+600){ renderPage(i); }
+      }
+    }
+    function syncCurrentPageFromScroll(){
+      // READ-ONLY: updates the page number. NEVER writes scrollTop.
+      if (v.closed) return;
+      try{
+        var cRect=container.getBoundingClientRect();
+        var best=0, bestVis=-1;
+        for (var i=1;i<=v.total;i++){
+          var wrap=v.wrappers[i-1]; if(!wrap) continue;
+          var r=wrap.getBoundingClientRect();
+          var vis=Math.max(0, Math.min(r.bottom, cRect.bottom)-Math.max(r.top, cRect.top));
+          if (vis>bestVis){ bestVis=vis; best=i; }
+        }
+        if (best>0 && best!==v.currentPage){ v.currentPage=best; updateUI(); }
+      }catch(e){}
+    }
+
+    // ---------- CLOSE ----------
+    function closeViewer(){
+      if (v.closed) return; v.closed=true;
+      try{ if (v.observer) v.observer.disconnect(); }catch(e){}
+      try{ if (v.pdf) v.pdf.destroy(); }catch(e){}
+      try{ modal.remove(); }catch(e){}
+      try{ document.body.style.overflow=''; }catch(e){}
+      if (active===v) active=null;
+      try{ var lib=document.getElementById('zed-offline-lib-modal'); if(lib) lib.style.display='flex'; }catch(e){}
+    }
+    v.close=closeViewer;
+    modal.querySelector('[data-act="close"]').onclick=closeViewer;
+    modal.addEventListener('click', function(e){ if (e.target===modal) closeViewer(); });
+
+    // ---------- TOOLBAR ----------
+    modal.querySelector('[data-act="prev"]').onclick=function(){ if (v.currentPage>1) goToPage(v.currentPage-1); };
+    modal.querySelector('[data-act="next"]').onclick=function(){ if (v.currentPage<v.total) goToPage(v.currentPage+1); };
+    pageInput.addEventListener('change', function(){
+      var n=parseInt(pageInput.value,10);
+      if (!n || n<1 || n>v.total){ pageInput.value=String(v.currentPage); return; }
+      goToPage(n);
+    });
+    modal.querySelector('[data-act="zoom-out"]').onclick=function(){
+      var r=container.getBoundingClientRect();
+      setScale(v.scale-0.25, captureAnchor(r.left+r.width/2, r.top+r.height/2));
     };
-    document.addEventListener('keydown', keyHandler);
-    
-    // Load PDF
-    try{
-      if(!blob){
-        // Fetch from blobUrl
-        blob = await fetchBlobFromUrl(blobUrl);
-        currentBlob = blob;
-      }
-      const arrayBuffer = await blob.arrayBuffer();
-      
-      // Wait for pdfjsLib
-      let attempts=0;
-      while(typeof pdfjsLib==='undefined' && attempts<50){
-        await new Promise(r=>setTimeout(r,100));
-        attempts++;
-      }
-      if(typeof pdfjsLib==='undefined'){
-        throw new Error('PDF.js not loaded - check internet');
-      }
-      
-      const loadingTask = pdfjsLib.getDocument({data: arrayBuffer});
-      currentPdf = await loadingTask.promise;
-      totalPages = currentPdf.numPages;
-      document.getElementById('pdf-page-total').textContent = totalPages;
-      
-      // Auto fit on first load
-      setTimeout(()=>{
-        const fitBtn = document.getElementById('pdf-fit');
-        if(fitBtn) fitBtn.click();
-      }, 100);
-      
-      await renderSinglePage();
-      
-      // Pre-cache next pages
-      for(let i=2;i<=Math.min(3,totalPages);i++){
-        currentPdf.getPage(i).then(()=>{});
-      }
-      
-    }catch(err){
-      console.log('PDF load error', err);
-      const loader = document.getElementById('zed-pdf-loader');
-      if(loader){
-        loader.innerHTML = `<div style="text-align:center;max-width:260px;">
-          <div style="font-size:32px;margin-bottom:12px;">⚠️</div>
-          <div style="color:#F5F1E8;font-size:13px;font-weight:600;margin-bottom:6px;">Failed to load PDF</div>
-          <div style="color:#9A9590;font-size:11px;margin-bottom:14px;word-break:break-word;">${err.message}</div>
-          <div style="display:flex;gap:8px;justify-content:center;">
-            <button id="retry-pdf" style="background:#E8C15A;color:#fff;border:none;padding:8px 14px;border-radius:8px;font-size:11px;font-weight:800;cursor:pointer;">Retry</button>
-            
-          </div>
-        </div>`;
-        document.getElementById('retry-pdf').onclick=()=>{ buildEnhancedModal(blobUrl, title, blob); };
-        
-      }
-    }
-  }
+    modal.querySelector('[data-act="zoom-in"]').onclick=function(){
+      var r=container.getBoundingClientRect();
+      setScale(v.scale+0.25, captureAnchor(r.left+r.width/2, r.top+r.height/2));
+    };
+    modal.querySelector('[data-act="fit"]').onclick=function(){
+      // FIT = fit the WIDEST page in the whole document, so EVERY page fits — not just the current one.
+      // Old code fit only the current page, so a wider page later stayed cut off.
+      // For your wide Science paper this lands around 40%. Minimum is now 15%, not 50%.
+      var a={ page:v.currentPage, fx:0, fy:0, x:container.getBoundingClientRect().left, y:container.getBoundingClientRect().top };
+      var avail=availWidth();
+      var widest0=0;
+      for (var i=1;i<=v.total;i++){ var w0=pageW(i); if (w0>widest0) widest0=w0; }
+      if (widest0>0) setScale(clamp((avail/widest0)*0.98, 0.15, 2.5), a);
+    };
+    rotateBtn.onclick=function(){
+      var r=container.getBoundingClientRect();
+      var a=captureAnchor(r.left+r.width/2, r.top+r.height/2);
+      v.rotation=(v.rotation+90)%360;
+      v.renderGen++; v.renderedKey=v.renderedKey.map(function(){ return ''; });
+      layoutPages(); updateUI();
+      requestAnimationFrame(function(){ if (v.closed) return; restoreAnchor(a); renderVisible(); });
+    };
+    document.addEventListener('keydown', function onKey(e){
+      if (v.closed){ document.removeEventListener('keydown', onKey); return; }
+      if (e.key==='Escape') closeViewer();
+      else if (e.key==='ArrowLeft' && v.currentPage>1) goToPage(v.currentPage-1);
+      else if (e.key==='ArrowRight' && v.currentPage<v.total) goToPage(v.currentPage+1);
+      else if (e.key==='+'||e.key==='='){ var r=container.getBoundingClientRect(); setScale(v.scale+0.2, captureAnchor(r.left+r.width/2, r.top+r.height/2)); }
+      else if (e.key==='-'||e.key==='_'){ var r2=container.getBoundingClientRect(); setScale(v.scale-0.2, captureAnchor(r2.left+r2.width/2, r2.top+r2.height/2)); }
+    });
 
-  // Intercept original viewer modal creation
-  function enhanceExistingModal(modalNode){
-    try{
-      const iframe = modalNode.querySelector('iframe#zed-pdf-viewer, iframe');
-      if(!iframe) return;
-      const src = iframe.src;
-      if(!src) return;
-      
-      // Extract title
-      let titleEl = modalNode.querySelector('[style*="font-weight:600"]');
-      let title = 'Paper';
-      if(titleEl) title = titleEl.textContent.replace('• Offline','').replace('OFFLINE','').trim();
-      // Try to get from global
-      if(window._blobUrlCache){
-        // src is blobUrl, we have blob? need to fetch
-      }
-      // Fetch blob then build enhanced
-      fetchBlobFromUrl(src).then(blob=>{
-        buildEnhancedModal(src, title, blob);
-      }).catch(e=>{
-        // Even if fetch fails, try to build with src only
-        buildEnhancedModal(src, title, null);
+    // ---------- SCROLL: read-only ----------
+    container.addEventListener('scroll', function(){
+      if (v.scrollRaf) return;
+      v.scrollRaf=requestAnimationFrame(function(){
+        v.scrollRaf=0; if (v.closed) return;
+        syncCurrentPageFromScroll();
       });
-    }catch(e){
-      console.log('enhance modal error', e);
+    }, { passive:true });
+
+    // ---------- WHEEL ZOOM (desktop Ctrl+wheel) ----------
+    container.addEventListener('wheel', function(e){
+      if (!(e.ctrlKey||e.metaKey)) return;
+      e.preventDefault();
+      var a=captureAnchor(e.clientX, e.clientY);
+      var next=clamp(v.scale * (e.deltaY<0 ? 1.12 : 0.89), 0.15, 3.5);
+      // Update layout immediately, defer the heavy re-render until the wheel stops.
+      var oldGen=v.renderGen; v.scale=next; v.renderGen++; v.renderedKey=v.renderedKey.map(function(){ return ''; });
+      layoutPages(); updateUI();
+      requestAnimationFrame(function(){ if (v.closed) return; restoreAnchor(a); });
+      clearTimeout(v.wheelTimer);
+      v.wheelTimer=setTimeout(function(){ if (!v.closed) renderVisible(); }, 120);
+    }, { passive:false });
+
+    // ---------- PINCH: only the canvas under your fingers scales live ----------
+    var pinchStartDist=0, pinchStartScale=1, pinchLiveScale=1, pinchMidX=0, pinchMidY=0, pinchAnchor=null, pinchCanvas=null;
+    container.addEventListener('touchstart', function(e){
+      if (e.touches.length!==2) return;
+      try{ container.style.touchAction='none'; }catch(err){}
+      pinchStartDist=Math.hypot(e.touches[0].pageX-e.touches[1].pageX, e.touches[0].pageY-e.touches[1].pageY);
+      pinchStartScale=v.scale; pinchLiveScale=v.scale;
+      pinchMidX=(e.touches[0].clientX+e.touches[1].clientX)/2;
+      pinchMidY=(e.touches[0].clientY+e.touches[1].clientY)/2;
+      pinchAnchor=captureAnchor(pinchMidX, pinchMidY);
+      // The ONE canvas under the midpoint — never the whole container.
+      pinchCanvas=null;
+      for (var i=0;i<v.canvases.length;i++){
+        var r=v.canvases[i].getBoundingClientRect();
+        if (pinchMidX>=r.left-4 && pinchMidX<=r.right+4 && pinchMidY>=r.top-4 && pinchMidY<=r.bottom+4){ pinchCanvas=v.canvases[i]; break; }
+      }
+    }, { passive:true });
+    container.addEventListener('touchmove', function(e){
+      if (e.touches.length!==2 || pinchStartDist<=0) return;
+      try{ e.preventDefault(); }catch(err){}
+      var dist=Math.hypot(e.touches[0].pageX-e.touches[1].pageX, e.touches[0].pageY-e.touches[1].pageY);
+      if (dist<=0) return;
+      pinchLiveScale=clamp(pinchStartScale*(dist/pinchStartDist), 0.15, 3.5);
+      pinchMidX=(e.touches[0].clientX+e.touches[1].clientX)/2;
+      pinchMidY=(e.touches[0].clientY+e.touches[1].clientY)/2;
+      if (zoomLabel) zoomLabel.textContent=Math.round(pinchLiveScale*100)+'%';
+      if (pinchCanvas){
+        var ratio=pinchLiveScale/v.scale;
+        var cr=pinchCanvas.getBoundingClientRect();
+        var ox=cr.width>0 ? clamp((pinchMidX-cr.left)/cr.width*100,0,100) : 50;
+        var oy=cr.height>0 ? clamp((pinchMidY-cr.top)/cr.height*100,0,100) : 50;
+        pinchCanvas.style.willChange='transform';
+        pinchCanvas.style.transformOrigin=ox+'% '+oy+'%';
+        pinchCanvas.style.transform='scale('+ratio+')';
+      }
+    }, { passive:false });
+    function endPinch(){
+      if (pinchStartDist<=0) return;
+      var finalScale=pinchLiveScale, anchor=pinchAnchor;
+      if (pinchCanvas){ pinchCanvas.style.transform=''; pinchCanvas.style.willChange=''; pinchCanvas.style.transformOrigin=''; }
+      pinchCanvas=null; pinchStartDist=0;
+      try{ container.style.touchAction='pan-x pan-y'; }catch(err){}
+      if (Math.abs(finalScale - v.scale) > 0.01){ setScale(finalScale, anchor); }
+      else { updateUI(); }
     }
+    container.addEventListener('touchend', function(e){ if (e.touches.length<2) endPinch(); }, { passive:true });
+    container.addEventListener('touchcancel', function(){ endPinch(); }, { passive:true });
+
+    // ---------- LOAD ----------
+    try{
+      await waitForPdfJs();
+      var buf=await blob.arrayBuffer();
+      var loadingTask=pdfjsLib.getDocument({ data: buf });
+      v.pdf=await loadingTask.promise;
+      v.total=v.pdf.numPages;
+      pageTotalEl.textContent=String(v.total);
+      // Measure every page ONCE (cheap) so layout is stable before any render.
+      v.dims=[];
+      for (var i=1;i<=v.total;i++){
+        try{
+          var pg=await v.pdf.getPage(i);
+          var vp=pg.getViewport({ scale:1, rotation:0 });
+          v.dims.push({ w:vp.width, h:vp.height });
+          if (typeof pg.cleanup==='function'){ try{ pg.cleanup(); }catch(e){} }
+        }catch(e){ v.dims.push({ w:600, h:850 }); }
+      }
+      // Initial scale = FIT WIDTH of the WIDEST page, so ALL pages fit on open.
+      // Old code fit only page 1 — a wider page later stayed cut off even at 50% (your screenshot).
+      // For normal A4 this is ~60-65%. For your wide Science scan it lands ~38-42% — the 40% you asked for.
+      // Floor is now 15%, not 50%, so even very wide scans fit.
+      var avail0=availWidth();
+      var widest00=0;
+      for (var ii=0;ii<v.dims.length;ii++){ if (v.dims[ii].w>widest00) widest00=v.dims[ii].w; }
+      if (avail0>0 && widest00>0){ v.scale=clamp((avail0/widest00)*0.98, 0.15, 2.5); }
+      // Build DOM ONCE — wrappers + canvases + placeholders.
+      for (var p=1;p<=v.total;p++){
+        var wrap=document.createElement('div');
+        wrap.style.cssText='position:relative;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:6px;width:100%;flex-shrink:0;';
+        wrap.dataset.page=String(p);
+        var cv=document.createElement('canvas');
+        cv.dataset.page=String(p);
+        cv.style.cssText='background:#fff;box-shadow:0 4px 24px rgba(0,0,0,0.5);border-radius:4px;display:block;flex-shrink:0;';
+        var lab=document.createElement('div');
+        lab.style.cssText='color:#9A9590;font-size:10px;font-weight:600;letter-spacing:0.06em;';
+        lab.textContent='Page '+p+' / '+v.total;
+        wrap.appendChild(cv); wrap.appendChild(lab);
+        pagesEl.appendChild(wrap);
+        v.wrappers.push(wrap); v.canvases.push(cv); v.renderedKey.push('');
+      }
+      layoutPages();
+      updateUI();
+      hideLoader();
+      // IntersectionObserver: render a page when it (nearly) enters view. Never re-renders the whole doc.
+      try{
+        v.observer=new IntersectionObserver(function(entries){
+          for (var k=0;k<entries.length;k++){ if (entries[k].isIntersecting){ var pn=parseInt(entries[k].target.dataset.page,10); if (pn) renderPage(pn); } }
+        }, { root: container, rootMargin:'600px 0px 600px 0px', threshold:0 });
+        v.wrappers.forEach(function(w){ v.observer.observe(w); });
+      }catch(e){ renderVisible(); }
+      renderVisible();
+      window.addEventListener('resize', function(){ if (!v.closed){ layoutPages(); } });
+    }catch(err){
+      hideLoader();
+      if (loaderEl){
+        loaderEl.style.display='flex';
+        loaderEl.innerHTML='<div style="text-align:center;max-width:260px;"><div style="font-size:32px;margin-bottom:12px;">⚠️</div><div style="color:#F5F1E8;font-size:13px;font-weight:600;margin-bottom:6px;">Failed to load PDF</div><div style="color:#9A9590;font-size:11px;margin-bottom:14px;word-break:break-word;">'+esc(err && err.message ? err.message : 'Unknown error')+'</div><button data-act="retry" style="background:#E8C15A;color:#fff;border:none;padding:8px 14px;border-radius:8px;font-size:11px;font-weight:800;cursor:pointer;">Retry</button></div>';
+        var rb=loaderEl.querySelector('[data-act="retry"]');
+        if (rb) rb.onclick=function(){ try{ closeViewer(); }catch(e){} openPdfViewer(blob, { title: title }); };
+      }
+    }
+    return v;
   }
 
-  // Watch for original modal creation
-  const bodyObserver = new MutationObserver((mutations)=>{
-    for(let mut of mutations){
-      for(let node of mut.addedNodes){
-        if(node.nodeType===1){
-          if(node.id==='zed-pdf-modal'){
-            enhanceExistingModal(node);
-          } else {
-            const inner = node.querySelector && node.querySelector('#zed-pdf-modal');
-            if(inner) enhanceExistingModal(inner);
-          }
-        }
+  window._zedOpenViewerEnhanced = function(blob, meta){ return openPdfViewer(blob, meta); };
+  window._zedOpenViewer = window._zedOpenViewerEnhanced;
+  window._zedOpenPdfV2 = openPdfViewer;
+
+  // Intercept the OLD React modal (iframe) — open it in V2 instead. Ignore our own V2 modal.
+  var mo=new MutationObserver(function(muts){
+    for (var i=0;i<muts.length;i++){
+      var mut=muts[i];
+      for (var j=0;j<mut.addedNodes.length;j++){
+        var node=mut.addedNodes[j];
+        if (!node || node.nodeType!==1) continue;
+        var cand=null;
+        if (node.id==='zed-pdf-modal') cand=node;
+        else if (node.querySelector) { try{ cand=node.querySelector('#zed-pdf-modal'); }catch(e){} }
+        if (!cand) continue;
+        if (cand.getAttribute && cand.getAttribute('data-v2')==='1') continue; // ours — ignore
+        var ifr=null;
+        try{ ifr=cand.querySelector('iframe'); }catch(e){}
+        if (!ifr || !ifr.src) { try{ cand.remove(); }catch(e){} continue; }
+        var src=ifr.src;
+        var title='Paper';
+        try{
+          var tEl=cand.querySelector('[style*="font-weight:600"]');
+          if (tEl) title=tEl.textContent.replace('• Offline','').replace('OFFLINE','').trim()||'Paper';
+        }catch(e){}
+        try{ cand.remove(); }catch(e){}
+        fetchBlobFromUrl(src).then(function(b){ return openPdfViewer(b, { title: title }); }).catch(function(){ return openPdfViewer(src, title); });
       }
     }
   });
-  bodyObserver.observe(document.body, {childList:true, subtree:true});
-
-  // Also override global functions
-  window._zedOpenViewerEnhanced = async function(blob, meta){
-    let blobUrl;
-    try{
-      if(meta && meta.id && window._blobUrlCache && window._blobUrlCache[meta.id]){
-        blobUrl = window._blobUrlCache[meta.id];
-      } else {
-        let pdfBlob = blob.type && blob.type.includes('pdf') ? blob : new Blob([blob], {type:'application/pdf'});
-        blobUrl = URL.createObjectURL(pdfBlob);
-        if(meta && meta.id){
-          if(!window._blobUrlCache) window._blobUrlCache={};
-          window._blobUrlCache[meta.id]=blobUrl;
-        }
-      }
-    }catch{
-      blobUrl = URL.createObjectURL(blob);
-    }
-    await buildEnhancedModal(blobUrl, meta.title||'Paper', blob);
-  };
-
-  // Override showRealOfflineLibrary to use enhanced viewer
-  const originalShowLib = window.showRealOfflineLibrary;
-  window.showRealOfflineLibrary = async function(){
-    // Call original to get modal, then override its view buttons
-    if(originalShowLib){
-      // We'll create our own enhanced library modal instead
-      const DB = await openDB();
-      const all = await new Promise((res,rej)=>{
-        const tx=DB.transaction(STORE_NAME,'readonly');
-        const req=tx.objectStore(STORE_NAME).getAll();
-        req.onsuccess=()=>res(req.result||[]);
-        req.onerror=()=>rej(req.error);
-      });
-      
-      // Build modal similar to original but with enhanced viewer
-      let old=document.getElementById('zed-offline-lib-modal'); if(old) old.remove();
-      const modal=document.createElement('div');
-      modal.id='zed-offline-lib-modal';
-      modal.style.cssText='position:fixed;inset:0;z-index:999999;background:rgba(0,0,0,0.88);display:flex;align-items:center;justify-content:center;padding:16px;backdrop-filter:blur(6px);';
-      
-      function formatSize(b){if(!b) return '';if(b<1024) return b+' B';if(b<1024*1024) return (b/1024).toFixed(1)+' KB';return (b/1024/1024).toFixed(1)+' MB';}
-      function formatDate(ts){ if(!ts) return ''; const d=new Date(ts); return d.toLocaleDateString(); }
-      
-      modal.innerHTML=`
-        <div style="background:#0F0E0D;border:2px solid #E8C15A;border-radius:18px;width:100%;max-width:460px;max-height:90vh;display:flex;flex-direction:column;box-shadow:0 20px 60px rgba(0,0,0,0.9);overflow:hidden;">
-          <div style="padding:16px;border-bottom:1px solid #2A2825;display:flex;justify-content:space-between;align-items:center;gap:12px;">
-            <div style="color:#F5F1E8;font-weight:800;font-size:15px;display:flex;align-items:center;gap:8px;"><span>📚</span><span>My Offline Papers (${all.length})</span><span style="background:#E8C15A;color:#fff;font-size:9px;font-weight:800;padding:3px 8px;border-radius:999px;">PDF VIEWER</span></div>
-            <button id="zed-lib-close" style="background:#F5F1E8;color:#000;border:none;width:36px;height:36px;border-radius:10px;font-weight:800;cursor:pointer;display:flex;align-items:center;justify-content:center;">✕</button>
-          </div>
-          <div style="padding:12px 16px;border-bottom:1px solid #1F1D1B;background:#141312;">
-            <div style="position:relative;">
-              <span style="position:absolute;left:12px;top:50%;transform:translateY(-50%);font-size:14px;">🔍</span>
-              <input id="zed-lib-search" type="text" placeholder="Search offline papers..." autocomplete="off" style="width:100%;height:44px;background:#1A1917;border:1px solid #2A2825;border-radius:12px;padding:0 14px 0 38px;color:#F5F1E8;font-size:13px;outline:none;font-family:inherit;">
-            </div>
-          </div>
-          <div id="zed-lib-list" style="flex:1;overflow:auto;padding:12px 12px 16px 12px;background:#04101F;"></div>
-        </div>
-      `;
-      document.body.appendChild(modal);
-      
-      const listWrap = modal.querySelector('#zed-lib-list');
-      const searchInput = modal.querySelector('#zed-lib-search');
-      const closeBtn = modal.querySelector('#zed-lib-close');
-      
-      function renderList(items){
-        if(items.length===0){
-          listWrap.innerHTML=`<div style="text-align:center;padding:32px 16px;color:#9A9590;"><div style="font-size:32px;margin-bottom:12px;">📄</div><div style="font-size:13px;font-weight:600;margin-bottom:6px;">No offline papers yet</div><div style="font-size:11px;">Save papers from the app to view them offline with PDF viewer</div></div>`;
-          return;
-        }
-        listWrap.innerHTML = items.map(f=>`
-          <div class="zed-offline-item" style="background:#1A1917;border:1px solid #2A2825;border-radius:12px;padding:12px;margin-bottom:10px;">
-            <div style="color:#F5F1E8;font-size:13px;font-weight:600;margin-bottom:4px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">${(f.title||'Paper').slice(0,65)}</div>
-            <div style="color:#A9B8D0;font-size:11px;margin-bottom:10px;display:flex;gap:8px;align-items:center;"><span>${formatSize(f.size)}</span><span style="color:#223A5E;">•</span><span style="color:#9A9590;">${formatDate(f.savedAt)}</span><span style="background:#E8C15A;color:#fff;font-size:8px;font-weight:800;padding:2px 6px;border-radius:999px;margin-left:auto;">PDF READY</span></div>
-            <div style="display:flex;gap:8px;">
-              <button data-id="${f.id}" class="zed-lib-view-enhanced" style="flex:1;height:44px;border-radius:11px;background:#E8C15A;color:#fff;font-weight:800;border:none;cursor:pointer;font-size:13px;display:flex;align-items:center;justify-content:center;gap:6px;">📖 View PDF</button>
-              <button data-id="${f.id}" class="zed-lib-del-enhanced" style="width:44px;height:44px;border-radius:11px;background:transparent;border:1px solid #3a2a2a;color:#ff9a9a;cursor:pointer;display:flex;align-items:center;justify-content:center;font-size:16px;">✕</button>
-            </div>
-          </div>
-        `).join('');
-        
-        listWrap.querySelectorAll('.zed-lib-view-enhanced').forEach(btn=>{
-          btn.onclick=async ()=>{
-            const id=btn.dataset.id;
-            try{
-              const db=await openDB();
-              const rec=await new Promise((res,rej)=>{const tx=db.transaction(STORE_NAME,'readonly');const req=tx.objectStore(STORE_NAME).get(id);req.onsuccess=()=>res(req.result||null);req.onerror=()=>rej(req.error);});
-              if(rec&&rec.blob){
-                await window._zedOpenViewerEnhanced(rec.blob,{title:rec.title, id:rec.id});
-              } else {
-                showToast('File not found', true);
-              }
-            }catch(e){ showToast('Error opening', true); }
-          };
-        });
-        listWrap.querySelectorAll('.zed-lib-del-enhanced').forEach(btn=>{
-          btn.onclick=async ()=>{
-            if(confirm('Remove this paper from phone?')){
-              const db=await openDB();
-              await new Promise((res,rej)=>{const tx=db.transaction(STORE_NAME,'readwrite');const req=tx.objectStore(STORE_NAME).delete(btn.dataset.id);req.onsuccess=()=>res();req.onerror=()=>rej(req.error);});
-              showToast('Removed');
-              const updated = all.filter(x=>x.id!==btn.dataset.id);
-              const idx=all.findIndex(x=>x.id===btn.dataset.id);
-              if(idx>-1) all.splice(idx,1);
-              renderList(updated);
-            }
-          };
-        });
-      }
-      
-      renderList(all);
-      searchInput.addEventListener('input', ()=>{
-        const q=searchInput.value.trim().toLowerCase();
-        const filtered=q? all.filter(f=>(f.title||'').toLowerCase().includes(q)) : all;
-        renderList(filtered);
-      });
-      closeBtn.onclick=()=>modal.remove();
-      modal.onclick=(e)=>{ if(e.target===modal) modal.remove(); };
-      setTimeout(()=>{ searchInput.focus(); },100);
-      return;
-    }
-    // Fallback to original
-    return originalShowLib.apply(this, arguments);
-  };
-
-  // Periodically rebind card view buttons to use enhanced viewer
-  setInterval(()=>{
-    document.querySelectorAll('.zed-view-offline-btn').forEach(btn=>{
-      if(btn.dataset.enhancedBound==='1') return;
-      // Preserve original but also add enhanced override
-      const origClick = btn.onclick;
-      btn.dataset.enhancedBound='1';
-      btn.addEventListener('click', async (e)=>{
-        e.preventDefault();
-        e.stopPropagation();
-        // Try to find file id from nearby
-        try{
-          // The button is inside a card that has fileId in closure - we need to get from storage by title
-          const card = btn.closest('div[class*="bg-"][class*="border"][class*="rounded"]') || btn.parentElement.parentElement.parentElement;
-          let title = 'Paper';
-          if(card){
-            const tEl = card.querySelector('.font-semibold');
-            if(tEl) title = tEl.textContent.trim();
-          }
-          const all = await new Promise(async (res)=>{
-            try{
-              const db=await openDB();
-              const tx=db.transaction(STORE_NAME,'readonly');
-              const req=tx.objectStore(STORE_NAME).getAll();
-              req.onsuccess=()=>res(req.result||[]);
-              req.onerror=()=>res([]);
-            }catch{ res([]); }
-          });
-          let found = all.find(f=>f.title===title) || all[0];
-          if(found && found.blob){
-            await window._zedOpenViewerEnhanced(found.blob, {title:found.title, id:found.id});
-          } else if(origClick){
-            origClick.call(btn, e);
-          }
-        }catch(err){
-          console.log('rebind error', err);
-          if(origClick) origClick.call(btn, e);
-        }
-      }, true);
-    });
-  }, 1000);
-
-  console.log('✅ ZED Enhanced PDF Viewer loaded - PDF.js powered - offline ready');
+  try{ mo.observe(document.body, { childList:true, subtree:true }); }catch(e){}
+  console.log('[ZED] PDF Viewer V2 loaded — continuous scroll, stable DOM, page-relative zoom');
 })();
 </script>
+
 
 
 
@@ -11382,31 +11111,10 @@ main div.grid.grid-cols-3.zed-top3-parent{ grid-template-columns:1fr !important;
     setTimeout(function(){ if(window._zedOpenViewerEnhanced) window._zedOpenViewerEnhanced(rec.blob, {title:title, id:rec.id}); else toast('Viewer loading... tap Open again'); }, 300);
   }
   function openWithPdfJs(blob, title){
-    var modal=document.createElement('div');
-    modal.id='zed-pdf-modal';
-    modal.style.cssText='position:fixed;inset:0;z-index:9999999;background:#04101F;display:flex;flex-direction:column;';
-    var safe = String(title||'Paper').replace(/</g,'&lt;');
-    modal.innerHTML='<div style="height:52px;background:#1A1917;display:flex;align-items:center;justify-content:space-between;padding:0 12px;"><div style="color:#fff;font-size:13px;font-weight:700;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">'+safe+'</div><span style="font-size:8px;background:#E8C15A;color:#fff;padding:3px 7px;border-radius:999px;font-weight:800;">PDF VIEWER</span><button id="zed-pdf-close-fallback" style="background:#fff;color:#000;border:none;width:32px;height:32px;border-radius:8px;font-weight:800;cursor:pointer;">✕</button></div><div id="zed-pdf-fallback-canvas-wrap" style="flex:1;overflow:auto;display:flex;flex-direction:column;align-items:center;padding:12px;gap:12px;"><div style="color:#fff;font-size:13px;">Loading PDF...</div></div><div style="height:44px;background:#1A1917;display:flex;align-items:center;justify-content:center;gap:8px;"><button id="zed-pdf-prev-fb" style="background:#1E3A5F;color:#fff;border:1px solid #223A5E;width:36px;height:34px;border-radius:10px;">‹</button><span id="zed-pdf-page-fb" style="color:#fff;font-size:12px;font-weight:700;">1 / 1</span><button id="zed-pdf-next-fb" style="background:#1E3A5F;color:#fff;border:1px solid #223A5E;width:36px;height:34px;border-radius:10px;">›</button></div>';
-    document.body.appendChild(modal);
-    modal.querySelector('#zed-pdf-close-fallback').onclick=function(){ modal.remove(); };
-    var pageNum=1, pdfDoc=null;
-    function renderPage(n){
-      if(!pdfDoc) return;
-      pdfDoc.getPage(n).then(function(page){
-        var viewport=page.getViewport({scale:1.5});
-        var canvas=document.createElement('canvas');
-        canvas.style.cssText='background:#fff;max-width:100%;border-radius:6px;box-shadow:0 8px 32px rgba(0,0,0,.6);';
-        canvas.width=viewport.width; canvas.height=viewport.height;
-        var ctx=canvas.getContext('2d');
-        page.render({canvasContext:ctx, viewport:viewport});
-        var wrap=modal.querySelector('#zed-pdf-fallback-canvas-wrap');
-        wrap.innerHTML=''; wrap.appendChild(canvas);
-        modal.querySelector('#zed-pdf-page-fb').textContent=n+' / '+pdfDoc.numPages;
-      });
-    }
-    blob.arrayBuffer().then(function(buf){ return pdfjsLib.getDocument({data:buf}).promise; }).then(function(pdf){ pdfDoc=pdf; renderPage(1); });
-    modal.querySelector('#zed-pdf-prev-fb').onclick=function(){ if(pageNum>1){ pageNum--; renderPage(pageNum); } };
-    modal.querySelector('#zed-pdf-next-fb').onclick=function(){ if(pdfDoc && pageNum<pdfDoc.numPages){ pageNum++; renderPage(pageNum); } };
+    // V2: this old fallback viewer is retired — it created a SECOND #zed-pdf-modal that fought the main viewer.
+    // All opens now go through the single V2 viewer.
+    if (window._zedOpenViewerEnhanced) { window._zedOpenViewerEnhanced(blob, { title: title||'Paper' }); return; }
+    if (window._zedOpenPdfV2) { window._zedOpenPdfV2(blob, title||'Paper'); return; }
   }
   function killExternalOpen(){ document.querySelectorAll('#zed-pdf-open-ext-enhanced, [id*="open-ext"]').forEach(function(b){ b.remove(); }); }
   document.addEventListener('click', function(e){
@@ -14597,6 +14305,282 @@ window._zedV15Filter = 'search';
   }
   setInterval(injectAdminBars, 1000);
   console.log('[ZED] Upload progress active — Papers, Docs, Videos all show real %');
+})();
+</script>
+
+
+<script>
+// ZED OFFLINE 6 — 19 Nov 2026 — Show 6 MOST RECENT downloads in Papers / Docs when the online list is empty (offline)
+// Why: Papers + Docs lists come from Supabase (online). When you're offline React renders 0 cards
+// ("No papers found"), so your downloaded papers were invisible — you had to tap the 📚 FAB to see them.
+// Fix: when the Papers or Docs tab has NO real online cards, inject 6 most-recent downloaded files
+// (from IndexedDB, newest first) right into that tab. Same look as the normal cards, Open works offline.
+// Rules:
+//  - 6 = most recent by savedAt (newest first), not random, not oldest. Rest behind "View all".
+//  - Papers tab: papers first, fill remaining slots with docs if fewer than 6 papers.
+//  - Docs tab: docs first, fill remaining slots with papers if fewer than 6 docs.
+//  - If the online list IS showing (real cards > 0), injection is removed — never duplicates.
+//  - Search still works offline: the 6 are filtered by what you typed in "Search papers...".
+//  - Never uses class "rounded-[14px]" for injected cards, so the Papers cleanAll + this counter never mistake them for real cards.
+(function(){
+  if (window.__zedOffline6Loaded) return;
+  window.__zedOffline6Loaded = true;
+  var DB = 'zed_internal_storage_v2', STORE = 'offline_files';
+  function openDB(){
+    return new Promise(function(res, rej){
+      try{
+        var r = indexedDB.open(DB, 2);
+        r.onupgradeneeded = function(e){ var db = e.target.result; if (!db.objectStoreNames.contains(STORE)) db.createObjectStore(STORE, {keyPath:'id'}); };
+        r.onsuccess = function(){ res(r.result); };
+        r.onerror = function(){ rej(r.error); };
+      }catch(e){ rej(e); }
+    });
+  }
+  async function getAllRec(){
+    try{
+      var db = await openDB();
+      return new Promise(function(res){
+        try{
+          var tx = db.transaction(STORE, 'readonly');
+          var q = tx.objectStore(STORE).getAll();
+          q.onsuccess = function(){ res(q.result || []); };
+          q.onerror = function(){ res([]); };
+        }catch(e){ res([]); }
+      });
+    }catch(e){ return []; }
+  }
+  function esc(s){ return String(s == null ? '' : s).replace(/</g,'&lt;').replace(/>/g,'&gt;'); }
+  function formatSize(b){
+    if (!b) return '';
+    if (b < 1024) return b + ' B';
+    if (b < 1024*1024) return (b/1024).toFixed(1) + ' KB';
+    return (b/(1024*1024)).toFixed(1) + ' MB';
+  }
+  function isDocRec(rec){
+    var url = String(rec.url || rec.file_url || '').toLowerCase();
+    var title = String(rec.title || '').toLowerCase();
+    if (rec.type === 'doc' || rec.kind === 'doc' || rec.category === 'documents') return true;
+    if (rec.type === 'paper' && url.indexOf('document') === -1 && url.indexOf('/docs/') === -1) {
+      // type is 'paper' for BOTH papers + docs in the old saver, so fall through to title/url check
+    }
+    if (url.indexOf('/documents/') !== -1 || url.indexOf('/docs/') !== -1 || url.indexOf('document') !== -1) return true;
+    if (/\bdoc\b/.test(title)) return true;
+    if (title.indexOf('notes') !== -1 || title.indexOf('textbook') !== -1 || title.indexOf('guide') !== -1 ||
+        title.indexOf('syllabus') !== -1 || title.indexOf('handbook') !== -1 || title.indexOf('summary') !== -1 ||
+        title.indexOf('pamphlet') !== -1 || title.indexOf('handout') !== -1 || title.indexOf('revision') !== -1) return true;
+    return false;
+  }
+  function getTab(){
+    var main = document.querySelector('main');
+    if (!main) return null;
+    if (main.querySelector('input[placeholder="Search papers..."]')) return 'papers';
+    var txt = main.innerText || '';
+    if (/\b\d+\s+docs\b/.test(txt)) return 'documents';
+    // Fallback: active tab button (outside <main>) carries bg-[var(--text)]
+    try{
+      var btns = document.querySelectorAll('button');
+      for (var i=0;i<btns.length;i++){
+        var t = (btns[i].textContent||'').trim();
+        if ((t === 'Papers' || t === 'Docs') && String(btns[i].className||'').indexOf('bg-[var(--text)]') !== -1){
+          return t === 'Papers' ? 'papers' : 'documents';
+        }
+      }
+    }catch(e){}
+    return null;
+  }
+  function getSearchTerm(tab){
+    try{
+      if (tab === 'papers'){
+        var inp = document.querySelector('main input[placeholder="Search papers..."]');
+        if (inp) return (inp.value||'').trim();
+      }
+    }catch(e){}
+    return '';
+  }
+  function getRealCardCount(main){
+    try{
+      var cards = main.querySelectorAll('div[class*="rounded-[14px]"]');
+      var n = 0;
+      for (var i=0;i<cards.length;i++){
+        var c = cards[i];
+        if (c.closest && c.closest('#zed-offline-6')) continue; // ours — never count
+        if (c.className && String(c.className).indexOf('animate-pulse') !== -1) continue; // skeleton
+        if (c.className && String(c.className).indexOf('animate-pulse') !== -1) continue;
+        // Skip skeletons: they have h-[140px] + animate-pulse, or are empty pulse blocks
+        if (c.innerHTML && c.innerHTML.indexOf('animate-pulse') !== -1) continue;
+        n++;
+      }
+      return n;
+    }catch(e){ return 0; }
+  }
+  function isLoading(main){
+    try{ return !!main.querySelector('.animate-pulse'); }catch(e){ return false; }
+  }
+  function removeInjection(){
+    try{
+      var el = document.getElementById('zed-offline-6');
+      if (el) el.remove();
+    }catch(e){}
+    lastSig = '';
+  }
+  var lastSig = '';
+  var checking = false;
+  async function checkAndInject(){
+    if (checking) return;
+    checking = true;
+    try{
+      var main = document.querySelector('main');
+      if (!main){ checking = false; return; }
+      var tab = getTab();
+      if (tab !== 'papers' && tab !== 'documents'){ removeInjection(); checking = false; return; }
+      if (isLoading(main)){ checking = false; return; } // React still fetching — don't jump in yet
+      var real = getRealCardCount(main);
+      if (real > 0){ removeInjection(); checking = false; return; } // online list is showing — never duplicate
+      var search = getSearchTerm(tab);
+      var all = await getAllRec();
+      // Only complete downloads (have a real blob)
+      var valid = [];
+      for (var i=0;i<all.length;i++){
+        var r = all[i];
+        if (r && r.blob && r.blob.size > 1024 && r.title) valid.push(r);
+      }
+      // MOST RECENT FIRST — newest savedAt first. This is the "recent downloaded" order the user asked for.
+      valid.sort(function(a,b){ return (b.savedAt||0) - (a.savedAt||0); });
+      // Search filter (offline search): match title
+      var filtered = valid;
+      if (search){
+        var q = search.toLowerCase();
+        filtered = valid.filter(function(r){ return String(r.title||'').toLowerCase().indexOf(q) !== -1; });
+        if (filtered.length === 0){ removeInjection(); checking = false; return; }
+      }
+      // Split papers / docs, then fill to 6 so you always get 6 when you have 6+ downloads total.
+      var papers = [], docs = [];
+      for (var j=0;j<filtered.length;j++){ if (isDocRec(filtered[j])) docs.push(filtered[j]); else papers.push(filtered[j]); }
+      var primary = tab === 'papers' ? papers : docs;
+      var secondary = tab === 'papers' ? docs : papers;
+      var shown = primary.slice(0, 6);
+      if (shown.length < 6){
+        for (var k=0;k<secondary.length && shown.length < 6;k++){ shown.push(secondary[k]); }
+      }
+      var sig = tab + '|' + search + '|' + shown.map(function(r){ return r.id; }).join(',') + '|' + valid.length;
+      var existing = document.getElementById('zed-offline-6');
+      if (existing && sig === lastSig){ checking = false; return; } // already showing this exact 6 — don't rebuild / flicker
+      lastSig = sig;
+      if (existing) existing.remove();
+      // Hide React's "No papers found." when we are showing downloads — otherwise both show.
+      try{
+        var walker = document.createTreeWalker(main, NodeFilter.SHOW_ELEMENT, null, false);
+        var node;
+        while (walker.nextNode()){
+          node = walker.currentNode;
+          if (node.children && node.children.length === 0 && (node.textContent||'').trim() === 'No papers found.'){
+            node.style.display = 'none';
+          }
+        }
+      }catch(e){}
+      // Docs tab header "0 docs" is misleading when we show downloads — update it.
+      if (tab === 'documents'){
+        try{
+          var els = main.querySelectorAll('div');
+          for (var h=0;h<els.length;h++){
+            if (/^\d+\s+docs$/.test((els[h].textContent||'').trim())){
+              els[h].textContent = shown.length + ' of ' + valid.length + ' downloaded • offline';
+              break;
+            }
+          }
+        }catch(e){}
+      }
+      var wrap = document.createElement('div');
+      wrap.id = 'zed-offline-6';
+      wrap.setAttribute('data-tab', tab);
+      wrap.style.cssText = 'display:flex;flex-direction:column;gap:12px;width:100%;margin-top:4px;';
+      var totalLabel = valid.length;
+      var headerHtml =
+        '<div style="background:#0F2547;border:1px solid #1E3A5F;border-radius:14px;padding:12px 14px;">' +
+        '<div style="display:flex;align-items:center;justify-content:space-between;gap:8px;">' +
+        '<div style="color:#fff;font-size:13px;font-weight:800;">📚 Downloaded • Works offline</div>' +
+        '<span style="font-size:9px;font-weight:800;background:#E8C15A;color:#fff;padding:3px 8px;border-radius:999px;letter-spacing:0.06em;">OFFLINE</span></div>' +
+        '<div style="color:#A9B8D0;font-size:11px;margin-top:4px;line-height:1.4;">Showing your ' + shown.length + ' most recent download' + (shown.length === 1 ? '' : 's') + ' — tap Open to read offline, no data needed.</div>' +
+        (totalLabel > 6 ? '<button data-zed-view-all style="margin-top:10px;background:#E8C15A;color:#fff;border:none;height:36px;padding:0 14px;border-radius:999px;font-size:12px;font-weight:800;cursor:pointer;">View all ' + totalLabel + ' downloaded →</button>' : '') +
+        '</div>';
+      var cardsHtml = '';
+      if (shown.length === 0){
+        cardsHtml = '<div style="background:#16294D;border:1px solid #1E3A5F;border-radius:14px;padding:18px 14px;text-align:center;color:#A9B8D0;font-size:13px;line-height:1.5;">No downloaded ' + (tab === 'papers' ? 'papers' : 'docs') + ' yet.<br><span style="color:#fff;font-weight:700;">Download while you are online, then they will appear here offline.</span></div>';
+      } else {
+        for (var m=0;m<shown.length;m++){
+          var rec = shown[m];
+          var title = esc(rec.title || 'Paper');
+          var dateStr = '';
+          try{ dateStr = rec.savedAt ? new Date(rec.savedAt).toLocaleDateString() : ''; }catch(e){}
+          var kind = isDocRec(rec) ? 'DOC' : 'PAPER';
+          cardsHtml +=
+            '<div style="background:#16294D;border:1px solid #1E3A5F;border-radius:14px;padding:14px;display:flex;align-items:center;gap:10px;justify-content:space-between;">' +
+            '<div style="flex:1;min-width:0;">' +
+            '<div style="color:#FFFFFF;font-size:14px;font-weight:800;line-height:1.35;word-break:break-word;">' + title + '</div>' +
+            '<div style="color:#A9B8D0;font-size:11px;margin-top:4px;">' + kind + ' • PDF • ' + formatSize(rec.size || (rec.blob && rec.blob.size) || 0) + (dateStr ? ' • ' + dateStr : '') + ' • Downloaded</div></div>' +
+            '<span style="width:26px;height:26px;min-width:26px;border-radius:999px;background:#22C55E;color:#fff;display:flex;align-items:center;justify-content:center;font-size:13px;font-weight:800;">✓</span>' +
+            '<button data-zed-open="' + esc(rec.id) + '" style="background:#22C55E;color:#fff;border:none;height:36px;min-width:72px;padding:0 18px;border-radius:999px;font-size:13px;font-weight:800;cursor:pointer;flex-shrink:0;">Open</button>' +
+            '</div>';
+        }
+      }
+      wrap.innerHTML = headerHtml + cardsHtml;
+      // Attach Open + View all (buttons are inside wrap, so no global delegation clash)
+      wrap.querySelectorAll('[data-zed-open]').forEach(function(btn){
+        btn.onclick = function(e){
+          e.preventDefault(); e.stopPropagation();
+          var id = btn.getAttribute('data-zed-open');
+          var rec2 = null;
+          for (var n=0;n<valid.length;n++){ if (valid[n].id === id){ rec2 = valid[n]; break; } }
+          if (!rec2 || !rec2.blob) return;
+          try{
+            if (window._zedOpenViewerEnhanced){ window._zedOpenViewerEnhanced(rec2.blob, {title: rec2.title || 'Paper', id: rec2.id}); return; }
+            if (window._zedOpenViewer){ window._zedOpenViewer(rec2.blob, {title: rec2.title || 'Paper', id: rec2.id}); return; }
+          }catch(err){}
+          try{ if (window._zedOpenPdfV2) window._zedOpenPdfV2(rec2.blob, rec2.title || 'Paper'); }catch(err2){}
+        };
+      });
+      var viewAll = wrap.querySelector('[data-zed-view-all]');
+      if (viewAll){
+        viewAll.onclick = function(){
+          try{
+            if (window.showRealOfflineLibrary){ window.showRealOfflineLibrary(); return; }
+          }catch(e){}
+        };
+      }
+      // Append to the tab's container: Papers has div.space-y-4, Docs has its own container — fall back to <main>.
+      var host = main.querySelector(':scope > div.space-y-4') || main.querySelector('div.space-y-4') || main;
+      host.appendChild(wrap);
+    }catch(e){
+      // Never break the page if IndexedDB fails — just don't show offline cards.
+    }finally{
+      checking = false;
+    }
+  }
+  // Keep it alive across React re-renders / tab switches, but don't rebuild on our own mutations.
+  var moTimer = 0;
+  try{
+    new MutationObserver(function(muts){
+      for (var i=0;i<muts.length;i++){
+        var t = muts[i].target;
+        if (t && t.closest && t.closest('#zed-offline-6')) continue;
+        if (muts[i].addedNodes){
+          for (var j=0;j<muts[i].addedNodes.length;j++){
+            var nd = muts[i].addedNodes[j];
+            if (nd && nd.id === 'zed-offline-6') continue;
+          }
+        }
+        clearTimeout(moTimer);
+        moTimer = setTimeout(checkAndInject, 250);
+        return;
+      }
+    }).observe(document.body, {childList:true, subtree:true});
+  }catch(e){}
+  setInterval(checkAndInject, 1200);
+  window.addEventListener('online', function(){ lastSig = ''; setTimeout(checkAndInject, 200); });
+  window.addEventListener('offline', function(){ lastSig = ''; setTimeout(checkAndInject, 200); });
+  if (document.readyState !== 'loading') setTimeout(checkAndInject, 600);
+  else document.addEventListener('DOMContentLoaded', function(){ setTimeout(checkAndInject, 600); });
+  console.log('[ZED] Offline 6 loaded — 6 most recent downloads in Papers/Docs when offline');
 })();
 </script>
 
