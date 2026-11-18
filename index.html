@@ -1972,7 +1972,22 @@ if (typeof pdfjsLib !== 'undefined') {
 .yt-lite.yt-loaded {
   cursor: default;
 }
-/* DELETED 18 Nov — .yt-title-bar CSS (overlay title deleted, card title is the only title). */
+.yt-lite .yt-title-bar {
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  padding: 10px 12px;
+  z-index: 2;
+  color: white;
+  font-size: 12px;
+  font-weight: 600;
+  line-height: 1.3;
+  background: linear-gradient(180deg, rgba(0,0,0,0.55), transparent);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
 /* Force grid via CSS to avoid JS thrashing */
 
 /* === V21 LIST VIEW - NO GRID === */
@@ -2006,8 +2021,8 @@ if (typeof pdfjsLib !== 'undefined') {
 
 <style>
 /* ZED - Own Expand button - ALWAYS works, even if YouTube's own button is blocked */
-/* DELETED 18 Nov — CONFLICT: .zed-expand-btn floating button CSS (button deleted). Actions-row Expand is the only Expand. */
-/* DELETED 18 Nov — .zed-expand-btn:active (button deleted). */
+.zed-expand-btn{position:absolute !important;top:8px !important;right:8px !important;z-index:40 !important;width:38px !important;height:38px !important;background:rgba(0,0,0,0.65) !important;border:1px solid rgba(255,255,255,0.35) !important;border-radius:10px !important;color:#fff !important;font-size:18px !important;display:flex !important;align-items:center !important;justify-content:center !important;cursor:pointer !important;pointer-events:auto !important;}
+.zed-expand-btn:active{transform:scale(0.92);}
 .zed-video-fullscreen{position:fixed !important;inset:0 !important;width:100vw !important;height:100vh !important;max-width:100vw !important;max-height:100vh !important;z-index:999999 !important;background:#000 !important;display:flex !important;align-items:center !important;justify-content:center !important;border-radius:0 !important;}
 .zed-video-fullscreen{background:#000 !important;display:flex !important;align-items:center !important;justify-content:center !important;}
 .zed-video-fullscreen iframe{width:min(100vw, 177.78vh) !important;height:min(56.25vw, 100vh) !important;aspect-ratio:16/9 !important;margin:auto !important;flex:none !important;}
@@ -2015,9 +2030,9 @@ if (typeof pdfjsLib !== 'undefined') {
 iframe:fullscreen{width:min(100vw, 177.78vh) !important;height:min(56.25vw, 100vh) !important;aspect-ratio:16/9 !important;margin:auto !important;}
 iframe:-webkit-full-screen{width:min(100vw, 177.78vh) !important;height:min(56.25vw, 100vh) !important;aspect-ratio:16/9 !important;}
 
-/* DELETED 18 Nov — fullscreen .zed-expand-btn rule (button deleted). */
-/* DELETED 18 Nov — CONFLICT: early .zed-fullscreen-close (z-index 41, fought canonical fixed X z-index 9999999). Canonical X rule at end of file is now the only one. */
-/* DELETED 18 Nov — duplicate fullscreen X display rule (canonical rule at end of file owns it). */
+.zed-video-fullscreen .zed-expand-btn{top:12px !important;right:12px !important;}
+.zed-fullscreen-close{position:absolute !important;top:12px !important;left:12px !important;z-index:41 !important;background:rgba(255,255,255,0.9) !important;color:#000 !important;border:none !important;width:38px !important;height:38px !important;border-radius:50% !important;font-size:16px !important;font-weight:800 !important;display:none !important;align-items:center !important;justify-content:center !important;cursor:pointer !important;}
+.zed-video-fullscreen .zed-fullscreen-close{display:flex !important;}
 /* ZED - Landscape fallback for iPhone / browsers where orientation.lock is blocked */
 .zed-force-landscape{width:100vh !important;height:100vw !important;left:50% !important;top:50% !important;inset:auto !important;transform:translate(-50%,-50%) rotate(90deg) !important;position:fixed !important;}
 iframe.zed-force-landscape-iframe{width:100vh !important;height:100vw !important;position:fixed !important;left:50% !important;top:50% !important;transform:translate(-50%,-50%) rotate(90deg) !important;}
@@ -2038,9 +2053,10 @@ iframe.zed-force-landscape-iframe{width:100vh !important;height:100vw !important
 
 <style>
 /* ZED - Hide / block YouTube More videos + YouTube own expand button */
-/* DELETED 18 Nov — CONFLICT: .zed-more-shield CSS (shield deleted). */
-/* DELETED 18 Nov — CONFLICT: .zed-yt-expand-shield CSS (shield deleted). */
-/* DELETED 18 Nov — .zed-expand-btn z-index (button deleted). */
+.zed-more-shield{position:absolute !important;left:0 !important;right:0 !important;bottom:44px !important;height:70px !important;background:transparent !important;pointer-events:auto !important;z-index:22 !important;}
+.zed-yt-expand-shield{position:absolute !important;top:0 !important;right:0 !important;width:72px !important;height:54px !important;background:transparent !important;pointer-events:auto !important;z-index:22 !important;}
+/* Our own ZED expand button stays above shields */
+.zed-expand-btn{z-index:30 !important;}
 /* Load more button */
 #zed-load-more-videos{width:100% !important;height:48px !important;background:#E8C15A !important;color:#fff !important;border:none !important;border-radius:12px !important;font-weight:800 !important;font-size:14px !important;letter-spacing:.08em !important;cursor:pointer !important;margin:12px 0 !important;}
 #zed-videos-loading{font-size:12px !important;color:#888 !important;text-align:center !important;padding:8px !important;}
@@ -2818,11 +2834,11 @@ Zq=async function(_subj,_grade,_count,_saveToDb,_isRetry){
     var _s=(String(_subj||"")).trim();
     if(!_s){ F("Type a subject first, e.g. Mathematics"); return null; }
     var _g=(String(_grade||"")).trim();
-    var _n=Math.min(Math.max(parseInt(_count||20,10)||20,1),20);
+    var _n=Math.min(Math.max(parseInt(_count||10,10)||10,1),10);
     var _norm=(window.zedNormalizeGrade?window.zedNormalizeGrade(_g):null);
     var _gradeLabel=_norm?_norm.label:(_g?("Grade "+_g):"Grade 10-12");
     var _gradeForDb=_norm?(_norm.db||String(_norm.num)):(_g||"10-12");
-    var _balance=(window.zedQuizBalance?window.zedQuizBalance(_n):{easy:0,medium:10,hard:10,plan:["Medium","Hard","Medium","Hard","Hard","Medium","Hard","Medium","Medium","Hard","Medium","Hard","Hard","Medium","Hard","Medium","Hard","Medium","Hard","Medium"]});
+    var _balance=(window.zedQuizBalance?window.zedQuizBalance(_n):{easy:0,medium:5,hard:5,plan:["Medium","Hard","Medium","Hard","Hard","Medium","Hard","Medium","Medium","Hard"]});
     var _plan=_balance.plan||[];
     try{ if(!_isRetry){ window.zedQuizGenerationId=(window.zedQuizGenerationId||0)+1; window.zedQuizCancelled=false; } _genId=window.zedQuizGenerationId||0; }catch(e){}
     try{ if(window.zedQuizLoaderShow) window.zedQuizLoaderShow(); }catch(e){}
@@ -2848,7 +2864,7 @@ Zq=async function(_subj,_grade,_count,_saveToDb,_isRetry){
       for(var _mi=0;_mi<_models.length&&!_txt;_mi++){
         try{
           if(_cancelled()){ _txt=""; break; }
-          var _ctrl=new AbortController(); try{ window.zedQuizAbortController=_ctrl; }catch(e){} /* NO TIMEOUT - quiz waits as long as AI needs. User can tap Cancel in loader to stop. */ var _res=await fetch("https://generativelanguage.googleapis.com/v1beta/models/"+_models[_mi]+":generateContent?key="+encodeURIComponent(_keys[_ki]),{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({contents:[{parts:[{text:_prompt}]}],generationConfig:{maxOutputTokens:16000,temperature:0.3}}),signal:_ctrl.signal}); /* no clearTimeout - no timer */ try{ if(window.zedQuizAbortController===_ctrl) window.zedQuizAbortController=null; }catch(e){} if(_cancelled()){ _txt=""; break; }
+          var _ctrl=new AbortController(); try{ window.zedQuizAbortController=_ctrl; }catch(e){} /* NO TIMEOUT - quiz waits as long as AI needs. User can tap Cancel in loader to stop. */ var _res=await fetch("https://generativelanguage.googleapis.com/v1beta/models/"+_models[_mi]+":generateContent?key="+encodeURIComponent(_keys[_ki]),{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({contents:[{parts:[{text:_prompt}]}],generationConfig:{maxOutputTokens:8000,temperature:0.3}}),signal:_ctrl.signal}); /* no clearTimeout - no timer */ try{ if(window.zedQuizAbortController===_ctrl) window.zedQuizAbortController=null; }catch(e){} if(_cancelled()){ _txt=""; break; }
           var _data={}; try{ _data=await _res.json(); }catch(e){ _data={}; } if(!_res.ok){ _lastErr=(_data.error&&_data.error.message)||("HTTP "+_res.status); try{ console.log("Zed Scholar AI Quiz failed", _models[_mi], _res.status, _lastErr); }catch(e){} if(_res.status===400 && /api key/i.test(_lastErr)){ _txt=""; break; } continue; } if(_data.promptFeedback && _data.promptFeedback.blockReason){ _lastErr="BLOCKED:"+_data.promptFeedback.blockReason; _txt=""; break; }
           try{ _txt=_data.candidates[0].content.parts[0].text||""; }catch(e){ _txt=""; }
         }catch(e){ _lastErr=(e&&e.message)||String(e); }
@@ -2907,7 +2923,7 @@ if(!h && _zedTopicVal && _zedTopicVal.toLowerCase()!=="general"){
     if(!ex || ex.length===0){ await e.from("topics").insert({subject_name:Ja, grade:Ga, name:_zedTopicVal}); }
   }catch(_e){ console.log("topic auto-create error", _e); }
 }
-if(h)throw Error(h.message);F(vidFile?"Video uploaded from phone ✓":"Video added live!"),Za(""),Qa(""),setVidFile(null),zp(""),Rp("");let _tEl=document.getElementById("zed-topic-input");if(_tEl)_tEl.value="";let{data:P}=await e.from("videos").select("*").order("created_at",{ascending:!1}).limit(200);ga(P||[])}catch(o){F(o.message)}finally{setVidUp(!1)}},Vp=(o)=>{var _sh=(window.zedBalanceAnswers?window.zedBalanceAnswers(o||[]):(o||[]));Su(_sh),Ca({}),Sa(0),QiSet(0)},Hp=async()=>{if(!Te)return;if(window.__zedQuizSubmitting)return;window.__zedQuizSubmitting=!0;let o=0;Te.forEach((y,h)=>{if(_a[h]===y.correct_answer)o++});try{let y={user_id:r.id,subject:Te[0]?.subject||"General",grade:Te[0]?.grade||r.grade||"",score:o,total:Te.length,time_spent:Nu},{error:h}=await e.from("quiz_attempts").insert(y);if(h&&/grade/i.test(h.message||"")){let _f={user_id:r.id,subject:y.subject,score:o,total:Te.length,time_spent:Nu},_fr=await e.from("quiz_attempts").insert(_f);if(_fr.error)throw Error(_fr.error.message);}else if(h)throw Error(h.message);let P=(r.coins||0)+o*5;await e.from("profiles").update({coins:P}).eq("id",r.id);let W={...r,coins:P};l(W),localStorage.setItem("zed_user",JSON.stringify(W)),F(`Quiz submitted: ${o}/${Te.length} • +${o*5} coins`),Su(null),QiSet(0),window.__zedQuizSubmitting=!1;let{data:V}=await e.from("quiz_attempts").select("user_id,score,total,subject,created_at").order("created_at",{ascending:!1}).limit(500);ka(V||[])}catch(y){window.__zedQuizSubmitting=!1,F(y.message)}},xa=S.useMemo(()=>{let o=ku.toLowerCase();return gv.filter((y)=>y.province===je&&y.name.toLowerCase().includes(o)).slice(0,20)},[je,ku]);if(!r)return v("div",{className:"min-h-screen bg-[var(--bg)] text-[var(--text)] flex flex-col",style:{paddingTop:"var(--safe-area-inset-top)",boxSizing:"border-box"},children:[v("header",{className:"sticky top-[var(--safe-area-inset-top)] z-30 bg-[var(--bg)]/95 backdrop-blur-xl border-b border-[var(--border)] px-4 md:px-6 h-[60px] flex items-center justify-between",children:[v("div",{className:"flex items-center gap-3",children:[c("div",{className:"w-9 h-9 rounded-full bg-[var(--green)] flex items-center justify-center text-black font-extrabold text-[15px]",children:"Z"}),v("div",{children:[c("div",{className:"font-serif text-[18px] leading-none tracking-[-0.02em]",children:"ZED SCHOLAR"}),c("div",{className:"text-[10px] uppercase tracking-[0.18em] text-[var(--muted)]",children:"ZAMBIA • GRADE 10-12 • FORM 1-6"})]})]}),v("div",{className:"flex items-center gap-2 text-[11px]",children:[c("span",{className:`w-2 h-2 rounded-full ${n.ok?"bg-[var(--green)]":n.ok===!1?"bg-[#ff9a9a]":"bg-[var(--yellow)] animate-pulse"}`}),c("span",{className:"text-[10px] uppercase tracking-[0.12em] text-[var(--muted)]",children:""})]})]}),c("div",{className:"flex-1 flex justify-center px-4 py-6 md:py-10",children:c("div",{className:"w-full max-w-[460px]",children:!$?v("div",{className:"bg-[var(--surface)] border border-[var(--border)] rounded-[22px] p-6 md:p-8 shadow-[0_16px_40px_rgba(0,0,0,0.35)]",children:[v("div",{className:"flex gap-2 mb-6 p-1 bg-[var(--bg)] rounded-full w-fit border border-[var(--border)]",children:[c("button",{onClick:()=>i("password"),className:`px-5 h-9 rounded-full text-[11px] uppercase tracking-[0.14em] font-bold transition ${u==="password"?"bg-[var(--text)] text-[var(--bg)]":"text-[var(--muted)]"}`,children:"Password"}),c("button",{onClick:()=>i("otp"),className:`px-5 h-9 rounded-full text-[11px] uppercase tracking-[0.14em] font-bold transition ${u==="otp"?"bg-[var(--text)] text-[var(--bg)]":"text-[var(--muted)]"}`,children:"OTP"})]}),u==="password"?v("div",{className:"space-y-4",children:[v("div",{children:[c("h2",{className:"font-serif text-[30px] leading-[0.95] tracking-[-0.02em]",children:"Welcome back"}),c("p",{className:"text-[13px] text-[var(--muted)] mt-2 leading-snug",children:"Log in to access past papers, quizzes and your school leaderboard."})]}),v("div",{children:[c("label",{className:"text-[11px] uppercase tracking-[0.12em] text-[var(--muted)]",children:"Phone — 10 digits"}),c("input",{value:a,onChange:(o)=>f(o.target.value.replace(/\D/g,"").slice(0,10)),placeholder:"Enter phone number",className:"mt-1.5 w-full h-11 px-4 rounded-[12px] bg-[var(--bg)] border border-[var(--border)] outline-none focus:border-[var(--green)] text-[14px]"})]}),v("div",{children:[c("label",{className:"text-[11px] uppercase tracking-[0.12em] text-[var(--muted)]",children:"Password"}),c("input",{type:"password",value:m,onChange:(o)=>g(o.target.value),placeholder:"••••••",className:"mt-1.5 w-full h-11 px-4 rounded-[12px] bg-[var(--bg)] border border-[var(--border)] outline-none focus:border-[var(--green)] text-[14px]"})]}),c("button",{id:"zed-login-btn",disabled:k,onPointerDown:(o)=>{try{if(o.currentTarget.setAttribute("data-clicked","1"),o.currentTarget.textContent="Logging in...",!document.getElementById("login-click-feedback")){void 0 /* duplicate Login banner removed */}}catch{}},onClick:(o)=>{try{if(o.currentTarget.setAttribute("data-clicked","1"),o.currentTarget.textContent="Logging in...",!document.getElementById("login-click-feedback")){void 0 /* duplicate Login banner removed */}}catch{}Pp()},className:"w-full h-11 rounded-[12px] bg-[var(--green)] text-black font-bold uppercase tracking-[0.12em] text-[12px] hover:brightness-110 disabled:opacity-60",children:k?"Logging in...":"Login"}),v("div",{className:"text-[13px] text-[var(--muted)] text-center pt-2",id:"signup-trigger",children:["No account? ",c("button",{id:"zed-signup-open",type:"button","data-testid":"signup-zambia-btn",onClick:(o)=>{try{let y=o.currentTarget;y.textContent="Opening signup... ✓",y.setAttribute("data-opened","1"),y.setAttribute("aria-expanded","true"),y.style.color="var(--green)";let h="zed-signup-feedback-live",P=document.getElementById(h);if(!P)P=document.createElement("div"),P.id=h,P.textContent="Opening signup — create your profile",P.style.position="fixed",P.style.bottom="90px",P.style.left="16px",P.style.right="16px",P.style.background="#F5F1E8",P.style.color="#04101F",P.style.padding="10px 14px",P.style.borderRadius="10px",P.style.zIndex="9999",P.style.fontSize="12px",P.style.fontWeight="600",document.body.appendChild(P),setTimeout(()=>{try{P.remove()}catch{}},3000);location.hash="#signup",document.documentElement.setAttribute("data-signup","open"),window.scrollTo(0,0),console.log("[ZED] Signup trigger clicked - clean auth v31")}catch(y){console.log("[ZED] signup open error",y)}Ce(!0),F("Opening signup — choose province → district → school")},className:"underline text-[var(--text)] font-semibold",children:"Create account"})]})]}):v("div",{className:"space-y-4",children:[v("div",{children:[c("h2",{className:"font-serif text-[30px] leading-[0.95] tracking-[-0.02em]",children:"Phone OTP"}),c("p",{className:"text-[13px] text-[var(--muted)] mt-2 leading-snug",children:"We'll send a 6-digit code to your Zambian number."})]}),v("div",{children:[c("label",{className:"text-[11px] uppercase tracking-[0.12em] text-[var(--muted)]",children:"Phone — 10 digits"}),c("input",{value:_,onChange:(o)=>z(o.target.value.replace(/\D/g,"").slice(0,10)),placeholder:"Enter phone number",className:"mt-1.5 w-full h-11 px-4 rounded-[12px] bg-[var(--bg)] border border-[var(--border)] outline-none focus:border-[var(--green)] text-[14px]"})]}),!N?c("button",{disabled:p,onClick:Mp,className:"w-full h-11 rounded-[12px] bg-[var(--yellow)] text-black font-bold uppercase tracking-[0.12em] text-[12px] disabled:opacity-60",children:p?"Sending...":"Send OTP"}):v(wu,{children:[v("div",{children:[c("label",{className:"text-[11px] uppercase tracking-[0.12em] text-[var(--muted)]",children:"6-digit code"}),c("input",{value:d,onChange:(o)=>s(o.target.value.replace(/\D/g,"").slice(0,6)),placeholder:"123456",className:"mt-1.5 w-full h-11 px-4 rounded-[12px] bg-[var(--bg)] border border-[var(--border)] outline-none focus:border-[var(--green)] text-[14px] tracking-[0.2em]"})]}),c("button",{disabled:p,onClick:Lp,className:"w-full h-11 rounded-[12px] bg-[var(--green)] text-black font-bold uppercase tracking-[0.12em] text-[12px] disabled:opacity-60",children:p?"Verifying...":"Verify & Login"}),c("button",{onClick:()=>{D(!1),s("")},className:"w-full h-9 text-[11px] uppercase tracking-[0.12em] text-[var(--muted)]",children:"Resend code"})]}),v("div",{className:"text-[13px] text-[var(--muted)] text-center",children:["Have password? ",c("button",{type:"button",onClick:()=>i("password"),className:"underline text-[var(--text)]",children:"Use password"})," • ",c("button",{type:"button",onClick:()=>{Ce(!0),F("Opening signup")},className:"underline text-[var(--text)]",children:"Sign up"})]})]})]}):v("div",{className:"bg-[var(--surface)] border border-[var(--border)] rounded-[22px] p-6 md:p-8 shadow-[0_16px_40px_rgba(0,0,0,0.35)] space-y-4",id:"signup",children:[c("button",{type:"button",onClick:()=>{Ce(!1);try{location.hash="",document.documentElement.removeAttribute("data-signup")}catch{}},className:"text-[11px] uppercase tracking-[0.12em] text-[var(--muted)] hover:text-[var(--text)]",children:"← Back to login"}),v("div",{children:[c("h2",{className:"font-serif text-[30px] leading-[0.95] tracking-[-0.02em]",children:"Create account"}),c("p",{className:"text-[13px] text-[var(--muted)] mt-2",children:"Choose province → district → school. Can't find yours? Add a custom school."})]}),v("div",{className:"grid gap-3.5",children:[v("div",{children:[c("label",{className:"text-[11px] uppercase tracking-[0.12em] text-[var(--muted)]",children:"Full Name"}),c("input",{value:xe,onChange:(o)=>Yd(o.target.value),placeholder:"Bwalya Mwansa",className:"mt-1.5 w-full h-11 px-4 rounded-[12px] bg-[var(--bg)] border border-[var(--border)] outline-none focus:border-[var(--green)] text-[14px]"})]}),v("div",{children:[c("label",{className:"text-[11px] uppercase tracking-[0.12em] text-[var(--muted)]",children:"Phone — 10 digits"}),c("input",{value:sn,onChange:(o)=>Zd(o.target.value.replace(/\D/g,"").slice(0,10)),placeholder:"Enter phone number",className:"mt-1.5 w-full h-11 px-4 rounded-[12px] bg-[var(--bg)] border border-[var(--border)] outline-none focus:border-[var(--green)] text-[14px]"})]}),v("div",{className:"grid grid-cols-2 gap-3",children:[v("div",{children:[c("label",{className:"text-[11px] uppercase tracking-[0.12em] text-[var(--muted)]",children:"Province"}),c("select",{value:je,onChange:(o)=>Qd(o.target.value),className:"mt-1.5 w-full h-11 px-3 rounded-[12px] bg-[var(--bg)] border border-[var(--border)] text-[13px]",children:Hd.map((o)=>c("option",{children:o},o))})]}),v("div",{children:[c("label",{className:"text-[11px] uppercase tracking-[0.12em] text-[var(--muted)]",children:"District"}),c("select",{value:Fr,onChange:(o)=>fa(o.target.value),className:"mt-1.5 w-full h-11 px-3 rounded-[12px] bg-[var(--bg)] border border-[var(--border)] text-[13px]",children:Or[je]?.map((o)=>c("option",{children:o},o))})]})]}),v("div",{children:[c("label",{className:"text-[11px] uppercase tracking-[0.12em] text-[var(--muted)]",children:"School — searchable (150+)"}),c("input",{value:ku,onChange:(o)=>Jd(o.target.value),placeholder:"Search school...",className:"mt-1.5 w-full h-10 px-3 rounded-[12px] bg-[var(--bg)] border border-[var(--border)] text-[13px]"}),v("div",{className:"mt-2 max-h-[160px] overflow-auto rounded-[12px] border border-[var(--border)] bg-[var(--bg)]",children:[xa.map((o)=>c("button",{onClick:()=>{Gd(o.name),sa(!1)},className:`w-full text-left px-3 py-2.5 text-[12px] hover:bg-[var(--surface)] transition ${Ot===o.name?"bg-[var(--surface-2)] text-[var(--green)] font-semibold":""}`,children:o.name},o.name)),xa.length===0&&c("div",{className:"px-3 py-3 text-[11px] text-[var(--muted)]",children:"No match — tick custom below to add a custom school."})]}),v("div",{className:"mt-3 flex items-center gap-2",children:[c("input",{type:"checkbox",checked:Fn,onChange:(o)=>sa(o.target.checked),className:"w-4 h-4 rounded"}),c("span",{className:"text-[11px] uppercase tracking-[0.08em] text-[var(--muted)]",children:"Add custom school"})]}),Fn&&c("input",{value:Ft,onChange:(o)=>qd(o.target.value),placeholder:"e.g. Your school name",className:"mt-2 w-full h-11 px-3 rounded-[12px] bg-[var(--bg)] border border-[var(--border)] text-[13px] outline-none focus:border-[var(--green)]"}),Ot&&!Fn&&v("div",{className:"mt-2 text-[11px] text-[var(--green)]",children:["Selected: ",Ot]}),Fn&&Ft&&v("div",{className:"mt-2 text-[11px] text-[var(--green)]",children:["Custom: ",Ft]})]}),v("div",{className:"grid grid-cols-2 gap-3",children:[v("div",{children:[c("label",{className:"text-[11px] uppercase tracking-[0.12em] text-[var(--muted)]",children:"Grade"}),c("select",{value:Dr,onChange:(o)=>xd(o.target.value),className:"mt-1.5 w-full h-11 px-3 rounded-[12px] bg-[var(--bg)] border border-[var(--border)] text-[13px]",children:["10","11","12","Form 1","Form 2","Form 3","Form 4","Form 5","Form 6"].map(o=>c("option",{children:o},o))})]}),v("div",{children:[c("label",{className:"text-[11px] uppercase tracking-[0.12em] text-[var(--muted)]",children:"Account Code"}),v("div",{className:"mt-1.5 h-11 px-3 rounded-[12px] bg-[var(--bg)] border border-[var(--border)] flex items-center text-[11px] font-mono text-[var(--muted)]",children:["ZED-",Date.now().toString().slice(-6)]})]})]}),v("div",{className:"grid grid-cols-2 gap-3",children:[v("div",{children:[c("label",{className:"text-[11px] uppercase tracking-[0.12em] text-[var(--muted)]",children:"Password"}),c("input",{type:"password",value:Eu,onChange:(o)=>jd(o.target.value),placeholder:"Create",className:"mt-1.5 w-full h-11 px-3 rounded-[12px] bg-[var(--bg)] border border-[var(--border)] text-[13px] outline-none focus:border-[var(--green)]"})]}),v("div",{children:[c("label",{className:"text-[11px] uppercase tracking-[0.12em] text-[var(--muted)]",children:"Confirm"}),c("input",{type:"password",value:da,onChange:(o)=>bd(o.target.value),placeholder:"Confirm",className:"mt-1.5 w-full h-11 px-3 rounded-[12px] bg-[var(--bg)] border border-[var(--border)] text-[13px] outline-none focus:border-[var(--green)]"})]})]}),c("button",{id:"zed-signup-btn",disabled:pa,onClick:()=>{console.log("[ZED] zed-signup-btn clean -> signup"),Ip()},className:"w-full h-11 rounded-[12px] bg-[var(--green)] text-black font-bold uppercase tracking-[0.12em] text-[12px] disabled:opacity-60 disabled:cursor-not-allowed hover:brightness-110",children:pa?"Signing up...":"Create account"})]})]})})}),I&&c("div",{className:"fixed bottom-4 left-4 right-4 md:left-auto md:right-4 md:w-[380px] z-50 bg-[var(--text)] text-[var(--bg)] px-4 py-3 rounded-[12px] text-[13px] font-medium shadow-xl border-2 border-[var(--green)]",children:I})]});return v("div",{className:"min-h-screen bg-[var(--bg)] text-[var(--text)]",style:{paddingTop:"var(--safe-area-inset-top)",boxSizing:"border-box"},children:[v("header",{className:"sticky top-[var(--safe-area-inset-top)] z-30 bg-[var(--bg)]/90 backdrop-blur-xl border-b border-[var(--border)] px-4 md:px-6 h-[56px] flex items-center justify-between",children:[v("div",{className:"flex items-center gap-3",children:[c("div",{className:"w-9 h-9 rounded-full bg-[var(--green)] flex items-center justify-center text-black font-extrabold",children:"Z"}),v("div",{children:[c("div",{className:"font-serif text-[16px] leading-none tracking-[-0.02em]",children:"ZED SCHOLAR v1"}),c("div",{className:"text-[10px] uppercase tracking-[0.16em] text-[var(--muted)] hidden md:block",children:"Zambia • ECZ Past Papers"})]})]}),v("div",{className:"flex items-center gap-3",children:[v("div",{className:"flex items-center gap-2 px-3 h-7 rounded-full bg-[var(--surface)] border border-[var(--border)] text-[10px]",children:[c("span",{className:`w-1.5 h-1.5 rounded-full ${""}`}),c("span",{className:"text-[11px] uppercase tracking-[0.12em] text-[var(--muted)]",children:""})]}),v("div",{className:"hidden md:flex items-center gap-2",children:[c("span",{className:"text-[11px] text-[var(--muted)]",children:r.name}),v("span",{className:"px-2 py-0.5 rounded-full bg-[var(--yellow)] text-black text-[10px] font-bold",children:[r.coins||0," coins"]})]})]})]}),v("div",{className:"border-b border-[var(--border)] bg-[var(--surface)] px-2 md:px-6 h-[37px] flex items-center gap-1 overflow-x-auto",children:[[{id:"papers",label:"Papers"},{id:"quizzes",label:"Quizzes"},{id:"documents",label:"Docs"},{id:"videos",label:"Videos"},{id:"leaderboard",label:"Leaderboard"},{id:"admin",label:"Admin"},{id:"profile",label:"Profile"}].map((o)=>c("button",{onClick:()=>x(o.id),className:`h-7 px-3 rounded-full text-[11px] uppercase tracking-[0.12em] font-semibold border whitespace-nowrap ${M===o.id?"bg-[var(--text)] text-[var(--bg)] border-[var(--text)]":"bg-transparent border-[var(--border)] text-[var(--muted)]"}`,children:o.label},o.id)),v("div",{className:"ml-auto hidden md:flex items-center gap-2 text-[10px] text-[var(--muted)]",children:[v("span",{children:[r.province," • ",r.district]}),c("span",{className:"px-2 py-0.5 rounded-full bg-[var(--surface-2)]",children:r.school})]})]}),v("main",{className:"max-w-[1200px] mx-auto px-4 md:px-6 py-6",children:[M==="papers"&&v("div",{className:"space-y-4",children:[v("div",{className:"flex flex-wrap gap-2 items-center",children:[c("input",{value:$r,onChange:(o)=>ip(o.target.value),placeholder:"Search papers...",className:"h-9 px-3 rounded-[10px] bg-[var(--surface)] border border-[var(--border)] text-[13px] w-full"})]}),ep?c("div",{className:"grid md:grid-cols-3 gap-3",children:Array.from({length:6}).map((o,y)=>c("div",{className:"h-[140px] rounded-[14px] bg-[var(--surface)] animate-pulse"},y))}):v(wu,{children:[!$r.trim()&&Tu.length>0&&c("div",{className:"text-[12px] text-[var(--muted)]",children:"Newest uploads — search above for more papers."}),c("div",{className:"grid md:grid-cols-2 lg:grid-cols-3 gap-3",children:Tu.slice(0,20).map((o)=>v("div",{className:"bg-[var(--surface)] border border-[var(--border)] rounded-[14px] p-4 flex flex-col",children:[v("div",{className:"flex items-start justify-between gap-2",children:[v("div",{children:[v("div",{className:"text-[11px] uppercase tracking-[0.12em] text-[var(--yellow)]",children:[o.subject," • G",o.grade," • ",o.year]}),c("div",{className:"font-semibold text-[14px] leading-tight mt-1 line-clamp-2",children:o.title}),v("div",{className:"text-[11px] text-[var(--muted)] mt-1",children:[o.paper_type," • ",o.province||""," ",o.district||""]})]}),c("span",{className:"text-[10px] px-2 py-0.5 rounded-full bg-[var(--surface-2)] border border-[var(--border)]",children:o.file_name?.slice(-3).toUpperCase()||"PDF"})]}),c("div",{className:"text-[12px] text-[var(--muted)] mt-2 line-clamp-2",children:o.description}),v("div",{className:"mt-auto pt-3 flex gap-2",children:[c("a",{href:o.file_url,target:"_blank",rel:"noopener",className:"flex-1 h-8 rounded-[8px] bg-[var(--text)] text-[var(--bg)] flex items-center justify-center text-[11px] font-semibold uppercase tracking-[0.08em]",children:"Download"}),o.uploaded_by===r.id&&c("button",{onClick:()=>Du(o),className:"h-8 px-3 rounded-[8px] bg-[var(--surface-2)] border border-[var(--border)] text-[11px]",children:"Delete"})]}),v("div",{className:"mt-2 text-[10px] text-[var(--muted-2)]",children:["by ",o.uploaded_by?.slice(0,8)||"—"," • ",new Date(o.created_at).toLocaleDateString()]})]},o.id))}),Tu.length===0&&c("div",{className:"text-center py-8 text-[var(--muted)] text-[13px]",children:"No papers found."})]})]}),M==="quizzes"&&v("div",{className:"space-y-4",children:[v("div",{className:"flex flex-wrap gap-2 items-center",children:[v("select",{value:Ar,onChange:(o)=>sp(o.target.value),className:"h-9 px-2 rounded-[10px] bg-[var(--surface)] border border-[var(--border)] text-[11px]",children:[c("option",{value:"All",children:"Select Subject"}),It.map((o)=>c("option",{children:o},o))]}),v("select",{value:Kr,onChange:(o)=>dp(o.target.value),className:"h-9 px-2 rounded-[10px] bg-[var(--surface)] border border-[var(--border)] text-[11px]",children:[c("option",{value:"All",children:"Select Grade"}),["10","11","12","Form 1","Form 2","Form 3","Form 4","Form 5","Form 6"].map(o=>c("option",{children:o},o))]}),null,c("button",{onClick:async function(){ if(Ar==="All"){ F("Pick a subject first, then tap TAKE ZED SCHOLAR QUIZ"); return; } var _q=await Zq(Ar,Kr==="All"?"":Kr,20,false); if(_q&&_q.length) Vp(_q); },className:"h-9 px-4 rounded-[10px] bg-[var(--yellow)] text-black font-bold text-[11px] uppercase tracking-[0.12em]",children:"🤖 TAKE ZED SCHOLAR QUIZ"}),c("span",{className:"ml-auto text-[11px] text-[var(--muted)]",children:"AI makes every quiz fresh • +5 coins per correct"})]}),null,Te&&c("div",{className:"fixed inset-0 z-50 bg-black/60 backdrop-blur-sm p-4 flex items-center justify-center",children:v("div",{className:"bg-[var(--surface)] border border-[var(--border)] rounded-[16px] w-full max-w-[720px] max-h-[90vh] overflow-auto p-6",children:[v("div",{className:"flex items-center justify-between",children:[v("h3",{className:"font-serif text-[22px]",children:["Quiz — Question ",Qi+1," of ",Te.length]}),v("div",{className:"text-[12px] text-[var(--muted)]",children:["Time: ",Math.floor(Nu/60),":",String(Nu%60).padStart(2,"0")]})]}),c("div",{className:"mt-2 text-[11px] text-[var(--muted)]",children:["Score so far: ",Te.filter(function(q,_i){return _a[_i]===q.correct_answer}).length," / ",Te.length," correct"]}),c("div",{className:"mt-2 h-2 rounded-full bg-[var(--bg)] overflow-hidden",children:c("div",{className:"h-full bg-[var(--green)]",style:{width:Math.round(((Qi+1)/Te.length)*100)+"%"}})}),c("div",{className:"mt-4",children:[v("div",{className:"text-[15px] font-semibold leading-snug",children:[Qi+1,". ",Te[Qi].question_text]}),c("div",{className:"mt-3 grid grid-cols-1 md:grid-cols-2 gap-2",children:["A","B","C","D"].filter(function(h){return Te[Qi][`option_${h.toLowerCase()}`]&&String(Te[Qi][`option_${h.toLowerCase()}`]).trim()}).map(function(h){var _picked=_a[Qi];var _isCorrect=h===Te[Qi].correct_answer;var _isPicked=h===_picked;var _answered=_picked!==undefined;var _cls=_answered?(_isCorrect?"bg-[var(--green)] text-black border-[var(--green)]":_isPicked?"bg-red-500 text-white border-red-500":"bg-[var(--bg)] border-[var(--border)] opacity-60"):"bg-[var(--bg)] border-[var(--border)]";return v("button",{onClick:function(){ if(_a[Qi]!==undefined) return; Ca(function(P){return {...P,[Qi]:h};}); },className:"text-left px-3 py-3 rounded-[10px] border text-[13px] "+_cls,children:[v("span",{className:"font-bold mr-1",children:[h,"."]}),Te[Qi][`option_${h.toLowerCase()}`],_answered&&_isCorrect?c("span",{className:"ml-2 font-bold",children:"✓"}):null,_answered&&_isPicked&&!_isCorrect?c("span",{className:"ml-2 font-bold",children:"✗"}):null]},h)})}),_a[Qi]!==undefined&&v("div",{className:"mt-4 space-y-2",children:[v("div",{className:"text-[13px] font-bold px-3 py-2 rounded-[10px] "+(_a[Qi]===Te[Qi].correct_answer?"bg-[var(--green)] text-black":"bg-red-500 text-white"),children:_a[Qi]===Te[Qi].correct_answer?["✓ Correct! Well done."]:["✗ Wrong. Correct answer is ",Te[Qi].correct_answer," — ",Te[Qi][`option_${(Te[Qi].correct_answer||"A").toLowerCase()}`]]}),v("div",{className:"bg-[var(--bg)] border border-[var(--border)] rounded-[12px] p-3",children:[v("div",{className:"text-[11px] uppercase tracking-[0.12em] text-[var(--green)] font-bold",children:"Explanation — why this is correct and why the others are wrong"}),c("div",{className:"mt-1 text-[13px] leading-snug",children:Te[Qi].explanation&&String(Te[Qi].explanation).trim()?Te[Qi].explanation:["Correct answer is ",Te[Qi].correct_answer," — ",Te[Qi][`option_${(Te[Qi].correct_answer||"A").toLowerCase()}`],". The other options are incorrect for this question."]})]})]}),_a[Qi]===undefined&&c("div",{className:"mt-3 text-[11px] text-[var(--muted)]",children:"Tap one answer to see if you are right."})]}),v("div",{className:"mt-6 flex gap-2",children:[c("button",{onClick:function(){Su(null);QiSet(0);},className:"h-10 px-4 rounded-[10px] bg-[var(--surface-2)] border border-[var(--border)] text-[12px]",children:"Cancel"}),_a[Qi]===undefined?c("button",{disabled:!0,className:"flex-1 h-10 rounded-[10px] bg-[var(--surface-2)] border border-[var(--border)] text-[12px] opacity-50",children:"Pick an answer first"}):Qi<Te.length-1?c("button",{onClick:function(){QiSet(Qi+1);},className:"flex-1 h-10 rounded-[10px] bg-[var(--green)] text-black font-bold uppercase tracking-[0.12em] text-[12px]",children:"Next →"}):c("button",{onClick:Hp,className:"flex-1 h-10 rounded-[10px] bg-[var(--green)] text-black font-bold uppercase tracking-[0.12em] text-[12px]",children:"Finish • See Score"})]})]})})]}),M==="documents"&&v("div",{className:"space-y-4",children:[v("div",{className:"text-[11px] uppercase tracking-[0.12em] text-[var(--muted)]",children:[Cu.length," docs"]}),c("div",{className:"grid md:grid-cols-3 gap-3",children:Cu.map((o)=>v("div",{className:"bg-[var(--surface)] border border-[var(--border)] rounded-[14px] p-4",children:[v("div",{className:"text-[11px] uppercase text-[var(--yellow)]",children:[o.subject," • ",o.grade]}),c("div",{className:"font-semibold text-[14px] mt-1",children:o.title}),c("div",{className:"text-[12px] text-[var(--muted)] mt-1 line-clamp-2",children:o.description}),c("a",{href:o.file_url,target:"_blank",rel:"noopener",className:"mt-3 inline-flex h-8 px-3 rounded-[8px] bg-[var(--text)] text-[var(--bg)] text-[11px] font-semibold items-center",children:"Open Document"})]},o.id))}),Cu.length===0&&c("div",{className:"text-center py-8 text-[var(--muted)] text-[13px]",children:"No documents yet."})]}),M==="videos"&&v("div",{className:"space-y-4",children:[c("div",{className:"text-[11px] uppercase tracking-[0.12em] text-[var(--muted)]",children:[ha.length," videos"]}),c("div",{className:"grid md:grid-cols-2 gap-4",children:ha.map((o)=>{let y=Ad(o.video_url);return v("div",{className:"bg-[var(--surface)] border border-[var(--border)] rounded-[14px] overflow-hidden",children:[y?c("div",{className:"aspect-video bg-black",children:c("iframe",{src:`https://www.youtube-nocookie.com/embed/${y}?modestbranding=1&rel=0&iv_load_policy=3&controls=1&fs=1&playsinline=1&disablekb=0&showinfo=0&cc_load_policy=0&enablejsapi=1`,className:"w-full h-full",loading:"lazy",allowFullScreen:!0,sandbox:"allow-scripts allow-same-origin allow-presentation",allow:"accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; fullscreen",title:o.title})}):c("video",{src:o.video_url,controls:!0,className:"w-full aspect-video bg-black"}),v("div",{className:"p-4",children:[v("div",{className:"text-[11px] uppercase text-[var(--green)]",children:[o.subject," • G",o.grade]}),c("div",{className:"font-semibold text-[14px] mt-1",children:o.title}),c("div",{className:"text-[12px] text-[var(--muted)] mt-1",children:o.description})]})]},o.id)})}),ha.length===0&&c("div",{className:"text-center py-8 text-[var(--muted)] text-[13px]",children:"No videos — add YouTube links in Admin."})]}),M==="leaderboard"&&v("div",{className:"space-y-6",children:[v("div",{className:"flex flex-wrap gap-2 items-center",children:[c("h2",{className:"font-serif text-[32px] tracking-[-0.02em]",children:"Whole Zambia Leaderboard"}),c("span",{className:"ml-auto px-3 py-1 rounded-full bg-[var(--green)] text-black text-[11px] font-bold uppercase tracking-[0.12em]",children:"Take Zed Scholar quiz to be ranked"})]}),v("div",{className:"flex flex-wrap gap-2",children:[c("input",{value:Zr,onChange:(o)=>yp(o.target.value),placeholder:"Search name/school...",className:"h-9 px-3 rounded-[10px] bg-[var(--surface)] border border-[var(--border)] text-[12px] w-[180px]"}),v("label",{className:"flex items-center gap-2 text-[11px]",children:[c("input",{type:"checkbox",checked:Qr,onChange:(o)=>gp(o.target.checked)})," District top 3"]})]}),c("div",{className:"grid grid-cols-3 gap-3",children:qr.slice(0,3).map((o,y)=>v("div",{className:`rounded-[16px] p-4 border text-center ${y===0?"bg-[var(--yellow)] text-black border-[var(--yellow)] order-2":y===1?"bg-[var(--surface)] border-[var(--border)] order-1":"bg-[var(--surface)] border-[var(--border)] order-3"}`,children:[c("div",{className:"text-[20px]",children:y===0?"\uD83D\uDC51":y===1?"\uD83E\uDD48":"\uD83E\uDD49"}),c("div",{className:"font-serif text-[16px] mt-1 leading-tight",children:o.profile.name}),c("div",{className:"text-[10px] uppercase tracking-[0.08em] mt-1 opacity-70",children:o.profile.school?.slice(0,22)}),v("div",{className:"mt-2 text-[12px] font-bold",children:[o.profile.coins||0," coins • ",o.count," quizzes"]}),v("div",{className:"text-[11px]",children:["Avg ",o.avg.toFixed(1),"% • Total ",o.totalScore]})]},o.profile.id))}),c("div",{className:"grid md:grid-cols-3 lg:grid-cols-5 gap-3",children:Op.map((o)=>v("div",{className:"bg-[var(--surface)] border border-[var(--border)] rounded-[14px] p-3",children:[c("div",{className:"text-[11px] uppercase tracking-[0.12em] text-[var(--muted)]",children:o.province}),v("div",{className:"font-bold text-[14px] mt-1",children:[o.total," learners"]}),v("div",{className:"text-[10px] text-[var(--muted)] mt-1 line-clamp-2",children:["Top: ",o.topSchool]})]},o.province))}),Qr&&c("div",{className:"grid md:grid-cols-2 gap-3",children:Fp.map((o)=>v("div",{className:"bg-[var(--surface)] border border-[var(--border)] rounded-[14px] p-3",children:[c("div",{className:"text-[11px] uppercase tracking-[0.12em] text-[var(--green)]",children:o.district}),c("div",{className:"mt-2 space-y-1",children:o.top.map((y,h)=>v("div",{className:"flex justify-between text-[12px]",children:[v("span",{children:[h+1,". ",y.profile.name]}),v("span",{children:[y.profile.coins,"c"]})]},y.profile.id))})]},o.district))}),c("div",{className:"overflow-auto rounded-[14px] border border-[var(--border)]",children:v("table",{className:"w-full text-[12px]",children:[c("thead",{className:"bg-[var(--surface)] text-[11px] uppercase tracking-[0.12em] text-[var(--muted)]",children:v("tr",{children:[c("th",{className:"text-left px-3 py-2",children:"Rank"}),c("th",{className:"text-left px-3 py-2",children:"Name"}),c("th",{className:"text-left px-3 py-2",children:"School (District)"}),c("th",{className:"text-left px-3 py-2",children:"Province"}),c("th",{className:"text-left px-3 py-2",children:"Coins"}),c("th",{className:"text-left px-3 py-2",children:"Streak"}),c("th",{className:"text-left px-3 py-2",children:"Quizzes"}),c("th",{className:"text-left px-3 py-2",children:"Avg"}),c("th",{className:"text-left px-3 py-2",children:"Total"})]})}),c("tbody",{children:qr.slice(0,100).map((o,y)=>v("tr",{className:`border-t border-[var(--border)] ${o.profile.id===r.id?"bg-[var(--surface-3)]":""}`,children:[c("td",{className:"px-3 py-2",children:y+1}),v("td",{className:"px-3 py-2 font-medium",children:[o.profile.name," ",o.profile.id===r.id&&c("span",{className:"ml-1 px-1.5 py-0.5 rounded-full bg-[var(--green)] text-black text-[9px]",children:"YOU"})]}),v("td",{className:"px-3 py-2",children:[o.profile.school," ",v("span",{className:"text-[var(--muted)]",children:["(",o.profile.district,")"]})]}),c("td",{className:"px-3 py-2",children:c("span",{className:"px-2 py-0.5 rounded-full bg-[var(--surface-2)] border border-[var(--border)] text-[10px]",children:o.profile.province})}),c("td",{className:"px-3 py-2 font-bold",children:o.profile.coins||0}),c("td",{className:"px-3 py-2",children:o.profile.streak||0}),c("td",{className:"px-3 py-2",children:o.count}),v("td",{className:"px-3 py-2",children:[o.avg.toFixed(1),"%"]}),c("td",{className:"px-3 py-2",children:o.totalScore})]},o.profile.id))})]})})]}),M==="admin"&&(admOk?v("div",{className:"space-y-6",children:[v("div",{className:"flex flex-wrap gap-2",children:[c("h2",{className:"font-serif text-[28px]",children:"Admin — Uploads"}),c("div",{className:"ml-auto flex gap-2 text-[11px] flex-wrap",children:Object.entries(lp).map(([o,y])=>v("span",{className:"px-2 py-1 rounded-full bg-[var(--surface)] border border-[var(--border)]",children:[o,": ",y]},o))})]}),v("div",{className:"grid grid-cols-1 lg:grid-cols-2 gap-4 md:gap-6 w-full max-w-full",children:[v("div",{className:"bg-[var(--surface)] border border-[var(--border)] rounded-[14px] p-5",children:[c("div",{className:"text-[11px] uppercase tracking-[0.12em] text-[var(--yellow)]",children:"Upload Past Paper — PDF • No size limit"}),v("div",{className:"mt-3 grid grid-cols-2 gap-2",children:[c("input",{value:za,onChange:(o)=>wp(o.target.value),placeholder:"Subject e.g. Maths",className:"h-9 px-2 rounded-[10px] bg-[var(--bg)] border border-[var(--border)] text-[11px]"}),c("input",{value:Ra,onChange:(o)=>kp(o.target.value),placeholder:"Grade e.g. 12",className:"h-9 px-2 rounded-[10px] bg-[var(--bg)] border border-[var(--border)] text-[11px]"}),c("input",{value:Pa,onChange:(o)=>Ep(o.target.value),placeholder:"Year e.g. 2023",className:"h-9 px-2 rounded-[10px] bg-[var(--bg)] border border-[var(--border)] text-[11px]"}),c("input",{value:Ma,onChange:(o)=>_p(o.target.value),placeholder:"Type e.g. ECZ",className:"h-9 px-2 rounded-[10px] bg-[var(--bg)] border border-[var(--border)] text-[11px]"})]}),c("input",{value:Ru,onChange:(o)=>La(o.target.value),placeholder:"Title e.g. Maths Paper 1",className:"mt-3 w-full h-10 px-3 rounded-[10px] bg-[var(--bg)] border border-[var(--border)] text-[12px]"}),c("textarea",{value:Ia,onChange:(o)=>Oa(o.target.value),placeholder:"Description",className:"mt-2 w-full h-20 px-3 py-2 rounded-[10px] bg-[var(--bg)] border border-[var(--border)] text-[12px]"}),c("input",{type:"file",accept:"application/pdf",onChange:(o)=>Fa(o.target.files?.[0]||null),className:"mt-3 w-full text-[11px] file:mr-3 file:h-7 file:rounded-[8px] file:border-0 file:bg-[var(--text)] file:text-[var(--bg)] file:text-[11px] file:font-semibold file:uppercase"}),c("button",{disabled:Da,onClick:Dp,className:"mt-3 w-full h-10 rounded-[10px] bg-[var(--green)] text-black font-bold uppercase tracking-[0.12em] text-[11px] disabled:opacity-60",children:Da?"Uploading live...":"Upload Past Paper"})]}),v("div",{className:"bg-[var(--surface)] border border-[var(--border)] rounded-[14px] p-5 w-full max-w-full",children:[c("div",{className:"text-[11px] uppercase tracking-[0.12em] text-[var(--yellow)]",children:"Add Video — YouTube or Phone Upload"}),c("input",{value:Fu,onChange:(o)=>Za(o.target.value),placeholder:"Video title",className:"mt-3 w-full h-10 px-3 rounded-[10px] bg-[var(--bg)] border border-[var(--border)] text-[12px]"}),c("input",{id:"zed-topic-input",placeholder:"Topic e.g. Mole Concept",className:"mt-2 w-full h-10 px-3 rounded-[10px] bg-[var(--bg)] border border-[var(--border)] text-[12px] outline-none focus:border-[var(--green)]",defaultValue:""}),c("input",{value:Jr,onChange:(o)=>Qa(o.target.value),placeholder:"YouTube URL (optional)",className:"mt-2 w-full h-10 px-3 rounded-[10px] bg-[var(--bg)] border border-[var(--border)] text-[12px]"}),c("div",{className:"mt-2 p-2 rounded-[10px] bg-[var(--bg)] border border-dashed border-[var(--border)]",children:[c("div",{className:"text-[10px] uppercase tracking-[0.12em] text-[var(--muted)]",children:"Or upload video from phone"}),c("input",{type:"file",accept:"video/*",onChange:(o)=>setVidFile(o.target.files?.[0]||null),className:"mt-2 w-full text-[11px] file:mr-3 file:h-8 file:rounded-[8px] file:border-0 file:bg-[var(--text)] file:text-[var(--bg)] file:text-[11px] file:font-semibold file:uppercase"}),vidFile?c("div",{className:"mt-1 text-[11px] text-[var(--green)]",children:"Selected: "+vidFile.name+" ("+(vidFile.size/1024/1024).toFixed(1)+" MB)"}):null]}),v("div",{className:"mt-3 grid grid-cols-2 gap-2",children:[c("input",{value:Ja,onChange:(o)=>zp(o.target.value),placeholder:"Subject e.g. Maths",className:"h-9 px-2 rounded-[10px] bg-[var(--bg)] border border-[var(--border)] text-[11px]"}),c("input",{value:Ga,onChange:(o)=>Rp(o.target.value),placeholder:"Grade e.g. 12",className:"h-9 px-2 rounded-[10px] bg-[var(--bg)] border border-[var(--border)] text-[11px]"})]}),c("button",{disabled:vidUp,onClick:$p,className:"mt-3 w-full h-10 rounded-[10px] bg-[var(--yellow)] text-black font-bold uppercase tracking-[0.12em] text-[11px] disabled:opacity-60",children:vidUp?"Uploading video...":"Insert Video Live"}),c("div",{className:"mt-2 text-[10px] text-[var(--muted)]",children:"YouTube or MP4 / WebM from phone."})]})]})]}):v("div",{className:"min-h-[60vh] flex flex-col items-center justify-center p-6",children:[v("div",{className:"w-full max-w-[400px] bg-[var(--surface)] border border-[var(--border)] rounded-[16px] p-6",children:[c("h2",{className:"font-serif text-[22px]",children:"Admin Access — Locked"}),c("p",{className:"text-[12px] text-[var(--muted)] mt-2",children:"Enter admin key to unlock admin panel"}),c("input",{type:"password",value:admKey,onChange:e=>setAdmKey(e.target.value),placeholder:"sb_publishable_...",className:"mt-4 w-full h-11 px-4 rounded-[12px] bg-[var(--bg)] border border-[var(--border)] outline-none text-[13px]"}),c("button",{onClick:()=>{if(admKey==="sb_publishable_74vo5_RlNXb0U0TrNLCdCQ_8zjDwFni"){setAdmOk(!0),F("Admin unlocked ✓")}else{F("Invalid admin key — access denied")}},className:"mt-3 w-full h-11 rounded-[12px] bg-[var(--green)] text-black font-bold text-[12px] uppercase tracking-[0.12em]",children:"Unlock Admin"})]})]})),M==="profile"&&v("div",{className:"grid grid-cols-1 lg:grid-cols-[320px_1fr] gap-4 md:gap-6 w-full",children:[v("div",{className:"bg-[var(--surface)] border border-[var(--border)] rounded-[14px] p-5 h-fit lg:sticky lg:top-[calc(56px+var(--safe-area-inset-top)+37px)]",children:[c("div",{className:"w-16 h-16 rounded-full bg-[var(--green)] flex items-center justify-center text-black font-extrabold text-[24px]",children:r.name[0]}),c("div",{className:"font-serif text-[22px] mt-3",children:r.name}),v("div",{className:"text-[12px] text-[var(--muted)]",children:[r.phone," • ",r.account_code]}),v("div",{className:"mt-3 flex flex-wrap gap-2",children:[v("span",{className:"px-2 py-1 rounded-full bg-[var(--yellow)] text-black text-[11px] font-bold",children:[r.coins||0," coins"]}),v("span",{className:"px-2 py-1 rounded-full bg-[var(--surface-2)] border border-[var(--border)] text-[11px]",children:["Streak ",r.streak||0]}),v("span",{className:"px-2 py-1 rounded-full bg-[var(--surface-2)] border border-[var(--border)] text-[11px]",children:["Grade ",r.grade]})]}),v("div",{className:"mt-4 text-[12px] space-y-1",children:[v("div",{children:[c("span",{className:"text-[var(--muted)]",children:"Province:"})," ",r.province]}),v("div",{children:[c("span",{className:"text-[var(--muted)]",children:"District:"})," ",r.district]}),v("div",{children:[c("span",{className:"text-[var(--muted)]",children:"School:"})," ",r.school]})]})]}),v("div",{className:"space-y-4",children:[c("h3",{className:"font-serif text-[20px]",children:"Quiz History"}),v("div",{className:"grid gap-2",children:[(()=>{var _d=[],_seen={};Ea.forEach(function(o){var _k=(o.subject||"")+"|"+(o.score||0)+"|"+(o.total||0),_t=new Date(o.created_at||0).getTime();if(_seen[_k]!==undefined&&Math.abs(_t-_seen[_k])<10000)return;_seen[_k]=_t;_d.push(o)});var _g={},_order=[];_d.forEach(function(o){var _gr=String(o.grade||"").trim()||"Other";if(!_g[_gr]){_g[_gr]=[];_order.push(_gr)}_g[_gr].push(o)});var _go=function(g){if(g==="Other")return 99;var _m=String(g).match(/Form\s*(\d)/i);if(_m)return parseInt(_m[1],10);var _n=parseInt(g,10);if(!isNaN(_n))return 20+_n;return 50};_order.sort(function(a,b){return _go(a)-_go(b)});var _fmt=function(g){if(g==="Other")return "Other";if(/^Form/i.test(g))return g;return "Grade "+g};var _out=[];_order.forEach(function(_gr){_out.push(v("div",{className:"mt-1 flex items-center gap-2",children:[v("span",{className:"px-2 py-1 rounded-full bg-[var(--yellow)] text-black text-[11px] font-bold",children:_fmt(_gr)}),v("span",{className:"text-[11px] text-[var(--muted)]",children:[_g[_gr].length," quiz",_g[_gr].length===1?"":"zes"]})]},"h-"+_gr));_g[_gr].forEach(function(o){_out.push(v("div",{className:"bg-[var(--surface)] border border-[var(--border)] rounded-[12px] p-3 flex items-center justify-between",children:[v("div",{children:[v("div",{className:"text-[12px] font-semibold",children:[o.subject]}),v("div",{className:"text-[11px] text-[var(--muted)]",children:[new Date(o.created_at).toLocaleString()," • ",o.time_spent,"s"]})]}),v("div",{className:"text-right",children:[v("div",{className:"text-[14px] font-bold",children:[o.score,"/",o.total]}),v("div",{className:"text-[11px] text-[var(--green)]",children:[(o.score/o.total*100).toFixed(1),"%"]})]})]},o.id))})});return _out})(),Ea.length===0&&c("div",{className:"text-[13px] text-[var(--muted)] py-8 text-center",children:"No attempts yet — take a quiz to earn +5 coins per correct answer."})]})]})]})]}),I&&c("div",{className:"fixed bottom-4 left-4 right-4 md:left-auto md:right-4 md:w-[380px] z-50 bg-[var(--text)] text-[var(--bg)] px-4 py-3 rounded-[12px] text-[13px] font-medium shadow-xl border-2 border-[var(--green)]",children:I}),qa&&c("div",{className:"fixed inset-0 z-50 bg-black/60 backdrop-blur-sm flex items-center justify-center p-4",children:v("div",{className:"bg-[var(--surface)] border border-[var(--border)] rounded-[16px] p-6 w-full max-w-[400px]",children:[c("h4",{className:"font-serif text-[18px]",children:"Delete paper?"}),c("p",{className:"text-[12px] text-[var(--muted)] mt-2",children:"This will delete this item permanently."}),v("div",{className:"mt-4 flex gap-2",children:[c("button",{onClick:()=>Du(null),className:"flex-1 h-10 rounded-[10px] bg-[var(--surface-2)] border border-[var(--border)] text-[12px]",children:"Cancel"}),c("button",{onClick:()=>Tp(qa),className:"flex-1 h-10 rounded-[10px] bg-[#ff9a9a] text-black font-bold text-[12px]",children:"Delete"})]})]})})]})}Xd.createRoot(document.getElementById("root")).render(c(Kd.default.StrictMode,{children:c(ca,{})}));
+if(h)throw Error(h.message);F(vidFile?"Video uploaded from phone ✓":"Video added live!"),Za(""),Qa(""),setVidFile(null),zp(""),Rp("");let _tEl=document.getElementById("zed-topic-input");if(_tEl)_tEl.value="";let{data:P}=await e.from("videos").select("*").order("created_at",{ascending:!1}).limit(200);ga(P||[])}catch(o){F(o.message)}finally{setVidUp(!1)}},Vp=(o)=>{var _sh=(window.zedBalanceAnswers?window.zedBalanceAnswers(o||[]):(o||[]));Su(_sh),Ca({}),Sa(0),QiSet(0)},Hp=async()=>{if(!Te)return;if(window.__zedQuizSubmitting)return;window.__zedQuizSubmitting=!0;let o=0;Te.forEach((y,h)=>{if(_a[h]===y.correct_answer)o++});try{let y={user_id:r.id,subject:Te[0]?.subject||"General",grade:Te[0]?.grade||r.grade||"",score:o,total:Te.length,time_spent:Nu},{error:h}=await e.from("quiz_attempts").insert(y);if(h&&/grade/i.test(h.message||"")){let _f={user_id:r.id,subject:y.subject,score:o,total:Te.length,time_spent:Nu},_fr=await e.from("quiz_attempts").insert(_f);if(_fr.error)throw Error(_fr.error.message);}else if(h)throw Error(h.message);let P=(r.coins||0)+o*5;await e.from("profiles").update({coins:P}).eq("id",r.id);let W={...r,coins:P};l(W),localStorage.setItem("zed_user",JSON.stringify(W)),F(`Quiz submitted: ${o}/${Te.length} • +${o*5} coins`),Su(null),QiSet(0),window.__zedQuizSubmitting=!1;let{data:V}=await e.from("quiz_attempts").select("user_id,score,total,subject,created_at").order("created_at",{ascending:!1}).limit(500);ka(V||[])}catch(y){window.__zedQuizSubmitting=!1,F(y.message)}},xa=S.useMemo(()=>{let o=ku.toLowerCase();return gv.filter((y)=>y.province===je&&y.name.toLowerCase().includes(o)).slice(0,20)},[je,ku]);if(!r)return v("div",{className:"min-h-screen bg-[var(--bg)] text-[var(--text)] flex flex-col",style:{paddingTop:"var(--safe-area-inset-top)",boxSizing:"border-box"},children:[v("header",{className:"sticky top-[var(--safe-area-inset-top)] z-30 bg-[var(--bg)]/95 backdrop-blur-xl border-b border-[var(--border)] px-4 md:px-6 h-[60px] flex items-center justify-between",children:[v("div",{className:"flex items-center gap-3",children:[c("div",{className:"w-9 h-9 rounded-full bg-[var(--green)] flex items-center justify-center text-black font-extrabold text-[15px]",children:"Z"}),v("div",{children:[c("div",{className:"font-serif text-[18px] leading-none tracking-[-0.02em]",children:"ZED SCHOLAR"}),c("div",{className:"text-[10px] uppercase tracking-[0.18em] text-[var(--muted)]",children:"ZAMBIA • GRADE 10-12 • FORM 1-6"})]})]}),v("div",{className:"flex items-center gap-2 text-[11px]",children:[c("span",{className:`w-2 h-2 rounded-full ${n.ok?"bg-[var(--green)]":n.ok===!1?"bg-[#ff9a9a]":"bg-[var(--yellow)] animate-pulse"}`}),c("span",{className:"text-[10px] uppercase tracking-[0.12em] text-[var(--muted)]",children:""})]})]}),c("div",{className:"flex-1 flex justify-center px-4 py-6 md:py-10",children:c("div",{className:"w-full max-w-[460px]",children:!$?v("div",{className:"bg-[var(--surface)] border border-[var(--border)] rounded-[22px] p-6 md:p-8 shadow-[0_16px_40px_rgba(0,0,0,0.35)]",children:[v("div",{className:"flex gap-2 mb-6 p-1 bg-[var(--bg)] rounded-full w-fit border border-[var(--border)]",children:[c("button",{onClick:()=>i("password"),className:`px-5 h-9 rounded-full text-[11px] uppercase tracking-[0.14em] font-bold transition ${u==="password"?"bg-[var(--text)] text-[var(--bg)]":"text-[var(--muted)]"}`,children:"Password"}),c("button",{onClick:()=>i("otp"),className:`px-5 h-9 rounded-full text-[11px] uppercase tracking-[0.14em] font-bold transition ${u==="otp"?"bg-[var(--text)] text-[var(--bg)]":"text-[var(--muted)]"}`,children:"OTP"})]}),u==="password"?v("div",{className:"space-y-4",children:[v("div",{children:[c("h2",{className:"font-serif text-[30px] leading-[0.95] tracking-[-0.02em]",children:"Welcome back"}),c("p",{className:"text-[13px] text-[var(--muted)] mt-2 leading-snug",children:"Log in to access past papers, quizzes and your school leaderboard."})]}),v("div",{children:[c("label",{className:"text-[11px] uppercase tracking-[0.12em] text-[var(--muted)]",children:"Phone — 10 digits"}),c("input",{value:a,onChange:(o)=>f(o.target.value.replace(/\D/g,"").slice(0,10)),placeholder:"Enter phone number",className:"mt-1.5 w-full h-11 px-4 rounded-[12px] bg-[var(--bg)] border border-[var(--border)] outline-none focus:border-[var(--green)] text-[14px]"})]}),v("div",{children:[c("label",{className:"text-[11px] uppercase tracking-[0.12em] text-[var(--muted)]",children:"Password"}),c("input",{type:"password",value:m,onChange:(o)=>g(o.target.value),placeholder:"••••••",className:"mt-1.5 w-full h-11 px-4 rounded-[12px] bg-[var(--bg)] border border-[var(--border)] outline-none focus:border-[var(--green)] text-[14px]"})]}),c("button",{id:"zed-login-btn",disabled:k,onPointerDown:(o)=>{try{if(o.currentTarget.setAttribute("data-clicked","1"),o.currentTarget.textContent="Logging in...",!document.getElementById("login-click-feedback")){void 0 /* duplicate Login banner removed */}}catch{}},onClick:(o)=>{try{if(o.currentTarget.setAttribute("data-clicked","1"),o.currentTarget.textContent="Logging in...",!document.getElementById("login-click-feedback")){void 0 /* duplicate Login banner removed */}}catch{}Pp()},className:"w-full h-11 rounded-[12px] bg-[var(--green)] text-black font-bold uppercase tracking-[0.12em] text-[12px] hover:brightness-110 disabled:opacity-60",children:k?"Logging in...":"Login"}),v("div",{className:"text-[13px] text-[var(--muted)] text-center pt-2",id:"signup-trigger",children:["No account? ",c("button",{id:"zed-signup-open",type:"button","data-testid":"signup-zambia-btn",onClick:(o)=>{try{let y=o.currentTarget;y.textContent="Opening signup... ✓",y.setAttribute("data-opened","1"),y.setAttribute("aria-expanded","true"),y.style.color="var(--green)";let h="zed-signup-feedback-live",P=document.getElementById(h);if(!P)P=document.createElement("div"),P.id=h,P.textContent="Opening signup — create your profile",P.style.position="fixed",P.style.bottom="90px",P.style.left="16px",P.style.right="16px",P.style.background="#F5F1E8",P.style.color="#04101F",P.style.padding="10px 14px",P.style.borderRadius="10px",P.style.zIndex="9999",P.style.fontSize="12px",P.style.fontWeight="600",document.body.appendChild(P),setTimeout(()=>{try{P.remove()}catch{}},3000);location.hash="#signup",document.documentElement.setAttribute("data-signup","open"),window.scrollTo(0,0),console.log("[ZED] Signup trigger clicked - clean auth v31")}catch(y){console.log("[ZED] signup open error",y)}Ce(!0),F("Opening signup — choose province → district → school")},className:"underline text-[var(--text)] font-semibold",children:"Create account"})]})]}):v("div",{className:"space-y-4",children:[v("div",{children:[c("h2",{className:"font-serif text-[30px] leading-[0.95] tracking-[-0.02em]",children:"Phone OTP"}),c("p",{className:"text-[13px] text-[var(--muted)] mt-2 leading-snug",children:"We'll send a 6-digit code to your Zambian number."})]}),v("div",{children:[c("label",{className:"text-[11px] uppercase tracking-[0.12em] text-[var(--muted)]",children:"Phone — 10 digits"}),c("input",{value:_,onChange:(o)=>z(o.target.value.replace(/\D/g,"").slice(0,10)),placeholder:"Enter phone number",className:"mt-1.5 w-full h-11 px-4 rounded-[12px] bg-[var(--bg)] border border-[var(--border)] outline-none focus:border-[var(--green)] text-[14px]"})]}),!N?c("button",{disabled:p,onClick:Mp,className:"w-full h-11 rounded-[12px] bg-[var(--yellow)] text-black font-bold uppercase tracking-[0.12em] text-[12px] disabled:opacity-60",children:p?"Sending...":"Send OTP"}):v(wu,{children:[v("div",{children:[c("label",{className:"text-[11px] uppercase tracking-[0.12em] text-[var(--muted)]",children:"6-digit code"}),c("input",{value:d,onChange:(o)=>s(o.target.value.replace(/\D/g,"").slice(0,6)),placeholder:"123456",className:"mt-1.5 w-full h-11 px-4 rounded-[12px] bg-[var(--bg)] border border-[var(--border)] outline-none focus:border-[var(--green)] text-[14px] tracking-[0.2em]"})]}),c("button",{disabled:p,onClick:Lp,className:"w-full h-11 rounded-[12px] bg-[var(--green)] text-black font-bold uppercase tracking-[0.12em] text-[12px] disabled:opacity-60",children:p?"Verifying...":"Verify & Login"}),c("button",{onClick:()=>{D(!1),s("")},className:"w-full h-9 text-[11px] uppercase tracking-[0.12em] text-[var(--muted)]",children:"Resend code"})]}),v("div",{className:"text-[13px] text-[var(--muted)] text-center",children:["Have password? ",c("button",{type:"button",onClick:()=>i("password"),className:"underline text-[var(--text)]",children:"Use password"})," • ",c("button",{type:"button",onClick:()=>{Ce(!0),F("Opening signup")},className:"underline text-[var(--text)]",children:"Sign up"})]})]})]}):v("div",{className:"bg-[var(--surface)] border border-[var(--border)] rounded-[22px] p-6 md:p-8 shadow-[0_16px_40px_rgba(0,0,0,0.35)] space-y-4",id:"signup",children:[c("button",{type:"button",onClick:()=>{Ce(!1);try{location.hash="",document.documentElement.removeAttribute("data-signup")}catch{}},className:"text-[11px] uppercase tracking-[0.12em] text-[var(--muted)] hover:text-[var(--text)]",children:"← Back to login"}),v("div",{children:[c("h2",{className:"font-serif text-[30px] leading-[0.95] tracking-[-0.02em]",children:"Create account"}),c("p",{className:"text-[13px] text-[var(--muted)] mt-2",children:"Choose province → district → school. Can't find yours? Add a custom school."})]}),v("div",{className:"grid gap-3.5",children:[v("div",{children:[c("label",{className:"text-[11px] uppercase tracking-[0.12em] text-[var(--muted)]",children:"Full Name"}),c("input",{value:xe,onChange:(o)=>Yd(o.target.value),placeholder:"Bwalya Mwansa",className:"mt-1.5 w-full h-11 px-4 rounded-[12px] bg-[var(--bg)] border border-[var(--border)] outline-none focus:border-[var(--green)] text-[14px]"})]}),v("div",{children:[c("label",{className:"text-[11px] uppercase tracking-[0.12em] text-[var(--muted)]",children:"Phone — 10 digits"}),c("input",{value:sn,onChange:(o)=>Zd(o.target.value.replace(/\D/g,"").slice(0,10)),placeholder:"Enter phone number",className:"mt-1.5 w-full h-11 px-4 rounded-[12px] bg-[var(--bg)] border border-[var(--border)] outline-none focus:border-[var(--green)] text-[14px]"})]}),v("div",{className:"grid grid-cols-2 gap-3",children:[v("div",{children:[c("label",{className:"text-[11px] uppercase tracking-[0.12em] text-[var(--muted)]",children:"Province"}),c("select",{value:je,onChange:(o)=>Qd(o.target.value),className:"mt-1.5 w-full h-11 px-3 rounded-[12px] bg-[var(--bg)] border border-[var(--border)] text-[13px]",children:Hd.map((o)=>c("option",{children:o},o))})]}),v("div",{children:[c("label",{className:"text-[11px] uppercase tracking-[0.12em] text-[var(--muted)]",children:"District"}),c("select",{value:Fr,onChange:(o)=>fa(o.target.value),className:"mt-1.5 w-full h-11 px-3 rounded-[12px] bg-[var(--bg)] border border-[var(--border)] text-[13px]",children:Or[je]?.map((o)=>c("option",{children:o},o))})]})]}),v("div",{children:[c("label",{className:"text-[11px] uppercase tracking-[0.12em] text-[var(--muted)]",children:"School — searchable (150+)"}),c("input",{value:ku,onChange:(o)=>Jd(o.target.value),placeholder:"Search school...",className:"mt-1.5 w-full h-10 px-3 rounded-[12px] bg-[var(--bg)] border border-[var(--border)] text-[13px]"}),v("div",{className:"mt-2 max-h-[160px] overflow-auto rounded-[12px] border border-[var(--border)] bg-[var(--bg)]",children:[xa.map((o)=>c("button",{onClick:()=>{Gd(o.name),sa(!1)},className:`w-full text-left px-3 py-2.5 text-[12px] hover:bg-[var(--surface)] transition ${Ot===o.name?"bg-[var(--surface-2)] text-[var(--green)] font-semibold":""}`,children:o.name},o.name)),xa.length===0&&c("div",{className:"px-3 py-3 text-[11px] text-[var(--muted)]",children:"No match — tick custom below to add a custom school."})]}),v("div",{className:"mt-3 flex items-center gap-2",children:[c("input",{type:"checkbox",checked:Fn,onChange:(o)=>sa(o.target.checked),className:"w-4 h-4 rounded"}),c("span",{className:"text-[11px] uppercase tracking-[0.08em] text-[var(--muted)]",children:"Add custom school"})]}),Fn&&c("input",{value:Ft,onChange:(o)=>qd(o.target.value),placeholder:"e.g. Your school name",className:"mt-2 w-full h-11 px-3 rounded-[12px] bg-[var(--bg)] border border-[var(--border)] text-[13px] outline-none focus:border-[var(--green)]"}),Ot&&!Fn&&v("div",{className:"mt-2 text-[11px] text-[var(--green)]",children:["Selected: ",Ot]}),Fn&&Ft&&v("div",{className:"mt-2 text-[11px] text-[var(--green)]",children:["Custom: ",Ft]})]}),v("div",{className:"grid grid-cols-2 gap-3",children:[v("div",{children:[c("label",{className:"text-[11px] uppercase tracking-[0.12em] text-[var(--muted)]",children:"Grade"}),c("select",{value:Dr,onChange:(o)=>xd(o.target.value),className:"mt-1.5 w-full h-11 px-3 rounded-[12px] bg-[var(--bg)] border border-[var(--border)] text-[13px]",children:["10","11","12","Form 1","Form 2","Form 3","Form 4","Form 5","Form 6"].map(o=>c("option",{children:o},o))})]}),v("div",{children:[c("label",{className:"text-[11px] uppercase tracking-[0.12em] text-[var(--muted)]",children:"Account Code"}),v("div",{className:"mt-1.5 h-11 px-3 rounded-[12px] bg-[var(--bg)] border border-[var(--border)] flex items-center text-[11px] font-mono text-[var(--muted)]",children:["ZED-",Date.now().toString().slice(-6)]})]})]}),v("div",{className:"grid grid-cols-2 gap-3",children:[v("div",{children:[c("label",{className:"text-[11px] uppercase tracking-[0.12em] text-[var(--muted)]",children:"Password"}),c("input",{type:"password",value:Eu,onChange:(o)=>jd(o.target.value),placeholder:"Create",className:"mt-1.5 w-full h-11 px-3 rounded-[12px] bg-[var(--bg)] border border-[var(--border)] text-[13px] outline-none focus:border-[var(--green)]"})]}),v("div",{children:[c("label",{className:"text-[11px] uppercase tracking-[0.12em] text-[var(--muted)]",children:"Confirm"}),c("input",{type:"password",value:da,onChange:(o)=>bd(o.target.value),placeholder:"Confirm",className:"mt-1.5 w-full h-11 px-3 rounded-[12px] bg-[var(--bg)] border border-[var(--border)] text-[13px] outline-none focus:border-[var(--green)]"})]})]}),c("button",{id:"zed-signup-btn",disabled:pa,onClick:()=>{console.log("[ZED] zed-signup-btn clean -> signup"),Ip()},className:"w-full h-11 rounded-[12px] bg-[var(--green)] text-black font-bold uppercase tracking-[0.12em] text-[12px] disabled:opacity-60 disabled:cursor-not-allowed hover:brightness-110",children:pa?"Signing up...":"Create account"})]})]})})}),I&&c("div",{className:"fixed bottom-4 left-4 right-4 md:left-auto md:right-4 md:w-[380px] z-50 bg-[var(--text)] text-[var(--bg)] px-4 py-3 rounded-[12px] text-[13px] font-medium shadow-xl border-2 border-[var(--green)]",children:I})]});return v("div",{className:"min-h-screen bg-[var(--bg)] text-[var(--text)]",style:{paddingTop:"var(--safe-area-inset-top)",boxSizing:"border-box"},children:[v("header",{className:"sticky top-[var(--safe-area-inset-top)] z-30 bg-[var(--bg)]/90 backdrop-blur-xl border-b border-[var(--border)] px-4 md:px-6 h-[56px] flex items-center justify-between",children:[v("div",{className:"flex items-center gap-3",children:[c("div",{className:"w-9 h-9 rounded-full bg-[var(--green)] flex items-center justify-center text-black font-extrabold",children:"Z"}),v("div",{children:[c("div",{className:"font-serif text-[16px] leading-none tracking-[-0.02em]",children:"ZED SCHOLAR v1"}),c("div",{className:"text-[10px] uppercase tracking-[0.16em] text-[var(--muted)] hidden md:block",children:"Zambia • ECZ Past Papers"})]})]}),v("div",{className:"flex items-center gap-3",children:[v("div",{className:"flex items-center gap-2 px-3 h-7 rounded-full bg-[var(--surface)] border border-[var(--border)] text-[10px]",children:[c("span",{className:`w-1.5 h-1.5 rounded-full ${""}`}),c("span",{className:"text-[11px] uppercase tracking-[0.12em] text-[var(--muted)]",children:""})]}),v("div",{className:"hidden md:flex items-center gap-2",children:[c("span",{className:"text-[11px] text-[var(--muted)]",children:r.name}),v("span",{className:"px-2 py-0.5 rounded-full bg-[var(--yellow)] text-black text-[10px] font-bold",children:[r.coins||0," coins"]})]})]})]}),v("div",{className:"border-b border-[var(--border)] bg-[var(--surface)] px-2 md:px-6 h-[37px] flex items-center gap-1 overflow-x-auto",children:[[{id:"papers",label:"Papers"},{id:"quizzes",label:"Quizzes"},{id:"documents",label:"Docs"},{id:"videos",label:"Videos"},{id:"leaderboard",label:"Leaderboard"},{id:"admin",label:"Admin"},{id:"profile",label:"Profile"}].map((o)=>c("button",{onClick:()=>x(o.id),className:`h-7 px-3 rounded-full text-[11px] uppercase tracking-[0.12em] font-semibold border whitespace-nowrap ${M===o.id?"bg-[var(--text)] text-[var(--bg)] border-[var(--text)]":"bg-transparent border-[var(--border)] text-[var(--muted)]"}`,children:o.label},o.id)),v("div",{className:"ml-auto hidden md:flex items-center gap-2 text-[10px] text-[var(--muted)]",children:[v("span",{children:[r.province," • ",r.district]}),c("span",{className:"px-2 py-0.5 rounded-full bg-[var(--surface-2)]",children:r.school})]})]}),v("main",{className:"max-w-[1200px] mx-auto px-4 md:px-6 py-6",children:[M==="papers"&&v("div",{className:"space-y-4",children:[v("div",{className:"flex flex-wrap gap-2 items-center",children:[c("input",{value:$r,onChange:(o)=>ip(o.target.value),placeholder:"Search papers...",className:"h-9 px-3 rounded-[10px] bg-[var(--surface)] border border-[var(--border)] text-[13px] w-full"})]}),ep?c("div",{className:"grid md:grid-cols-3 gap-3",children:Array.from({length:6}).map((o,y)=>c("div",{className:"h-[140px] rounded-[14px] bg-[var(--surface)] animate-pulse"},y))}):v(wu,{children:[!$r.trim()&&Tu.length>0&&c("div",{className:"text-[12px] text-[var(--muted)]",children:"Newest uploads — search above for more papers."}),c("div",{className:"grid md:grid-cols-2 lg:grid-cols-3 gap-3",children:Tu.slice(0,20).map((o)=>v("div",{className:"bg-[var(--surface)] border border-[var(--border)] rounded-[14px] p-4 flex flex-col",children:[v("div",{className:"flex items-start justify-between gap-2",children:[v("div",{children:[v("div",{className:"text-[11px] uppercase tracking-[0.12em] text-[var(--yellow)]",children:[o.subject," • G",o.grade," • ",o.year]}),c("div",{className:"font-semibold text-[14px] leading-tight mt-1 line-clamp-2",children:o.title}),v("div",{className:"text-[11px] text-[var(--muted)] mt-1",children:[o.paper_type," • ",o.province||""," ",o.district||""]})]}),c("span",{className:"text-[10px] px-2 py-0.5 rounded-full bg-[var(--surface-2)] border border-[var(--border)]",children:o.file_name?.slice(-3).toUpperCase()||"PDF"})]}),c("div",{className:"text-[12px] text-[var(--muted)] mt-2 line-clamp-2",children:o.description}),v("div",{className:"mt-auto pt-3 flex gap-2",children:[c("a",{href:o.file_url,target:"_blank",rel:"noopener",className:"flex-1 h-8 rounded-[8px] bg-[var(--text)] text-[var(--bg)] flex items-center justify-center text-[11px] font-semibold uppercase tracking-[0.08em]",children:"Download"}),o.uploaded_by===r.id&&c("button",{onClick:()=>Du(o),className:"h-8 px-3 rounded-[8px] bg-[var(--surface-2)] border border-[var(--border)] text-[11px]",children:"Delete"})]}),v("div",{className:"mt-2 text-[10px] text-[var(--muted-2)]",children:["by ",o.uploaded_by?.slice(0,8)||"—"," • ",new Date(o.created_at).toLocaleDateString()]})]},o.id))}),Tu.length===0&&c("div",{className:"text-center py-8 text-[var(--muted)] text-[13px]",children:"No papers found."})]})]}),M==="quizzes"&&v("div",{className:"space-y-4",children:[v("div",{className:"flex flex-wrap gap-2 items-center",children:[v("select",{value:Ar,onChange:(o)=>sp(o.target.value),className:"h-9 px-2 rounded-[10px] bg-[var(--surface)] border border-[var(--border)] text-[11px]",children:[c("option",{value:"All",children:"Select Subject"}),It.map((o)=>c("option",{children:o},o))]}),v("select",{value:Kr,onChange:(o)=>dp(o.target.value),className:"h-9 px-2 rounded-[10px] bg-[var(--surface)] border border-[var(--border)] text-[11px]",children:[c("option",{value:"All",children:"Select Grade"}),["10","11","12","Form 1","Form 2","Form 3","Form 4","Form 5","Form 6"].map(o=>c("option",{children:o},o))]}),null,c("button",{onClick:async function(){ if(Ar==="All"){ F("Pick a subject first, then tap TAKE ZED SCHOLAR QUIZ"); return; } var _q=await Zq(Ar,Kr==="All"?"":Kr,10,false); if(_q&&_q.length) Vp(_q); },className:"h-9 px-4 rounded-[10px] bg-[var(--yellow)] text-black font-bold text-[11px] uppercase tracking-[0.12em]",children:"🤖 TAKE ZED SCHOLAR QUIZ"}),c("span",{className:"ml-auto text-[11px] text-[var(--muted)]",children:"AI makes every quiz fresh • +5 coins per correct"})]}),null,Te&&c("div",{className:"fixed inset-0 z-50 bg-black/60 backdrop-blur-sm p-4 flex items-center justify-center",children:v("div",{className:"bg-[var(--surface)] border border-[var(--border)] rounded-[16px] w-full max-w-[720px] max-h-[90vh] overflow-auto p-6",children:[v("div",{className:"flex items-center justify-between",children:[v("h3",{className:"font-serif text-[22px]",children:["Quiz — Question ",Qi+1," of ",Te.length]}),v("div",{className:"text-[12px] text-[var(--muted)]",children:["Time: ",Math.floor(Nu/60),":",String(Nu%60).padStart(2,"0")]})]}),c("div",{className:"mt-2 text-[11px] text-[var(--muted)]",children:["Score so far: ",Te.filter(function(q,_i){return _a[_i]===q.correct_answer}).length," / ",Te.length," correct"]}),c("div",{className:"mt-2 h-2 rounded-full bg-[var(--bg)] overflow-hidden",children:c("div",{className:"h-full bg-[var(--green)]",style:{width:Math.round(((Qi+1)/Te.length)*100)+"%"}})}),c("div",{className:"mt-4",children:[v("div",{className:"text-[15px] font-semibold leading-snug",children:[Qi+1,". ",Te[Qi].question_text]}),c("div",{className:"mt-3 grid grid-cols-1 md:grid-cols-2 gap-2",children:["A","B","C","D"].filter(function(h){return Te[Qi][`option_${h.toLowerCase()}`]&&String(Te[Qi][`option_${h.toLowerCase()}`]).trim()}).map(function(h){var _picked=_a[Qi];var _isCorrect=h===Te[Qi].correct_answer;var _isPicked=h===_picked;var _answered=_picked!==undefined;var _cls=_answered?(_isCorrect?"bg-[var(--green)] text-black border-[var(--green)]":_isPicked?"bg-red-500 text-white border-red-500":"bg-[var(--bg)] border-[var(--border)] opacity-60"):"bg-[var(--bg)] border-[var(--border)]";return v("button",{onClick:function(){ if(_a[Qi]!==undefined) return; Ca(function(P){return {...P,[Qi]:h};}); },className:"text-left px-3 py-3 rounded-[10px] border text-[13px] "+_cls,children:[v("span",{className:"font-bold mr-1",children:[h,"."]}),Te[Qi][`option_${h.toLowerCase()}`],_answered&&_isCorrect?c("span",{className:"ml-2 font-bold",children:"✓"}):null,_answered&&_isPicked&&!_isCorrect?c("span",{className:"ml-2 font-bold",children:"✗"}):null]},h)})}),_a[Qi]!==undefined&&v("div",{className:"mt-4 space-y-2",children:[v("div",{className:"text-[13px] font-bold px-3 py-2 rounded-[10px] "+(_a[Qi]===Te[Qi].correct_answer?"bg-[var(--green)] text-black":"bg-red-500 text-white"),children:_a[Qi]===Te[Qi].correct_answer?["✓ Correct! Well done."]:["✗ Wrong. Correct answer is ",Te[Qi].correct_answer," — ",Te[Qi][`option_${(Te[Qi].correct_answer||"A").toLowerCase()}`]]}),v("div",{className:"bg-[var(--bg)] border border-[var(--border)] rounded-[12px] p-3",children:[v("div",{className:"text-[11px] uppercase tracking-[0.12em] text-[var(--green)] font-bold",children:"Explanation — why this is correct and why the others are wrong"}),c("div",{className:"mt-1 text-[13px] leading-snug",children:Te[Qi].explanation&&String(Te[Qi].explanation).trim()?Te[Qi].explanation:["Correct answer is ",Te[Qi].correct_answer," — ",Te[Qi][`option_${(Te[Qi].correct_answer||"A").toLowerCase()}`],". The other options are incorrect for this question."]})]})]}),_a[Qi]===undefined&&c("div",{className:"mt-3 text-[11px] text-[var(--muted)]",children:"Tap one answer to see if you are right."})]}),v("div",{className:"mt-6 flex gap-2",children:[c("button",{onClick:function(){Su(null);QiSet(0);},className:"h-10 px-4 rounded-[10px] bg-[var(--surface-2)] border border-[var(--border)] text-[12px]",children:"Cancel"}),_a[Qi]===undefined?c("button",{disabled:!0,className:"flex-1 h-10 rounded-[10px] bg-[var(--surface-2)] border border-[var(--border)] text-[12px] opacity-50",children:"Pick an answer first"}):Qi<Te.length-1?c("button",{onClick:function(){QiSet(Qi+1);},className:"flex-1 h-10 rounded-[10px] bg-[var(--green)] text-black font-bold uppercase tracking-[0.12em] text-[12px]",children:"Next →"}):c("button",{onClick:Hp,className:"flex-1 h-10 rounded-[10px] bg-[var(--green)] text-black font-bold uppercase tracking-[0.12em] text-[12px]",children:"Finish • See Score"})]})]})})]}),M==="documents"&&v("div",{className:"space-y-4",children:[v("div",{className:"text-[11px] uppercase tracking-[0.12em] text-[var(--muted)]",children:[Cu.length," docs"]}),c("div",{className:"grid md:grid-cols-3 gap-3",children:Cu.map((o)=>v("div",{className:"bg-[var(--surface)] border border-[var(--border)] rounded-[14px] p-4",children:[v("div",{className:"text-[11px] uppercase text-[var(--yellow)]",children:[o.subject," • ",o.grade]}),c("div",{className:"font-semibold text-[14px] mt-1",children:o.title}),c("div",{className:"text-[12px] text-[var(--muted)] mt-1 line-clamp-2",children:o.description}),c("a",{href:o.file_url,target:"_blank",rel:"noopener",className:"mt-3 inline-flex h-8 px-3 rounded-[8px] bg-[var(--text)] text-[var(--bg)] text-[11px] font-semibold items-center",children:"Open Document"})]},o.id))}),Cu.length===0&&c("div",{className:"text-center py-8 text-[var(--muted)] text-[13px]",children:"No documents yet."})]}),M==="videos"&&v("div",{className:"space-y-4",children:[c("div",{className:"text-[11px] uppercase tracking-[0.12em] text-[var(--muted)]",children:[ha.length," videos"]}),c("div",{className:"grid md:grid-cols-2 gap-4",children:ha.map((o)=>{let y=Ad(o.video_url);return v("div",{className:"bg-[var(--surface)] border border-[var(--border)] rounded-[14px] overflow-hidden",children:[y?c("div",{className:"aspect-video bg-black",children:c("iframe",{src:`https://www.youtube-nocookie.com/embed/${y}?modestbranding=1&rel=0&iv_load_policy=3&controls=1&fs=1&playsinline=1&disablekb=0&showinfo=0&cc_load_policy=0&enablejsapi=1`,className:"w-full h-full",loading:"lazy",allowFullScreen:!0,sandbox:"allow-scripts allow-same-origin allow-presentation",allow:"accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; fullscreen",title:o.title})}):c("video",{src:o.video_url,controls:!0,className:"w-full aspect-video bg-black"}),v("div",{className:"p-4",children:[v("div",{className:"text-[11px] uppercase text-[var(--green)]",children:[o.subject," • G",o.grade]}),c("div",{className:"font-semibold text-[14px] mt-1",children:o.title}),c("div",{className:"text-[12px] text-[var(--muted)] mt-1",children:o.description})]})]},o.id)})}),ha.length===0&&c("div",{className:"text-center py-8 text-[var(--muted)] text-[13px]",children:"No videos — add YouTube links in Admin."})]}),M==="leaderboard"&&v("div",{className:"space-y-6",children:[v("div",{className:"flex flex-wrap gap-2 items-center",children:[c("h2",{className:"font-serif text-[32px] tracking-[-0.02em]",children:"Whole Zambia Leaderboard"}),c("span",{className:"ml-auto px-3 py-1 rounded-full bg-[var(--green)] text-black text-[11px] font-bold uppercase tracking-[0.12em]",children:"Take Zed Scholar quiz to be ranked"})]}),v("div",{className:"flex flex-wrap gap-2",children:[c("input",{value:Zr,onChange:(o)=>yp(o.target.value),placeholder:"Search name/school...",className:"h-9 px-3 rounded-[10px] bg-[var(--surface)] border border-[var(--border)] text-[12px] w-[180px]"}),v("label",{className:"flex items-center gap-2 text-[11px]",children:[c("input",{type:"checkbox",checked:Qr,onChange:(o)=>gp(o.target.checked)})," District top 3"]})]}),c("div",{className:"grid grid-cols-3 gap-3",children:qr.slice(0,3).map((o,y)=>v("div",{className:`rounded-[16px] p-4 border text-center ${y===0?"bg-[var(--yellow)] text-black border-[var(--yellow)] order-2":y===1?"bg-[var(--surface)] border-[var(--border)] order-1":"bg-[var(--surface)] border-[var(--border)] order-3"}`,children:[c("div",{className:"text-[20px]",children:y===0?"\uD83D\uDC51":y===1?"\uD83E\uDD48":"\uD83E\uDD49"}),c("div",{className:"font-serif text-[16px] mt-1 leading-tight",children:o.profile.name}),c("div",{className:"text-[10px] uppercase tracking-[0.08em] mt-1 opacity-70",children:o.profile.school?.slice(0,22)}),v("div",{className:"mt-2 text-[12px] font-bold",children:[o.profile.coins||0," coins • ",o.count," quizzes"]}),v("div",{className:"text-[11px]",children:["Avg ",o.avg.toFixed(1),"% • Total ",o.totalScore]})]},o.profile.id))}),c("div",{className:"grid md:grid-cols-3 lg:grid-cols-5 gap-3",children:Op.map((o)=>v("div",{className:"bg-[var(--surface)] border border-[var(--border)] rounded-[14px] p-3",children:[c("div",{className:"text-[11px] uppercase tracking-[0.12em] text-[var(--muted)]",children:o.province}),v("div",{className:"font-bold text-[14px] mt-1",children:[o.total," learners"]}),v("div",{className:"text-[10px] text-[var(--muted)] mt-1 line-clamp-2",children:["Top: ",o.topSchool]})]},o.province))}),Qr&&c("div",{className:"grid md:grid-cols-2 gap-3",children:Fp.map((o)=>v("div",{className:"bg-[var(--surface)] border border-[var(--border)] rounded-[14px] p-3",children:[c("div",{className:"text-[11px] uppercase tracking-[0.12em] text-[var(--green)]",children:o.district}),c("div",{className:"mt-2 space-y-1",children:o.top.map((y,h)=>v("div",{className:"flex justify-between text-[12px]",children:[v("span",{children:[h+1,". ",y.profile.name]}),v("span",{children:[y.profile.coins,"c"]})]},y.profile.id))})]},o.district))}),c("div",{className:"overflow-auto rounded-[14px] border border-[var(--border)]",children:v("table",{className:"w-full text-[12px]",children:[c("thead",{className:"bg-[var(--surface)] text-[11px] uppercase tracking-[0.12em] text-[var(--muted)]",children:v("tr",{children:[c("th",{className:"text-left px-3 py-2",children:"Rank"}),c("th",{className:"text-left px-3 py-2",children:"Name"}),c("th",{className:"text-left px-3 py-2",children:"School (District)"}),c("th",{className:"text-left px-3 py-2",children:"Province"}),c("th",{className:"text-left px-3 py-2",children:"Coins"}),c("th",{className:"text-left px-3 py-2",children:"Streak"}),c("th",{className:"text-left px-3 py-2",children:"Quizzes"}),c("th",{className:"text-left px-3 py-2",children:"Avg"}),c("th",{className:"text-left px-3 py-2",children:"Total"})]})}),c("tbody",{children:qr.slice(0,100).map((o,y)=>v("tr",{className:`border-t border-[var(--border)] ${o.profile.id===r.id?"bg-[var(--surface-3)]":""}`,children:[c("td",{className:"px-3 py-2",children:y+1}),v("td",{className:"px-3 py-2 font-medium",children:[o.profile.name," ",o.profile.id===r.id&&c("span",{className:"ml-1 px-1.5 py-0.5 rounded-full bg-[var(--green)] text-black text-[9px]",children:"YOU"})]}),v("td",{className:"px-3 py-2",children:[o.profile.school," ",v("span",{className:"text-[var(--muted)]",children:["(",o.profile.district,")"]})]}),c("td",{className:"px-3 py-2",children:c("span",{className:"px-2 py-0.5 rounded-full bg-[var(--surface-2)] border border-[var(--border)] text-[10px]",children:o.profile.province})}),c("td",{className:"px-3 py-2 font-bold",children:o.profile.coins||0}),c("td",{className:"px-3 py-2",children:o.profile.streak||0}),c("td",{className:"px-3 py-2",children:o.count}),v("td",{className:"px-3 py-2",children:[o.avg.toFixed(1),"%"]}),c("td",{className:"px-3 py-2",children:o.totalScore})]},o.profile.id))})]})})]}),M==="admin"&&(admOk?v("div",{className:"space-y-6",children:[v("div",{className:"flex flex-wrap gap-2",children:[c("h2",{className:"font-serif text-[28px]",children:"Admin — Uploads"}),c("div",{className:"ml-auto flex gap-2 text-[11px] flex-wrap",children:Object.entries(lp).map(([o,y])=>v("span",{className:"px-2 py-1 rounded-full bg-[var(--surface)] border border-[var(--border)]",children:[o,": ",y]},o))})]}),v("div",{className:"grid grid-cols-1 lg:grid-cols-2 gap-4 md:gap-6 w-full max-w-full",children:[v("div",{className:"bg-[var(--surface)] border border-[var(--border)] rounded-[14px] p-5",children:[c("div",{className:"text-[11px] uppercase tracking-[0.12em] text-[var(--yellow)]",children:"Upload Past Paper — PDF • No size limit"}),v("div",{className:"mt-3 grid grid-cols-2 gap-2",children:[c("input",{value:za,onChange:(o)=>wp(o.target.value),placeholder:"Subject e.g. Maths",className:"h-9 px-2 rounded-[10px] bg-[var(--bg)] border border-[var(--border)] text-[11px]"}),c("input",{value:Ra,onChange:(o)=>kp(o.target.value),placeholder:"Grade e.g. 12",className:"h-9 px-2 rounded-[10px] bg-[var(--bg)] border border-[var(--border)] text-[11px]"}),c("input",{value:Pa,onChange:(o)=>Ep(o.target.value),placeholder:"Year e.g. 2023",className:"h-9 px-2 rounded-[10px] bg-[var(--bg)] border border-[var(--border)] text-[11px]"}),c("input",{value:Ma,onChange:(o)=>_p(o.target.value),placeholder:"Type e.g. ECZ",className:"h-9 px-2 rounded-[10px] bg-[var(--bg)] border border-[var(--border)] text-[11px]"})]}),c("input",{value:Ru,onChange:(o)=>La(o.target.value),placeholder:"Title e.g. Maths Paper 1",className:"mt-3 w-full h-10 px-3 rounded-[10px] bg-[var(--bg)] border border-[var(--border)] text-[12px]"}),c("textarea",{value:Ia,onChange:(o)=>Oa(o.target.value),placeholder:"Description",className:"mt-2 w-full h-20 px-3 py-2 rounded-[10px] bg-[var(--bg)] border border-[var(--border)] text-[12px]"}),c("input",{type:"file",accept:"application/pdf",onChange:(o)=>Fa(o.target.files?.[0]||null),className:"mt-3 w-full text-[11px] file:mr-3 file:h-7 file:rounded-[8px] file:border-0 file:bg-[var(--text)] file:text-[var(--bg)] file:text-[11px] file:font-semibold file:uppercase"}),c("button",{disabled:Da,onClick:Dp,className:"mt-3 w-full h-10 rounded-[10px] bg-[var(--green)] text-black font-bold uppercase tracking-[0.12em] text-[11px] disabled:opacity-60",children:Da?"Uploading live...":"Upload Past Paper"})]}),v("div",{className:"bg-[var(--surface)] border border-[var(--border)] rounded-[14px] p-5 w-full max-w-full",children:[c("div",{className:"text-[11px] uppercase tracking-[0.12em] text-[var(--yellow)]",children:"Add Video — YouTube or Phone Upload"}),c("input",{value:Fu,onChange:(o)=>Za(o.target.value),placeholder:"Video title",className:"mt-3 w-full h-10 px-3 rounded-[10px] bg-[var(--bg)] border border-[var(--border)] text-[12px]"}),c("input",{id:"zed-topic-input",placeholder:"Topic e.g. Mole Concept",className:"mt-2 w-full h-10 px-3 rounded-[10px] bg-[var(--bg)] border border-[var(--border)] text-[12px] outline-none focus:border-[var(--green)]",defaultValue:""}),c("input",{value:Jr,onChange:(o)=>Qa(o.target.value),placeholder:"YouTube URL (optional)",className:"mt-2 w-full h-10 px-3 rounded-[10px] bg-[var(--bg)] border border-[var(--border)] text-[12px]"}),c("div",{className:"mt-2 p-2 rounded-[10px] bg-[var(--bg)] border border-dashed border-[var(--border)]",children:[c("div",{className:"text-[10px] uppercase tracking-[0.12em] text-[var(--muted)]",children:"Or upload video from phone"}),c("input",{type:"file",accept:"video/*",onChange:(o)=>setVidFile(o.target.files?.[0]||null),className:"mt-2 w-full text-[11px] file:mr-3 file:h-8 file:rounded-[8px] file:border-0 file:bg-[var(--text)] file:text-[var(--bg)] file:text-[11px] file:font-semibold file:uppercase"}),vidFile?c("div",{className:"mt-1 text-[11px] text-[var(--green)]",children:"Selected: "+vidFile.name+" ("+(vidFile.size/1024/1024).toFixed(1)+" MB)"}):null]}),v("div",{className:"mt-3 grid grid-cols-2 gap-2",children:[c("input",{value:Ja,onChange:(o)=>zp(o.target.value),placeholder:"Subject e.g. Maths",className:"h-9 px-2 rounded-[10px] bg-[var(--bg)] border border-[var(--border)] text-[11px]"}),c("input",{value:Ga,onChange:(o)=>Rp(o.target.value),placeholder:"Grade e.g. 12",className:"h-9 px-2 rounded-[10px] bg-[var(--bg)] border border-[var(--border)] text-[11px]"})]}),c("button",{disabled:vidUp,onClick:$p,className:"mt-3 w-full h-10 rounded-[10px] bg-[var(--yellow)] text-black font-bold uppercase tracking-[0.12em] text-[11px] disabled:opacity-60",children:vidUp?"Uploading video...":"Insert Video Live"}),c("div",{className:"mt-2 text-[10px] text-[var(--muted)]",children:"YouTube or MP4 / WebM from phone."})]})]})]}):v("div",{className:"min-h-[60vh] flex flex-col items-center justify-center p-6",children:[v("div",{className:"w-full max-w-[400px] bg-[var(--surface)] border border-[var(--border)] rounded-[16px] p-6",children:[c("h2",{className:"font-serif text-[22px]",children:"Admin Access — Locked"}),c("p",{className:"text-[12px] text-[var(--muted)] mt-2",children:"Enter admin key to unlock admin panel"}),c("input",{type:"password",value:admKey,onChange:e=>setAdmKey(e.target.value),placeholder:"sb_publishable_...",className:"mt-4 w-full h-11 px-4 rounded-[12px] bg-[var(--bg)] border border-[var(--border)] outline-none text-[13px]"}),c("button",{onClick:()=>{if(admKey==="sb_publishable_74vo5_RlNXb0U0TrNLCdCQ_8zjDwFni"){setAdmOk(!0),F("Admin unlocked ✓")}else{F("Invalid admin key — access denied")}},className:"mt-3 w-full h-11 rounded-[12px] bg-[var(--green)] text-black font-bold text-[12px] uppercase tracking-[0.12em]",children:"Unlock Admin"})]})]})),M==="profile"&&v("div",{className:"grid grid-cols-1 lg:grid-cols-[320px_1fr] gap-4 md:gap-6 w-full",children:[v("div",{className:"bg-[var(--surface)] border border-[var(--border)] rounded-[14px] p-5 h-fit lg:sticky lg:top-[calc(56px+var(--safe-area-inset-top)+37px)]",children:[c("div",{className:"w-16 h-16 rounded-full bg-[var(--green)] flex items-center justify-center text-black font-extrabold text-[24px]",children:r.name[0]}),c("div",{className:"font-serif text-[22px] mt-3",children:r.name}),v("div",{className:"text-[12px] text-[var(--muted)]",children:[r.phone," • ",r.account_code]}),v("div",{className:"mt-3 flex flex-wrap gap-2",children:[v("span",{className:"px-2 py-1 rounded-full bg-[var(--yellow)] text-black text-[11px] font-bold",children:[r.coins||0," coins"]}),v("span",{className:"px-2 py-1 rounded-full bg-[var(--surface-2)] border border-[var(--border)] text-[11px]",children:["Streak ",r.streak||0]}),v("span",{className:"px-2 py-1 rounded-full bg-[var(--surface-2)] border border-[var(--border)] text-[11px]",children:["Grade ",r.grade]})]}),v("div",{className:"mt-4 text-[12px] space-y-1",children:[v("div",{children:[c("span",{className:"text-[var(--muted)]",children:"Province:"})," ",r.province]}),v("div",{children:[c("span",{className:"text-[var(--muted)]",children:"District:"})," ",r.district]}),v("div",{children:[c("span",{className:"text-[var(--muted)]",children:"School:"})," ",r.school]})]})]}),v("div",{className:"space-y-4",children:[c("h3",{className:"font-serif text-[20px]",children:"Quiz History"}),v("div",{className:"grid gap-2",children:[(()=>{var _d=[],_seen={};Ea.forEach(function(o){var _k=(o.subject||"")+"|"+(o.score||0)+"|"+(o.total||0),_t=new Date(o.created_at||0).getTime();if(_seen[_k]!==undefined&&Math.abs(_t-_seen[_k])<10000)return;_seen[_k]=_t;_d.push(o)});var _g={},_order=[];_d.forEach(function(o){var _gr=String(o.grade||"").trim()||"Other";if(!_g[_gr]){_g[_gr]=[];_order.push(_gr)}_g[_gr].push(o)});var _go=function(g){if(g==="Other")return 99;var _m=String(g).match(/Form\s*(\d)/i);if(_m)return parseInt(_m[1],10);var _n=parseInt(g,10);if(!isNaN(_n))return 20+_n;return 50};_order.sort(function(a,b){return _go(a)-_go(b)});var _fmt=function(g){if(g==="Other")return "Other";if(/^Form/i.test(g))return g;return "Grade "+g};var _out=[];_order.forEach(function(_gr){_out.push(v("div",{className:"mt-1 flex items-center gap-2",children:[v("span",{className:"px-2 py-1 rounded-full bg-[var(--yellow)] text-black text-[11px] font-bold",children:_fmt(_gr)}),v("span",{className:"text-[11px] text-[var(--muted)]",children:[_g[_gr].length," quiz",_g[_gr].length===1?"":"zes"]})]},"h-"+_gr));_g[_gr].forEach(function(o){_out.push(v("div",{className:"bg-[var(--surface)] border border-[var(--border)] rounded-[12px] p-3 flex items-center justify-between",children:[v("div",{children:[v("div",{className:"text-[12px] font-semibold",children:[o.subject]}),v("div",{className:"text-[11px] text-[var(--muted)]",children:[new Date(o.created_at).toLocaleString()," • ",o.time_spent,"s"]})]}),v("div",{className:"text-right",children:[v("div",{className:"text-[14px] font-bold",children:[o.score,"/",o.total]}),v("div",{className:"text-[11px] text-[var(--green)]",children:[(o.score/o.total*100).toFixed(1),"%"]})]})]},o.id))})});return _out})(),Ea.length===0&&c("div",{className:"text-[13px] text-[var(--muted)] py-8 text-center",children:"No attempts yet — take a quiz to earn +5 coins per correct answer."})]})]})]})]}),I&&c("div",{className:"fixed bottom-4 left-4 right-4 md:left-auto md:right-4 md:w-[380px] z-50 bg-[var(--text)] text-[var(--bg)] px-4 py-3 rounded-[12px] text-[13px] font-medium shadow-xl border-2 border-[var(--green)]",children:I}),qa&&c("div",{className:"fixed inset-0 z-50 bg-black/60 backdrop-blur-sm flex items-center justify-center p-4",children:v("div",{className:"bg-[var(--surface)] border border-[var(--border)] rounded-[16px] p-6 w-full max-w-[400px]",children:[c("h4",{className:"font-serif text-[18px]",children:"Delete paper?"}),c("p",{className:"text-[12px] text-[var(--muted)] mt-2",children:"This will delete this item permanently."}),v("div",{className:"mt-4 flex gap-2",children:[c("button",{onClick:()=>Du(null),className:"flex-1 h-10 rounded-[10px] bg-[var(--surface-2)] border border-[var(--border)] text-[12px]",children:"Cancel"}),c("button",{onClick:()=>Tp(qa),className:"flex-1 h-10 rounded-[10px] bg-[#ff9a9a] text-black font-bold text-[12px]",children:"Delete"})]})]})})]})}Xd.createRoot(document.getElementById("root")).render(c(Kd.default.StrictMode,{children:c(ca,{})}));
 </script>
   <script>(function(){function m(a){var h=a.getAttribute("href");if(!h)return;try{var u=new URL(h,document.baseURI);if(h.indexOf('youtube.com')!==-1||h.indexOf('youtu.be')!==-1||h.indexOf('youtube-nocookie')!==-1){a.removeAttribute('target');a.setAttribute('data-zed-blocked-youtube','1');return;}if(((u.protocol==="http:"||u.protocol==="https:")&&u.host!==location.host&&!h.toLowerCase().includes(".pdf"))||u.protocol==="mailto:"||u.protocol==="tel:"||u.protocol==="sms:"){a.target="_blank";a.rel="noopener noreferrer";}}catch(e){}}function s(){document.querySelectorAll("a[href]").forEach(m);}if(document.readyState!=="loading"){s();}else{document.addEventListener("DOMContentLoaded",s);}document.addEventListener("click",function(e){var a=e.target&&e.target.closest&&e.target.closest("a[href]");if(a){if((a.getAttribute('href')||'').indexOf('youtube')!==-1){e.preventDefault();e.stopPropagation();return false;}m(a);}},true);})();</script>
   <script type="application/json" data-clippy-inline-media-manifest="1">{"version":1,"slots":[]}</script>
@@ -3492,9 +3508,12 @@ if(h)throw Error(h.message);F(vidFile?"Video uploaded from phone ✓":"Video add
     play.className = 'yt-play-btn';
     play.setAttribute('aria-label', 'Play');
 
-    /* DELETED 18 Nov — CONFLICT/DUPLICATE TITLE: facade .yt-title-bar painted the title over the thumbnail, while the card below already shows the same title (see screenshot: PHYSICS 2026 GCE SCIENCE 1 twice). Card title is the only title now. */
+    let titleBar = document.createElement('div');
+    titleBar.className = 'yt-title-bar';
+    titleBar.textContent = title || '';
 
     wrap.appendChild(img);
+    wrap.appendChild(titleBar);
     wrap.appendChild(play);
 
     // Click to load iframe
@@ -3520,7 +3539,20 @@ if(h)throw Error(h.message);F(vidFile?"Video uploaded from phone ✓":"Video add
       // Replace content
       wrap.innerHTML = '';
       wrap.appendChild(iframe);
-      /* DELETED 18 Nov — CONFLICT: facade div shields .zed-yt-shield-top (top 0-52px, left 0-70% — sat directly over the X) + .zed-yt-shield-logo. Deleted. No div now covers the X. */
+      // SHIELDS: block clicks on YouTube logo (bottom-right) + title/channel (top) - they would open YouTube
+      // Play/pause, seek bar + controls at very bottom are NOT covered, so they still work
+      var shieldTop = document.createElement('div');
+      shieldTop.className = 'zed-yt-shield-top';
+      shieldTop.setAttribute('aria-hidden', 'true');
+      shieldTop.addEventListener('click', function(e){ e.preventDefault(); e.stopPropagation(); }, true);
+      shieldTop.addEventListener('touchstart', function(e){ e.stopPropagation(); }, {passive:true});
+      wrap.appendChild(shieldTop);
+      var shieldLogo = document.createElement('div');
+      shieldLogo.className = 'zed-yt-shield-logo';
+      shieldLogo.setAttribute('aria-hidden', 'true');
+      shieldLogo.addEventListener('click', function(e){ e.preventDefault(); e.stopPropagation(); }, true);
+      shieldLogo.addEventListener('touchstart', function(e){ e.stopPropagation(); }, {passive:true});
+      wrap.appendChild(shieldLogo);
     }, {once: false});
 
     return wrap;
@@ -3661,20 +3693,21 @@ if(h)throw Error(h.message);F(vidFile?"Video uploaded from phone ✓":"Video add
 <style>
 /* ZED BULLETPROOF - CSS shields survive React re-renders (React wipes DOM shields, CSS stays) */
 .aspect-video:has(iframe[src*="youtube"]){position:relative !important;overflow:hidden !important;}
-/* DELETED 18 Nov — CONFLICT: ::before top shield (invisible, sat over X corner). */
-/* DELETED 18 Nov — CONFLICT: ::after logo shield (invisible, overlapped bottom-right guard). */
-/* DELETED 18 Nov — CONFLICT: :has() fallback ::before shield. */
+.aspect-video:has(iframe[src*="youtube"])::before{content:'' !important;position:absolute !important;top:0 !important;left:0 !important;right:30% !important;height:52px !important;z-index:30 !important;background:transparent !important;pointer-events:auto !important;cursor:default !important;display:block !important;}
+.aspect-video:has(iframe[src*="youtube"])::after{content:'' !important;position:absolute !important;bottom:48px !important;right:10px !important;width:110px !important;height:38px !important;z-index:30 !important;background:transparent !important;pointer-events:auto !important;cursor:default !important;display:block !important;}
+/* Fallback for old WebViews without :has() - cover via generic aspect-video inside video grid */
+.grid .aspect-video::before{pointer-events:auto;}
 /* Facade wrapper: when loaded, ::before becomes top shield, ::after becomes logo shield */
-/* DELETED 18 Nov — CONFLICT: .yt-lite::before top shield. */
-/* DELETED 18 Nov — CONFLICT: .yt-lite::after logo shield. */
+.yt-lite.yt-loaded::before{display:block !important;content:'' !important;position:absolute !important;top:0 !important;left:0 !important;right:30% !important;height:52px !important;z-index:20 !important;background:transparent !important;pointer-events:auto !important;}
+.yt-lite.yt-loaded::after{content:'' !important;position:absolute !important;bottom:48px !important;right:10px !important;width:110px !important;height:38px !important;z-index:20 !important;background:transparent !important;pointer-events:auto !important;display:block !important;}
 /* Hide YouTube watermark/logo elements that can be clicked */
 .ytp-watermark, .ytp-youtube-button, .ytp-chrome-top, .ytp-show-cards-title{display:none !important;pointer-events:none !important;}
 </style>
 <style>
 /* ZED - YouTube stays in-app: shields block logo/title clicks, NOT controls */
-/* DELETED 18 Nov — .zed-yt-shield-top CSS (div deleted above). */
-/* DELETED 18 Nov — .zed-yt-shield-logo CSS (div deleted above). */
-/* DELETED 18 Nov — shield div display rule (divs deleted). */
+.zed-yt-shield-top{position:absolute;top:0;left:0;right:30%;height:52px;z-index:20;background:transparent;pointer-events:auto;cursor:default;}
+.zed-yt-shield-logo{position:absolute;bottom:48px;right:10px;width:110px;height:38px;z-index:20;background:transparent;pointer-events:auto;cursor:default;}
+.yt-lite.yt-loaded .zed-yt-shield-top,.yt-lite.yt-loaded .zed-yt-shield-logo{display:block !important;}
 </style>
 <style>
 /* V25 FIX - MAKE CONTROLS TAPPABLE */
@@ -3682,10 +3715,10 @@ if(h)throw Error(h.message);F(vidFile?"Video uploaded from phone ✓":"Video add
   display: none !important;
   content: none !important;
 }
-.yt-lite.yt-loaded .yt-play-btn {
+.yt-lite.yt-loaded .yt-play-btn,
+.yt-lite.yt-loaded .yt-title-bar {
   display: none !important;
 }
-/* DELETED 18 Nov — .yt-title-bar hide rule (title bar deleted). */
 .yt-lite.yt-loaded {
   background: #000 !important;
   cursor: default !important;
@@ -3762,22 +3795,18 @@ if(h)throw Error(h.message);F(vidFile?"Video uploaded from phone ✓":"Video add
     if(lite && !lite.classList.contains('yt-loaded')){
       // Let original handler run first, then fix
       setTimeout(()=>{
-        let iframe = lite.querySelector('iframe');
-        if(iframe && !iframe.src.includes('controls=1')){
-          let src = iframe.src;
-          if(!src.includes('controls=')){
-            iframe.src = src + '&controls=1&fs=1&playsinline=1';
-          }
-          enhanceIframes();
-        }
+        // FIX 18 Nov: NEVER rewrite iframe.src after it loaded - that reloads YouTube and pauses it at 0:00. Controls are already set when the facade builds the iframe. Leave it alone.
+        enhanceIframes();
       }, 200);
     }
   }, true);
 
   setInterval(()=>{
+    try{ if(window.__zedYtPlaying) return; }catch(e){}
+    try{ if(document.querySelector('.yt-lite.yt-loaded iframe')) return; }catch(e){}
     enhanceIframes();
     patchFacadeCreation();
-  }, 800);
+  }, 3000);
 
   console.log('✅ V25 Controls fix - overlay removed, pause/seek now works');
 })();
@@ -3896,8 +3925,8 @@ function showZedUpdateToast(){
     if(typeof url === 'string' && url.indexOf('youtube') !== -1){ console.log('[ZED] Blocked YouTube window.open:', url); return null; }
     return _origOpen.apply(window, arguments);
   };
-  // Keep enforcing forever - React re-renders cannot escape this
-  setInterval(enforce, 500);
+  // Keep enforcing forever - React re-renders cannot escape this. FIX 18 Nov: 500ms -> 2000ms + skip while YT playing (was pausing video).
+  setInterval(function(){ try{ if(window.__zedYtPlaying) return; }catch(e){} try{ if(document.querySelector('.yt-lite.yt-loaded iframe')) return; }catch(e){} enforce(); }, 2000);
   new MutationObserver(enforce).observe(document.body, {childList:true, subtree:true});
   enforce();
   console.log('[ZED] FINAL No-YouTube-Redirect enforcement active');
@@ -3970,7 +3999,37 @@ function showZedUpdateToast(){
   }
   function isExpanded(wrapper){ return wrapper.classList.contains('zed-video-fullscreen'); }
 
-  /* DELETED 18 Nov — CONFLICT: old ensureExpandButtons created a second floating .zed-expand-btn + a second .zed-fullscreen-close with a stale closure (wrap captured at creation). It fought the canonical delegated X. Actions-row Expand ([data-zed-expand]) is the only Expand left. */
+  function ensureExpandButtons(){
+    document.querySelectorAll('.aspect-video, .yt-lite').forEach(function(wrap){
+      // Only for YouTube videos (has iframe or has yt-lite)
+      var isYT = wrap.querySelector('iframe[src*="youtube"]') || wrap.classList.contains('yt-lite') || wrap.dataset.vid;
+      if(!isYT) return;
+      // Don't add twice
+      if(wrap.querySelector('.zed-expand-btn')) return;
+      // Wrapper must be position:relative for button to sit correctly
+      if(getComputedStyle(wrap).position === 'static') wrap.style.position = 'relative';
+      var btn = document.createElement('button');
+      btn.className = 'zed-expand-btn';
+      btn.type = 'button';
+      btn.setAttribute('aria-label','Expand video - make it bigger');
+      btn.innerHTML = '⤢';
+      btn.addEventListener('click', function(e){
+        e.preventDefault(); e.stopPropagation();
+        if(isExpanded(wrap)) shrinkVideo(wrap); else expandVideo(wrap);
+      });
+      btn.addEventListener('touchstart', function(e){ e.stopPropagation(); }, {passive:true});
+      wrap.appendChild(btn);
+      // Close button for fullscreen mode
+      if(!wrap.querySelector('.zed-fullscreen-close')){
+        var close = document.createElement('button');
+        close.className = 'zed-fullscreen-close';
+        close.type = 'button';
+        close.innerHTML = '✕';
+        close.addEventListener('click', function(e){ e.preventDefault(); e.stopPropagation(); shrinkVideo(wrap); });
+        wrap.appendChild(close);
+      }
+    });
+  }
   // If user exits native fullscreen via Back / Esc, also remove CSS class
   document.addEventListener('fullscreenchange', function(){
     if(!document.fullscreenElement){
@@ -3989,7 +4048,10 @@ function showZedUpdateToast(){
       lockLandscape();
     }
   });
-  /* DELETED 18 Nov — old ensureExpandButtons interval + observer + call (see above). */
+  setInterval(ensureExpandButtons, 600);
+  new MutationObserver(ensureExpandButtons).observe(document.body, {childList:true, subtree:true});
+  ensureExpandButtons();
+  console.log('[ZED] Expand button active - tap ⤢ to make video big');
 })();
 </script>
 
@@ -4037,9 +4099,29 @@ console.log('[ZED] Welcome popup + fast login active');
 // they never ran (applyPagination returned early: 'V15 owns pagination') and duplicated
 // V15/V16 pagination. Only the shields are live, so only they stay.
 (function(){
-  /* DELETED 18 Nov — CONFLICT: addShields created .zed-more-shield (bottom 70px, covered controls/suggestions) + .zed-yt-expand-shield (top-right) every 800ms. They intercepted taps meant for X / suggestions. Canonical bottom-right guard is now only .zed-yt-fs-shield. */
-
-  /* DELETED 18 Nov — addShields log (function deleted above). */
+  function addShields(){
+    document.querySelectorAll('.aspect-video').forEach(function(wrap){
+      if(!wrap) return;
+      if(wrap.style.position !== 'relative') wrap.style.position = 'relative';
+      if(!wrap.querySelector('.zed-more-shield')){
+        var s = document.createElement('div');
+        s.className = 'zed-more-shield'; s.title = '';
+        s.addEventListener('click', function(e){ e.preventDefault(); e.stopPropagation(); });
+        s.addEventListener('pointerdown', function(e){ e.preventDefault(); e.stopPropagation(); });
+        wrap.appendChild(s);
+      }
+      if(!wrap.querySelector('.zed-yt-expand-shield')){
+        var s2 = document.createElement('div');
+        s2.className = 'zed-yt-expand-shield'; s2.title = '';
+        s2.addEventListener('click', function(e){ e.preventDefault(); e.stopPropagation(); });
+        s2.addEventListener('pointerdown', function(e){ e.preventDefault(); e.stopPropagation(); });
+        wrap.appendChild(s2);
+      }
+    });
+  }
+  addShields();
+  setInterval(function(){ try{ addShields(); }catch(e){} }, 800);
+  console.log('[ZED] More-videos shields active (pagination owned by V15)');
 })();
 </script>
 
@@ -8552,7 +8634,7 @@ input[placeholder="Search school..."]{ position: relative !important; z-index: 3
   window.zedHardTopics = function(subject, grade){ return window.zedEczTopics(subject, grade); };
 
   window.zedQuizBalance = function(n){
-    n = Math.max(1, Math.min(20, parseInt(n || 20, 10) || 20));
+    n = Math.max(1, Math.min(10, parseInt(n || 10, 10) || 10));
     var medium = Math.ceil(n / 2);
     var hard = n - medium;
     var plan = [];
@@ -8563,7 +8645,7 @@ input[placeholder="Search school..."]{ position: relative !important; z-index: 3
   };
   // V20: Guarantee A/B/C/D balance by INDEX, not by matching option text.
   // Old code matched by text (if(_op===_ct)) - breaks when AI repeats an option text, and random shuffle alone can still give 8x A.
-  // This forces exactly even distribution: 20 Qs = 5 A, 5 B, 5 C, 5 D in random order. Correct content is preserved, only its position moves.
+  // This forces exactly even distribution: 10 Qs = 3 A, 3 B, 2 C, 2 D in random order. Correct content is preserved, only its position moves.
   window.zedBalanceAnswers = function(questions){
     var qs = Array.isArray(questions) ? questions.slice() : [];
     if(!qs.length) return qs;
@@ -8652,7 +8734,7 @@ input[placeholder="Search school..."]{ position: relative !important; z-index: 3
   }
   var hourlyMsgs = [
     {t:'🔥 New ECZ papers just dropped!', b:'Open ZED Scholar and check PAPERS now — your next A is waiting.'},
-    {t:'🧠 Your brain needs a workout!', b:'20 balanced ECZ questions are waiting for you. Tap to take your Zed Scholar AI Quiz!'},
+    {t:'🧠 Your brain needs a workout!', b:'10 balanced ECZ questions are waiting for you. Tap to take your Zed Scholar AI Quiz!'},
     {t:'📹 New video just posted!', b:'Watch it before everyone else — it could be the topic in your next exam.'},
     {t:'🏆 Someone just passed you!', b:'Take a quiz now and climb back up the leaderboard. You can do it!'},
     {t:'📚 New docs uploaded!', b:'Fresh notes are in DOCS. Open them now — don\'t let others get ahead.'},
@@ -10355,7 +10437,7 @@ header *{ transition:none!important; animation:none!important; }
 .zed-lock-cover::after, .zed-lock-cover::before{ background-color: transparent !important; }
 .zed-lock-cover::after, .zed-lock-cover::before{ display:none !important; content:none !important; }
 .zed-lock-icon, .zed-lock-sub{ background: transparent !important; box-shadow:none !important; backdrop-filter:none !important; }
-/* DELETED 18 Nov — .yt-title-bar override (title bar deleted). */
+.yt-lite .yt-title-bar{ background: transparent !important; background-image:none !important; text-shadow: 0 1px 4px rgba(0,0,0,0.8) !important; }
 .yt-lite::before{ background: transparent !important; display:none !important; content:none !important; }
 </style>
 
@@ -10373,7 +10455,7 @@ header *{ transition:none!important; animation:none!important; }
 .zed-lock-icon, .zed-lock-sub{ background: transparent !important; box-shadow:none !important; text-shadow: 0 2px 6px rgba(0,0,0,0.9) !important; }
 .aspect-video, .video-wrapper, .yt-lite, .zed-dl-card video{ background: transparent !important; background-color: transparent !important; }
 .yt-lite img.yt-thumb{ display:block !important; opacity:1 !important; }
-/* DELETED 18 Nov — .zed-expand-btn transparent rule (button deleted). */
+.zed-expand-btn{ background: transparent !important; background-color: transparent !important; border:none !important; box-shadow:none !important; text-shadow: 0 2px 6px rgba(0,0,0,0.9) !important; }
 </style>
 <script>
 (function(){
@@ -10422,7 +10504,12 @@ header *{ transition:none!important; animation:none!important; }
       el.style.backgroundColor = "transparent";
       el.style.background = "transparent";
     });
-    /* DELETED 18 Nov — fixBlackShield .zed-expand-btn loop (button deleted, loop was touching a dead button every 800ms). Lock-cover work below is kept. */
+    document.querySelectorAll(".zed-expand-btn").forEach(function(b){
+      b.style.background = "transparent";
+      b.style.backgroundColor = "transparent";
+      b.style.border = "none";
+      b.style.boxShadow = "none";
+    });
     // Fix every lock cover
     document.querySelectorAll(".zed-lock-cover").forEach(function(cover){
       cover.style.backgroundColor = "transparent";
@@ -10489,9 +10576,11 @@ header *{ transition:none!important; animation:none!important; }
   min-width:96px !important; justify-content:center !important;
 }
 /* Hide the tiny old expand button on the thumbnail - we now use the big one after Play */
-/* DELETED 18 Nov — .zed-expand-btn hide rule (button deleted). */
+.yt-lite > .zed-expand-btn, .aspect-video > .zed-expand-btn{
+  display:none !important;
+}
 /* In fullscreen, keep close button visible */
-/* DELETED 18 Nov — duplicate fullscreen X display rule (canonical rule at end owns it). */
+.zed-video-fullscreen .zed-fullscreen-close{ display:flex !important; }
 </style>
 <script>
 (function(){
@@ -11119,6 +11208,8 @@ main div.grid.grid-cols-3.zed-top3-parent{ grid-template-columns:1fr !important;
     });
   }
   function cleanAll(){
+    try{ if(window.__zedYtPlaying) return; }catch(e){}
+    try{ if(document.querySelector('.yt-lite.yt-loaded iframe')) return; }catch(e){}
     // FLICKER FIX (all tabs): while React is swapping <main>, cards are half-rendered.
     // Transforming them now, then again after the swap, is the Papers/Docs flicker. Wait.
     try{ if(window.__zedTabSwitching && window.__zedTabSwitching()) return; }catch(e){}
@@ -12450,6 +12541,10 @@ window._zedV15Filter = 'search';
     }
   }
   function isAnyVideoPlaying(){
+    try{ if(window.__zedYtPlaying) return true; }catch(e){}
+    try{ if(document.querySelector('.zed-video-fullscreen')) return true; }catch(e){}
+    try{ if(document.querySelector('.zed-video-card[data-zed-playing="1"]')) return true; }catch(e){}
+    try{ if(document.querySelector('.yt-lite.yt-loaded iframe')) return true; }catch(e){}
     try{
       var vids=document.querySelectorAll('video');
       for(var i=0;i<vids.length;i++){ var v=vids[i]; if(v && !v.paused && !v.ended && v.currentTime>0) return true; }
@@ -13434,7 +13529,7 @@ window._zedV15Filter = 'search';
     // V16.1: no floating button - nothing to create/update here
     try{ markOfflineClass(); }catch(e){}
     try{ lastProcess=0; processVideos(); }catch(e){} // FIX 18 Nov: was only called when in Videos, so video UI that re-appeared outside Videos was never hidden. processVideos() itself decides.
-  }, 600);
+  }, 1500);
   setTimeout(function(){ try{ var _b2=document.getElementById('zed-offline-videos-btn'); if(_b2) _b2.remove(); markOfflineClass(); flushPendingSync(); }catch(e){} }, 1000);
   // V10: No interval touching chat button.
   window.zedVideoCoins={ unlockCost: UNLOCK_COST, getCoins: getCoins, getUnlocked: getUnlocked, process: function(){ lastProcess=0; processVideos(); }, setFilter: setFilter };
@@ -14315,22 +14410,10 @@ window._zedV15Filter = 'search';
   }
   function ensureControls(wrap){
     if(!wrap || !isInnermostWrap(wrap)) return;
-    // FIX 18 Nov (pausing): NEVER call getComputedStyle here. It forces layout on every pass.
-    // Position only needs setting once.
-    if(!wrap.dataset.zedPosFixed){
-      if(!wrap.style.position) wrap.style.position = 'relative';
-      wrap.dataset.zedPosFixed = '1';
-    }
+    if(getComputedStyle(wrap).position === 'static') wrap.style.position = 'relative';
     getOrigId(wrap);
-    // FAST PATH: if everything is already in place, do NOTHING. No appendChild = no mutation = no observer loop.
-    var close0 = wrap.querySelector('.zed-fullscreen-close');
-    var shield0 = wrap.querySelector('.zed-yt-fs-shield');
-    var bar0 = wrap.querySelector('.zed-suggest-bar');
-    var suggestOn = wrap.dataset.zedShowSuggest === '1';
-    var suggestOk = suggestOn ? wrap.classList.contains('zed-show-suggest') : !wrap.classList.contains('zed-show-suggest');
-    if(close0 && shield0 && bar0 && suggestOk && wrap.lastElementChild === close0) return;
     // --- X close button (reuse the old one if it survived, else create it) ---
-    var close = close0;
+    var close = wrap.querySelector('.zed-fullscreen-close');
     if(!close){
       close = document.createElement('button');
       close.className = 'zed-fullscreen-close';
@@ -14339,20 +14422,25 @@ window._zedV15Filter = 'search';
       close.innerHTML = '✕';
     }
     bindTap(close, function(){ exitFullscreen(); });
+    // FIX 18 Nov: was appendChild every 500ms even when already last - moved DOM every 500ms, fired every MutationObserver, paused YouTube. Only move if not already last.
+    if(wrap.lastElementChild !== close) wrap.appendChild(close); // LAST child = paints above iframe + shields
     // --- Shield over YouTube's own fullscreen button (bottom-right) ---
-    var shield = shield0;
-    if(!shield){
-      shield = document.createElement('div');
-      shield.className = 'zed-yt-fs-shield';
-      shield.setAttribute('aria-hidden', 'true');
-      shield.title = '';
-      bindTap(shield, function(){ enterFullscreen(wrap); });
-      wrap.appendChild(shield);
-    } else if(!shield.dataset.zedTapBound){
-      bindTap(shield, function(){ enterFullscreen(wrap); });
+    if(!wrap.querySelector('.zed-yt-fs-shield')){
+      var sh = document.createElement('div');
+      sh.className = 'zed-yt-fs-shield';
+      sh.setAttribute('aria-hidden', 'true');
+      sh.title = '';
+      bindTap(sh, function(){ enterFullscreen(wrap); });
+      wrap.appendChild(sh);
+    } else {
+      // Keep shield above iframe but below X / suggestions bar
+      var ex = wrap.querySelector('.zed-yt-fs-shield');
+      if(ex && !ex.dataset.zedTapBound) bindTap(ex, function(){ enterFullscreen(wrap); });
+      // Re-append shield BEFORE X so X stays last - only if order is wrong, else don't touch DOM.
+      if(wrap.lastElementChild !== close){ wrap.appendChild(ex); wrap.appendChild(close); }
     }
     // --- Suggestions bar (hidden until video ends) ---
-    var bar = bar0;
+    var bar = wrap.querySelector('.zed-suggest-bar');
     if(!bar){
       bar = document.createElement('div');
       bar.className = 'zed-suggest-bar';
@@ -14369,13 +14457,11 @@ window._zedV15Filter = 'search';
       bar.appendChild(replay);
       bar.appendChild(cls);
       wrap.appendChild(bar);
+      if(wrap.lastElementChild !== close) wrap.appendChild(close); // X stays last
     }
-    // ONE ordering fix only: X must be last. Only move it if it is not already last.
-    if(wrap.lastElementChild !== close) wrap.appendChild(close);
-    // Suggest class only if it actually differs — do not toggle it every pass.
-    if(suggestOn){ if(!wrap.classList.contains('zed-show-suggest')) wrap.classList.add('zed-show-suggest'); }
-    else { if(wrap.classList.contains('zed-show-suggest')) wrap.classList.remove('zed-show-suggest'); }
-    wrap.dataset.zedControlsDone = '1';
+    // Restore "show suggestions" state after a facade wipe / re-render
+    if(wrap.dataset.zedShowSuggest === '1') wrap.classList.add('zed-show-suggest');
+    else wrap.classList.remove('zed-show-suggest');
   }
   function showSuggestBar(wrap){
     if(!wrap) return;
@@ -14420,40 +14506,16 @@ window._zedV15Filter = 'search';
       hideSuggestBar(wrap);
     }
   }
-  var _lastSweep = 0;
-  var _sweepScheduled = false;
-  function isAnythingPlaying(){
-    try{
-      var vids = document.querySelectorAll('video');
-      for(var i = 0; i < vids.length; i++){ var v = vids[i]; if(v && !v.paused && !v.ended && v.currentTime > 0) return true; }
-      if(document.querySelector('.zed-video-card[data-zed-playing="1"]')) return true;
-      if(document.querySelector('.zed-video-fullscreen')) return true;
-    }catch(e){}
-    return false;
-  }
   function sweep(){
-    try{
-      if(document.hidden) return;
-      var now = Date.now();
-      if(now - _lastSweep < 1000) return; // at most 1 sweep per second
-      _lastSweep = now;
-      if(isAnythingPlaying()) return; // do not steal the main thread while a video is playing
-      var wraps = document.querySelectorAll('.yt-lite, .aspect-video');
-      for(var i = 0; i < wraps.length; i++){
-        var wrap = wraps[i];
-        try{
-          // Fast skip: already done and X still last — no work, no DOM write.
-          if(wrap.dataset.zedControlsDone === '1' && wrap.lastElementChild && wrap.lastElementChild.classList && wrap.lastElementChild.classList.contains('zed-fullscreen-close')) continue;
-          var hasYt = wrap.classList.contains('yt-lite') || wrap.querySelector('iframe[src*="youtube"]') || wrap.querySelector('iframe[src*="youtube-nocookie"]') || wrap.dataset.vid;
-          if(hasYt) ensureControls(wrap);
-        }catch(e){}
-      }
-    }catch(e){}
-  }
-  function requestSweep(){
-    if(_sweepScheduled) return;
-    _sweepScheduled = true;
-    setTimeout(function(){ _sweepScheduled = false; sweep(); }, 400);
+    try{ if(window.__zedYtPlaying) return; }catch(e){}
+    try{ if(document.querySelector('.zed-video-fullscreen')) return; }catch(e){}
+    try{ if(document.querySelector('.yt-lite.yt-loaded iframe')) return; }catch(e){}
+    document.querySelectorAll('.yt-lite, .aspect-video').forEach(function(wrap){
+      try{
+        var hasYt = wrap.classList.contains('yt-lite') || wrap.querySelector('iframe[src*="youtube"]') || wrap.querySelector('iframe[src*="youtube-nocookie"]') || wrap.dataset.vid;
+        if(hasYt) ensureControls(wrap);
+      }catch(e){}
+    });
   }
   // --- Unify the actions-row Expand button with the same enter/exit logic ---
   var _origToggle = window.zedToggleExpand;
@@ -14501,6 +14563,8 @@ window._zedV15Filter = 'search';
         if(iframes[i].contentWindow === ev.source){
           var wrap = getWrap(iframes[i]);
           if(wrap){
+            try{ window.__zedYtPlaying = (state === 1); }catch(e){}
+            try{ var _card = wrap.closest ? wrap.closest('.zed-video-card') : null; if(_card) _card.dataset.zedPlaying = (state === 1 ? '1' : '0'); }catch(e){}
             if(state === 0) showSuggestBar(wrap);
             else hideSuggestBar(wrap);
           }
@@ -14510,163 +14574,9 @@ window._zedV15Filter = 'search';
     }catch(e){}
   });
   sweep();
-  setInterval(function(){ if(!document.hidden) sweep(); }, 3000);
-  // FIX 18 Nov (pausing): old observer ran sweep() on EVERY mutation with no filter and no debounce,
-  // and sweep() itself wrote to the DOM every time — a self-feeding loop that froze the Videos tab.
-  // New observer: only reacts to NEW video wrappers / iframes / cards, ignores our own buttons, debounced.
-  try{
-    new MutationObserver(function(muts){
-      try{
-        for(var i = 0; i < muts.length; i++){
-          var added = muts[i].addedNodes || [];
-          for(var j = 0; j < added.length; j++){
-            var n = added[j];
-            if(!n || n.nodeType !== 1) continue;
-            var cn = n.className || '';
-            if(typeof cn === 'string' && (cn.indexOf('zed-fullscreen-close') !== -1 || cn.indexOf('zed-yt-fs-shield') !== -1 || cn.indexOf('zed-suggest-bar') !== -1)) continue;
-            if(n.classList && (n.classList.contains('yt-lite') || n.classList.contains('aspect-video') || n.classList.contains('grid'))){ requestSweep(); return; }
-            if(n.tagName === 'IFRAME' || n.tagName === 'VIDEO'){ requestSweep(); return; }
-            if(n.querySelector && (n.querySelector('.yt-lite') || n.querySelector('iframe[src*="youtube"]') || n.querySelector('.grid'))){ requestSweep(); return; }
-          }
-        }
-      }catch(e){}
-    }).observe(document.body, {childList:true, subtree:true});
-  }catch(e){}
+  setInterval(sweep, 2000);
+  try{ var _sweepTimer=null; new MutationObserver(function(){ if(_sweepTimer) clearTimeout(_sweepTimer); _sweepTimer=setTimeout(function(){ sweep(); }, 800); }).observe(document.body, {childList:true, subtree:true}); }catch(e){}
   console.log('[ZED] Fullscreen Close + Suggestions Close fix active (18 Nov 2026)');
-})();
-</script>
-
-
-<style>
-/* ZED FIX 18 Nov 2026 (2) — X button must work even when its per-button handler is stale/wiped */
-/* Make X fixed to the viewport + topmost, so no shield / iframe / pseudo-element can cover it. */
-.zed-video-fullscreen .zed-fullscreen-close{position:fixed !important;top:12px !important;left:12px !important;z-index:9999999 !important;pointer-events:auto !important;touch-action:manipulation !important;display:flex !important;}
-/* In fullscreen, kill every shield that covers the top of the player (they sit over the X). Keep ONLY the bottom-right YouTube-fullscreen shield. */
-.zed-video-fullscreen .zed-yt-shield-top,.zed-video-fullscreen .zed-yt-shield-logo,.zed-video-fullscreen .zed-more-shield,.zed-video-fullscreen .zed-yt-expand-shield{display:none !important;pointer-events:none !important;}
-.zed-video-fullscreen .zed-yt-fs-shield{display:block !important;pointer-events:auto !important;}
-</style>
-<script>
-// === ZED FIX 18 Nov 2026 (2) — X button: delegated handler + fullscreen watchdog ===
-// Why X died again:
-//  - The pausing fix made sweep() SKIP while a video is playing / fullscreen, so if the X was wiped
-//    or re-created by the old code AFTER entering fullscreen, nothing re-bound it.
-//  - Per-button handlers are fragile: facade innerHTML='' deletes the button, React re-renders replace
-//    it, and the old code creates X buttons with a stale closure. Any of those leaves a visible but dead X.
-// Fix: do NOT depend on per-button handlers. One delegated handler on document catches taps on ANY
-// .zed-fullscreen-close that exists, whenever it was created. Plus a cheap watchdog that only touches
-// the fullscreen wrapper (1 element) and re-creates / re-orders its X even while playing.
-(function(){
-  var lastExit = 0;
-  function exitFullscreen(){
-    var now = Date.now();
-    if(now - lastExit < 350) return;
-    lastExit = now;
-    try{ document.querySelectorAll('.zed-video-fullscreen').forEach(function(w){ w.classList.remove('zed-video-fullscreen'); }); }catch(e){}
-    try{ if(screen.orientation && screen.orientation.unlock) screen.orientation.unlock(); }catch(e){}
-    try{ document.querySelectorAll('.zed-force-landscape').forEach(function(el){ el.classList.remove('zed-force-landscape'); }); }catch(e){}
-    try{ document.querySelectorAll('.zed-force-landscape-iframe').forEach(function(el){ el.classList.remove('zed-force-landscape-iframe'); }); }catch(e){}
-    try{ if(document.fullscreenElement) document.exitFullscreen(); }catch(e){}
-    try{ if(document.webkitFullscreenElement) document.webkitExitFullscreen(); }catch(e){}
-    try{ if(document.mozFullScreenElement) document.mozCancelFullScreen(); }catch(e){}
-  }
-  function enterFullscreen(wrap){
-    if(!wrap) return;
-    try{ wrap.classList.add('zed-video-fullscreen'); }catch(e){}
-    try{
-      if(wrap.requestFullscreen) wrap.requestFullscreen();
-      else if(wrap.webkitRequestFullscreen) wrap.webkitRequestFullscreen();
-      else if(wrap.mozRequestFullScreen) wrap.mozRequestFullScreen();
-    }catch(e){}
-    try{ if(screen.orientation && screen.orientation.lock){ var p = screen.orientation.lock('landscape'); if(p && p.catch) p.catch(function(){}); } }catch(e){}
-  }
-  function getWrap(el){
-    try{ return el.closest ? (el.closest('.yt-lite') || el.closest('.aspect-video')) : null; }catch(e){ return null; }
-  }
-  function getOrigId(wrap){
-    if(!wrap) return '';
-    if(wrap.dataset.zedOrigYtId) return wrap.dataset.zedOrigYtId;
-    var id = wrap.dataset.vid || '';
-    if(!id){
-      var ifr = wrap.querySelector('iframe');
-      var src = ifr ? (ifr.getAttribute('src') || '') : '';
-      var m = src.match(/(?:embed\/|v=|youtu\.be\/)([A-Za-z0-9_-]{11})/);
-      if(m) id = m[1];
-    }
-    if(!id){
-      var card = wrap.closest ? wrap.closest('.zed-video-card') : null;
-      if(card && card.dataset.zedYtId) id = card.dataset.zedYtId;
-    }
-    if(id) wrap.dataset.zedOrigYtId = id;
-    return id || '';
-  }
-  function reloadYt(wrap, autoplay){
-    var id = getOrigId(wrap);
-    var ifr = wrap ? wrap.querySelector('iframe') : null;
-    if(!id || !ifr) return false;
-    try{ wrap.dataset.zedShowSuggest = '0'; wrap.classList.remove('zed-show-suggest'); }catch(e){}
-    try{ ifr.setAttribute('src', 'https://www.youtube-nocookie.com/embed/' + id + '?autoplay=' + (autoplay ? '1' : '0') + '&modestbranding=1&rel=0&iv_load_policy=3&playsinline=1&controls=1&fs=1&enablejsapi=1'); }catch(e){}
-    return true;
-  }
-  // --- Delegated taps: survive facade wipes, React re-renders, stale closures, fast-path skips ---
-  function onTap(e){
-    try{
-      var t = e.target && e.target.closest ? e.target.closest('.zed-fullscreen-close, .zed-yt-fs-shield, .zed-suggest-close, .zed-suggest-replay') : null;
-      if(!t) return;
-      try{ e.preventDefault(); }catch(_){}
-      try{ e.stopPropagation(); }catch(_){}
-      try{ if(e.stopImmediatePropagation) e.stopImmediatePropagation(); }catch(_){}
-      if(t.classList.contains('zed-fullscreen-close')){
-        exitFullscreen();
-        return;
-      }
-      var wrap = getWrap(t);
-      if(!wrap) return;
-      if(t.classList.contains('zed-yt-fs-shield')){
-        // Tapping YouTube's own fullscreen corner -> ZED fullscreen instead
-        if(wrap.classList.contains('zed-video-fullscreen')) exitFullscreen();
-        else enterFullscreen(wrap);
-        return;
-      }
-      if(t.classList.contains('zed-suggest-close')){
-        if(!reloadYt(wrap, false)){
-          try{ var ifr = wrap.querySelector('iframe'); if(ifr && ifr.contentWindow) ifr.contentWindow.postMessage(JSON.stringify({event:'command', func:'pauseVideo', args:''}), '*'); }catch(_){}
-        }
-        return;
-      }
-      if(t.classList.contains('zed-suggest-replay')){
-        reloadYt(wrap, true);
-        return;
-      }
-    }catch(_){}
-  }
-  document.addEventListener('pointerdown', onTap, true);
-  document.addEventListener('click', onTap, true);
-  // --- Watchdog: ONLY touches the fullscreen wrapper (max 1 element), even while playing. ---
-  // If its X was deleted or buried under a re-created shield, re-create it and move it last.
-  function watchFullscreen(){
-    try{
-      if(document.hidden) return;
-      var fsWrap = document.querySelector('.zed-video-fullscreen');
-      if(!fsWrap) return;
-      var x = fsWrap.querySelector('.zed-fullscreen-close');
-      if(!x){
-        x = document.createElement('button');
-        x.className = 'zed-fullscreen-close';
-        x.type = 'button';
-        x.setAttribute('aria-label', 'Close fullscreen');
-        x.innerHTML = '✕';
-        fsWrap.appendChild(x);
-      } else if(fsWrap.lastElementChild !== x){
-        fsWrap.appendChild(x);
-      }
-    }catch(e){}
-  }
-  setInterval(watchFullscreen, 1000);
-  // Run once on load, and right after entering fullscreen (enter is async, so check again shortly after)
-  watchFullscreen();
-  document.addEventListener('fullscreenchange', function(){ setTimeout(watchFullscreen, 100); setTimeout(watchFullscreen, 600); });
-  document.addEventListener('webkitfullscreenchange', function(){ setTimeout(watchFullscreen, 100); setTimeout(watchFullscreen, 600); });
-  console.log('[ZED] X delegated handler + fullscreen watchdog active (18 Nov 2026 fix 2)');
 })();
 </script>
 
