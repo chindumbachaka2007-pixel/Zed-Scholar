@@ -1,52 +1,148 @@
-// ZED SCHOLAR - Service Worker V35 - TRULY MANUAL UPDATE
-// v35 = Install button fix + blank-space fix + TOP install banner + CENTERED update popup + MANUAL update. Nothing updates until user taps Update.
-const CACHE_NAME = 'zed-scholar-v10';
-const CACHE_VERSION = 'v10';
-const ASSETS_TO_CACHE = ['./','./index.html','./manifest.json','./icon-192.png','./icon-512.png'];
-self.addEventListener('install', (event) => {
-  console.log('[SW] Install', CACHE_VERSION, '- WAITING for user to tap Update, NOT taking over');
-  // NO self.skipWaiting() here - truly manual.
+var CACHE_NAME = 'zed-scholar-v21';
+var RUNTIME_CACHE = 'zed-scholar-runtime-v21';
+var PDF_CACHE = 'zed-scholar-pdfs-v21';
+var PRECACHE_URLS = [
+  '/',
+  '/index.html',
+  '/manifest.json',
+  '/icon-192.png',
+  '/icon-512.png'
+];
+self.addEventListener('install', function (event) {
   event.waitUntil(
-    caches.open(CACHE_NAME).then((cache) => {
-      return Promise.all(ASSETS_TO_CACHE.map((url) => cache.add(url).catch((err) => console.log('[SW] Could not cache', url, err))));
+    caches.open(CACHE_NAME).then(function (cache) {
+      var chain = Promise.resolve();
+      PRECACHE_URLS.forEach(function (url) {
+        chain = chain.then(function () {
+          return cache.add(url).catch(function () {});
+        });
+      });
+      return chain;
     })
   );
 });
-self.addEventListener('activate', (event) => {
-  console.log('[SW] Activate', CACHE_VERSION, '- user tapped Update, taking over now');
+self.addEventListener('activate', function (event) {
   event.waitUntil(
-    caches.keys().then((keys) => {
-      return Promise.all(keys.map((key) => { if (key !== CACHE_NAME) return caches.delete(key); }));
-    }).then(() => self.clients.claim())
+    caches.keys().then(function (names) {
+      return Promise.all(
+        names.map(function (name) {
+          if (name !== CACHE_NAME && name !== RUNTIME_CACHE && name !== PDF_CACHE) {
+            return caches.delete(name);
+          }
+        })
+      );
+    }).then(function () {
+      return self.clients.claim();
+    })
   );
 });
-self.addEventListener('fetch', (event) => {
-  if (event.request.method !== 'GET' || event.request.url.startsWith('chrome-extension')) return;
-  if (event.request.headers.get('accept')?.includes('text/html')) {
+self.addEventListener('message', function (event) {
+  if (event.data && event.data.type === 'SKIP_WAITING') {
+    self.skipWaiting();
+  }
+});
+self.addEventListener('fetch', function (event) {
+  var request = event.request;
+  if (request.method !== 'GET') return;
+  var url;
+  try { url = new URL(request.url); } catch (e) { return; }
+  if (url.protocol !== 'http:' && url.protocol !== 'https:') return;
+  if (
+    url.hostname.indexOf('googlesyndication') !== -1 ||
+    url.hostname.indexOf('youtube') !== -1 ||
+    url.hostname.indexOf('google-analytics') !== -1 ||
+    url.hostname.indexOf('googletagmanager') !== -1
+  ) return;
+  if (
+    url.hostname.indexOf('supabase.co') !== -1 &&
+    (url.pathname.indexOf('/auth/') !== -1 || url.pathname.indexOf('/rest/') !== -1)
+  ) {
+    event.respondWith(fetch(request));
+    return;
+  }
+  if (request.mode === 'navigate') {
     event.respondWith(
-      fetch(event.request).then((res) => {
-        const clone = res.clone();
-        caches.open(CACHE_NAME).then((cache) => cache.put(event.request, clone));
-        return res;
-      }).catch(() => caches.match(event.request).then((cached) => cached || caches.match('./index.html')))
+      fetch(request).then(function (net) {
+        var copy = net.clone();
+        caches.open(CACHE_NAME).then(function (cache) {
+          cache.put(request, copy).catch(function () {});
+        }).catch(function () {});
+        return net;
+      }).catch(function () {
+        return caches.match(request).then(function (cached) {
+          if (cached) return cached;
+          return caches.match('/').then(function (home) {
+            if (home) return home;
+            return caches.match('/index.html');
+          });
+        }).then(function (cached) {
+          if (cached) return cached;
+          return new Response(
+            '<!doctype html><title>ZED SCHOLAR - Offline</title>' +
+            '<body style="font-family:sans-serif;background:#04101F;color:#F5F1E8;padding:32px;text-align:center">' +
+            '<h1>ZED SCHOLAR</h1><p>You are offline.</p>' +
+            '<p>Open the app once while online, then it works offline.</p>' +
+            '<button onclick="location.reload()" style="padding:12px 20px;border-radius:10px;background:#E8C15A;border:none;font-weight:800">Retry</button>' +
+            '</body>',
+            { headers: { 'Content-Type': 'text/html' } }
+          );
+        });
+      })
+    );
+    return;
+  }
+  if (url.hostname.indexOf('supabase.co') !== -1 && url.pathname.indexOf('/storage/') !== -1) {
+    event.respondWith(
+      fetch(request).then(function (net) {
+        var copy = net.clone();
+        caches.open(PDF_CACHE).then(function (cache) {
+          cache.put(request, copy).catch(function () {});
+        }).catch(function () {});
+        return net;
+      }).catch(function () {
+        return caches.match(request);
+      })
+    );
+    return;
+  }
+  if (
+    url.origin === self.location.origin ||
+    url.hostname.indexOf('cdnjs.cloudflare.com') !== -1 ||
+    url.hostname.indexOf('fonts.googleapis.com') !== -1 ||
+    url.hostname.indexOf('fonts.gstatic.com') !== -1
+  ) {
+    event.respondWith(
+      caches.match(request).then(function (cached) {
+        var fetchPromise = fetch(request).then(function (net) {
+          if (net && net.status === 200) {
+            var copy = net.clone();
+            caches.open(RUNTIME_CACHE).then(function (cache) {
+              cache.put(request, copy).catch(function () {});
+            }).catch(function () {});
+          }
+          return net;
+        }).catch(function () { return null; });
+        if (cached) { fetchPromise.catch(function () {}); return cached; }
+        return fetchPromise.then(function (net) {
+          if (net) return net;
+          throw new Error('offline');
+        });
+      })
     );
     return;
   }
   event.respondWith(
-    caches.match(event.request).then((cached) => {
-      if (cached) return cached;
-      return fetch(event.request).then((res) => {
-        if (event.request.url.includes('supabase') || event.request.url.includes('youtube') || event.request.url.includes('ytimg')) return res;
-        const clone = res.clone();
-        caches.open(CACHE_NAME).then((cache) => cache.put(event.request, clone));
-        return res;
-      });
-    }).catch(() => caches.match('./index.html'))
+    fetch(request).catch(function () { return caches.match(request); })
   );
 });
-self.addEventListener('message', (event) => {
-  if (event.data && event.data.type === 'SKIP_WAITING') {
-    console.log('[SW] User tapped Update - skipWaiting now');
-    self.skipWaiting();
-  }
+self.addEventListener('notificationclick', function (event) {
+  event.notification.close();
+  event.waitUntil(
+    self.clients.matchAll({ type: 'window', includeUncontrolled: true }).then(function (list) {
+      for (var i = 0; i < list.length; i++) {
+        if ('focus' in list[i]) return list[i].focus();
+      }
+      if (self.clients.openWindow) return self.clients.openWindow('/');
+    })
+  );
 });
