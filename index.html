@@ -14206,5 +14206,296 @@ Count only VISIBLE titles. Blank pills count as ZERO, so the offline fallback sh
 })();
 </script>
 
+
+<!-- ===== ZED GOOGLE AUTH v2 FIXED - 20 Nov 2026 - ONE button, forced position ===== -->
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script>
+(function(){
+  if(window.__zedGoogleAuthV2) return; window.__zedGoogleAuthV2 = true;
+  // Kill v1 duplicates immediately - v1 created 2 wrappers and React moved them
+  function killOld(){
+    try{
+      document.querySelectorAll("#zed-google-login-wrap, #zed-google-signup-wrap, #zed-google-login-btn, #zed-google-signup-btn").forEach(function(n){ try{ if(n.id!=="zed-google-fixed-wrap") n.remove(); }catch(e){} });
+      // Any stray v1 button that is not inside our fixed wrap
+      document.querySelectorAll("[data-zed-google='1']").forEach(function(n){ try{ if(!n.closest("#zed-google-fixed-wrap")) n.remove(); }catch(e){} });
+    }catch(e){}
+  }
+  killOld();
+  var SUPA_URL = "https://biastmylavwhlsccvpyu.supabase.co";
+  var SUPA_KEY = "sb_publishable_74vo5_RlNXb0U0TrNLCdCQ_8zjDwFni";
+  var client = null;
+  function getClient(){
+    if(client) return client;
+    try{ if(window.supabase && window.supabase.createClient){ client = window.supabase.createClient(SUPA_URL, SUPA_KEY, { auth: { persistSession: true, autoRefreshToken: true, detectSessionInUrl: true } }); } }catch(e){}
+    return client;
+  }
+  function headers(){ return { apikey: SUPA_KEY, Authorization: "Bearer "+SUPA_KEY, "Content-Type": "application/json", Prefer: "return=representation" }; }
+  function showToast(msg){
+    try{
+      var t=document.createElement("div"); t.textContent=msg;
+      t.style.cssText="position:fixed;left:12px;right:12px;bottom:110px;z-index:99999;background:#04101F;color:#fff;border:1px solid #E8C15A;padding:12px 14px;border-radius:12px;font-size:13px;text-align:center;box-shadow:0 10px 30px rgba(0,0,0,.4)";
+      document.body.appendChild(t); setTimeout(function(){ try{t.remove()}catch(e){} }, 3500);
+    }catch(e){ alert(msg); }
+  }
+  async function signInWithGoogle(btn){
+    var c=getClient(); if(!c){ showToast("Google login is still loading. Try again in 2 seconds."); return; }
+    try{
+      if(btn){ btn.disabled=true; btn.innerHTML="Connecting to Google..."; }
+      var redirectTo = window.location.origin + window.location.pathname;
+      var res = await c.auth.signInWithOAuth({ provider: "google", options: { redirectTo: redirectTo, queryParams: { access_type: "offline", prompt: "consent" } } });
+      if(res.error) throw res.error;
+    }catch(e){
+      console.error("[ZED Google] signIn error", e);
+      showToast("Google sign-in failed: " + (e.message||"Try again"));
+      if(btn){ btn.disabled=false; btn.innerHTML = googleBtnInner(); }
+    }
+  }
+  function googleBtnInner(){
+    return '<span style="display:inline-flex;align-items:center;gap:10px;justify-content:center;width:100%;font-weight:700;font-size:14px;color:#1f2937;">'
+      + '<span style="background:#fff;border-radius:50%;width:22px;height:22px;display:flex;align-items:center;justify-content:center;font-weight:900;font-size:15px;line-height:1;color:#4285F4;">G</span>'
+      + 'Continue with Google</span>';
+  }
+  // ---- SINGLE WRAPPER, reused forever ----
+  var googleWrap = null;
+  var googleBtn = null;
+  function getOrCreateWrap(){
+    if(googleWrap && document.contains(googleWrap)){
+      // clean any duplicate inside
+      return googleWrap;
+    }
+    if(!googleWrap){
+      googleWrap = document.createElement("div");
+      googleWrap.id = "zed-google-fixed-wrap";
+      googleWrap.setAttribute("data-zed-google-fixed","1");
+      googleWrap.style.cssText = "width:100%;display:block;margin:12px 0 2px 0;";
+      var div = document.createElement("div");
+      div.setAttribute("data-zed-google-divider","1");
+      div.style.cssText="display:flex;align-items:center;gap:10px;margin:2px 0 10px 0;color:#A9B8D0;font-size:11px;letter-spacing:.12em;text-transform:uppercase;";
+      div.innerHTML='<span style="flex:1;height:1px;background:#2A3A55;display:block;"></span><span>OR</span><span style="flex:1;height:1px;background:#2A3A55;display:block;"></span>';
+      googleWrap.appendChild(div);
+      googleBtn = document.createElement("button");
+      googleBtn.type="button"; googleBtn.id="zed-google-fixed-btn";
+      googleBtn.innerHTML = googleBtnInner();
+      googleBtn.style.cssText="width:100%;height:44px;border-radius:12px;background:#fff;color:#1f2937;border:1px solid #d1d5db;display:flex;align-items:center;justify-content:center;cursor:pointer;font-family:inherit;";
+      googleBtn.addEventListener("click", function(e){ e.preventDefault(); e.stopPropagation(); signInWithGoogle(googleBtn); });
+      googleWrap.appendChild(googleBtn);
+    }
+    // if it was detached by React, it is still in googleWrap variable, reuse it
+    return googleWrap;
+  }
+  function isVisible(el){
+    if(!el) return false;
+    try{
+      if(el.offsetParent===null && getComputedStyle(el).position!=="fixed") return false;
+      var r=el.getBoundingClientRect(); if(r.width===0 && r.height===0) return false;
+      if(getComputedStyle(el).display==="none" || getComputedStyle(el).visibility==="hidden") return false;
+    }catch(e){ return false; }
+    return true;
+  }
+  function getPrimaryButton(){
+    // Priority: Signup > OTP SEND/VERIFY > Login
+    // Use IDs first - they are the real React buttons
+    var su = document.getElementById("zed-signup-btn");
+    if(isVisible(su)) return su;
+    var lg = document.getElementById("zed-login-btn");
+    // In OTP mode, LOGIN button may be hidden but still in DOM - only return if visible
+    if(isVisible(lg)) return lg;
+    // OTP / VERIFY buttons have no stable ID - find by text, visible only, inside main
+    try{
+      var btns = document.querySelectorAll("main button, #signup button, div button");
+      var want = ["send otp","verify & login","verify","verify otp"];
+      for(var i=0;i<btns.length;i++){
+        var t=(btns[i].textContent||"").trim().toLowerCase();
+        if(!isVisible(btns[i])) continue;
+        if(btns[i].id && btns[i].id.indexOf("zed-google")!==-1) continue;
+        if(btns[i].id==="zed-signup-avatar-btn") continue;
+        for(var j=0;j<want.length;j++){ if(t===want[j]) return btns[i]; }
+      }
+      // Fallback: any button that says SEND OTP / VERIFY in whole doc
+      var all=document.querySelectorAll("button");
+      for(var k=0;k<all.length;k++){
+        var tt=(all[k].textContent||"").trim().toLowerCase();
+        if(!isVisible(all[k])) continue;
+        if(tt==="send otp" || tt.indexOf("verify")===0) return all[k];
+      }
+    }catch(e){}
+    return null;
+  }
+  function isAuthScreen(){
+    // If we have a primary button, we are on auth. If we have Welcome back / Create account + no logged in user, also auth.
+    if(getPrimaryButton()) return true;
+    try{
+      if(localStorage.getItem("zed_user")) return false;
+      var bodyTxt=(document.body.innerText||"").toLowerCase();
+      if(bodyTxt.indexOf("welcome back")!==-1 || bodyTxt.indexOf("create your account")!==-1 || bodyTxt.indexOf("create account")!==-1) return true;
+    }catch(e){}
+    return false;
+  }
+  function fixPosition(){
+    try{
+      killOld();
+      // Remove any duplicate fixed wraps - keep only our JS variable one
+      var allWraps=document.querySelectorAll("#zed-google-fixed-wrap");
+      for(var i=0;i<allWraps.length;i++){ if(allWraps[i]!==googleWrap) { try{ allWraps[i].remove(); }catch(e){} } }
+      if(!isAuthScreen()){
+        if(googleWrap) googleWrap.style.display="none";
+        return;
+      }
+      var primary=getPrimaryButton();
+      if(!primary){
+        if(googleWrap) googleWrap.style.display="none";
+        return;
+      }
+      var wrap=getOrCreateWrap();
+      wrap.style.display="block";
+      // If React moved wrap to wrong place, move it back to RIGHT AFTER primary
+      // Check: is wrap's parent the same as primary's parent AND is wrap immediately after primary?
+      var parent=primary.parentNode;
+      if(!parent) return;
+      if(wrap.parentNode!==parent || wrap.previousElementSibling!==primary){
+        // Insert after primary - this is the fix for OTP tap moving it to top
+        try{ parent.insertBefore(wrap, primary.nextSibling); }catch(e){
+          try{ parent.appendChild(wrap); }catch(e2){}
+        }
+      }
+      // Ensure button text is correct if it was changed to Connecting...
+      if(googleBtn && googleBtn.disabled && googleBtn.textContent.indexOf("Connecting")!==-1){
+        // keep it, it is actually connecting
+      }
+    }catch(e){ console.log("[ZED Google v2] fixPosition", e); }
+  }
+  // ---- Profile handling (same as v1) ----
+  async function fetchProfileByEmail(email){
+    try{
+      var url = SUPA_URL + "/rest/v1/profiles?select=*&email=eq." + encodeURIComponent(email) + "&limit=1";
+      var r = await fetch(url, { headers: { apikey: SUPA_KEY, Authorization: "Bearer "+SUPA_KEY } });
+      var j = await r.json(); if(Array.isArray(j) && j.length) return j[0];
+    }catch(e){}
+    return null;
+  }
+  async function fetchProfileByAuthId(authId){
+    try{
+      var url = SUPA_URL + "/rest/v1/profiles?select=*&auth_id=eq." + encodeURIComponent(authId) + "&limit=1";
+      var r = await fetch(url, { headers: { apikey: SUPA_KEY, Authorization: "Bearer "+SUPA_KEY } });
+      var j = await r.json(); if(Array.isArray(j) && j.length) return j[0];
+    }catch(e){}
+    return null;
+  }
+  async function createGoogleProfile(user){
+    var email = user.email || "";
+    var name = (user.user_metadata && (user.user_metadata.full_name || user.user_metadata.name)) || (email ? email.split("@")[0] : "Student");
+    var avatar = (user.user_metadata && (user.user_metadata.avatar_url || user.user_metadata.picture)) || "";
+    var base = { name: name, email: email, school: "", grade: "", province: "", district: "", account_code: "ZED-"+Date.now(), coins: 0, streak: 0, auth_id: user.id, avatar_url: avatar, avatar: avatar };
+    var attempts = [
+      Object.assign({}, base, { phone: null }),
+      Object.assign({}, base, { phone: "GOOGLE-"+String(user.id).slice(0,8) }),
+      { phone: "GOOGLE-"+String(user.id).slice(0,8), name: name, school: "", grade: "", account_code: "ZED-"+Date.now(), coins: 0, streak: 0 }
+    ];
+    for(var i=0;i<attempts.length;i++){
+      try{
+        var r = await fetch(SUPA_URL+"/rest/v1/profiles", { method: "POST", headers: headers(), body: JSON.stringify(attempts[i]) });
+        var j = await r.json();
+        if(r.ok && Array.isArray(j) && j.length) return j[0];
+        if(r.ok && j && j.id) return j;
+      }catch(e){}
+    }
+    return null;
+  }
+  function needsCompletion(p){ if(!p) return true; return !p.school || !p.grade || !p.phone || String(p.phone||"").indexOf("GOOGLE-")===0; }
+  function showCompleteModal(profile){
+    if(document.getElementById("zed-google-complete-modal")) return;
+    var overlay=document.createElement("div"); overlay.id="zed-google-complete-modal";
+    overlay.style.cssText="position:fixed;inset:0;z-index:100000;background:rgba(0,0,0,.75);display:flex;align-items:center;justify-content:center;padding:16px;";
+    overlay.innerHTML = '<div style="background:#0A1A2E;color:#fff;width:100%;max-width:420px;border-radius:18px;padding:22px;border:1px solid #E8C15A;">'
+      + '<div style="font-size:20px;font-weight:800;margin-bottom:4px;">Welcome, ' + (profile.name||"Student") + ' 🎉</div>'
+      + '<div style="font-size:13px;color:#A9B8D0;margin-bottom:16px;">You signed in with Google. Complete your profile so we can show your papers & school correctly.</div>'
+      + '<label style="font-size:12px;color:#A9B8D0;">Phone (optional)</label><input id="zg-phone" placeholder="0977..." style="width:100%;height:42px;border-radius:10px;background:#04101F;border:1px solid #2A3A55;color:#fff;padding:0 12px;margin:6px 0 12px 0;box-sizing:border-box;" />'
+      + '<label style="font-size:12px;color:#A9B8D0;">School</label><input id="zg-school" placeholder="e.g. Kitwe Boys" style="width:100%;height:42px;border-radius:10px;background:#04101F;border:1px solid #2A3A55;color:#fff;padding:0 12px;margin:6px 0 12px 0;box-sizing:border-box;" />'
+      + '<label style="font-size:12px;color:#A9B8D0;">Grade / Form</label><input id="zg-grade" placeholder="e.g. Grade 12" style="width:100%;height:42px;border-radius:10px;background:#04101F;border:1px solid #2A3A55;color:#fff;padding:0 12px;margin:6px 0 14px 0;box-sizing:border-box;" />'
+      + '<button id="zg-save" style="width:100%;height:44px;border-radius:12px;background:#E8C15A;color:#04101F;font-weight:800;border:none;cursor:pointer;">Save & Continue</button>'
+      + '<button id="zg-skip" style="width:100%;height:40px;background:transparent;color:#A9B8D0;border:none;margin-top:6px;cursor:pointer;font-size:13px;">Skip for now</button></div>';
+    document.body.appendChild(overlay);
+    function finish(){ try{ overlay.remove(); }catch(e){} try{ window.location.reload(); }catch(e){} }
+    document.getElementById("zg-skip").addEventListener("click", finish);
+    document.getElementById("zg-save").addEventListener("click", async function(){
+      var phone=document.getElementById("zg-phone").value.trim();
+      var school=document.getElementById("zg-school").value.trim();
+      var grade=document.getElementById("zg-grade").value.trim();
+      if(phone && !/^(09|07)\\d{8}$/.test(phone)){ showToast("Phone must be 10 digits starting 09 or 07 - or leave it blank"); return; }
+      this.textContent="Saving..."; this.disabled=true;
+      try{
+        var patch={}; if(phone) patch.phone=phone; if(school) patch.school=school; if(grade) patch.grade=grade;
+        if(Object.keys(patch).length){
+          await fetch(SUPA_URL+"/rest/v1/profiles?id=eq."+encodeURIComponent(profile.id), { method:"PATCH", headers: headers(), body: JSON.stringify(patch) });
+          var updated = Object.assign({}, profile, patch);
+          try{ localStorage.setItem("zed_user", JSON.stringify(updated)); }catch(e){}
+        }
+      }catch(e){}
+      finish();
+    });
+  }
+  async function handleGoogleUser(user){
+    if(!user || !user.email) return;
+    try{
+      var existingRaw = localStorage.getItem("zed_user");
+      if(existingRaw){
+        var ex=JSON.parse(existingRaw);
+        if(ex && ex.email===user.email && ex.auth_id===user.id) return;
+        var isRedirect = window.location.search.indexOf("code=")!==-1 || window.location.hash.indexOf("access_token")!==-1;
+        if(ex && ex.phone && !isRedirect) return;
+      }
+    }catch(e){}
+    showToast("Signed in with Google as " + user.email + " - setting up your profile...");
+    var profile = await fetchProfileByAuthId(user.id) || await fetchProfileByEmail(user.email);
+    if(!profile){
+      profile = await createGoogleProfile(user);
+      if(!profile){ showToast("Google login worked but we could not create your profile. Run the SQL from the guide (add email/auth_id columns)."); return; }
+    } else {
+      if(!profile.auth_id){
+        try{ await fetch(SUPA_URL+"/rest/v1/profiles?id=eq."+encodeURIComponent(profile.id), { method:"PATCH", headers: headers(), body: JSON.stringify({ auth_id: user.id }) }); profile.auth_id=user.id; }catch(e){}
+      }
+    }
+    try{ localStorage.setItem("zed_user", JSON.stringify(profile)); }catch(e){}
+    try{ localStorage.setItem("zed_google_user", JSON.stringify({ email: user.email, id: user.id })); }catch(e){}
+    try{ if(window.location.search.indexOf("code=")!==-1 || window.location.hash.indexOf("access_token")!==-1){ window.history.replaceState({}, document.title, window.location.pathname); } }catch(e){}
+    if(needsCompletion(profile)){ showCompleteModal(profile); } else { setTimeout(function(){ window.location.reload(); }, 600); }
+  }
+  async function checkSession(){
+    var c=getClient(); if(!c) return;
+    try{ var res = await c.auth.getSession(); var session = res.data && res.data.session; if(session && session.user){ await handleGoogleUser(session.user); } }catch(e){}
+  }
+  function init(){
+    fixPosition();
+    // Fast + frequent - this is what stops the jump. 120ms beats React's re-render flicker.
+    setInterval(fixPosition, 120);
+    // Also fix on every DOM change (OTP tap, tab switch, typing)
+    if(document.body) new MutationObserver(function(){ fixPosition(); }).observe(document.body, { childList:true, subtree:true, attributes:true });
+    // Fix on click - OTP tap is a click, fix immediately after it
+    document.addEventListener("click", function(){ setTimeout(fixPosition, 30); setTimeout(fixPosition, 200); setTimeout(fixPosition, 600); }, true);
+    var c=getClient();
+    if(c){
+      c.auth.onAuthStateChange(function(event, session){
+        if(event==="SIGNED_IN" && session && session.user){ handleGoogleUser(session.user); }
+        if(event==="SIGNED_OUT"){ try{ localStorage.removeItem("zed_user"); localStorage.removeItem("zed_google_user"); }catch(e){} }
+      });
+      checkSession();
+    } else { setTimeout(checkSession, 1500); }
+    document.addEventListener("click", function(e){
+      try{
+        var t=(e.target && e.target.textContent||"").toLowerCase();
+        if(t.indexOf("log out")!==-1 || t.indexOf("logout")!==-1 || t.indexOf("sign out")!==-1){ var cc=getClient(); if(cc) cc.auth.signOut(); }
+      }catch(err){}
+    });
+    console.log("[ZED] Google Auth v2 FIXED active - one button, forced after LOGIN / SEND OTP / CREATE ACCOUNT");
+  }
+  if(document.readyState==="loading") document.addEventListener("DOMContentLoaded", init);
+  else init();
+  window.zedGoogleSignIn = signInWithGoogle;
+  window.zedGoogleFix = fixPosition;
+})();
+</script>
+<!-- ===== END ZED GOOGLE AUTH v2 ===== -->
+
+
 </body>
 </html>
