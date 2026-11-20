@@ -14408,7 +14408,7 @@ Count only VISIBLE titles. Blank pills count as ZERO, so the offline fallback sh
     }
     return null;
   }
-  function needsCompletion(p){ if(!p) return true; return !p.school || !p.grade || !p.phone || !p.province || !p.district || String(p.phone||"").indexOf("GOOGLE-")===0; }
+  function needsCompletion(p){ if(!p) return true; if(String(p.phone||"").indexOf("GOOGLE-")===0) return true; return !p.school || !p.grade; } // FIX LOOP: Phone says (optional), province/district are saved if given but must NOT block Continue - requiring all 5 made Save/Skip loop forever.
   function showCompleteModal(profile){
     if(document.getElementById("zed-google-complete-modal")) return;
     // Prefill from saved Supabase profile - never show empty if account already existed.
@@ -14432,60 +14432,114 @@ Count only VISIBLE titles. Blank pills count as ZERO, so the offline fallback sh
       + '<button id="zg-save" style="width:100%;height:44px;border-radius:12px;background:#E8C15A;color:#04101F;font-weight:800;border:none;cursor:pointer;">Save & Continue</button>'
       + '<button id="zg-skip" style="width:100%;height:40px;background:transparent;color:#A9B8D0;border:none;margin-top:6px;cursor:pointer;font-size:13px;">Skip for now</button></div>';
     document.body.appendChild(overlay);
-    function finish(){ try{ overlay.remove(); }catch(e){} try{ window.location.reload(); }catch(e){} }
-    document.getElementById("zg-skip").addEventListener("click", finish);
+    function closeOnly(){ try{ overlay.remove(); }catch(e){} }
+    function finish(){ closeOnly(); try{ window.location.reload(); }catch(e){} } // only used after a VERIFIED complete save
+    document.getElementById("zg-skip").addEventListener("click", function(){
+      // SKIP MUST NOT RELOAD - reload re-runs handleGoogleUser and shows the modal again.
+      try{ localStorage.setItem("zed_profile_skip_"+String(profile.email||"").toLowerCase(), String(Date.now())); }catch(e){}
+      window.__zedProfileSkipped = String(profile.email||"").toLowerCase();
+      closeOnly();
+      showToast("Skipped - you can complete your profile later in Profile / Settings");
+    });
     document.getElementById("zg-save").addEventListener("click", async function(){
       var phone=document.getElementById("zg-phone").value.trim();
       var school=document.getElementById("zg-school").value.trim();
       var province=document.getElementById("zg-province").value.trim();
       var district=document.getElementById("zg-district").value.trim();
       var grade=document.getElementById("zg-grade").value.trim();
-      if(phone && !/^(09|07)\\d{8}$/.test(phone)){ showToast("Phone must be 10 digits starting 09 or 07 - or leave it blank"); return; }
+      // VALIDATE BEFORE SAVING - old code saved a partial profile then reloaded into the same modal.
+      if(!school){ showToast("Enter your School first"); return; }
+      if(!grade){ showToast("Enter Grade / Form e.g. Grade 12"); return; }
+      if(phone && !/^(09|07)\d{8}$/.test(phone)){ showToast("Phone must be 10 digits starting 09 or 07 - or leave it blank"); return; }
       this.textContent="Saving..."; this.disabled=true;
       try{
-        var patch={}; if(phone) patch.phone=phone; if(school) patch.school=school; if(province) patch.province=province; if(district) patch.district=district; if(grade) patch.grade=grade;
-        if(Object.keys(patch).length){
-          await fetch(SUPA_URL+"/rest/v1/profiles?id=eq."+encodeURIComponent(profile.id), { method:"PATCH", headers: headers(), body: JSON.stringify(patch) });
-          var updated = Object.assign({}, profile, patch);
-          try{ localStorage.setItem("zed_user", JSON.stringify(updated)); }catch(e){}
+        // Always send school+grade (required), plus the rest only if filled.
+        var patch={ school: school, grade: grade };
+        if(phone) patch.phone=phone; if(province) patch.province=province; if(district) patch.district=district;
+        var res = await fetch(SUPA_URL+"/rest/v1/profiles?id=eq."+encodeURIComponent(profile.id), { method:"PATCH", headers: headers(), body: JSON.stringify(patch) });
+        if(!res.ok){
+          // OLD BUG: fetch failure was swallowed (catch{}), then finish() reloaded into the modal again with no error shown.
+          var errTxt=""; try{ errTxt=await res.text(); }catch(e){}
+          showToast("Could not save: " + (errTxt||("HTTP "+res.status)).slice(0,140));
+          this.textContent="Save & Continue"; this.disabled=false;
+          return;
         }
-      }catch(e){}
-      finish();
+        // VERIFY what Supabase actually saved - do NOT reload on hope.
+        var verify=null;
+        try{
+          var vr = await fetch(SUPA_URL+"/rest/v1/profiles?id=eq."+encodeURIComponent(profile.id)+"&select=*", { headers: headers() });
+          var vj = await vr.json(); if(Array.isArray(vj) && vj[0]) verify=vj[0];
+        }catch(e){}
+        var finalProfile = verify || Object.assign({}, profile, patch);
+        if(needsCompletion(finalProfile)){
+          showToast("Still missing: " + (!finalProfile.school?"School ":"") + (!finalProfile.grade?"Grade":"") + " - fill it, then Save again");
+          this.textContent="Save & Continue"; this.disabled=false;
+          return; // keep modal OPEN, do NOT reload into a loop
+        }
+        try{ localStorage.setItem("zed_user", JSON.stringify(finalProfile)); }catch(e){}
+        try{ localStorage.removeItem("zed_profile_skip_"+String(profile.email||"").toLowerCase()); }catch(e){}
+        window.__zedProfileSkipped="";
+        closeOnly();
+        showToast("Profile saved");
+        setTimeout(function(){ try{ window.location.reload(); }catch(e){} }, 400); // reload ONCE, now verified complete so it will NOT show the modal again
+      }catch(e){
+        showToast("Could not save - check internet and try again");
+        this.textContent="Save & Continue"; this.disabled=false;
+      }
+    });
     });
   }
   async function handleGoogleUser(user){
     if(!user || !user.email) return;
-    // Keep cached copy only as an OFFLINE fallback - never return early from it.
-    // Supabase is the source of truth, so we always fetch fresh below.
+    var emailLower = String(user.email||"").toLowerCase();
+    // LOOP GUARD 1: checkSession() + onAuthStateChange(SIGNED_IN) both fire per load - ignore 2nd call within 5s.
+    if(window.__zedGoogleHandlingUntil && Date.now() < window.__zedGoogleHandlingUntil) return;
+    window.__zedGoogleHandlingUntil = Date.now() + 5000;
+    // LOOP GUARD 2: user tapped Skip - respect it for 24h, do NOT show modal again.
+    try{
+      var skippedAt = parseInt(localStorage.getItem("zed_profile_skip_"+emailLower)||"0", 10);
+      if(skippedAt && Date.now()-skippedAt < 24*60*60*1000) return;
+      if(window.__zedProfileSkipped && window.__zedProfileSkipped===emailLower) return;
+    }catch(e){}
+    // Keep cached copy only as OFFLINE fallback - never return early from it.
     var cached = null;
     try{
       var existingRaw = localStorage.getItem("zed_user");
       if(existingRaw){
         var ex=JSON.parse(existingRaw);
-        if(ex && ex.email && ex.email.toLowerCase()===user.email.toLowerCase()) cached = ex;
+        if(ex && ex.email && ex.email.toLowerCase()===emailLower) cached = ex;
       }
     }catch(e){}
+    var wasCompleteCached = !!(cached && cached.school && cached.grade);
     showToast("Signed in with Google as " + user.email + " - setting up your profile...");
-    // ONE account per email: fetch by auth_id first, then by email. Only create if both miss.
     var profile = await fetchProfileByAuthId(user.id) || await fetchProfileByEmail(user.email);
     if(!profile){
       if(cached && cached.id){
-        // Fetch failed / offline - reuse cached row instead of creating a duplicate.
-        profile = cached;
+        profile = cached; // fetch failed / offline - reuse cached instead of creating a duplicate
       } else {
         profile = await createGoogleProfile(user);
         if(!profile){ showToast("Google login worked but we could not create your profile. Run this SQL in Supabase: create unique index if not exists profiles_email_unique on profiles (lower(email));"); return; }
       }
     }
-    // Link auth_id for an old phone profile - do NOT return early here.
-    // We still need to check needsCompletion and show the modal with saved values.
     if(!profile.auth_id){
       try{ await fetch(SUPA_URL+"/rest/v1/profiles?id=eq."+encodeURIComponent(profile.id), { method:"PATCH", headers: headers(), body: JSON.stringify({ auth_id: user.id }) }); profile.auth_id=user.id; }catch(e){}
     }
     try{ localStorage.setItem("zed_user", JSON.stringify(profile)); }catch(e){}
     try{ localStorage.setItem("zed_google_user", JSON.stringify({ email: user.email, id: user.id })); }catch(e){}
     try{ if(window.location.search.indexOf("code=")!==-1 || window.location.hash.indexOf("access_token")!==-1){ window.history.replaceState({}, document.title, window.location.pathname); } }catch(e){}
-    if(needsCompletion(profile)){ showCompleteModal(profile); } else { setTimeout(function(){ window.location.reload(); }, 600); }
+    if(needsCompletion(profile)){
+      showCompleteModal(profile);
+    } else if(!wasCompleteCached){
+      // LOOP GUARD 3: OLD BUG - complete profile did setTimeout(reload) on EVERY load = reload loop.
+      // Reload only ONCE per session, when we first see a complete profile.
+      try{
+        if(!sessionStorage.getItem("zed_google_reloaded_"+emailLower)){
+          sessionStorage.setItem("zed_google_reloaded_"+emailLower, "1");
+          setTimeout(function(){ try{ window.location.reload(); }catch(e){} }, 600);
+        }
+      }catch(e){}
+    }
+    // else: already complete + already in localStorage -> do NOTHING. No reload, no modal, no loop.
   }
   async function checkSession(){
     var c=getClient(); if(!c) return;
