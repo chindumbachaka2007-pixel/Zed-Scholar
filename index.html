@@ -14383,21 +14383,28 @@ Count only VISIBLE titles. Blank pills count as ZERO, so the offline fallback sh
     return null;
   }
   async function createGoogleProfile(user){
-    var email = user.email || "";
+    var email = (user.email || "").toLowerCase().trim();
     var name = (user.user_metadata && (user.user_metadata.full_name || user.user_metadata.name)) || (email ? email.split("@")[0] : "Student");
     var avatar = (user.user_metadata && (user.user_metadata.avatar_url || user.user_metadata.picture)) || "";
     var base = { name: name, email: email, school: "", grade: "", province: "", district: "", account_code: "ZED-"+Date.now(), coins: 0, streak: 0, auth_id: user.id, avatar_url: avatar, avatar: avatar };
     var attempts = [
       Object.assign({}, base, { phone: null }),
-      Object.assign({}, base, { phone: "GOOGLE-"+String(user.id).slice(0,8) }),
-      { phone: "GOOGLE-"+String(user.id).slice(0,8), name: name, school: "", grade: "", account_code: "ZED-"+Date.now(), coins: 0, streak: 0 }
+      Object.assign({}, base, { phone: "GOOGLE-"+String(user.id).slice(0,8) })
     ];
     for(var i=0;i<attempts.length;i++){
       try{
-        var r = await fetch(SUPA_URL+"/rest/v1/profiles", { method: "POST", headers: headers(), body: JSON.stringify(attempts[i]) });
+        // UPSERT on email - if this email already exists, UPDATE it instead of creating a duplicate row
+        var h = headers();
+        h["Prefer"] = "resolution=merge-duplicates,return=representation";
+        var r = await fetch(SUPA_URL+"/rest/v1/profiles?on_conflict=email", { method: "POST", headers: h, body: JSON.stringify(attempts[i]) });
         var j = await r.json();
         if(r.ok && Array.isArray(j) && j.length) return j[0];
         if(r.ok && j && j.id) return j;
+        // If upsert failed because email has no unique index yet, fall back to normal insert (old behaviour)
+        var r2 = await fetch(SUPA_URL+"/rest/v1/profiles", { method: "POST", headers: headers(), body: JSON.stringify(attempts[i]) });
+        var j2 = await r2.json();
+        if(r2.ok && Array.isArray(j2) && j2.length) return j2[0];
+        if(r2.ok && j2 && j2.id) return j2;
       }catch(e){}
     }
     return null;
@@ -14441,7 +14448,16 @@ Count only VISIBLE titles. Blank pills count as ZERO, so the offline fallback sh
       var existingRaw = localStorage.getItem("zed_user");
       if(existingRaw){
         var ex=JSON.parse(existingRaw);
-        if(ex && ex.email===user.email && ex.auth_id===user.id) return;
+        if(ex && ex.email && ex.email.toLowerCase()===user.email.toLowerCase() && ex.auth_id===user.id) return;
+        // Same email but missing auth_id (old phone profile) - link it, do NOT create a duplicate
+        if(ex && ex.email && ex.email.toLowerCase()===user.email.toLowerCase() && ex.id){
+          try{
+            var h2 = headers(); h2["Prefer"] = "return=representation";
+            await fetch(SUPA_URL+"/rest/v1/profiles?id=eq."+encodeURIComponent(ex.id), { method:"PATCH", headers: h2, body: JSON.stringify({ auth_id: user.id }) });
+            ex.auth_id = user.id; localStorage.setItem("zed_user", JSON.stringify(ex));
+          }catch(e){}
+          return;
+        }
         var isRedirect = window.location.search.indexOf("code=")!==-1 || window.location.hash.indexOf("access_token")!==-1;
         if(ex && ex.phone && !isRedirect) return;
       }
