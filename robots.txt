@@ -1,4 +1,3 @@
 User-agent: *
 Allow: /
-
 Sitemap: https://zed-scholar.pages.dev/sitemap.xml
