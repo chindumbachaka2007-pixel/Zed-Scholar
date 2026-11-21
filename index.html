@@ -13606,32 +13606,91 @@ WHAT YOU ASKED FOR, IN ONE PLACE (this block runs LAST, so it wins over every ea
   // Cache paper meta when online (for offline fallback titles)
   setInterval(function(){ try{ if(isOffline()) return; var arr=[]; document.querySelectorAll('main div[class*="rounded-[14px]"]').forEach(function(c){ var u=getFileUrl(c); if(u) arr.push({title:getTitle(c), url:u}); }); if(arr.length) localStorage.setItem('zed_papers_meta_v1', JSON.stringify(arr.slice(0,200))); }catch(e){} }, 5000);
 
-  /* ---------- OFFLINE: show DOWNLOADED papers when React list is empty ---------- */
+  /* ---------- OFFLINE FIX 21 Nov 2026 — ONE fallback, Papers/Docs ONLY, never duplicated ----------
+     BUG in screenshots: banner + 6 cards showed on Videos / Quizzes / Leaderboard, and twice (top + bottom) on Papers/Docs.
+     ROOT CAUSES:
+     1) TWO functions (renderOfflinePapersFallback + v21OfflineFallback) both created #zed-offline-papers-fallback on 1500ms timers -> race = 2 copies.
+     2) Both did `if(!isPapers && !isDocs) return;` WITHOUT removing the old fallback. React does not delete a node we appendChild'd to <main>, so the old fallback survived every tab switch.
+     3) Tab detection used main.textContent ('No documents yet.') which stays true after the fallback is injected, and counted the fallback's own .zed-final-card as a React card.
+     FIX: ONE function, ONE timer, ONE node. v21 below is now a no-op. Always remove ALL copies first (querySelectorAll, not getElementById — duplicates already exist in the wild). Active tab = tab-bar button only. Count React cards EXCLUDING fallback. Hide React's empty text while fallback shows. Never rebuild if same tab + same list already rendered (data-zed-sig). ---------- */
+  function zedRemoveAllOfflineFallbacks(){
+    try{
+      document.querySelectorAll('#zed-offline-papers-fallback').forEach(function(n){ try{ n.remove(); }catch(e){} });
+      document.querySelectorAll('[data-zed-empty-hidden="1"]').forEach(function(n){ try{ n.style.display=''; n.removeAttribute('data-zed-empty-hidden'); }catch(e){} });
+    }catch(e){}
+  }
+  function zedGetActiveTabLabel(){
+    try{
+      var bars = document.querySelectorAll('header + div');
+      for(var ci=0; ci<bars.length; ci++){
+        var bar = bars[ci];
+        var btns = bar.querySelectorAll(':scope > button');
+        if(!btns.length) continue;
+        var texts = Array.prototype.map.call(btns, function(b){ return (b.textContent||'').trim().toLowerCase(); }).join('|');
+        if(texts.indexOf('papers')===-1) continue; // not the main tab bar — skip login toggles etc.
+        for(var i=0;i<btns.length;i++){
+          if((btns[i].className||'').indexOf('bg-[var(--text)]')!==-1) return (btns[i].textContent||'').trim().toLowerCase();
+        }
+        return '';
+      }
+      return '';
+    }catch(e){ return ''; }
+  }
   async function renderOfflinePapersFallback(){
     try{
-      if(!isOffline()){ var old=document.getElementById('zed-offline-papers-fallback'); if(old) old.remove(); return; }
+      var active = zedGetActiveTabLabel();
+      var isPapers = (active==='papers');
+      var isDocs = (active==='docs' || active==='documents');
+      // Not Papers/Docs (Videos, Quizzes, Leaderboard, Admin, Profile, login) OR back online -> ALWAYS remove, never return early leaving it behind.
+      if(!isOffline() || (!isPapers && !isDocs)){
+        zedRemoveAllOfflineFallbacks();
+        return;
+      }
       var main=document.querySelector('main'); if(!main) return;
-      // Papers OR Docs tab: Papers has a "Search papers" input; Docs has NO search input,
-      // so detect Docs via the active tab button ("Docs") or its own empty text / links.
-      var isPapersTab = !!main.querySelector('input[placeholder*="Search papers"]');
-      var isDocsTab = false;
+      // Count REAL React cards only — never count our own fallback cards.
+      var realCards = 0;
       try{
-        var _ab = document.querySelector('header + div button[class*="bg-[var(--text)]"]');
-        if(_ab && /docs/i.test(_ab.textContent||'')) isDocsTab = true;
-        else if((main.textContent||'').indexOf('No documents yet.')!==-1) isDocsTab = true;
-        else if(!isPapersTab && (main.textContent||'').indexOf('Open Document')!==-1) isDocsTab = true;
+        main.querySelectorAll('.zed-final-card').forEach(function(c){ if(!c.closest('#zed-offline-papers-fallback')) realCards++; });
+        if(realCards===0){
+          main.querySelectorAll('div[class*="rounded-[14px]"], div[class*="rounded-[12px]"]').forEach(function(c){ if(!c.closest('#zed-offline-papers-fallback')) realCards++; });
+        }
       }catch(e){}
-      if(!isPapersTab && !isDocsTab) return;
-      var isDocs = isDocsTab && !isPapersTab;
-      var hasCards = main.querySelectorAll('.zed-final-card').length>0;
-      var noPapersText = (main.textContent||'').indexOf('No papers found')!==-1 || (main.textContent||'').indexOf('No documents yet.')!==-1;
-      if(hasCards && !noPapersText) { var o=document.getElementById('zed-offline-papers-fallback'); if(o) o.remove(); return; }
+      if(realCards>0){ zedRemoveAllOfflineFallbacks(); return; }
+      // Is React actually empty? Check WITHOUT fallback text (clone + strip fallback first).
+      var mainText = '';
+      try{
+        var clone = main.cloneNode(true);
+        var fb0 = clone.querySelector('#zed-offline-papers-fallback'); if(fb0) fb0.remove();
+        mainText = clone.textContent||'';
+      }catch(e){ mainText = main.textContent||''; }
+      var isEmptyText = mainText.indexOf('No papers found')!==-1 || mainText.indexOf('No documents yet.')!==-1;
+      if(!isEmptyText){
+        // React still loading (no cards, no empty text) -> do not flash a fallback. Keep existing one if already showing.
+        return;
+      }
       var all=await getAllRec(); var papers=all.filter(function(r){ return r.blob && r.blob.size>1024; });
-      if(!papers.length) return;
-      var existing=document.getElementById('zed-offline-papers-fallback');
-      if(existing && !noPapersText) return;
+      if(!papers.length){ zedRemoveAllOfflineFallbacks(); return; }
+      // Re-check tab AFTER the async DB read — user may have switched tabs while we were reading.
+      var active2 = zedGetActiveTabLabel();
+      if(active2!==active){ zedRemoveAllOfflineFallbacks(); return; }
+      var sig = active + '|' + papers.length + '|' + papers.map(function(r){ return r.id; }).join(',');
+      // Remove duplicates, keep one if signature already matches (this stops the rebuild-every-1.5s loop).
+      var allFbs = document.querySelectorAll('#zed-offline-papers-fallback');
+      if(allFbs.length>1){ for(var k=1;k<allFbs.length;k++){ try{ allFbs[k].remove(); }catch(e){} } }
+      var existing=document.querySelector('#zed-offline-papers-fallback');
+      if(existing && existing.getAttribute('data-zed-sig')===sig) return;
       if(existing) existing.remove();
-      var wrap=document.createElement('div'); wrap.id='zed-offline-papers-fallback';
+      // Hide React's empty message while fallback shows, so you don't see "No documents yet." + list together.
+      try{
+        main.querySelectorAll('div, p').forEach(function(el){
+          if(el.closest('#zed-offline-papers-fallback')) return;
+          var t=(el.textContent||'').trim();
+          if(t==='No documents yet.' || t==='No papers found.' || t==='No papers found'){
+            if(!el.querySelector('.zed-final-card')){ el.style.display='none'; el.setAttribute('data-zed-empty-hidden','1'); }
+          }
+        });
+      }catch(e){}
+      var wrap=document.createElement('div'); wrap.id='zed-offline-papers-fallback'; wrap.setAttribute('data-zed-sig', sig); wrap.setAttribute('data-zed-tab', active);
       var head=document.createElement('div'); head.style.cssText='font-size:12px;color:#A9B8D0;'; head.textContent='Offline — showing your '+papers.length+' downloaded '+(isDocs ? 'doc'+(papers.length===1?'':'s') : 'paper'+(papers.length===1?'':'s'))+'. Videos need internet.';
       wrap.appendChild(head);
       papers.forEach(function(rec){
@@ -13644,10 +13703,16 @@ WHAT YOU ASKED FOR, IN ONE PLACE (this block runs LAST, so it wins over every ea
         btn.onclick=function(){ openPaperFinal(rec, rec.title||(isDocs?'Doc':'Paper')); };
         ui.appendChild(row); card.appendChild(ui); wrap.appendChild(card);
       });
-      main.appendChild(wrap);
+      // Insert ONCE at the TOP of <main> (not appendChild at bottom — append + React re-render = duplicate at bottom).
+      if(main.firstChild) main.insertBefore(wrap, main.firstChild);
+      else main.appendChild(wrap);
     }catch(e){}
   }
   setInterval(renderOfflinePapersFallback, 1500);
+  // Tab switch / online-offline must clean instantly, not after 1.5s.
+  document.addEventListener('click', function(){ setTimeout(renderOfflinePapersFallback, 50); setTimeout(renderOfflinePapersFallback, 300); }, true);
+  window.addEventListener('online', function(){ zedRemoveAllOfflineFallbacks(); });
+  window.addEventListener('offline', function(){ setTimeout(renderOfflinePapersFallback, 100); });
 
   /* ---------- VIDEOS: ONLY when ONLINE. When offline, NO videos at all. ---------- */
   function isVideosTabActive(){
@@ -13783,47 +13848,9 @@ Count only VISIBLE titles. Blank pills count as ZERO, so the offline fallback sh
   document.addEventListener('input', function(e){ if(e.target && e.target.tagName==='INPUT') setTimeout(repairBlankCards, 100); }, true);
   if(document.body) new MutationObserver(function(){ if(window.__zedV21T) clearTimeout(window.__zedV21T); window.__zedV21T=setTimeout(repairBlankCards, 120); }).observe(document.body, {childList:true, subtree:true});
 
-  // Offline fallback: if VISIBLE titles are 0 but IndexedDB has downloads, show them (blank pills must not block this)
-  // Count only visible titles — blank cards count as zero, so the fallback shows.
-  async function v21OfflineFallback(){
-    try{
-      if(typeof navigator!=='undefined' && navigator.onLine) return;
-      var main=document.querySelector('main'); if(!main) return;
-      // Papers OR Docs tab — same detection as renderOfflinePapersFallback (Docs has no search input).
-      var isPapersTab = !!main.querySelector('input[placeholder*="Search papers"]');
-      var isDocsTab = false;
-      try{
-        var _ab2 = document.querySelector('header + div button[class*="bg-[var(--text)]"]');
-        if(_ab2 && /docs/i.test(_ab2.textContent||'')) isDocsTab = true;
-        else if((main.textContent||'').indexOf('No documents yet.')!==-1) isDocsTab = true;
-        else if(!isPapersTab && (main.textContent||'').indexOf('Open Document')!==-1) isDocsTab = true;
-      }catch(e){}
-      if(!isPapersTab && !isDocsTab) return;
-      var isDocs = isDocsTab && !isPapersTab;
-      if(countVisibleTitles()>0) return;
-      // Don't double-render if fallback already did it
-      if(document.getElementById('zed-offline-papers-fallback')) return;
-      var db = await new Promise(function(res,rej){ var r=indexedDB.open('zed_internal_storage_v2',2); r.onsuccess=function(){ res(r.result); }; r.onerror=function(){ rej(r.error); }; });
-      var all = await new Promise(function(res){ var tx=db.transaction('offline_files','readonly'); var q=tx.objectStore('offline_files').getAll(); q.onsuccess=function(){ res(q.result||[]); }; q.onerror=function(){ res([]); }; });
-      var papers = all.filter(function(x){ return x.blob && x.blob.size>1024; });
-      if(!papers.length) return;
-      var wrap=document.createElement('div'); wrap.id='zed-offline-papers-fallback';
-      var head=document.createElement('div'); head.style.cssText='font-size:12px;color:#A9B8D0;margin-bottom:4px;'; head.textContent='Offline — showing your '+papers.length+' downloaded '+(isDocs ? 'doc'+(papers.length===1?'':'s') : 'paper'+(papers.length===1?'':'s'))+'. Tap Open to read.';
-      wrap.appendChild(head);
-      papers.forEach(function(rec){
-        var card=document.createElement('div'); card.className='zed-final-card';
-        var ui=document.createElement('div'); ui.className='zed-final-ui';
-        var row=document.createElement('div'); row.className='zed-final-row';
-        var ts=document.createElement('div'); ts.className='zed-final-title'; ts.textContent=rec.title||(isDocs?'Doc':'Paper'); row.appendChild(ts);
-        var tick=document.createElement('span'); tick.className='zed-final-tick'; tick.textContent='✓'; row.appendChild(tick);
-        var btn=document.createElement('button'); btn.className='zed-final-btn open'; btn.textContent='Open'; row.appendChild(btn);
-        btn.onclick=function(){ try{ if(window._zedOpenViewerEnhanced) window._zedOpenViewerEnhanced(rec.blob, {title:rec.title||(isDocs?'Doc':'Paper'), id:rec.id}); }catch(e){} };
-        ui.appendChild(row); card.appendChild(ui); wrap.appendChild(card);
-      });
-      main.appendChild(wrap);
-    }catch(e){}
-  }
-  setInterval(v21OfflineFallback, 1500);
+  // v21OfflineFallback — DISABLED 21 Nov 2026: this was a SECOND copy of renderOfflinePapersFallback creating the same #zed-offline-papers-fallback ID -> duplicates + race. Now it just calls the ONE fixed function above.
+  // No second setInterval here — renderOfflinePapersFallback already runs every 1500ms. A second timer here was the duplication race.
+  async function v21OfflineFallback(){ try{ await renderOfflinePapersFallback(); }catch(e){} }
   console.log('[ZED V21] Blank-pills repair active — one UI per card, blank counts as zero');
 })();
 </script>
