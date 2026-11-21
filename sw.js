@@ -1,6 +1,6 @@
-var CACHE_NAME = 'zed-scholar-v7';
-var RUNTIME_CACHE = 'zed-scholar-runtime-v7';
-var PDF_CACHE = 'zed-scholar-pdfs-v7';
+var CACHE_NAME = 'zed-scholar-v8';
+var RUNTIME_CACHE = 'zed-scholar-runtime-v8';
+var PDF_CACHE = 'zed-scholar-pdfs-v8';
 var PRECACHE_URLS = [
   '/',
   '/index.html',
